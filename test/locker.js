@@ -21,7 +21,7 @@ async function getBalances(tokenInstance, accounts) {
 }
 
 contract("Lock", accounts => {
-    before(async () => {
+    before(async function() {
         const superUserAddress = accounts[0];
         tokenHolder = accounts[1];
 
@@ -40,9 +40,10 @@ contract("Lock", accounts => {
         await tokenAceInstance.withdrawTokens(interestEarnedAddress, 10000);
     });
 
-    it("should allow lock products to be created", async () => {
+    it("should allow lock products to be created", async function() {
         // create lock product with 5% per term, and 60 sec lock time:
-        await lockerInstance.addLockProduct(50000, 60, 100, true);
+        const tx = await lockerInstance.addLockProduct(50000, 60, 100, true);
+        testHelpers.logGasUse(this, tx, "addLockProduct");
 
         await testHelpers.assertEvent(lockerInstance, "NewLockProduct", {
             lockProductId: 0,
@@ -53,18 +54,19 @@ contract("Lock", accounts => {
         });
     });
 
-    it("should allow the number of lock products to be queried", async () => {
+    it("should allow the number of lock products to be queried", async function() {
         const startingNumLocks = (await lockerInstance.getLockProductCount()).toNumber();
 
         // create lock product with 5% per term, and 120 sec lock time:
-        await lockerInstance.addLockProduct(50000, 120, 0, true);
+        const tx = await lockerInstance.addLockProduct(50000, 120, 0, true);
+        testHelpers.logGasUse(this, tx, "addLockProduct");
 
         const endNumLocks = (await lockerInstance.getLockProductCount()).toNumber();
 
         assert(startingNumLocks + 1 === endNumLocks);
     });
 
-    it("should allow the getting of individual lock products", async () => {
+    it("should allow the getting of individual lock products", async function() {
         // create lock product with 8% per term, and 120 sec lock time:
         await lockerInstance.addLockProduct(80000, 120, 50, true);
 
@@ -84,7 +86,7 @@ contract("Lock", accounts => {
         assert(isActive === true);
     });
 
-    it("should allow the listing of lock products (0 offset)", async () => {
+    it("should allow the listing of lock products (0 offset)", async function() {
         // create lock product with 10% per term, and 120 sec lock time:
         await lockerInstance.addLockProduct(100000, 120, 75, true);
 
@@ -111,7 +113,7 @@ contract("Lock", accounts => {
         assert(isActive.toNumber() === 1);
     });
 
-    it("should allow the listing of lock products (non-zero offset)", async () => {
+    it("should allow the listing of lock products (non-zero offset)", async function() {
         const offset = 1;
 
         const products = await lockerInstance.getLockProducts(offset);
@@ -145,10 +147,11 @@ contract("Lock", accounts => {
 
     it("should allow the listing of lock products when there are more than 20 products");
 
-    it("should allow lock products to be enabled/disabled", async () => {
+    it("should allow lock products to be enabled/disabled", async function() {
         const lockProductId = 0;
 
-        await lockerInstance.setLockProductActiveState(lockProductId, false);
+        const tx = await lockerInstance.setLockProductActiveState(lockProductId, false);
+        testHelpers.logGasUse(this, tx, "setLockProductActiveState");
 
         await testHelpers.assertEvent(lockerInstance, "LockProductActiveChange", {
             lockProductId: lockProductId,
@@ -171,7 +174,7 @@ contract("Lock", accounts => {
         assert(product[3] === true);
     });
 
-    it("should allow tokens to be locked", async () => {
+    it("should allow tokens to be locked", async function() {
         const [startingBalances, totalLockAmountBefore] = await Promise.all([
             getBalances(tokenAceInstance, [tokenHolder, lockerInstance.address, interestEarnedAddress]),
             tokenAceInstance.totalLockedAmount()
@@ -183,6 +186,7 @@ contract("Lock", accounts => {
             lockerInstance.lockProducts(0),
             tokenAceInstance.lockFunds(lockerInstance.address, 0, amountToLock, { from: tokenHolder })
         ]);
+        testHelpers.logGasUse(this, lockingTransaction, "lockFunds");
 
         const perTermInterest = product[0].toNumber();
         const durationInSecs = product[1].toNumber();
@@ -239,7 +243,7 @@ contract("Lock", accounts => {
         assert(finishingBalances[interestEarnedAddress] === startingBalances[interestEarnedAddress] - interestEarned);
     });
 
-    it("should allow an account to see how many locks it has", async () => {
+    it("should allow an account to see how many locks it has", async function() {
         const startingNumLocks = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber();
         const amountToLock = 1000;
 
@@ -250,7 +254,7 @@ contract("Lock", accounts => {
         assert(finishingNumLocks === startingNumLocks + 1);
     });
 
-    it("should allow tokens to be unlocked", async () => {
+    it("should allow tokens to be unlocked", async function() {
         const startingBalances = await getBalances(tokenAceInstance, [
             tokenHolder,
             lockerInstance.address,
@@ -260,12 +264,17 @@ contract("Lock", accounts => {
         const amountToLock = 1000;
 
         // create lock product with 10% per term, and 2 sec lock time:
-        await lockerInstance.addLockProduct(100000, 2, 0, true);
+        let tx = await lockerInstance.addLockProduct(100000, 2, 0, true);
+        testHelpers.logGasUse(this, tx, "addLoanProduct");
+
         const interestEarned = Math.floor(amountToLock / 10); // 10%
 
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
 
-        await tokenAceInstance.lockFunds(lockerInstance.address, newLockProductId, amountToLock, { from: tokenHolder });
+        tx = await tokenAceInstance.lockFunds(lockerInstance.address, newLockProductId, amountToLock, {
+            from: tokenHolder
+        });
+        testHelpers.logGasUse(this, tx, "lockFunds");
 
         await testHelpers.waitFor(2500);
 
@@ -276,7 +285,8 @@ contract("Lock", accounts => {
 
         newestLockIndex = newestLockIndex.toNumber() - 1;
 
-        await lockerInstance.releaseFunds(tokenHolder, newestLockIndex);
+        tx = await lockerInstance.releaseFunds(tokenHolder, newestLockIndex);
+        testHelpers.logGasUse(this, tx, "releaseFunds");
 
         const [finishingBalances, totalLockAmountAfter, , ,] = await Promise.all([
             getBalances(tokenAceInstance, [tokenHolder, lockerInstance.address, interestEarnedAddress]),
@@ -313,7 +323,7 @@ contract("Lock", accounts => {
         assert(finishingBalances[interestEarnedAddress] === startingBalances[interestEarnedAddress] - interestEarned);
     });
 
-    it("should allow an account to see it's individual locks", async () => {
+    it("should allow an account to see it's individual locks", async function() {
         const amountToLock = 1000;
 
         // lock funds, and get the product that was used:
@@ -350,7 +360,7 @@ contract("Lock", accounts => {
         assert(isActive === true);
     });
 
-    it("should allow an account to see all it's locks (0 offset)", async () => {
+    it("should allow an account to see all it's locks (0 offset)", async function() {
         // NB: this test assumes that tokenHolder has less than 20 locks (when checking newestLock)
 
         const amountToLock = 1000;
@@ -395,7 +405,7 @@ contract("Lock", accounts => {
         assert(isActive.toNumber() === 1);
     });
 
-    it("should allow an account to see all it's locks (non-zero offset)", async () => {
+    it("should allow an account to see all it's locks (non-zero offset)", async function() {
         const offset = 1;
 
         const locks = await lockerInstance.getLocksForAddress(tokenHolder, offset);
@@ -433,7 +443,7 @@ contract("Lock", accounts => {
 
     it("should allow an account to see all it's locks when it has more than 20 locks");
 
-    it("should prevent someone from locking more tokens than they have", async () => {
+    it("should prevent someone from locking more tokens than they have", async function() {
         const startingBalances = await getBalances(tokenAceInstance, [
             tokenHolder,
             lockerInstance.address,
@@ -461,7 +471,7 @@ contract("Lock", accounts => {
         assert(finishingNumLocks === startingNumLocks);
     });
 
-    it("should prevent someone from depleting the interestEarnedAccount via locking", async () => {
+    it("should prevent someone from depleting the interestEarnedAccount via locking", async function() {
         // create lock product with 100% per term interest:
         await lockerInstance.addLockProduct(1000000, 120, 0, true);
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
@@ -497,7 +507,7 @@ contract("Lock", accounts => {
         assert(finishingNumLocks === startingNumLocks);
     });
 
-    it("should prevent someone from locking less than the minimumLockAmount", async () => {
+    it("should prevent someone from locking less than the minimumLockAmount", async function() {
         const startingBalances = await getBalances(tokenAceInstance, [
             tokenHolder,
             lockerInstance.address,
@@ -533,7 +543,7 @@ contract("Lock", accounts => {
         });
     });
 
-    it("should prevent someone from releasing a lock early", async () => {
+    it("should prevent someone from releasing a lock early", async function() {
         const startingBalances = await getBalances(tokenAceInstance, [
             tokenHolder,
             lockerInstance.address,
@@ -568,7 +578,7 @@ contract("Lock", accounts => {
         assert(finishingBalances[interestEarnedAddress] === startingBalances[interestEarnedAddress] - interestEarned);
     });
 
-    it("should prevent someone from unlocking an unlocked lock", async () => {
+    it("should prevent someone from unlocking an unlocked lock", async function() {
         const startingBalances = await getBalances(tokenAceInstance, [
             tokenHolder,
             lockerInstance.address,
@@ -603,7 +613,7 @@ contract("Lock", accounts => {
         assert(finishingBalances[interestEarnedAddress] === startingBalances[interestEarnedAddress] - interestEarned);
     });
 
-    it("should only allow whitelisted lock contract to be used", async () => {
+    it("should only allow whitelisted lock contract to be used", async function() {
         await lockerInstance.addLockProduct(1000000, 120, 0, true);
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
         await testHelpers.expectThrow(
@@ -611,18 +621,19 @@ contract("Lock", accounts => {
         );
     });
 
-    it("should only allow the token contract to call createLock", async () => {
+    it("should only allow the token contract to call createLock", async function() {
         await testHelpers.expectThrow(lockerInstance.createLock(0, tokenHolder, 1000, { from: tokenHolder }));
     });
 
-    it("should track the total amount of locked tokens", async () => {
+    it("should track the total amount of locked tokens", async function() {
         const startingLockedTokenCount = (await tokenAceInstance.balances(lockerInstance.address)).toNumber();
         const amountToLock = 1000;
 
-        const [product] = await Promise.all([
+        const [product, tx] = await Promise.all([
             lockerInstance.lockProducts(0),
             tokenAceInstance.lockFunds(lockerInstance.address, 0, amountToLock, { from: tokenHolder })
         ]);
+        testHelpers.logGasUse(this, tx, "lockFunds");
 
         const perTermInterest = product[0];
         const lockedInterested = Math.floor(amountToLock * perTermInterest / 1000000);
