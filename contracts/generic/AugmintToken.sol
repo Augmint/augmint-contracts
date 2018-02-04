@@ -29,11 +29,19 @@ contract AugmintToken is AugmintTokenInterface {
 
     uint public issuedByMonetaryBoard; // supply issued manually by monetary board
 
+    uint public totalLoanAmount; // total amount of all loans with interest, in token
+    uint public totalLockedAmount; // total amount of all locks with interest, in token
+    uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go above it
+    uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go below it
+
+
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
+
+    event LoanToDepositLimitsChanged(uint loanToDepositLockLimit, uint loanToDepositLoanLimit);
 
     function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
         address _interestEarnedAccount, uint _transferFeePt, uint _transferFeeMin,
-        uint _transferFeeMax) public {
+        uint _transferFeeMax, uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit) public {
         require(_feeAccount != address(0));
         require(_interestEarnedAccount != address(0));
         require(bytes(_name).length > 0);
@@ -46,6 +54,8 @@ contract AugmintToken is AugmintTokenInterface {
         transferFeePt = _transferFeePt;
         transferFeeMin = _transferFeeMin;
         transferFeeMax = _transferFeeMax;
+        loanToDepositLockLimit = _loanToDepositLockLimit;
+        loanToDepositLoanLimit = _loanToDepositLoanLimit;
     }
 
     function () public payable { // solhint-disable-line no-empty-blocks
@@ -124,6 +134,13 @@ contract AugmintToken is AugmintTokenInterface {
         transferFeeMin = _transferFeeMin;
         transferFeeMax = _transferFeeMax;
         TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
+    }
+
+    function setLoanToDepositLimits(uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit)
+    external restrict("MonetaryBoard") {
+        loanToDepositLockLimit = _loanToDepositLockLimit;
+        loanToDepositLoanLimit = _loanToDepositLoanLimit;
+        LoanToDepositLimitsChanged(loanToDepositLockLimit, loanToDepositLoanLimit);
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {

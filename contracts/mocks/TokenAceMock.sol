@@ -5,10 +5,10 @@ import "../generic/AugmintToken.sol";
 
 contract TokenAceMock is AugmintToken {
 
-    function TokenAceMock(address _feeAccount, address _interestEarnedAccount,
-        uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax)
-    public AugmintToken("Augmint TEST Crypto EUR", "ACET", "EUR", 4, _feeAccount,
-        _interestEarnedAccount, _transferFeePt, _transferFeeMin, _transferFeeMax)
+    function TokenAceMock(address _feeAccount, address _interestEarnedAccount, uint _transferFeePt,
+                uint _transferFeeMin, uint _transferFeeMax, uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit)
+    public AugmintToken("Augmint TEST Crypto EUR", "ACET", "EUR", 4, _feeAccount, _interestEarnedAccount,
+        _transferFeePt, _transferFeeMin, _transferFeeMax, _loanToDepositLockLimit, _loanToDepositLoanLimit)
     {} // solhint-disable-line no-empty-blocks
 
     function withdrawTokens(address _to, uint _amount) external restrict("MonetaryBoard") {
