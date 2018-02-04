@@ -96,6 +96,29 @@ contract("TokenAce tests", accounts => {
         await testHelper.expectThrow(tokenAce.burn(1000, { from: accounts[1] }));
     });
 
-    it("should be possible to set transfer fees ");
-    it("only allowed should set transfer fees ");
+    it("should be possible to set transfer fees ", async function() {
+        const fee = { pt: 100000, max: 80, min: 90 };
+        const tx = await tokenAce.setTransferFees(fee.pt, fee.min, fee.max, { from: accounts[0] });
+        testHelper.logGasUse(this, tx, "setTransferFees");
+
+        const [feePt, feeMin, feeMax] = await Promise.all([
+            tokenAce.transferFeePt(),
+            tokenAce.transferFeeMin(),
+            tokenAce.transferFeeMax()
+        ]);
+
+        testHelper.assertEvent(tokenAce, "TransferFeesChanged", {
+            transferFeePt: fee.pt,
+            transferFeeMin: fee.min,
+            transferFeeMax: fee.max
+        });
+
+        assert.equal(feePt, fee.pt);
+        assert.equal(feeMin, fee.min);
+        assert.equal(feeMax, fee.max);
+    });
+
+    it("only allowed should set transfer fees ", async function() {
+        await testHelper.expectThrow(tokenAce.setTransferFees(10000, 10000, 10000, { from: accounts[1] }));
+    });
 });

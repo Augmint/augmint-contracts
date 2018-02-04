@@ -23,13 +23,13 @@ contract AugmintToken is AugmintTokenInterface {
 
     address public feeAccount;
     address public interestEarnedAccount;
-    uint public transferFeePt; // in parts per million , ie. 2,000 = 0.2%
+    uint public transferFeePt; // in parts per million (ppm) , ie. 2,000 = 0.2%
     uint public transferFeeMin; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
     uint public transferFeeMax; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
 
     uint public issuedByMonetaryBoard; // supply issued manually by monetary board
 
-    event TransferFeesChanged(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax);
+    event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
     function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
         address _interestEarnedAccount, uint _transferFeePt, uint _transferFeeMin,

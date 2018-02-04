@@ -26,7 +26,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
 
     function () public payable; // to accept ETH sent into reserve (from defaulted loan's collateral )
 
-    event TransferFeesChanged(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax);
+    event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
     event Transfer(address indexed from, address indexed to, uint amount);
     event AugmintTransfer(address indexed from, address indexed to, uint amount, string narrative, uint fee);
     event TokenIssued(uint amount);
