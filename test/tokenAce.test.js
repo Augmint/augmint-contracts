@@ -19,11 +19,12 @@ contract("TokenAce tests", accounts => {
 
         const tx = await tokenAce.issue(amount);
         testHelper.logGasUse(this, tx, "issue");
-        assert(tx.logs[0].event, "Transfer");
-        assert.equal(tx.logs[0].event, "Transfer", "Transfer event should be emited when tokens issued");
-        assert.equal(tx.logs[0].args.from, NULL_ACC, "from should be 0x0 in transfer event event");
-        assert.equal(tx.logs[0].args.to, tokenAce.address, "to should be tokenAcd address in transfer event event");
-        assert.equal(tx.logs[0].args.amount.toString(), amount, "amount should be set in Transfer event");
+
+        await testHelper.assertEvent(tokenAce, "Transfer", {
+            from: NULL_ACC,
+            to: tokenAce.address,
+            amount: amount
+        });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             tokenAce.totalSupply(),
@@ -63,11 +64,12 @@ contract("TokenAce tests", accounts => {
 
         const tx = await tokenAce.burn(amount);
         testHelper.logGasUse(this, tx, "burn");
-        assert(tx.logs[0].event, "Transfer");
-        assert.equal(tx.logs[0].event, "Transfer", "Transfer event should be emited when tokens issued");
-        assert.equal(tx.logs[0].args.from, tokenAce.address, "from should be tokenAcd address in transfer event event");
-        assert.equal(tx.logs[0].args.to, NULL_ACC, "to should be 0x0 in transfer event event");
-        assert.equal(tx.logs[0].args.amount.toString(), amount, "amount should be set in Transfer event");
+
+        await testHelper.assertEvent(tokenAce, "Transfer", {
+            from: tokenAce.address,
+            to: NULL_ACC,
+            amount: amount
+        });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             tokenAce.totalSupply(),
@@ -107,7 +109,7 @@ contract("TokenAce tests", accounts => {
             tokenAce.transferFeeMax()
         ]);
 
-        testHelper.assertEvent(tokenAce, "TransferFeesChanged", {
+        await testHelper.assertEvent(tokenAce, "TransferFeesChanged", {
             transferFeePt: fee.pt,
             transferFeeMin: fee.min,
             transferFeeMax: fee.max
