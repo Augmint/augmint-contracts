@@ -172,10 +172,9 @@ contract("Lock", accounts => {
     });
 
     it("should allow tokens to be locked", async () => {
-        const startingBalances = await getBalances(tokenAceInstance, [
-            tokenHolder,
-            lockerInstance.address,
-            interestEarnedAddress
+        const [startingBalances, totalLockAmountBefore] = await Promise.all([
+            getBalances(tokenAceInstance, [tokenHolder, lockerInstance.address, interestEarnedAddress]),
+            tokenAceInstance.totalLockedAmount()
         ]);
         const amountToLock = 1000;
 
@@ -195,22 +194,42 @@ contract("Lock", accounts => {
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
 
-        await testHelpers.assertEvent(lockerInstance, "NewLock", {
-            lockOwner: tokenHolder,
-            lockIndex: 0,
-            amountLocked: amountToLock,
-            interestEarned: interestEarned,
-            lockedUntil: expectedLockedUntil,
-            perTermInterest: perTermInterest,
-            durationInSecs: durationInSecs,
-            isActive: true
-        });
+        const [finishingBalances, totalLockAmountAfter] = await Promise.all([
+            getBalances(tokenAceInstance, [tokenHolder, lockerInstance.address, interestEarnedAddress]),
+            tokenAceInstance.totalLockedAmount(),
 
-        const finishingBalances = await getBalances(tokenAceInstance, [
-            tokenHolder,
-            lockerInstance.address,
-            interestEarnedAddress
+            testHelpers.assertEvent(lockerInstance, "NewLock", {
+                lockOwner: tokenHolder,
+                lockIndex: 0,
+                amountLocked: amountToLock,
+                interestEarned: interestEarned,
+                lockedUntil: expectedLockedUntil,
+                perTermInterest: perTermInterest,
+                durationInSecs: durationInSecs,
+                isActive: true
+            })
+
+            // TODO: events are emitted but can't retrieve them
+            // testHelpers.assertEvent(tokenAceInstance, "Transfer", {
+            //     from: tokenHolder,
+            //     to: lockerInstance.address,
+            //     amount: amountToLock
+            // }),
+            //
+            // testHelpers.assertEvent(tokenAceInstance, "AugmintTransfer", {
+            //     from: tokenHolder,
+            //     to: lockerInstance.address,
+            //     amount: amountToLock,
+            //     fee: 0,
+            //     narrative: "Funds locked"
+            // })
         ]);
+
+        assert(
+            totalLockAmountAfter.toString(),
+            totalLockAmountBefore.add(amountToLock + interestEarned).toString(),
+            "totalLockedAmount should be increased by locked amount + interest"
+        );
 
         assert(finishingBalances[tokenHolder] === startingBalances[tokenHolder] - amountToLock);
         assert(
@@ -237,6 +256,7 @@ contract("Lock", accounts => {
             lockerInstance.address,
             interestEarnedAddress
         ]);
+
         const amountToLock = 1000;
 
         // create lock product with 10% per term, and 2 sec lock time:
@@ -249,20 +269,44 @@ contract("Lock", accounts => {
 
         await testHelpers.waitFor(2500);
 
-        const newestLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber() - 1;
+        let [newestLockIndex, totalLockAmountBefore] = await Promise.all([
+            lockerInstance.getLockCountForAddress(tokenHolder),
+            tokenAceInstance.totalLockedAmount()
+        ]);
+
+        newestLockIndex = newestLockIndex.toNumber() - 1;
 
         await lockerInstance.releaseFunds(tokenHolder, newestLockIndex);
 
-        await testHelpers.assertEvent(lockerInstance, "LockReleased", {
-            lockOwner: tokenHolder,
-            lockIndex: newestLockIndex
-        });
+        const [finishingBalances, totalLockAmountAfter, , ,] = await Promise.all([
+            getBalances(tokenAceInstance, [tokenHolder, lockerInstance.address, interestEarnedAddress]),
+            tokenAceInstance.totalLockedAmount(),
 
-        const finishingBalances = await getBalances(tokenAceInstance, [
-            tokenHolder,
-            lockerInstance.address,
-            interestEarnedAddress
+            testHelpers.assertEvent(lockerInstance, "LockReleased", {
+                lockOwner: tokenHolder,
+                lockIndex: newestLockIndex
+            }),
+
+            testHelpers.assertEvent(tokenAceInstance, "AugmintTransfer", {
+                from: lockerInstance.address,
+                to: tokenHolder,
+                amount: amountToLock + interestEarned,
+                fee: 0,
+                narrative: "Funds released from lock"
+            }),
+
+            testHelpers.assertEvent(tokenAceInstance, "Transfer", {
+                from: lockerInstance.address,
+                to: tokenHolder,
+                amount: amountToLock + interestEarned
+            })
         ]);
+
+        assert.equal(
+            totalLockAmountAfter.toString(),
+            totalLockAmountBefore.sub(amountToLock + interestEarned).toString(),
+            "totalLockedAmount should be decreased by released amount"
+        );
 
         assert(finishingBalances[tokenHolder] === startingBalances[tokenHolder] + interestEarned);
         assert(finishingBalances[lockerInstance.address] === startingBalances[lockerInstance.address]);

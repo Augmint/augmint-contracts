@@ -154,7 +154,7 @@ contract Locker is Restricted {
         lock.isActive = false;
         uint amountReleased = lock.amountLocked.add(lock.interestEarned);
         augmintToken.fundsReleased(amountReleased); // to maintain totalLockAmount
-        augmintToken.transferNoFee(lockOwner, amountReleased, "Releasing funds from lock");
+        augmintToken.transferNoFee(lockOwner, amountReleased, "Funds released from lock");
 
         LockReleased(lockOwner, lockIndex);
     }
