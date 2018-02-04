@@ -38,9 +38,12 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function transferNoFee(address _to, uint256 _amount, string _narrative)
     external restrict("NoFeeTransferContracts");
 
-    function repayLoan(address loanManager, uint loanId) external;
+    function fundsReleased(uint releasedAmount) external; // only for whitelisted LockerContracts
 
-    function issueAndDisburse(address borrower, uint loanAmount, string narrative)
+    function repayLoan(address loanManager, uint loanId) external;
+    function loanCollected(uint repaymentAmount) external; // only for whitelisted LoanManagerContracts
+
+    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
     external restrict("LoanManagerContracts");
 
     function placeSellTokenOrderOnExchange(address exchange, uint price, uint tokenAmount)

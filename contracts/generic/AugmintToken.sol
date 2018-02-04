@@ -80,15 +80,24 @@ contract AugmintToken is AugmintTokenInterface {
         // NB: locker.createLock will validate lockProductId and amountToLock:
         Locker locker = Locker(lockerAddress);
         uint interestEarnedAmount = locker.createLock(lockProductId, msg.sender, amountToLock);
+        totalLockedAmount = totalLockedAmount.add(amountToLock).add(interestEarnedAmount);
 
         _transfer(msg.sender, address(locker), amountToLock, "Locking funds", 0);
         _transfer(interestEarnedAccount, address(locker), interestEarnedAmount, "Accrue lock interest", 0);
 
     }
 
-    function issueAndDisburse(address borrower, uint loanAmount, string narrative)
+    /* called by Locker.releaseFunds to maintain totalLockAmount */
+    function fundsReleased(uint releasedAmount) external {
+        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
+        totalLockedAmount = totalLockedAmount.sub(releasedAmount);
+    }
+
+    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
     external restrict("LoanManagerContracts") {
         require(loanAmount > 0);
+        require(repaymentAmount > 0);
+        totalLoanAmount = totalLoanAmount.add(repaymentAmount);
         _issue(this, loanAmount);
         _transfer(this, borrower, loanAmount, narrative, 0);
     }
@@ -100,6 +109,8 @@ contract AugmintToken is AugmintTokenInterface {
         // solhint-disable-next-line space-after-comma
         var (borrower, , , repaymentAmount , loanAmount, interestAmount, ) = loanManager.loans(loanId);
         require(borrower == msg.sender);
+
+        totalLoanAmount = totalLoanAmount.sub(repaymentAmount);
         _transfer(msg.sender, this, repaymentAmount, "Loan repayment", 0);
         _burn(this, loanAmount);
         if (interestAmount > 0) {
@@ -108,6 +119,12 @@ contract AugmintToken is AugmintTokenInterface {
             balances[interestEarnedAccount] = balances[interestEarnedAccount].add(interestAmount);
         }
         loanManager.releaseCollateral(loanId);
+    }
+
+    /* called by LoanManager.collect to maintain totalLoanAmount */
+    function loanCollected(uint repaymentAmount) external {
+        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted loanManagers
+        totalLoanAmount = totalLoanAmount.sub(repaymentAmount);
     }
 
     /* convenience function - alternative to Exchange.placeSellTokenOrder without approval required */
