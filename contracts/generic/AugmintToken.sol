@@ -31,8 +31,8 @@ contract AugmintToken is AugmintTokenInterface {
 
     uint public totalLoanAmount; // total amount of all loans with interest, in token
     uint public totalLockedAmount; // total amount of all locks with interest, in token
-    uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go above it
-    uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go below it
+    uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go below with new lock
+    uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go above with new loan
 
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);

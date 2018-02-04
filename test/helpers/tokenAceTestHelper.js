@@ -26,8 +26,8 @@ async function newTokenAceMock(tokenOwner = web3.eth.accounts[0]) {
         2000, // transferFeePt in parts per million = 0.2%
         200, // min: 0.02 ACE
         50000, // max fee: 5 ACE
-        8000, // loanToDepositLockLimit: 0.8%
-        12000 // loanToDepositLoanLimit: 1.2 %
+        800000, // loanToDepositLockLimit: 80%
+        1200000 // loanToDepositLoanLimit: 120 %
     );
     feeAccount = FeeAccount.address;
 
