@@ -1,16 +1,21 @@
 {
-  "extends": "react-app",
-  "rules": {
-     max-len: "off"
-  },
-  "globals": {
+    "extends": ['eslint:recommended'],
+    "parserOptions": {
+        "ecmaVersion": 2017,
+    },
+    "env": {
+        "mocha": true,
+        "node": true,
+        "es6": true
+        },
+    "rules": {
+        "max-len": "off",
+        "no-console": "off",
+        "no-unused-vars": "warn",
+    },
+    "globals": {
         "web3": false,
         "assert": false,
-        "artifacts": false,
-        "before": false,
-        "after": false,
-        "afterEach": false,
-        "beforeEach": false,
-        "contract": false
+        "artifacts": false
     }
 }
