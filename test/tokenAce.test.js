@@ -124,26 +124,38 @@ contract("TokenAce tests", accounts => {
         await testHelper.expectThrow(tokenAce.setTransferFees(10000, 10000, 10000, { from: accounts[1] }));
     });
 
-    it("should be possible to set loanToDeposit limits ", async function() {
-        const limits = { lock: 12345, loan: 1234 };
-        const tx = await tokenAce.setLoanToDepositLimits(limits.lock, limits.loan, { from: accounts[0] });
+    it("should be possible to set loan and lock parameters", async function() {
+        const params = { lockLimit: 12345, loanLimit: 1234, lockAllowance: 10000, loanAllowance: 20000 };
+        const tx = await tokenAce.setLoanAndLockParams(
+            params.lockLimit,
+            params.loanLimit,
+            params.lockAllowance,
+            params.loanAllowance,
+            { from: accounts[0] }
+        );
         testHelper.logGasUse(this, tx, "setLoanToDepositLimits");
 
-        const [lockLimit, loanLimit] = await Promise.all([
+        const [lockLimit, loanLimit, lockAllowance, loanAllowance] = await Promise.all([
             tokenAce.loanToDepositLockLimit(),
-            tokenAce.loanToDepositLoanLimit()
+            tokenAce.loanToDepositLoanLimit(),
+            tokenAce.lockNoLimitAllowance(),
+            tokenAce.loanNoLimitAllowance()
         ]);
 
-        await testHelper.assertEvent(tokenAce, "LoanToDepositLimitsChanged", {
-            loanToDepositLockLimit: limits.lock,
-            loanToDepositLoanLimit: limits.loan
+        await testHelper.assertEvent(tokenAce, "LoanAndLockParamsChanged", {
+            loanToDepositLockLimit: params.lockLimit,
+            loanToDepositLoanLimit: params.loanLimit,
+            lockNoLimitAllowance: params.lockAllowance,
+            loanNoLimitAllowance: params.loanAllowance
         });
 
-        assert.equal(lockLimit, limits.lock);
-        assert.equal(loanLimit, limits.loan);
+        assert.equal(lockLimit, params.lockLimit);
+        assert.equal(loanLimit, params.loanLimit);
+        assert.equal(lockAllowance, params.lockAllowance);
+        assert.equal(loanAllowance, params.loanAllowance);
     });
 
     it("only allowed should set loanToDeposit limits ", async function() {
-        await testHelper.expectThrow(tokenAce.setLoanToDepositLimits(10000, 10000, { from: accounts[1] }));
+        await testHelper.expectThrow(tokenAce.setLoanAndLockParams(10000, 10000, 10000, 10000, { from: accounts[1] }));
     });
 });

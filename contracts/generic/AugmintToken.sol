@@ -31,17 +31,31 @@ contract AugmintToken is AugmintTokenInterface {
 
     uint public totalLoanAmount; // total amount of all loans with interest, in token
     uint public totalLockedAmount; // total amount of all locks with interest, in token
-    uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go below with new lock
-    uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go above with new loan
+    uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go BELOW with new lock
+    uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go ABOVE with new loan
+
+    // Parameters Used to avoid system halt when there totalLoanAmount or totalLockedAmount is 0 or very low.
+    uint public lockNoLimitAllowance;   // in token - if totalLockAmount is below this then a new lock is allowed
+                                        // up to this amount even if it will bring the loanToDepositRatio BELOW
+                                        // loanToDepositLoanLimit
+                                        // (interest earned account balance still applies a limit on top of it)
+    uint public loanNoLimitAllowance;   // in token - if totalLoanAmount is below this then a new loan is allowed
+                                        // up this amount even if it will bring the loanToDepositRatio
+                                        // ABOVE loanToDepositLoanLimit
 
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
     event LoanToDepositLimitsChanged(uint loanToDepositLockLimit, uint loanToDepositLoanLimit);
 
+    event LoanAndLockParamsChanged(uint loanToDepositLockLimit, uint loanToDepositLoanLimit,
+                                    uint lockNoLimitAllowance, uint loanNoLimitAllowance);
+
     function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
-        address _interestEarnedAccount, uint _transferFeePt, uint _transferFeeMin,
-        uint _transferFeeMax, uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit) public {
+        address _interestEarnedAccount, uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax,
+        uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit,
+        uint _lockNoLimitAllowance, uint _loanNoLimitAllowance) public {
+
         require(_feeAccount != address(0));
         require(_interestEarnedAccount != address(0));
         require(bytes(_name).length > 0);
@@ -56,6 +70,8 @@ contract AugmintToken is AugmintTokenInterface {
         transferFeeMax = _transferFeeMax;
         loanToDepositLockLimit = _loanToDepositLockLimit;
         loanToDepositLoanLimit = _loanToDepositLoanLimit;
+        lockNoLimitAllowance = _lockNoLimitAllowance;
+        loanNoLimitAllowance = _loanNoLimitAllowance;
     }
 
     function () public payable { // solhint-disable-line no-empty-blocks
@@ -153,11 +169,15 @@ contract AugmintToken is AugmintTokenInterface {
         TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
     }
 
-    function setLoanToDepositLimits(uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit)
+    function setLoanAndLockParams(uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit,
+                                    uint _lockNoLimitAllowance, uint _loanNoLimitAllowance)
     external restrict("MonetaryBoard") {
         loanToDepositLockLimit = _loanToDepositLockLimit;
         loanToDepositLoanLimit = _loanToDepositLoanLimit;
-        LoanToDepositLimitsChanged(loanToDepositLockLimit, loanToDepositLoanLimit);
+        lockNoLimitAllowance = _lockNoLimitAllowance;
+        loanNoLimitAllowance = _loanNoLimitAllowance;
+        LoanAndLockParamsChanged(loanToDepositLockLimit, loanToDepositLoanLimit,
+                                    lockNoLimitAllowance, loanNoLimitAllowance);
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
