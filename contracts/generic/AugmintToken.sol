@@ -180,6 +180,12 @@ contract AugmintToken is AugmintTokenInterface {
                                     lockNoLimitAllowance, loanNoLimitAllowance);
     }
 
+    /* helper function for FrontEnd to reduce calls */
+    function getParams() external view returns(uint[7]) {
+        return [transferFeePt, transferFeeMin, transferFeeMax,
+                loanToDepositLockLimit, loanToDepositLoanLimit, lockNoLimitAllowance, loanNoLimitAllowance];
+    }
+
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }

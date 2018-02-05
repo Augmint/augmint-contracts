@@ -125,7 +125,7 @@ contract("TokenAce tests", accounts => {
     });
 
     it("should be possible to set loan and lock parameters", async function() {
-        const params = { lockLimit: 12345, loanLimit: 1234, lockAllowance: 10000, loanAllowance: 20000 };
+        const params = { lockLimit: 12345, loanLimit: 1234, lockAllowance: 60000, loanAllowance: 70000 };
         const tx = await tokenAce.setLoanAndLockParams(
             params.lockLimit,
             params.loanLimit,
@@ -133,7 +133,7 @@ contract("TokenAce tests", accounts => {
             params.loanAllowance,
             { from: accounts[0] }
         );
-        testHelper.logGasUse(this, tx, "setLoanToDepositLimits");
+        testHelper.logGasUse(this, tx, "setLoanAndLockParams");
 
         const [lockLimit, loanLimit, lockAllowance, loanAllowance] = await Promise.all([
             tokenAce.loanToDepositLockLimit(),
@@ -157,5 +157,22 @@ contract("TokenAce tests", accounts => {
 
     it("only allowed should set loanToDeposit limits ", async function() {
         await testHelper.expectThrow(tokenAce.setLoanAndLockParams(10000, 10000, 10000, 10000, { from: accounts[1] }));
+    });
+
+    it("all params should be accesible via getParams", async function() {
+        const paramsOneByOne = await Promise.all([
+            tokenAce.transferFeePt(),
+            tokenAce.transferFeeMin(),
+            tokenAce.transferFeeMax(),
+
+            tokenAce.loanToDepositLockLimit(),
+            tokenAce.loanToDepositLoanLimit(),
+            tokenAce.lockNoLimitAllowance(),
+            tokenAce.loanNoLimitAllowance()
+        ]);
+
+        const paramsViaHelper = await tokenAce.getParams();
+
+        assert.deepEqual(paramsOneByOne, paramsViaHelper);
     });
 });
