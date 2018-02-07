@@ -67,6 +67,11 @@ npm run ganache:runmigrate
 truffle test
 ```
 
+## Sequence diagrams
+
+Sequence diagrams in docs folder are created with [plant UML](http://plantuml.com/sequence-diagram).
+To edit them there are two Atom editor plugins: [plantuml-preview](https://atom.io/packages/plantuml-preview) and [language-plantuml](https://atom.io/packages/language-plantuml)
+
 ## Non ganache launches/deploys
 
 ### Private chain
