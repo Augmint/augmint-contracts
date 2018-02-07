@@ -56,7 +56,7 @@ deactivate AugmintToken
 
 activate Lender
     Lender -> Lender : checks + set loan status
-    Lender -> AugmintToken : transferWithNarrative\n(interestEarnedAcc, interestAmount, "interest earned")
+    Lender -> AugmintToken : transfer(interestEarnedAcc, interestAmount)
     Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
     note over MonetarySupervisor
         repayAndBurn is restricted to
@@ -67,6 +67,10 @@ deactivate Lender
 activate MonetarySupervisor
     MonetarySupervisor -> MonetarySupervisor : update KPIs
     MonetarySupervisor -> AugmintToken : burnFrom(Lender, loanAmount)
+    note over AugmintToken
+        burnFrom is restricted to
+        MonetarySupervisor contract
+    end note
 deactivate MonetarySupervisor
 
 activate AugmintToken
