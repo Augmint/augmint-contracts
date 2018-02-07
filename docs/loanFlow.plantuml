@@ -32,6 +32,7 @@ activate AugmintToken
         MonetarySupervisor contract
     end note
     AugmintToken -> AugmintToken : _issue(to: Lender, loanAmount)\n//internal function//
+    AugmintToken --> Lender : loanAmount issued to Lender
     AugmintToken -> MonetarySupervisor : success (isssueTo)
 deactivate AugmintToken
 
@@ -45,20 +46,16 @@ deactivate Lender
 
 
 == Repay loan  ==
-Borrower -> AugmintToken : transferAndCallWithNarrative\n(address: Lender, value: repaymentAmount, narrative, data: loanId)
+Borrower -> AugmintToken : transferAndCall\n(address: Lender, value: repaymentAmount, data: loanId)
 
 activate AugmintToken
-    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, narrative, fee: 0)
+    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "", fee: 0)
     Borrower --> Lender : repaymentAmount transferred
     AugmintToken -> Lender : tokenFallback\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
 deactivate AugmintToken
 
 activate Lender
-    note over Lender
-        tokenFallback reverts (sends back tokens) if
-        sender is not trusted AugmintToken
-    end note
-    Lender -> Lender : loan checks + set loan status
+    Lender -> Lender : checks + set loan status
     Lender -> AugmintToken : transferWithNarrative\n(interestEarnedAcc, interestAmount, "interest earned")
     Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
     note over MonetarySupervisor
