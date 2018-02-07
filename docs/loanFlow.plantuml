@@ -23,7 +23,7 @@ activate MonetarySupervisor
         trusted Lender contract(s)
     end note
     MonetarySupervisor -> MonetarySupervisor : enforce limits + update KPIs
-    MonetarySupervisor -> AugmintToken : issueTo(borrower, loanAmount, narrative)
+    MonetarySupervisor -> AugmintToken : issueTo(Lender, loanAmount)
 deactivate MonetarySupervisor
 
 activate AugmintToken
@@ -31,20 +31,27 @@ activate AugmintToken
         issueTo is restricted to
         MonetarySupervisor contract
     end note
-    AugmintToken -> AugmintToken : _issue(to: msg.sender, loanAmount)\n//internal function//
-    AugmintToken -> AugmintToken : _transfer(from: msg.sender, to: Borrower, loanAmount, narrative, fee: 0)\n//internal function//
-    AugmintToken --> Borrower : loanAmount transferred
+    AugmintToken -> AugmintToken : _issue(to: Lender, loanAmount)\n//internal function//
     AugmintToken -> MonetarySupervisor : success (isssueTo)
 deactivate AugmintToken
 
 MonetarySupervisor -> Lender : success (issueAndDisburse)
 
-Lender -> Lender : emmit events
+activate Lender
+    Lender -> AugmintToken : transferWithNarrative(Borrower, loanAmount, narrative)
+    Lender --> Borrower : loanAmount transferred
+    Lender -> Lender : emmit events
+deactivate Lender
 
 
 == Repay loan  ==
-Borrower -> AugmintToken : transferAndCall\n(address: Lender, value: repaymentAmount, data: loanId)
-AugmintToken -> Lender : tokenFallback\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
+Borrower -> AugmintToken : transferAndCallWithNarrative\n(address: Lender, value: repaymentAmount, narrative, data: loanId)
+
+activate AugmintToken
+    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, narrative, fee: 0)
+    Borrower --> Lender : repaymentAmount transferred
+    AugmintToken -> Lender : tokenFallback\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
+deactivate AugmintToken
 
 activate Lender
     note over Lender
@@ -52,7 +59,8 @@ activate Lender
         sender is not trusted AugmintToken
     end note
     Lender -> Lender : loan checks + set loan status
-    Lender -> MonetarySupervisor : repayAndBurn\n(borrower, repaymentAmount, interestAmount, narrative)
+    Lender -> AugmintToken : transferWithNarrative\n(interestEarnedAcc, interestAmount, "interest earned")
+    Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
     note over MonetarySupervisor
         repayAndBurn is restricted to
         trusted Lender contract(s)
@@ -61,23 +69,10 @@ deactivate Lender
 
 activate MonetarySupervisor
     MonetarySupervisor -> MonetarySupervisor : update KPIs
-    MonetarySupervisor -> AugmintToken : burnFrom(borrower, loanAmount, interestAmount narrative)
+    MonetarySupervisor -> AugmintToken : burnFrom(Lender, loanAmount)
 deactivate MonetarySupervisor
 
 activate AugmintToken
-    note over AugmintToken #yellow
-        burnFrom is restricted to
-        MonetarySupervisor contract
-        Q: interestAmount is required (see below).
-        Could we avoid it to make burnFrom more generic?
-    end note
-    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, narrative)
-    Borrower --> Lender : repaymentAmount transferred
-    AugmintToken -> AugmintToken : _transfer\n(AugmintToken, interestEarnedAcc, interestAmount, "interest earned", fee: 0)
-    note over AugmintToken #yellow
-        it is in internal transfer, we don't really need transfer events & narratives
-        Shall we just do balances[] update instead?
-    end note
     AugmintToken -> AugmintToken : _burnFrom(Lender, loanAmount)
     AugmintToken -> MonetarySupervisor : success (burnFrom)
 deactivate AugmintToken
