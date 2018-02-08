@@ -47,10 +47,8 @@ Borrower -> AugmintToken : transferAndCall\n(address: Lender, value: repaymentAm
 
 activate AugmintToken
     AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "", fee: 0)
-    note over AugmintToken #yellow
-        can we/ shall we have 0 transfer fee?
-        eg. transferAndCall would not apply fees if target contract is whitelisted?
-        or a separete transferAndCallNoFee (which works with whitelisted target contracts only?)
+    note over AugmintToken
+        0 transfer fee only if target contract is whitelisted
     end note
     Borrower --> Lender : repaymentAmount transferred
     AugmintToken -> Lender : tokenFallback\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
@@ -59,10 +57,8 @@ deactivate AugmintToken
 activate Lender
     Lender -> Lender : checks + set loan status
     Lender -> AugmintToken : transfer(interestEarnedAcc, interestAmount)
-    note over AugmintToken #yellow
-        can we / shall we have 0 transfer fee?
-        separete whitelisted transferNoFee?
-        or transfer but it checks if sender is whitelisted?
+    note over AugmintToken
+        0 transfer fee (only for whitelisted sender contracts)
     end note
     Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
     note over MonetarySupervisor
