@@ -11,71 +11,91 @@ actor MatchCaller
 == Token sell Token order ALT 1. (ERC667 transferAndCall, requires one TX only from seller) ==
 Seller -> AugmintToken : transferAndCall\n(address: exchangeAddress, tokenAmount, data: price)
 AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "", fee: 0)
+note over AugmintToken
+    0 transfer fee only if target contract is whitelisted
+end note
 Seller --> ExchangeContract : tokens to sell transfered
 AugmintToken -> ExchangeContract : tokenFallback\n(sender: augmintToken, origin: Seller, amount, data: price)
 ExchangeContract -> ExchangeContract : check & save order
-
-== Token sell order ALT 2. - works with ERC20 standard calls (requires 2 TXs from seller) ==
-note over AugmintToken, ExchangeContract #yellow
-    Do we need this for first release?
-    It is implemented including unit tests but we might want to reduce bloat.
-end note
-Seller -> AugmintToken : Tx1: approve(ExchangeContract, amount)
-Seller -> ExchangeContract : Tx2: placeSellOrder(amount, price)
-ExchangeContract -> AugmintToken : transferFrom\n(from: msg.sender, to: ExchangeContract, amount)
-Seller --> ExchangeContract : tokens to sell transfered
-ExchangeContract -> ExchangeContract : save order
 
 == Token Buy Order  ==
 Buyer -> ExchangeContract : placeBuyOrder\n(price, {ethAMount})
 ExchangeContract -> ExchangeContract : check & save order
 
 == Take Sell Order (taking order in one go) ==
-Buyer -> ExchangeContract : takeSellOrder(orderId, orderIdx, {ethAMount});
-ExchangeContract -> ExchangeContract : fill/partially fill order
-ExchangeContract -> Seller : seller.send( ethValue - tradeFee )
-ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amountSold)
-ExchangeContract --> Buyer : amountSold transferred
-
-== Take Buy Order Alt 1. - ERC667 transferAndCall requires one TX only ==
-Seller -> AugmintToken : transferAndCall\n(address: exchangeAddress, tokenAmount, data: {orderId, orderIdx})
-AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "", fee: 0)
-Seller --> ExchangeContract : tokens to sell transfered
-AugmintToken -> ExchangeContract : tokenFallback\n(sender: augmintToken, origin: Seller, amount, data: {orderId, orderIdx})
+Buyer -> ExchangeContract : takeSellOrder(orderId, {ethAMount});
 ExchangeContract -> ExchangeContract : fill/partially fill order
 ExchangeContract -> Seller : Seller.send( ethValue - tradeFee )
 ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amountSold)
+note over AugmintToken
+    0 transfer fee (only for whitelisted sender contracts)
+end note
 ExchangeContract --> Buyer : amountSold transferred
 
-== Take Buy Order Alt 2. - standard ERC20 calls, requires two TXs (todo) ==
-note over AugmintToken, ExchangeContract #yellow
-    Do we need this for first release?
+== Take Buy Order Alt 1. - ERC667 transferAndCall requires one TX only ==
+Seller -> AugmintToken : transferAndCall\n(address: exchangeAddress, tokenAmount, data: orderId)
+AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "", fee: 0)
+note over AugmintToken
+    0 transfer fee only if target contract is whitelisted
 end note
+Seller --> ExchangeContract : tokens to sell transfered
+AugmintToken -> ExchangeContract : tokenFallback\n(sender: augmintToken, origin: Seller, amount, data: orderId)
+ExchangeContract -> ExchangeContract : fill/partially fill order
+ExchangeContract -> Seller : Seller.send( ethValue - tradeFee )
+ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amountSold)
+note over AugmintToken
+    0 transfer fee (only for whitelisted sender contracts)
+end note
+ExchangeContract --> Buyer : amountSold transferred
 
 == Order matching  ==
-Buyer -> ExchangeContract : matchMultiple(matchPairs[])\n//sell and buy order pairs passed with orderIdx and orderId
+Buyer -> ExchangeContract : matchMultiple(matchPairs[])\n//sell and buy orderId pairs passed
 note left
     matchMultiple() is not restricted
     Caller can be any 3rd party and will be rewarded with ETH
 end note
 loop on each match, as many times as it fits to gas provided to tx call
     ExchangeContract -> ExchangeContract : fill/partially fill order
-    ExchangeContract -> Seller : seller.send( ethValue - tradeFee - matchReward )
+    ExchangeContract -> Seller : Seller.send( ethValue - tradeFee - matchReward )
     ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amountSold)
+    note over AugmintToken
+        0 transfer fee (only for whitelisted sender contracts)
+    end note
     ExchangeContract --> Buyer : amountSold transferred
 end
 ExchangeContract -> ExchangeContract : feesAccount.send(sum tradeFee - sum matchReward)\n//fees in ETH//
 ExchangeContract -> MatchCaller : send(MatchCaller, sum matchReward)
 
 == cancel buy order  ==
-Buyer -> ExchangeContract : cancelBuyOrder\n(orderIdx, orderId)
+Buyer -> ExchangeContract : cancelBuyOrder\n(orderId)
 ExchangeContract -> ExchangeContract : remove order
-ExchangeContract -> Buyer : seller.send( unfilledEthValue)
+ExchangeContract -> Buyer : Seller.send( unfilledEthValue)
 
 == cancel sell order  ==
-Seller -> ExchangeContract : cancelSellOrder\n(orderIdx, orderId)
+Seller -> ExchangeContract : cancelSellOrder\n(orderId)
 ExchangeContract -> ExchangeContract : remove order
 ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amount)
+note over AugmintToken
+    0 transfer fee (only for whitelisted sender contracts)
+end note
 ExchangeContract --> Seller : unfilled amount transferred back
+
+== Token sell order ALT 2. - works with ERC20 standard calls (requires 2 TXs from seller) ==
+note over AugmintToken, ExchangeContract
+    Will not be implemented for pilot
+end note
+Seller -> AugmintToken : Tx1: approve(ExchangeContract, amount)
+Seller -> ExchangeContract : Tx2: placeSellOrder(amount, price)
+ExchangeContract -> AugmintToken : transferFrom\n(from: msg.sender, to: ExchangeContract, amount)
+note over AugmintToken
+    0 transfer fee (only for whitelisted sender contracts)
+end note
+Seller --> ExchangeContract : tokens to sell transfered
+ExchangeContract -> ExchangeContract : save order
+
+== Take Buy Order Alt 2. - standard ERC20 calls, requires two TXs (todo) ==
+note over AugmintToken, ExchangeContract
+    Will not be implemented for pilot
+end note
 
 @enduml
