@@ -23,7 +23,7 @@ activate MonetarySupervisor
         trusted Lender contract(s)
     end note
     MonetarySupervisor -> MonetarySupervisor : enforce limits + update KPIs
-    MonetarySupervisor -> AugmintToken : issueTo(Lender, loanAmount)
+    MonetarySupervisor -> AugmintToken : issueTo(Borrower, loanAmount)
 deactivate MonetarySupervisor
 
 activate AugmintToken
@@ -31,18 +31,15 @@ activate AugmintToken
         issueTo is restricted to
         MonetarySupervisor contract
     end note
-    AugmintToken -> AugmintToken : _issue(to: Lender, loanAmount)\n//internal function//
-    AugmintToken --> Lender : loanAmount issued to Lender
+    AugmintToken -> AugmintToken : _issue(to: Borrower, loanAmount)\n//internal function//
+    AugmintToken --> Borrower : loanAmount issued to Borrower
     AugmintToken -> MonetarySupervisor : success (isssueTo)
 deactivate AugmintToken
 
 MonetarySupervisor -> Lender : success (issueAndDisburse)
 
-activate Lender
-    Lender -> AugmintToken : transferWithNarrative(Borrower, loanAmount, narrative)
-    Lender --> Borrower : loanAmount transferred
-    Lender -> Lender : emmit events
-deactivate Lender
+Lender -> Lender : emmit events
+
 
 
 == Repay loan  ==
@@ -50,6 +47,11 @@ Borrower -> AugmintToken : transferAndCall\n(address: Lender, value: repaymentAm
 
 activate AugmintToken
     AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "", fee: 0)
+    note over AugmintToken #yellow
+        can we/ shall we have 0 transfer fee?
+        eg. transferAndCall would not apply fees if target contract is whitelisted?
+        or a separete transferAndCallNoFee (which works with whitelisted target contracts only?)
+    end note
     Borrower --> Lender : repaymentAmount transferred
     AugmintToken -> Lender : tokenFallback\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
 deactivate AugmintToken
@@ -57,6 +59,11 @@ deactivate AugmintToken
 activate Lender
     Lender -> Lender : checks + set loan status
     Lender -> AugmintToken : transfer(interestEarnedAcc, interestAmount)
+    note over AugmintToken #yellow
+        can we / shall we have 0 transfer fee?
+        separete whitelisted transferNoFee?
+        or transfer but it checks if sender is whitelisted?
+    end note
     Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
     note over MonetarySupervisor
         repayAndBurn is restricted to
