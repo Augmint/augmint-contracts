@@ -46,7 +46,7 @@ _Note: It is recommended to use PowerShell (win+X => powershell)_
    
 1. Get the source code:
     ```
-    git clone https://github.com/Augmint/augmint-web.git
+    git clone https://github.com/Augmint/augmint-contracts.git
     cd augmint-contracts
     npm install
     ```
