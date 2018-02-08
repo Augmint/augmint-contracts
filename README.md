@@ -25,27 +25,43 @@ Read more and try it: **[www.augmint.cc](http://www.augmint.cc)**
 
 [Web frontend repo](https://github.com/Augmint/augmint-web)
 
-Sequence diagrams about the planned [Loan flow](docs/loanFlow.png) and [Exchange flow](docs/exchangeFlow.png). _NB: slightly outdated, needs update_
+## Flows
+
+Sequence diagrams about the planned:
+
+* [Loan flow](docs/loanFlow.png)
+* [Lock flow](docs/lockFlow.png)
+* [Exchange flow](docs/exchangeFlow.png)
 
 [Flow of funds](https://docs.google.com/drawings/d/13BP5sj-GZ41zdBC2WPIdfLpVJbYia_9Tdw5_g4M4Psg/edit?usp=sharing)
 
-### Solidity Contracts
+## Solidity Contracts
 
 * [Restricted.sol](./contracts/generic/Owned.sol)  
    Stores which address can access which function call.
 * [ERC20.sol](./contracts/generic/ERC20.sol)  
   Standard [ERC20](https://theethereum.wiki/w/index.php/ERC20_Token_Standard) token interface.
 * [SystemAccount.sol](./contracts/generic/ERC20.sol)
-  Generic contract to maintain balances of Augmint system accounts (InterestPoolAccount, InterestEarnedAccount, FeeAccount)
+  Generic contract to maintain balances of Augmint system accounts
+* [InterestEarnedAccount](./contracts/InterestEarnedAccount.sol)
+    * Holds interest from lending (token) - only repaid loans, ie. already "earned"
+    * Provides interest for Locks
+* [FeeAccount.sol](./contracts/FeeAccount.sol)
+    * holds all fees (ETH & Token)
+    * calculates fees (not implemented yet, to be split out from AugmintToken & Exchange & LoanManager)
 * [AugmintToken.sol](./contracts/generic/AugmintToken.sol)  
   Base contract for all Augmint tokens. ERC20.
     * Issue and burn ACD for new loans and on loan repayment
     * Convenience functions: getLoan, placeSellOrder (see [Loan flow](docs/loanFlow.png) and [Exchange flow](docs/exchangeFlow.png).)
     * Holds ETH and Augmint Token reserves
-    * Send reserve for auction (not implemented yet) when intervening
-* [AugmintToken.sol](./contracts/TokenAcd.sol)
-    * AugmintToken contract for pegged Augmint tokens (A-EUR aka Augmint Crypto Euro is the first: [TokenAEur.sol](./contracts/TokenAEur.sol) )
-    * Sets standard token parameters (name, symbol, decimals, etc.)
+* MonetarySupervisor.sol - not implemented yet (to be split out from AugmintToken)
+    * maintains system wide KPIs (eg totalLockAmount, totalLoanAmount)
+    * holds system wide parameters/limits
+    * enforces system wide limits
+    * Send funds from reserve to exchange when intervening (not implemented yet)
+* [TokenAEur.sol](./contracts/TokenAEur.sol)
+    * First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Crypto Euro aka A€ )
+    * Sets standard token parameters (name, symbol, decimals, peggedSymbol etc.)
 * [Rates.sol](./contracts/Rates.sol)  
   A contract to return fiat/ETH exchange rates
 * [Exchange.sol](./contracts/Exchange.sol)  
