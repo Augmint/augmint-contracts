@@ -23,17 +23,30 @@ _NB: these steps are likely to work on linux too but it's not tested yet_
 
 ### Windows
 
-_NB: windows install was not tested since a while, update on it is welcome_
+_Note: It is recommended to use PowerShell (win+X => powershell)_
 
 1. [Git Bash](https://git-for-windows.github.io/) (required for truffle & yarn start)
 1. [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
 1. [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
 1. [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases)
-1. in Git bash:
+1. [nodejs](https://nodejs.org/en/download/) v8.5.0 or from command line:
+   ```
+   nvm install 8.5.0
+   nvm use 8.5.0
+   ```
+1. Truffle Ethereum Framework:
+   ```
+   npm install -g truffle
+   ```
+1. [Ganache GUI (TestRPC)](http://truffleframework.com/ganache/) or from command line:
+   ```
+   npm install -g ganache-cli
+   ```
+   _Config details in runganche.bat_
+   
+1. Get the source code:
     ```
-    nvm install 8.5.0
-    nvm use 8.5.0
-    git clone https://github.com/Augmint/augmint-contracts.git
+    git clone https://github.com/Augmint/augmint-web.git
     cd augmint-contracts
     npm install
     ```
