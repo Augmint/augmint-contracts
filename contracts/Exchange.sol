@@ -9,13 +9,19 @@ import "./interfaces/ExchangeInterface.sol";
 
 
 contract Exchange is ExchangeInterface {
+
+    uint public constant CHUNK_SIZE = 100;
+
+    uint[] activeBuyOrders;
+    uint[] activeSellOrders;
+
     uint public minOrderAmount; // 0: no limit. For placeBuyTokenOrder it's calculated on current rate & price provided
 
     /* used to stop executing matchMultiple when running out of gas.
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
     uint32 public constant ORDER_MATCH_WORST_GAS = 200000;
 
-    event NewOrder(uint orderIndex, uint indexed orderId, address indexed maker, uint price, uint tokenAmount,
+    event NewOrder(uint indexed orderId, address indexed maker, uint price, uint tokenAmount,
         uint weiAmount);
 
     event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint buyTokenOrderId,
@@ -31,22 +37,21 @@ contract Exchange is ExchangeInterface {
         minOrderAmount = _minOrderAmount;
     }
 
-    function placeBuyTokenOrder(uint price) external payable returns (uint orderIndex, uint orderId) {
+    function placeBuyTokenOrder(uint price) external payable returns (uint orderId) {
         require(price > 0);
         require(msg.value > 0);
 
         uint tokenAmount = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value.roundedDiv(price).mul(10000));
         require(tokenAmount >= minOrderAmount);
 
-        lastOrderId++;
-        orderIndex = buyTokenOrders.push(Order(lastOrderId, msg.sender, now, price, msg.value)) - 1;
+        orderId = buyTokenOrders.push(Order(activeBuyOrders.length, msg.sender, now, price, msg.value)) - 1;
+        activeBuyOrders.push(orderId);
 
-        NewOrder(orderIndex, lastOrderId, msg.sender, price, 0, msg.value);
-        return(orderIndex, lastOrderId);
+        NewOrder(orderId, msg.sender, price, 0, msg.value);
     }
 
     /* this function requires previous approval to transfer tokens */
-    function placeSellTokenOrder(uint price, uint tokenAmount) external returns (uint orderIndex, uint orderId) {
+    function placeSellTokenOrder(uint price, uint tokenAmount) external returns (uint orderId) {
         augmintToken.transferFromNoFee(msg.sender, this, tokenAmount, "Sell token order placed");
         return _placeSellTokenOrder(msg.sender, price, tokenAmount);
     }
@@ -54,41 +59,38 @@ contract Exchange is ExchangeInterface {
     /* This func assuming that token already transferred to Exchange so it can be only called
         via AugmintToken.placeSellTokenOrderOnExchange() convenience function */
     function placeSellTokenOrderTrusted(address maker, uint price, uint tokenAmount)
-    external returns (uint orderIndex, uint orderId) {
+    external returns (uint orderId) {
         require(msg.sender == address(augmintToken));
         return _placeSellTokenOrder(maker, price, tokenAmount);
     }
 
-    function cancelBuyTokenOrder(uint buyTokenIndex, uint buyTokenId) external {
-        require(buyTokenOrders[buyTokenIndex].maker == msg.sender);
-        require(buyTokenId == buyTokenOrders[buyTokenIndex].id);
+    function cancelBuyTokenOrder(uint buyTokenId) external {
+        Order storage order = buyTokenOrders[buyTokenId];
+        require(order.maker == msg.sender);
 
-        msg.sender.transfer(buyTokenOrders[buyTokenIndex].amount);
+        msg.sender.transfer(order.amount);
 
-        CancelledOrder(buyTokenId, msg.sender, 0, buyTokenOrders[buyTokenIndex].amount);
-        _removeOrder(buyTokenOrders, buyTokenIndex);
+        CancelledOrder(buyTokenId, msg.sender, 0, order.amount);
+        _removeBuyOrder(order);
     }
 
-    function cancelSellTokenOrder(uint sellTokenIndex, uint sellTokenId) external {
-        require(sellTokenOrders[sellTokenIndex].maker == msg.sender);
-        require(sellTokenId == sellTokenOrders[sellTokenIndex].id);
+    function cancelSellTokenOrder(uint sellTokenId) external {
+        Order storage order = sellTokenOrders[sellTokenId];
+        require(order.maker == msg.sender);
 
-        augmintToken.transferNoFee(msg.sender, sellTokenOrders[sellTokenIndex].amount, "Sell token order cancelled");
+        augmintToken.transferNoFee(msg.sender, order.amount, "Sell token order cancelled");
 
-        CancelledOrder(sellTokenId, msg.sender, sellTokenOrders[sellTokenIndex].amount, 0);
-        _removeOrder(sellTokenOrders, sellTokenIndex);
+        CancelledOrder(sellTokenId, msg.sender, order.amount, 0);
+        _removeSellOrder(order);
     }
 
     /* matches any two orders if the sell price >= buy price
         trade price is the price which is closer to par.
-        reverts if any of the orders been removed (i.e. passed orderId is not matching the orderIndex in contract)
+        reverts if any of the orders been removed
     */
-    function matchOrders(uint buyTokenIndex, uint buyTokenId, uint sellTokenIndex, uint sellTokenId) external {
-        require(isValidMatch(buyTokenIndex, buyTokenId, sellTokenIndex, sellTokenId));
-
-        var (buyFilled, sellFilled) = _fillOrder(buyTokenIndex, sellTokenIndex);
-        if (sellFilled) { _removeOrder(sellTokenOrders, sellTokenIndex);}
-        if (buyFilled) { _removeOrder(buyTokenOrders, buyTokenIndex); }
+    function matchOrders(uint buyTokenId, uint sellTokenId) external {
+        require(isValidMatch(buyTokenId, sellTokenId));
+        _fillOrder(buyTokenId, sellTokenId);
     }
 
     /*  matches as many orders as possible from the passed orders
@@ -98,28 +100,13 @@ contract Exchange is ExchangeInterface {
         Reverts if sizes of arrays passed shorter than passed buyTokenIndexes.
 
         FIXME: finish this func */
-    function matchMultipleOrders(uint[] buyTokenIndexes, uint[] buyTokenIds, uint[] sellTokenIndexes,
-    uint[] sellTokenIds) external returns(uint i) {
-        // fill but don't remove yet to keep indexes
-        for (i = 0; i < buyTokenIndexes.length && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
-            /* stop processing next match is not valid but let the others pass */
-            if (!isValidMatch(buyTokenIndexes[i], buyTokenIds[i], sellTokenIndexes[i], sellTokenIds[i])) { break; }
-
-            var (buyFilled, sellFilled) = _fillOrder(buyTokenIndexes[i], sellTokenIndexes[i]);
-
-            /* mark orders for removal - we can't remove yet as it would change indexes in buyTokenOrders storage array
-                TODO: more gas effecient way? i.e. without writing storage */
-            if (buyFilled) { buyTokenOrders[buyTokenIndexes[i]].amount = 0; }
-            if (sellFilled) { sellTokenOrders[sellTokenIndexes[i]].amount = 0; }
+    function matchMultipleOrders(uint[] buyTokenIds, uint[] sellTokenIds) external returns(uint count) {
+        for (uint i = 0; i < buyTokenIds.length && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
+            if (!isValidMatch(buyTokenIds[i], sellTokenIds[i])) { break; }
+            _fillOrder(buyTokenIds[i], sellTokenIds[i]);
+            count++;
         }
-
-        /* FIXME: do removal
-            potentially with a func optimised for multiple removals (instead of _removeOrder)
-            TODO: fix gas cost left over calculation to count in removals gas cost */
-
-        revert(); // function is not finished
-
-        return i;
+        return count;
     }
 
     /* only allowed for Monetary Board. */
@@ -128,46 +115,38 @@ contract Exchange is ExchangeInterface {
         MinOrderAmountChanged(minOrderAmount);
     }
 
-    function getOrderCounts() external view returns(uint buyTokenOrderCount, uint sellTokenOrderCount) {
-        return(buyTokenOrders.length, sellTokenOrders.length);
+    function getActiveOrderCounts() external view returns(uint buyTokenOrderCount, uint sellTokenOrderCount) {
+        return(activeBuyOrders.length, activeSellOrders.length);
     }
 
-    // returns 50 buy and sell token orders starting from some offset
-    //      orders are encoded as [maker], [index, id, addedTime, price, tokenAmount, weiAmount]
-    //      if weiAmount == 0 then SELL token order, if tokenAmount == 0 then BUY token order
-    function getOrders(uint offset) external view returns (uint[6][50] response, address[50] makers) {
-        Order memory order; // we should maybe use storage pointer here but that gives a warning
-
-        uint sellOffset = buyTokenOrders.length < offset ? offset - buyTokenOrders.length : 0;
-
-        for (uint8 i = 0; i < 50 && i + offset < buyTokenOrders.length; i++) {
-            order = buyTokenOrders[offset + i];
-            response[i] = [offset + i, order.id, order.addedTime, order.price, 0, order.amount];
-            makers[i] = order.maker;
+    // returns CHUNK_SIZE orders starting from offset
+    // orders are encoded as [id, maker, addedTime, price, amount]
+    function getActiveBuyOrders(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
+        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeBuyOrders.length; i++) {
+            uint orderId = activeBuyOrders[offset + i];
+            Order storage order = buyTokenOrders[orderId];
+            response[i] = [orderId, uint(order.maker), order.addedTime, order.price, order.amount];
         }
-
-        for (uint8 j = 0; j + i < 50 && sellOffset + j < sellTokenOrders.length; j++) {
-            order = sellTokenOrders[sellOffset + j];
-            response[i + j] = [sellOffset + j, order.id, order.addedTime, order.price,
-                                order.amount, 0];
-            makers[i + j] = order.maker;
-        }
-
-        return (response, makers);
     }
 
-    function isValidMatch(uint buyTokenIndex, uint buyTokenId, uint sellTokenIndex, uint sellTokenId)
+    function getActiveSellOrders(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
+        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeSellOrders.length; i++) {
+            uint orderId = activeSellOrders[offset + i];
+            Order storage order = sellTokenOrders[orderId];
+            response[i] = [orderId, uint(order.maker), order.addedTime, order.price, order.amount];
+        }
+    }
+
+    function isValidMatch(uint buyTokenId, uint sellTokenId)
     public view returns (bool) {
-        return (buyTokenId == buyTokenOrders[buyTokenIndex].id &&
-                sellTokenId == sellTokenOrders[sellTokenIndex].id &&
-                buyTokenOrders[buyTokenIndex].price >= sellTokenOrders[sellTokenIndex].price);
+        return buyTokenOrders[buyTokenId].price >= sellTokenOrders[sellTokenId].price;
     }
 
     /* internal fill function, called by matchOrders and matchMultipleOrders.
-        NB: it doesn't remove or check the match, calling function must do it */
-    function _fillOrder(uint buyTokenIndex, uint sellTokenIndex) internal returns (bool buyFilled, bool sellFilled) {
-        Order storage buyTokenOrder = buyTokenOrders[buyTokenIndex];
-        Order storage sellTokenOrder = sellTokenOrders[sellTokenIndex];
+        NB: it doesn't check the match, calling function must do it */
+    function _fillOrder(uint buyTokenId, uint sellTokenId) internal {
+        Order storage buyTokenOrder = buyTokenOrders[buyTokenId];
+        Order storage sellTokenOrder = sellTokenOrders[sellTokenId];
 
         uint price = getMatchPrice(buyTokenOrder.price, sellTokenOrder.price); // use price which is closer to par
         uint sellTokenWeiAmount = rates.convertToWei(augmintToken.peggedSymbol(),
@@ -184,22 +163,21 @@ contract Exchange is ExchangeInterface {
                                                         buyTokenOrder.amount.roundedDiv(price).mul(10000));
         }
 
-        sellFilled = tradedTokenAmount == sellTokenOrder.amount;
-        buyFilled = tradedWeiAmount == buyTokenOrder.amount;
-
-        if (!buyFilled) {
-            buyTokenOrder.amount -= tradedWeiAmount;
+        buyTokenOrder.amount -= tradedWeiAmount;
+        if (buyTokenOrder.amount == 0) {
+            _removeBuyOrder(buyTokenOrder);
         }
-        if (!sellFilled) {
-            sellTokenOrder.amount -= tradedTokenAmount;
+
+        sellTokenOrder.amount -= tradedTokenAmount;
+        if (sellTokenOrder.amount == 0) {
+            _removeSellOrder(sellTokenOrder);
         }
 
         sellTokenOrder.maker.transfer(tradedWeiAmount);
         augmintToken.transferNoFee(buyTokenOrder.maker, tradedTokenAmount, "Buy token order fill");
 
-        OrderFill(buyTokenOrder.maker, sellTokenOrder.maker, buyTokenOrders[buyTokenIndex].id,
-            sellTokenOrders[sellTokenIndex].id, price, tradedWeiAmount, tradedTokenAmount);
-        return(buyFilled, sellFilled);
+        OrderFill(buyTokenOrder.maker, sellTokenOrder.maker, buyTokenId,
+            sellTokenId, price, tradedWeiAmount, tradedTokenAmount);
     }
 
     // return par if it's between par otherwise the price which is closer to par
@@ -215,21 +193,28 @@ contract Exchange is ExchangeInterface {
     }
 
     function _placeSellTokenOrder(address maker, uint price, uint tokenAmount)
-    private returns (uint orderIndex, uint orderId) {
+    private returns (uint orderId) {
         require(price > 0);
         require(tokenAmount > 0);
         require(tokenAmount >= minOrderAmount);
 
-        lastOrderId++;
-        orderIndex = sellTokenOrders.push(Order(lastOrderId, maker, now, price, tokenAmount)) - 1;
+        orderId = sellTokenOrders.push(Order(activeSellOrders.length, maker, now, price, tokenAmount)) - 1;
+        activeSellOrders.push(orderId);
 
-        NewOrder(orderIndex, lastOrderId, maker, price, tokenAmount, 0);
-        return(orderIndex, lastOrderId);
+        NewOrder(orderId, maker, price, tokenAmount, 0);
     }
 
-    function _removeOrder(Order[] storage orders, uint orderIndex) private {
-        if (orderIndex < orders.length - 1) {
-            orders[orderIndex] = orders[orders.length - 1];
+    function _removeBuyOrder(Order storage order) private {
+        _removeOrder(activeBuyOrders, order.index);
+    }
+
+    function _removeSellOrder(Order storage order) private {
+        _removeOrder(activeSellOrders, order.index);
+    }
+
+    function _removeOrder(uint[] storage orders, uint index) private {
+        if (index < orders.length - 1) {
+            orders[index] = orders[orders.length - 1];
         }
         orders.length--;
     }

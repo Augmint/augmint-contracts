@@ -18,6 +18,7 @@ const MIN_TOKEN = 1000000; // 100 ACE
 const MAX_TOKEN = 10000000; // 1,000 ACE
 const TEST_ACCS_CT = web3.eth.accounts.length;
 const ACC_INIT_ACE = 100000000;
+const CHUNK_SIZE = 100;
 
 let rates, tokenAce, exchange;
 const random = new RandomSeed("Have the same test data");
@@ -31,21 +32,29 @@ const getOrderToFill = async () => {
     const state = await exchangeTestHelper.getState();
 
     // retreive all orders
+
     buyTokenOrders = [];
+    const buyChunks = Math.ceil(state.buyCount / CHUNK_SIZE);
+    for (let i = 0; i < buyChunks; i++) {
+        const buys = await exchangeTestHelper.getActiveBuyOrders(i * CHUNK_SIZE);
+        buyTokenOrders = buyTokenOrders.concat(buys);
+    }
+
     sellTokenOrders = [];
-    const queryCount = Math.ceil((state.sellCount + state.buyCount) / 50);
-    for (let i = 0; i < queryCount; i++) {
-        const fetchedOrders = await exchangeTestHelper.getOrders(i * 50);
-        buyTokenOrders = buyTokenOrders.concat(fetchedOrders.buyOrders);
-        sellTokenOrders = sellTokenOrders.concat(fetchedOrders.sellOrders);
+    const sellChunks = Math.ceil(state.sellCount / CHUNK_SIZE);
+    for (let i = 0; i < sellChunks; i++) {
+        const sells = await exchangeTestHelper.getActiveSellOrders(i * CHUNK_SIZE);
+        sellTokenOrders = sellTokenOrders.concat(sells);
     }
 
     // find match
     let match = null;
-    for (let buyIdx = 0; !match && buyIdx < state.buyCount; buyIdx++) {
-        for (let sellIdx = 0; !match && sellIdx < state.sellCount; sellIdx++) {
-            if (sellTokenOrders[sellIdx].price <= buyTokenOrders[buyIdx].price) {
-                match = { buyTokenOrder: buyTokenOrders[buyIdx], sellTokenOrder: sellTokenOrders[sellIdx] };
+    for (let buyIdx = 0; !match && buyIdx < buyTokenOrders.length; buyIdx++) {
+        const buy = buyTokenOrders[buyIdx];
+        for (let sellIdx = 0; !match && sellIdx < sellTokenOrders.length; sellIdx++) {
+            const sell = sellTokenOrders[sellIdx];
+            if (sell.price <= buy.price) {
+                match = { buyTokenOrder: buy, sellTokenOrder: sell };
             }
         }
     }
@@ -113,6 +122,7 @@ contract("Exchange random tests", accounts => {
     it("should fill x matching orders", async function() {
         const snapshotId = await testHelper.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
+
         let match = await getOrderToFill();
         let ct = 0;
         console.log("");
@@ -144,24 +154,18 @@ contract("Exchange random tests", accounts => {
         // convert & transpose matches to the format required by matchMultipleOrders
         matchArgs = matches.reduce(
             (args, match) => (
-                args.buyTokenIndexes.push(match.buyTokenOrder.index),
                 args.buyTokenIds.push(match.buyTokenOrder.id),
-                args.sellTokenIndexes.push(match.sellTokenOrder.index),
                 args.sellTokenIds.push(match.sellTokenOrder.id),
                 args
             ),
             {
-                buyTokenIndexes: [],
                 buyTokenIds: [],
-                sellTokenIndexes: [],
                 sellTokenIds: []
             }
         );
 
         const tx = await exchange.matchMultipleOrders(
-            matchArgs.buyTokenIndexes,
             matchArgs.buyTokenIds,
-            matchArgs.sellTokenIndexes,
             matchArgs.sellTokenIds
         );
         testHelper.logGasUse(this, tx, "matchMultipleOrders");
@@ -180,29 +184,14 @@ contract("Exchange random tests", accounts => {
         //await exchangeTestHelper.printOrderBook(10);
         const stateBefore = await exchangeTestHelper.getState();
 
-        // delete in a random order
-        console.log("");
-        for (let i = stateBefore.buyCount - 1; i >= 0; i--) {
-            const delIdx = Math.floor(random.random() * i);
-            console.log(
-                `\x1b[1A\x1b[2m\t*** Cancelling buy order #${stateBefore.buyCount - i} / ${
-                    stateBefore.buyCount
-                } (idx: ${delIdx})\t\x1b[0m`
-            );
-            const order = await exchangeTestHelper.getBuyTokenOrder(delIdx);
-            await exchangeTestHelper.cancelOrder(this, order);
+        const buys = await exchangeTestHelper.getActiveBuyOrders(0);
+        for (var i = 0; i < buys.length; i++) {
+            await exchangeTestHelper.cancelOrder(this, buys[i]);
         }
 
-        console.log("");
-        for (let i = stateBefore.sellCount - 1; i >= 0; i--) {
-            const delIdx = Math.floor(random.random() * i);
-            console.log(
-                `\x1b[1A\x1b[2m\t*** Cancelling sell order #${stateBefore.sellCount - i} / ${
-                    stateBefore.sellCount
-                } (idx: ${delIdx})\t\x1b[0m`
-            );
-            const order = await exchangeTestHelper.getSellTokenOrder(delIdx);
-            await exchangeTestHelper.cancelOrder(this, order);
+        const sells = await exchangeTestHelper.getActiveSellOrders(0);
+        for (var i = 0; i < sells.length; i++) {
+            await exchangeTestHelper.cancelOrder(this, sells[i]);
         }
 
         const stateAfter = await exchangeTestHelper.getState();
