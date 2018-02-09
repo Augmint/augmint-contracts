@@ -12,8 +12,8 @@ contract Exchange is ExchangeInterface {
 
     uint public constant CHUNK_SIZE = 100;
 
-    uint[] activeBuyOrders;
-    uint[] activeSellOrders;
+    uint[] private activeBuyOrders;
+    uint[] private activeSellOrders;
 
     uint public minOrderAmount; // 0: no limit. For placeBuyTokenOrder it's calculated on current rate & price provided
 
