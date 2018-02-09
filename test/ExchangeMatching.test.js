@@ -137,4 +137,5 @@ contract("Exchange matching tests", accounts => {
     it("matchMultipleOrders should match as many orders as fits into gas provided");
     it("matchMultipleOrders should stop if one is non-matching");
     it("matchMultipleOrders should stop if one of the orders removed");
+    it("matchMultipleOrders should stop if one of the orders filled");
 });

@@ -146,8 +146,7 @@ contract("Exchange random tests", accounts => {
         await testHelper.revertSnapshot(snapshotId);
     });
 
-    /* FIXME: matchMultipleOrders() is not finished */
-    it.skip("should match x orders at once (matchMultipleOrders)", async function() {
+    it("should match x orders at once (matchMultipleOrders)", async function() {
         const snapshotId = await testHelper.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
 

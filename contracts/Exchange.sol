@@ -1,5 +1,4 @@
 /* Augmint's internal Exchange
-    TODO: finish matchMultipleOrders()
     TODO: check/test if underflow possible on sell/buyORder.amount -= token/weiAmount in matchOrders()
     TODO: deduct fee
     TODO: consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
