@@ -1,5 +1,4 @@
 /* Augmint's internal Exchange
-    TODO: check/test if underflow possible on sell/buyORder.amount -= token/weiAmount in matchOrders()
     TODO: deduct fee
     TODO: consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
 */
@@ -158,12 +157,12 @@ contract Exchange is ExchangeInterface {
                                                         buyTokenOrder.amount.roundedDiv(price).mul(10000));
         }
 
-        buyTokenOrder.amount -= tradedWeiAmount;
+        buyTokenOrder.amount = buyTokenOrder.amount.sub(tradedWeiAmount);
         if (buyTokenOrder.amount == 0) {
             _removeBuyOrder(buyTokenOrder);
         }
 
-        sellTokenOrder.amount -= tradedTokenAmount;
+        sellTokenOrder.amount = sellTokenOrder.amount.sub(tradedTokenAmount);
         if (sellTokenOrder.amount == 0) {
             _removeSellOrder(sellTokenOrder);
         }
