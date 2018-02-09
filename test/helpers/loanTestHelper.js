@@ -61,14 +61,17 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
     const loan = await calcLoanValues(rates, product, collateralWei);
     loan.state = 0;
     loan.borrower = borrower;
+    const [totalSupplyBefore, totalLoanAmountBefore, balBefore] = await Promise.all([
+        tokenAce.totalSupply(),
+        tokenAce.totalLoanAmount(),
 
-    const totalSupplyBefore = await tokenAce.totalSupply();
-    const balBefore = await tokenAceTestHelper.getAllBalances({
-        reserve: reserveAcc,
-        borrower: loan.borrower,
-        loanManager: loanManager.address,
-        interestEarned: interestEarnedAcc
-    });
+        tokenAceTestHelper.getAllBalances({
+            reserve: reserveAcc,
+            borrower: loan.borrower,
+            loanManager: loanManager.address,
+            interestEarned: interestEarnedAcc
+        })
+    ]);
 
     const tx = await loanManager.newEthBackedLoan(loan.product.id, {
         from: loan.borrower,
@@ -77,8 +80,9 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
     testHelper.logGasUse(testInstance, tx, "newEthBackedLoan");
     loan.id = await newLoanEventAsserts(loan);
 
-    const [totalSupplyAfter, ,] = await Promise.all([
+    const [totalSupplyAfter, totalLoanAmountAfter, ,] = await Promise.all([
         tokenAce.totalSupply(),
+        tokenAce.totalLoanAmount(),
 
         loanAsserts(loan),
 
@@ -108,25 +112,33 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         totalSupplyBefore.add(loan.loanAmount).toString(),
         "total ACE supply should be increased by the disbursed loan amount"
     );
-
+    assert.equal(
+        totalLoanAmountAfter.toString(),
+        totalLoanAmountBefore.add(loan.repaymentAmount).toString(),
+        "total loan amount should be increased by the repayment amount"
+    );
     return loan;
 }
 
 async function repayLoan(testInstance, loan) {
-    const totalSupplyBefore = await tokenAce.totalSupply();
-    const balBefore = await tokenAceTestHelper.getAllBalances({
-        reserve: reserveAcc,
-        borrower: loan.borrower,
-        loanManager: loanManager.address,
-        interestEarned: interestEarnedAcc
-    });
+    const [totalSupplyBefore, totalLoanAmountBefore, balBefore] = await Promise.all([
+        tokenAce.totalSupply(),
+        tokenAce.totalLoanAmount(),
+        tokenAceTestHelper.getAllBalances({
+            reserve: reserveAcc,
+            borrower: loan.borrower,
+            loanManager: loanManager.address,
+            interestEarned: interestEarnedAcc
+        })
+    ]);
 
     loan.state = 1; // repaid
     const tx = await tokenAce.repayLoan(loanManager.address, loan.id, { from: loan.borrower });
     testHelper.logGasUse(testInstance, tx, "AugmintToken.repayLoan");
 
-    const [totalSupplyAfter, , , ,] = await Promise.all([
+    const [totalSupplyAfter, totalLoanAmountAfter, , , ,] = await Promise.all([
         tokenAce.totalSupply(),
+        tokenAce.totalLoanAmount(),
 
         testHelper.assertEvent(loanManager, "LoanRepayed", {
             loanId: loan.id,
@@ -176,6 +188,11 @@ async function repayLoan(testInstance, loan) {
         totalSupplyBefore.sub(loan.loanAmount).toString(),
         "total ACE supply should be reduced by the loan amount (what was disbursed)"
     );
+    assert.equal(
+        totalLoanAmountAfter.toString(),
+        totalLoanAmountBefore.sub(loan.repaymentAmount).toString(),
+        "total loan amount should be reduced by the repayment amount"
+    );
 }
 
 async function collectLoan(testInstance, loan, collector) {
@@ -188,6 +205,7 @@ async function collectLoan(testInstance, loan, collector) {
 
     const [
         totalSupplyBefore,
+        totalLoanAmountBefore,
         balBefore,
         collateralInToken,
         repaymentAmountInWei,
@@ -195,6 +213,7 @@ async function collectLoan(testInstance, loan, collector) {
         targetFeeInWei
     ] = await Promise.all([
         tokenAce.totalSupply(),
+        tokenAce.totalLoanAmount(),
 
         tokenAceTestHelper.getAllBalances({
             reserve: reserveAcc,
@@ -213,7 +232,7 @@ async function collectLoan(testInstance, loan, collector) {
     const collectedCollateral = loan.collateral.sub(releasedCollateral);
     const defaultingFee = BigNumber.min(targetFeeInWei, collectedCollateral);
 
-    const rate = await rates.rates("EUR");
+    // const rate = await rates.rates("EUR");
     // console.log(
     //     `    *** Collection params:
     //      A-EUR/EUR: ${rate[0] / 10000}
@@ -233,8 +252,9 @@ async function collectLoan(testInstance, loan, collector) {
     const tx = await loanManager.collect([loan.id], { from: loan.collector });
     testHelper.logGasUse(testInstance, tx, "collect 1");
 
-    const [totalSupplyAfter, , ,] = await Promise.all([
+    const [totalSupplyAfter, totalLoanAmountAfter, , ,] = await Promise.all([
         tokenAce.totalSupply(),
+        tokenAce.totalLoanAmount(),
 
         testHelper.assertEvent(loanManager, "LoanCollected", {
             loanId: loan.id,
@@ -277,6 +297,11 @@ async function collectLoan(testInstance, loan, collector) {
     ]);
 
     assert.equal(totalSupplyAfter.toString(), totalSupplyBefore.toString(), "totalSupply should be the same");
+    assert.equal(
+        totalLoanAmountAfter.toString(),
+        totalLoanAmountBefore.sub(loan.repaymentAmount).toString(),
+        "total loan amount should be reduced by the repayment amount"
+    );
 }
 
 async function getProductInfo(productId) {

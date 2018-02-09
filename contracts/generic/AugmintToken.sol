@@ -23,17 +23,39 @@ contract AugmintToken is AugmintTokenInterface {
 
     address public feeAccount;
     address public interestEarnedAccount;
-    uint public transferFeePt; // in parts per million , ie. 2,000 = 0.2%
+    uint public transferFeePt; // in parts per million (ppm) , ie. 2,000 = 0.2%
     uint public transferFeeMin; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
     uint public transferFeeMax; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
 
     uint public issuedByMonetaryBoard; // supply issued manually by monetary board
 
-    event TransferFeesChanged(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax);
+    uint public totalLoanAmount; // total amount of all loans with interest, in token
+    uint public totalLockedAmount; // total amount of all locks with interest, in token
+    uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go BELOW with new lock
+    uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go ABOVE with new loan
+
+    // Parameters Used to avoid system halt when there totalLoanAmount or totalLockedAmount is 0 or very low.
+    uint public lockNoLimitAllowance;   // in token - if totalLockAmount is below this then a new lock is allowed
+                                        // up to this amount even if it will bring the loanToDepositRatio BELOW
+                                        // loanToDepositLoanLimit
+                                        // (interest earned account balance still applies a limit on top of it)
+    uint public loanNoLimitAllowance;   // in token - if totalLoanAmount is below this then a new loan is allowed
+                                        // up this amount even if it will bring the loanToDepositRatio
+                                        // ABOVE loanToDepositLoanLimit
+
+
+    event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
+
+    event LoanToDepositLimitsChanged(uint loanToDepositLockLimit, uint loanToDepositLoanLimit);
+
+    event LoanAndLockParamsChanged(uint loanToDepositLockLimit, uint loanToDepositLoanLimit,
+                                    uint lockNoLimitAllowance, uint loanNoLimitAllowance);
 
     function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
-        address _interestEarnedAccount, uint _transferFeePt, uint _transferFeeMin,
-        uint _transferFeeMax) public {
+        address _interestEarnedAccount, uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax,
+        uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit,
+        uint _lockNoLimitAllowance, uint _loanNoLimitAllowance) public {
+
         require(_feeAccount != address(0));
         require(_interestEarnedAccount != address(0));
         require(bytes(_name).length > 0);
@@ -46,6 +68,10 @@ contract AugmintToken is AugmintTokenInterface {
         transferFeePt = _transferFeePt;
         transferFeeMin = _transferFeeMin;
         transferFeeMax = _transferFeeMax;
+        loanToDepositLockLimit = _loanToDepositLockLimit;
+        loanToDepositLoanLimit = _loanToDepositLoanLimit;
+        lockNoLimitAllowance = _lockNoLimitAllowance;
+        loanNoLimitAllowance = _loanNoLimitAllowance;
     }
 
     function () public payable { // solhint-disable-line no-empty-blocks
@@ -70,15 +96,24 @@ contract AugmintToken is AugmintTokenInterface {
         // NB: locker.createLock will validate lockProductId and amountToLock:
         Locker locker = Locker(lockerAddress);
         uint interestEarnedAmount = locker.createLock(lockProductId, msg.sender, amountToLock);
+        totalLockedAmount = totalLockedAmount.add(amountToLock).add(interestEarnedAmount);
 
-        _transfer(msg.sender, address(locker), amountToLock, "Locking funds", 0);
+        _transfer(msg.sender, address(locker), amountToLock, "Funds locked", 0);
         _transfer(interestEarnedAccount, address(locker), interestEarnedAmount, "Accrue lock interest", 0);
 
     }
 
-    function issueAndDisburse(address borrower, uint loanAmount, string narrative)
+    /* called by Locker.releaseFunds to maintain totalLockAmount */
+    function fundsReleased(uint releasedAmount) external {
+        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
+        totalLockedAmount = totalLockedAmount.sub(releasedAmount);
+    }
+
+    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
     external restrict("LoanManagerContracts") {
         require(loanAmount > 0);
+        require(repaymentAmount > 0);
+        totalLoanAmount = totalLoanAmount.add(repaymentAmount);
         _issue(this, loanAmount);
         _transfer(this, borrower, loanAmount, narrative, 0);
     }
@@ -90,6 +125,8 @@ contract AugmintToken is AugmintTokenInterface {
         // solhint-disable-next-line space-after-comma
         var (borrower, , , repaymentAmount , loanAmount, interestAmount, ) = loanManager.loans(loanId);
         require(borrower == msg.sender);
+
+        totalLoanAmount = totalLoanAmount.sub(repaymentAmount);
         _transfer(msg.sender, this, repaymentAmount, "Loan repayment", 0);
         _burn(this, loanAmount);
         if (interestAmount > 0) {
@@ -100,9 +137,15 @@ contract AugmintToken is AugmintTokenInterface {
         loanManager.releaseCollateral(loanId);
     }
 
+    /* called by LoanManager.collect to maintain totalLoanAmount */
+    function loanCollected(uint repaymentAmount) external {
+        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted loanManagers
+        totalLoanAmount = totalLoanAmount.sub(repaymentAmount);
+    }
+
     /* convenience function - alternative to Exchange.placeSellTokenOrder without approval required */
     function placeSellTokenOrderOnExchange(address _exchange, uint price, uint tokenAmount)
-    external returns (uint sellTokenOrderIndex, uint sellTokenOrderId) {
+    external returns (uint sellTokenOrderId) {
         require(permissions[_exchange]["ExchangeContracts"]); // only whitelisted exchanges
         ExchangeInterface exchange = ExchangeInterface(_exchange);
         _transfer(msg.sender, _exchange, tokenAmount, "Sell token order placed", 0);
@@ -124,6 +167,23 @@ contract AugmintToken is AugmintTokenInterface {
         transferFeeMin = _transferFeeMin;
         transferFeeMax = _transferFeeMax;
         TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
+    }
+
+    function setLoanAndLockParams(uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit,
+                                    uint _lockNoLimitAllowance, uint _loanNoLimitAllowance)
+    external restrict("MonetaryBoard") {
+        loanToDepositLockLimit = _loanToDepositLockLimit;
+        loanToDepositLoanLimit = _loanToDepositLoanLimit;
+        lockNoLimitAllowance = _lockNoLimitAllowance;
+        loanNoLimitAllowance = _loanNoLimitAllowance;
+        LoanAndLockParamsChanged(loanToDepositLockLimit, loanToDepositLoanLimit,
+                                    lockNoLimitAllowance, loanNoLimitAllowance);
+    }
+
+    /* helper function for FrontEnd to reduce calls */
+    function getParams() external view returns(uint[7]) {
+        return [transferFeePt, transferFeeMin, transferFeeMax,
+                loanToDepositLockLimit, loanToDepositLoanLimit, lockNoLimitAllowance, loanNoLimitAllowance];
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {

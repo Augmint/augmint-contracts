@@ -15,11 +15,9 @@ contract ExchangeInterface is Restricted {
     using SafeMath for uint256;
     AugmintTokenInterface public augmintToken;
     Rates public rates;
-    uint public lastOrderId; // a unique id accross buy/sell orders to avoid potential issues referencing by only idx
-                            // 0 means no order were placed yet
 
     struct Order {
-        uint id;
+        uint index;
         address maker;
         uint addedTime;
         uint price;
@@ -29,21 +27,21 @@ contract ExchangeInterface is Restricted {
     Order[] public buyTokenOrders;
     Order[] public sellTokenOrders;
 
-    function placeBuyTokenOrder(uint price) external payable returns (uint buyTokenOrderIndex, uint orderId);
+    function placeBuyTokenOrder(uint price) external payable returns (uint orderId);
 
     function placeSellTokenOrder(uint price, uint tokenAmount)
-        external returns (uint sellTokenOrderIndex, uint orderId);
+        external returns (uint orderId);
 
     function placeSellTokenOrderTrusted(address maker, uint price, uint tokenAmount)
-        external returns (uint sellTokenOrderIndex, uint orderId);
+        external returns (uint orderId);
 
-    function cancelSellTokenOrder(uint buyEtherOrderIndex, uint sellTokenOrderId) external;
-    function cancelBuyTokenOrder(uint buyTokenOrderIndex, uint buyTokenOrderId) external;
+    function cancelSellTokenOrder(uint sellTokenOrderId) external;
+    function cancelBuyTokenOrder(uint buyTokenOrderId) external;
 
-    function matchMultipleOrders(uint[] buyTokenIndexes, uint[] buyTokenIds, uint[] sellTokenIndexes,
-        uint[] sellTokenIds) external returns(uint matchCount);
+    function matchMultipleOrders(uint[] buyTokenIds, uint[] sellTokenIds)
+        external returns(uint matchCount);
 
-    function matchOrders(uint buyTokenOrderIndex, uint buyTokenOrderId, uint sellTokenOrderIndex, uint sellTokenOrderId)
+    function matchOrders(uint buyTokenOrderId, uint sellTokenOrderId)
         external;
 
 }

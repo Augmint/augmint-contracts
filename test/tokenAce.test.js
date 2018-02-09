@@ -19,11 +19,12 @@ contract("TokenAce tests", accounts => {
 
         const tx = await tokenAce.issue(amount);
         testHelper.logGasUse(this, tx, "issue");
-        assert(tx.logs[0].event, "Transfer");
-        assert.equal(tx.logs[0].event, "Transfer", "Transfer event should be emited when tokens issued");
-        assert.equal(tx.logs[0].args.from, NULL_ACC, "from should be 0x0 in transfer event event");
-        assert.equal(tx.logs[0].args.to, tokenAce.address, "to should be tokenAcd address in transfer event event");
-        assert.equal(tx.logs[0].args.amount.toString(), amount, "amount should be set in Transfer event");
+
+        await testHelper.assertEvent(tokenAce, "Transfer", {
+            from: NULL_ACC,
+            to: tokenAce.address,
+            amount: amount
+        });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             tokenAce.totalSupply(),
@@ -63,11 +64,12 @@ contract("TokenAce tests", accounts => {
 
         const tx = await tokenAce.burn(amount);
         testHelper.logGasUse(this, tx, "burn");
-        assert(tx.logs[0].event, "Transfer");
-        assert.equal(tx.logs[0].event, "Transfer", "Transfer event should be emited when tokens issued");
-        assert.equal(tx.logs[0].args.from, tokenAce.address, "from should be tokenAcd address in transfer event event");
-        assert.equal(tx.logs[0].args.to, NULL_ACC, "to should be 0x0 in transfer event event");
-        assert.equal(tx.logs[0].args.amount.toString(), amount, "amount should be set in Transfer event");
+
+        await testHelper.assertEvent(tokenAce, "Transfer", {
+            from: tokenAce.address,
+            to: NULL_ACC,
+            amount: amount
+        });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             tokenAce.totalSupply(),
@@ -96,6 +98,81 @@ contract("TokenAce tests", accounts => {
         await testHelper.expectThrow(tokenAce.burn(1000, { from: accounts[1] }));
     });
 
-    it("should be possible to set transfer fees ");
-    it("only allowed should set transfer fees ");
+    it("should be possible to set transfer fees ", async function() {
+        const fee = { pt: 100000, max: 80, min: 90 };
+        const tx = await tokenAce.setTransferFees(fee.pt, fee.min, fee.max, { from: accounts[0] });
+        testHelper.logGasUse(this, tx, "setTransferFees");
+
+        const [feePt, feeMin, feeMax] = await Promise.all([
+            tokenAce.transferFeePt(),
+            tokenAce.transferFeeMin(),
+            tokenAce.transferFeeMax()
+        ]);
+
+        await testHelper.assertEvent(tokenAce, "TransferFeesChanged", {
+            transferFeePt: fee.pt,
+            transferFeeMin: fee.min,
+            transferFeeMax: fee.max
+        });
+
+        assert.equal(feePt, fee.pt);
+        assert.equal(feeMin, fee.min);
+        assert.equal(feeMax, fee.max);
+    });
+
+    it("only allowed should set transfer fees ", async function() {
+        await testHelper.expectThrow(tokenAce.setTransferFees(10000, 10000, 10000, { from: accounts[1] }));
+    });
+
+    it("should be possible to set loan and lock parameters", async function() {
+        const params = { lockLimit: 12345, loanLimit: 1234, lockAllowance: 60000, loanAllowance: 70000 };
+        const tx = await tokenAce.setLoanAndLockParams(
+            params.lockLimit,
+            params.loanLimit,
+            params.lockAllowance,
+            params.loanAllowance,
+            { from: accounts[0] }
+        );
+        testHelper.logGasUse(this, tx, "setLoanAndLockParams");
+
+        const [lockLimit, loanLimit, lockAllowance, loanAllowance] = await Promise.all([
+            tokenAce.loanToDepositLockLimit(),
+            tokenAce.loanToDepositLoanLimit(),
+            tokenAce.lockNoLimitAllowance(),
+            tokenAce.loanNoLimitAllowance()
+        ]);
+
+        await testHelper.assertEvent(tokenAce, "LoanAndLockParamsChanged", {
+            loanToDepositLockLimit: params.lockLimit,
+            loanToDepositLoanLimit: params.loanLimit,
+            lockNoLimitAllowance: params.lockAllowance,
+            loanNoLimitAllowance: params.loanAllowance
+        });
+
+        assert.equal(lockLimit, params.lockLimit);
+        assert.equal(loanLimit, params.loanLimit);
+        assert.equal(lockAllowance, params.lockAllowance);
+        assert.equal(loanAllowance, params.loanAllowance);
+    });
+
+    it("only allowed should set loanToDeposit limits ", async function() {
+        await testHelper.expectThrow(tokenAce.setLoanAndLockParams(10000, 10000, 10000, 10000, { from: accounts[1] }));
+    });
+
+    it("all params should be accesible via getParams", async function() {
+        const paramsOneByOne = await Promise.all([
+            tokenAce.transferFeePt(),
+            tokenAce.transferFeeMin(),
+            tokenAce.transferFeeMax(),
+
+            tokenAce.loanToDepositLockLimit(),
+            tokenAce.loanToDepositLoanLimit(),
+            tokenAce.lockNoLimitAllowance(),
+            tokenAce.loanNoLimitAllowance()
+        ]);
+
+        const paramsViaHelper = await tokenAce.getParams();
+
+        assert.deepEqual(paramsOneByOne, paramsViaHelper);
+    });
 });

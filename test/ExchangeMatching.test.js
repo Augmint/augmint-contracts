@@ -119,24 +119,23 @@ contract("Exchange matching tests", accounts => {
 
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
-        await testHelper.expectThrow(exchange.matchOrders(buyOrder.index, buyOrder.id, sellOrder.index, sellOrder.id));
+        await testHelper.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
     });
 
-    it("should NOT match orders if order index changed", async function() {
-        const buyOrder = { amount: web3.toWei(1.750401), maker: maker, price: 10500, orderType: TOKEN_BUY };
-        const sellOrder1 = { amount: 2000000, maker: maker, price: 11000, orderType: TOKEN_SELL };
-        const sellOrder2 = { amount: 1000000, maker: maker, price: 12000, orderType: TOKEN_SELL };
-        await exchangeTestHelper.newOrder(this, sellOrder1);
-        await exchangeTestHelper.newOrder(this, sellOrder2);
+    it("Should not match when rates = 0", async function() {
+        const buyOrder = { amount: web3.toWei(1.750401), maker: maker, price: 10710, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 5614113, maker: taker, price: 10263, orderType: TOKEN_SELL };
+
         await exchangeTestHelper.newOrder(this, buyOrder);
+        await exchangeTestHelper.newOrder(this, sellOrder);
 
-        await testHelper.expectThrow(
-            exchange.matchOrders(buyOrder.index, buyOrder.id, sellOrder2.index, sellOrder2.id)
-        );
+        await rates.setRate("EUR", 0);
+        await testHelper.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
     });
-    it("Should not match when rates = 0");
+
     it("should match multiple orders"); // ensure edge cases of passing the same order twice
     it("matchMultipleOrders should match as many orders as fits into gas provided");
     it("matchMultipleOrders should stop if one is non-matching");
     it("matchMultipleOrders should stop if one of the orders removed");
+    it("matchMultipleOrders should stop if one of the orders filled");
 });

@@ -77,7 +77,7 @@ contract LoanManager is LoanManagerInterface {
         if (repaymentAmount > loanAmount) {
             interestAmount = repaymentAmount.sub(loanAmount);
         }
-        augmintToken.issueAndDisburse(msg.sender, loanAmount, "Loan disbursement");
+        augmintToken.issueAndDisburse(msg.sender, loanAmount, repaymentAmount, "Loan disbursement");
 
         NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount);
     }
@@ -104,6 +104,9 @@ contract LoanManager is LoanManagerInterface {
             require(loans[loanId].state == LoanState.Open);
             require(now >= loans[loanId].maturity);
             loans[loanId].state = LoanState.Defaulted;
+
+            augmintToken.loanCollected(loans[loanId].repaymentAmount); // to maintain totalLoanAmount
+
             // send ETH collateral to augmintToken reserve
             uint defaultingFeeInToken = loans[loanId].repaymentAmount.mul(loans[loanId].defaultingFeePt).div(1000000);
             uint defaultingFee = rates.convertToWei(augmintToken.peggedSymbol(), defaultingFeeInToken);

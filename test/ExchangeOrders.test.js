@@ -194,77 +194,76 @@ contract("Exchange orders tests", accounts => {
 
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
-        await testHelper.expectThrow(exchange.cancelBuyTokenOrder(buyOrder.index, buyOrder.id, { from: accounts[0] }));
-        await testHelper.expectThrow(
-            exchange.cancelSellTokenOrder(sellOrder.index, sellOrder.id, { from: accounts[0] })
-        );
+        await testHelper.expectThrow(exchange.cancelBuyTokenOrder(buyOrder.id, { from: accounts[0] }));
+        await testHelper.expectThrow(exchange.cancelSellTokenOrder(sellOrder.id, { from: accounts[0] }));
     });
 
-    it("shouldn't cancel BUY order if order index changed", async function() {
-        const buyOrder1 = { amount: web3.toWei(1), maker: makers[0], price: 12000, orderType: TOKEN_BUY };
-        const buyOrder2 = { amount: web3.toWei(0.5), maker: makers[0], price: 11000, orderType: TOKEN_BUY };
-
-        await exchangeTestHelper.newOrder(this, buyOrder1);
-        await exchangeTestHelper.newOrder(this, buyOrder2);
-        await exchangeTestHelper.cancelOrder(this, buyOrder1);
-        await testHelper.expectThrow(
-            exchange.cancelBuyTokenOrder(buyOrder2.index, buyOrder2.id, { from: buyOrder2.maker })
-        );
-    });
-
-    it("shouldn't cancel SELL order if order index changed", async function() {
-        const sellOrder1 = { amount: 2000000, maker: makers[0], price: 11000, orderType: TOKEN_SELL };
-        const sellOrder2 = { amount: 1000000, maker: makers[0], price: 12000, orderType: TOKEN_SELL };
-
-        await exchangeTestHelper.newOrder(this, sellOrder1);
-        await exchangeTestHelper.newOrder(this, sellOrder2);
-        await exchangeTestHelper.cancelOrder(this, sellOrder1);
-        await testHelper.expectThrow(
-            exchange.cancelSellTokenOrder(sellOrder2.index, sellOrder2.id, { from: sellOrder2.maker })
-        );
-    });
-
-    it("should return x orders from offset", async function() {
-        const orderCount = 4; // must be even
+    it("should return x buy orders from offset", async function() {
+        const chunkSize = await exchange.CHUNK_SIZE();
+        const orderCount = 4;
         const orders = [];
-        for (let i = 0; i < orderCount / 2; i++) {
-            orders.push(
-                tokenAce.placeSellTokenOrderOnExchange(exchange.address, 10000 + i, minOrderAmount + i, {
-                    from: makers[0]
-                })
-            );
+        for (let i = 0; i < orderCount; i++) {
             orders.push(exchange.placeBuyTokenOrder(10000 + i, { value: web3.toWei(0.5), from: makers[1] }));
         }
         const txs = await Promise.all(orders);
         assert(txs.length, orderCount);
 
         const orderQueries = [
-            exchangeTestHelper.getOrders(0).then(res => {
-                const returnedOrderCount = res.buyOrders.length + res.sellOrders.length;
-                assert.equal(returnedOrderCount, Math.min(orderCount, 50), "orders count when 0 offset");
+            exchangeTestHelper.getActiveBuyOrders(0).then(res => {
+                assert.equal(res.length, Math.min(orderCount, chunkSize), "buy orders count when 0 offset");
             }),
-            exchangeTestHelper.getOrders(1).then(res => {
-                const returnedOrderCount = res.buyOrders.length + res.sellOrders.length;
-                assert.equal(returnedOrderCount, Math.min(orderCount - 1, 50), "count when offset from buyOrder");
+            exchangeTestHelper.getActiveBuyOrders(1).then(res => {
+                assert.equal(res.length, Math.min(orderCount - 1, chunkSize), "buy count when offset from 1");
             }),
-            exchangeTestHelper.getOrders(orderCount / 2).then(res => {
-                const returnedOrderCount = res.buyOrders.length + res.sellOrders.length;
-                assert.equal(returnedOrderCount, Math.min(orderCount / 2, 50), "count when offset from sellOrder");
+            exchangeTestHelper.getActiveBuyOrders(orderCount - 1).then(res => {
+                assert.equal(res.length, 1, "returned buy orders count when offset from last");
             }),
-            exchangeTestHelper.getOrders(orderCount - 1).then(res => {
-                const returnedOrderCount = res.buyOrders.length + res.sellOrders.length;
-                assert.equal(returnedOrderCount, 1, "returned orders count when offset from last");
-            }),
-            exchangeTestHelper.getOrders(orderCount).then(res => {
-                const returnedOrderCount = res.buyOrders.length + res.sellOrders.length;
-                assert.equal(returnedOrderCount, 0, "returned orders count when offset > last");
+            exchangeTestHelper.getActiveBuyOrders(orderCount).then(res => {
+                assert.equal(res.length, 0, "returned buy orders count when offset > last");
             })
         ];
 
         await Promise.all(orderQueries);
-
-        // TODO: check results + test with only sell , only buy orders
     });
 
-    it("should not place orders when rate == 0");
+    it("should return x sell orders from offset", async function() {
+        const chunkSize = await exchange.CHUNK_SIZE();
+        const orderCount = 4;
+        const orders = [];
+        for (let i = 0; i < orderCount; i++) {
+            orders.push(
+                tokenAce.placeSellTokenOrderOnExchange(exchange.address, 10000 + i, minOrderAmount + i, {
+                    from: makers[0]
+                })
+            );
+        }
+        const txs = await Promise.all(orders);
+        assert(txs.length, orderCount);
+
+        const orderQueries = [
+            exchangeTestHelper.getActiveSellOrders(0).then(res => {
+                assert.equal(res.length, Math.min(orderCount, chunkSize), "sell orders count when 0 offset");
+            }),
+            exchangeTestHelper.getActiveSellOrders(1).then(res => {
+                assert.equal(res.length, Math.min(orderCount - 1, chunkSize), "sell count when offset from 1");
+            }),
+            exchangeTestHelper.getActiveSellOrders(orderCount - 1).then(res => {
+                assert.equal(res.length, 1, "returned sell orders count when offset from last");
+            }),
+            exchangeTestHelper.getActiveSellOrders(orderCount).then(res => {
+                assert.equal(res.length, 0, "returned sell orders count when offset > last");
+            })
+        ];
+
+        await Promise.all(orderQueries);
+    });
+
+    it("should not place orders when rate == 0", async function() {
+        await rates.setRate("EUR", 0);
+        const buyOrder = { amount: web3.toWei(1.750401), maker: accounts[1], price: 10710, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 5614113, maker: accounts[2], price: 10263, orderType: TOKEN_SELL };
+
+        await testHelper.expectThrow(exchangeTestHelper.newOrder(this, buyOrder));
+        await testHelper.expectThrow(exchangeTestHelper.newOrder(this, sellOrder));
+    });
 });

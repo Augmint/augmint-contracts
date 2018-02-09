@@ -19,7 +19,8 @@ module.exports = {
     getState,
     getBuyTokenOrder,
     getSellTokenOrder,
-    getOrders,
+    getActiveBuyOrders,
+    getActiveSellOrders,
     printOrderBook
 };
 
@@ -75,7 +76,6 @@ async function newOrder(testInstance, order) {
 
     const eventResult = await newOrderEventAsserts(order);
     order.id = parseInt(eventResult.orderId);
-    order.index = parseInt(eventResult.orderIndex);
 
     const state = await getState();
 
@@ -83,11 +83,11 @@ async function newOrder(testInstance, order) {
     if (order.orderType === TOKEN_BUY) {
         expBuyCount = stateBefore.buyCount + 1;
         expSellCount = stateBefore.sellCount;
-        actualOrder = await getBuyTokenOrder(order.index);
+        actualOrder = await getBuyTokenOrder(order.id);
     } else {
         expBuyCount = stateBefore.buyCount;
         expSellCount = stateBefore.sellCount + 1;
-        actualOrder = await getSellTokenOrder(order.index);
+        actualOrder = await getSellTokenOrder(order.id);
     }
 
     assert.equal(state.buyCount, expBuyCount, "buyCount should be set");
@@ -117,7 +117,6 @@ async function newOrder(testInstance, order) {
 
 async function newOrderEventAsserts(order) {
     const res = await testHelper.assertEvent(exchange, "NewOrder", {
-        orderIndex: x => x,
         orderId: x => x,
         maker: order.maker,
         price: order.price,
@@ -144,14 +143,24 @@ async function newOrderEventAsserts(order) {
 
 async function cancelOrder(testInstance, order) {
     const stateBefore = await getState();
+
     const balBefore = await tokenAceTestHelper.getAllBalances({ exchange: exchange.address, maker: order.maker });
 
-    if (order.orderType === TOKEN_SELL) {
-        const tx = await exchange.cancelSellTokenOrder(order.index, order.id, { from: order.maker });
+    const sell = order.orderType === TOKEN_SELL;
+    if (sell) {
+        const tx = await exchange.cancelSellTokenOrder(order.id, { from: order.maker });
         testHelper.logGasUse(testInstance, tx, "cancelSellTokenOrder");
     } else {
-        const tx = await exchange.cancelBuyTokenOrder(order.index, order.id, { from: order.maker });
+        const tx = await exchange.cancelBuyTokenOrder(order.id, { from: order.maker });
         testHelper.logGasUse(testInstance, tx, "cancelBuyTokenOrder");
+    }
+
+    if (sell) {
+        order.tokenAmount = order.amount;
+        order.weiAmount = 0;
+    } else {
+        order.tokenAmount = 0;
+        order.weiAmount = order.amount;
     }
 
     await testHelper.assertEvent(exchange, "CancelledOrder", {
@@ -267,9 +276,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder, marketRa
     };
 
     const tx = await exchange.matchOrders(
-        buyTokenOrder.index,
         buyTokenOrder.id,
-        sellTokenOrder.index,
         sellTokenOrder.id
     );
     testHelper.logGasUse(testInstance, tx, "matchOrders");
@@ -335,7 +342,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder, marketRa
 
 async function getState() {
     const ret = {};
-    const orderCounts = await exchange.getOrderCounts();
+    const orderCounts = await exchange.getActiveOrderCounts();
     ret.buyCount = orderCounts[0].toNumber();
     ret.sellCount = orderCounts[1].toNumber();
     return ret;
@@ -343,63 +350,53 @@ async function getState() {
 
 async function getBuyTokenOrder(i) {
     const order = parseOrder(await exchange.buyTokenOrders(i));
+    order.id = i;
     order.weiAmount = order.amount;
     order.tokenAmount = 0;
-    order.index = i;
     order.orderType = TOKEN_BUY;
     return order;
 }
 
 async function getSellTokenOrder(i) {
     const order = parseOrder(await exchange.sellTokenOrders(i));
+    order.id = i;
     order.weiAmount = 0;
     order.tokenAmount = order.amount;
-    order.index = i;
     order.orderType = TOKEN_SELL;
     return order;
 }
 
 function parseOrder(order) {
-    const ret = {
-        id: order[0].toNumber(),
+    return {
+        index: order[0],
         maker: order[1],
         addedTime: order[2].toNumber(),
         price: order[3].toNumber(),
         amount: order[4]
     };
-    return ret;
 }
 
-async function getOrders(offset) {
-    const result = await exchange.getOrders(offset);
-    // result format: [maker] [id, addedTime, price, tokenAmount, weiAmount]
-    return result[0].reduce(
-        (res, order, idx) => {
-            if (order[2].toString() !== "0") {
-                const parsed = {
-                    index: order[0].toNumber(),
-                    id: order[1].toNumber(),
-                    addedTime: order[2],
-                    price: order[3].toNumber(),
-                    tokenAmount: order[4],
-                    weiAmount: order[5],
-                    maker: result[1][idx]
-                };
-                if (parsed.weiAmount.toString() !== "0") {
-                    parsed.amount = parsed.weiAmount;
-                    parsed.orderType = TOKEN_BUY;
-                    res.buyOrders.push(parsed);
-                } else {
-                    parsed.amount = parsed.tokenAmount;
-                    parsed.orderType = TOKEN_SELL;
-                    res.sellOrders.push(parsed);
-                }
-            }
+function parseOrders(orderType, orders) {
+    return orders
+        .filter(order => order[4].toNumber() != 0)
+        .map(function(order) { return {
+                orderType: orderType,
+                id: order[0].toNumber(),
+                maker: "0x" + order[1].toString(16),
+                addedTime: order[2].toNumber(),
+                price: order[3].toNumber(),
+                amount: order[4]
+            }});
+}
 
-            return res;
-        },
-        { buyOrders: [], sellOrders: [] }
-    );
+async function getActiveBuyOrders(offset) {
+    const result = await exchange.getActiveBuyOrders(offset);
+    return parseOrders(TOKEN_BUY, result);
+}
+
+async function getActiveSellOrders(offset) {
+    const result = await exchange.getActiveSellOrders(offset);
+    return parseOrders(TOKEN_SELL, result);
 }
 
 async function printOrderBook(_limit) {

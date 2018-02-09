@@ -26,7 +26,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
 
     function () public payable; // to accept ETH sent into reserve (from defaulted loan's collateral )
 
-    event TransferFeesChanged(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax);
+    event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
     event Transfer(address indexed from, address indexed to, uint amount);
     event AugmintTransfer(address indexed from, address indexed to, uint amount, string narrative, uint fee);
     event TokenIssued(uint amount);
@@ -38,13 +38,16 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function transferNoFee(address _to, uint256 _amount, string _narrative)
     external restrict("NoFeeTransferContracts");
 
-    function repayLoan(address loanManager, uint loanId) external;
+    function fundsReleased(uint releasedAmount) external; // only for whitelisted LockerContracts
 
-    function issueAndDisburse(address borrower, uint loanAmount, string narrative)
+    function repayLoan(address loanManager, uint loanId) external;
+    function loanCollected(uint repaymentAmount) external; // only for whitelisted LoanManagerContracts
+
+    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
     external restrict("LoanManagerContracts");
 
     function placeSellTokenOrderOnExchange(address exchange, uint price, uint tokenAmount)
-    external returns (uint sellTokenOrderIndex, uint sellTokenOrderId);
+    external returns (uint sellTokenOrderId);
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining);
     function transferFrom(address from, address to, uint value) public returns (bool);
