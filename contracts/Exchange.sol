@@ -67,20 +67,25 @@ contract Exchange is ExchangeInterface {
         Order storage order = buyTokenOrders[buyTokenId];
         require(order.maker == msg.sender);
 
-        msg.sender.transfer(order.amount);
-
-        CancelledOrder(buyTokenId, msg.sender, 0, order.amount);
+        uint amount = order.amount;
+        order.amount = 0;
         _removeBuyOrder(order);
+        msg.sender.transfer(amount);
+
+        CancelledOrder(buyTokenId, msg.sender, 0, amount);
     }
 
     function cancelSellTokenOrder(uint sellTokenId) external {
         Order storage order = sellTokenOrders[sellTokenId];
         require(order.maker == msg.sender);
 
-        augmintToken.transferNoFee(msg.sender, order.amount, "Sell token order cancelled");
-
-        CancelledOrder(sellTokenId, msg.sender, order.amount, 0);
+        uint amount = order.amount;
+        order.amount = 0;
         _removeSellOrder(order);
+
+        augmintToken.transferNoFee(msg.sender, amount, "Sell token order cancelled");
+
+        CancelledOrder(sellTokenId, msg.sender, amount, 0);
     }
 
     /* matches any two orders if the sell price >= buy price
