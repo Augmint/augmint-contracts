@@ -122,7 +122,17 @@ contract("Exchange matching tests", accounts => {
         await testHelper.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
     });
 
-    it("Should not match when rates = 0");
+    it("Should not match when rates = 0", async function() {
+        const buyOrder = { amount: web3.toWei(1.750401), maker: maker, price: 10710, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 5614113, maker: taker, price: 10263, orderType: TOKEN_SELL };
+
+        await exchangeTestHelper.newOrder(this, buyOrder);
+        await exchangeTestHelper.newOrder(this, sellOrder);
+
+        await rates.setRate("EUR", 0);
+        await testHelper.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
+    });
+
     it("should match multiple orders"); // ensure edge cases of passing the same order twice
     it("matchMultipleOrders should match as many orders as fits into gas provided");
     it("matchMultipleOrders should stop if one is non-matching");

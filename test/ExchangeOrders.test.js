@@ -258,5 +258,12 @@ contract("Exchange orders tests", accounts => {
         await Promise.all(orderQueries);
     });
 
-    it("should not place orders when rate == 0");
+    it("should not place orders when rate == 0", async function() {
+        await rates.setRate("EUR", 0);
+        const buyOrder = { amount: web3.toWei(1.750401), maker: accounts[1], price: 10710, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 5614113, maker: accounts[2], price: 10263, orderType: TOKEN_SELL };
+
+        await testHelper.expectThrow(exchangeTestHelper.newOrder(this, buyOrder));
+        await testHelper.expectThrow(exchangeTestHelper.newOrder(this, sellOrder));
+    });
 });

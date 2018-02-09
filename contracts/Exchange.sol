@@ -197,6 +197,7 @@ contract Exchange is ExchangeInterface {
         require(price > 0);
         require(tokenAmount > 0);
         require(tokenAmount >= minOrderAmount);
+        require(rates.convertToWei(augmintToken.peggedSymbol(), tokenAmount) > 0);
 
         orderId = sellTokenOrders.push(Order(activeSellOrders.length, maker, now, price, tokenAmount)) - 1;
         activeSellOrders.push(orderId);
