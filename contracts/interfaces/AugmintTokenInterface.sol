@@ -47,7 +47,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     external restrict("LoanManagerContracts");
 
     function placeSellTokenOrderOnExchange(address exchange, uint price, uint tokenAmount)
-    external returns (uint sellTokenOrderIndex, uint sellTokenOrderId);
+    external returns (uint sellTokenOrderId);
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining);
     function transferFrom(address from, address to, uint value) public returns (bool);
