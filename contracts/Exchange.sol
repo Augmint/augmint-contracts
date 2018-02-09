@@ -142,9 +142,9 @@ contract Exchange is ExchangeInterface {
         return buyTokenOrders[buyTokenId].price >= sellTokenOrders[sellTokenId].price;
     }
 
-    /* internal fill function, called by matchOrders and matchMultipleOrders.
+    /* fill function, called by matchOrders and matchMultipleOrders.
         NB: it doesn't check the match, calling function must do it */
-    function _fillOrder(uint buyTokenId, uint sellTokenId) internal {
+    function _fillOrder(uint buyTokenId, uint sellTokenId) private {
         Order storage buyTokenOrder = buyTokenOrders[buyTokenId];
         Order storage sellTokenOrder = sellTokenOrders[sellTokenId];
 
@@ -181,7 +181,7 @@ contract Exchange is ExchangeInterface {
     }
 
     // return par if it's between par otherwise the price which is closer to par
-    function getMatchPrice(uint buyPrice, uint sellPrice) internal pure returns(uint price) {
+    function getMatchPrice(uint buyPrice, uint sellPrice) private pure returns(uint price) {
         if (sellPrice <= 10000 && buyPrice >= 10000) {
             price = 10000;
         } else {
