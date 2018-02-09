@@ -154,9 +154,7 @@ contract("Exchange random tests", accounts => {
         // convert & transpose matches to the format required by matchMultipleOrders
         matchArgs = matches.reduce(
             (args, match) => (
-                args.buyTokenIds.push(match.buyTokenOrder.id),
-                args.sellTokenIds.push(match.sellTokenOrder.id),
-                args
+                args.buyTokenIds.push(match.buyTokenOrder.id), args.sellTokenIds.push(match.sellTokenOrder.id), args
             ),
             {
                 buyTokenIds: [],
@@ -164,10 +162,7 @@ contract("Exchange random tests", accounts => {
             }
         );
 
-        const tx = await exchange.matchMultipleOrders(
-            matchArgs.buyTokenIds,
-            matchArgs.sellTokenIds
-        );
+        const tx = await exchange.matchMultipleOrders(matchArgs.buyTokenIds, matchArgs.sellTokenIds);
         testHelper.logGasUse(this, tx, "matchMultipleOrders");
 
         //await exchangeTestHelper.printOrderBook(10);
@@ -182,15 +177,15 @@ contract("Exchange random tests", accounts => {
     it("should cancel all orders", async function() {
         const snapshotId = await testHelper.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
-        const stateBefore = await exchangeTestHelper.getState();
+        //const stateBefore = await exchangeTestHelper.getState();
 
         const buys = await exchangeTestHelper.getActiveBuyOrders(0);
-        for (var i = 0; i < buys.length; i++) {
+        for (let i = 0; i < buys.length; i++) {
             await exchangeTestHelper.cancelOrder(this, buys[i]);
         }
 
         const sells = await exchangeTestHelper.getActiveSellOrders(0);
-        for (var i = 0; i < sells.length; i++) {
+        for (let i = 0; i < sells.length; i++) {
             await exchangeTestHelper.cancelOrder(this, sells[i]);
         }
 
