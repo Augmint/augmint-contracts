@@ -89,24 +89,20 @@ contract Exchange is ExchangeInterface {
         reverts if any of the orders been removed
     */
     function matchOrders(uint buyTokenId, uint sellTokenId) external {
-        require(isValidMatch(buyTokenId, sellTokenId));
         _fillOrder(buyTokenId, sellTokenId);
     }
 
     /*  matches as many orders as possible from the passed orders
-        Runs as long as gas avialable for the call
-        Returns the number of orders matched
+        Runs as long as gas is available for the call.
         Stops if any match is invalid (case when any of the orders removed after client generated the match list sent)
-        Reverts if sizes of arrays passed shorter than passed buyTokenIndexes.
-
-        FIXME: finish this func */
-    function matchMultipleOrders(uint[] buyTokenIds, uint[] sellTokenIds) external returns(uint count) {
-        for (uint i = 0; i < buyTokenIds.length && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
-            if (!isValidMatch(buyTokenIds[i], sellTokenIds[i])) { break; }
+    */
+    function matchMultipleOrders(uint[] buyTokenIds, uint[] sellTokenIds) external returns(uint matchCount) {
+        uint len = buyTokenIds.length;
+        require(len == sellTokenIds.length);
+        for (uint i = 0; i < len && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
             _fillOrder(buyTokenIds[i], sellTokenIds[i]);
-            count++;
+            matchCount++;
         }
-        return count;
     }
 
     /* only allowed for Monetary Board. */
@@ -137,16 +133,11 @@ contract Exchange is ExchangeInterface {
         }
     }
 
-    function isValidMatch(uint buyTokenId, uint sellTokenId)
-    public view returns (bool) {
-        return buyTokenOrders[buyTokenId].price >= sellTokenOrders[sellTokenId].price;
-    }
-
-    /* fill function, called by matchOrders and matchMultipleOrders.
-        NB: it doesn't check the match, calling function must do it */
     function _fillOrder(uint buyTokenId, uint sellTokenId) private {
         Order storage buyTokenOrder = buyTokenOrders[buyTokenId];
         Order storage sellTokenOrder = sellTokenOrders[sellTokenId];
+
+        require(buyTokenOrders[buyTokenId].price >= sellTokenOrders[sellTokenId].price);
 
         uint price = getMatchPrice(buyTokenOrder.price, sellTokenOrder.price); // use price which is closer to par
         uint sellTokenWeiAmount = rates.convertToWei(augmintToken.peggedSymbol(),
