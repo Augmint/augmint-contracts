@@ -114,8 +114,8 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
     );
     assert.equal(
         totalLoanAmountAfter.toString(),
-        totalLoanAmountBefore.add(loan.repaymentAmount).toString(),
-        "total loan amount should be increased by the repayment amount"
+        totalLoanAmountBefore.add(loan.loanAmount).toString(),
+        "total loan amount should be increased by the loan amount"
     );
     return loan;
 }
@@ -190,8 +190,8 @@ async function repayLoan(testInstance, loan) {
     );
     assert.equal(
         totalLoanAmountAfter.toString(),
-        totalLoanAmountBefore.sub(loan.repaymentAmount).toString(),
-        "total loan amount should be reduced by the repayment amount"
+        totalLoanAmountBefore.sub(loan.loanAmount).toString(),
+        "total loan amount should be reduced by the loan amount"
     );
 }
 
@@ -299,7 +299,7 @@ async function collectLoan(testInstance, loan, collector) {
     assert.equal(totalSupplyAfter.toString(), totalSupplyBefore.toString(), "totalSupply should be the same");
     assert.equal(
         totalLoanAmountAfter.toString(),
-        totalLoanAmountBefore.sub(loan.repaymentAmount).toString(),
+        totalLoanAmountBefore.sub(loan.loanAmount).toString(),
         "total loan amount should be reduced by the repayment amount"
     );
 }

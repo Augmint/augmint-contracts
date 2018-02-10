@@ -231,8 +231,8 @@ contract("Lock", accounts => {
 
         assert(
             totalLockAmountAfter.toString(),
-            totalLockAmountBefore.add(amountToLock + interestEarned).toString(),
-            "totalLockedAmount should be increased by locked amount + interest"
+            totalLockAmountBefore.add(amountToLock).toString(),
+            "totalLockedAmount should be increased by locked amount "
         );
 
         assert(finishingBalances[tokenHolder] === startingBalances[tokenHolder] - amountToLock);
@@ -314,8 +314,8 @@ contract("Lock", accounts => {
 
         assert.equal(
             totalLockAmountAfter.toString(),
-            totalLockAmountBefore.sub(amountToLock + interestEarned).toString(),
-            "totalLockedAmount should be decreased by released amount"
+            totalLockAmountBefore.sub(amountToLock).toString(),
+            "totalLockedAmount should be decreased by lock amount"
         );
 
         assert(finishingBalances[tokenHolder] === startingBalances[tokenHolder] + interestEarned);

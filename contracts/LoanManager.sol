@@ -105,7 +105,7 @@ contract LoanManager is LoanManagerInterface {
             require(now >= loans[loanId].maturity);
             loans[loanId].state = LoanState.Defaulted;
 
-            augmintToken.loanCollected(loans[loanId].repaymentAmount); // to maintain totalLoanAmount
+            augmintToken.loanCollected(loans[loanId].loanAmount); // to maintain totalLoanAmount
 
             // send ETH collateral to augmintToken reserve
             uint defaultingFeeInToken = loans[loanId].repaymentAmount.mul(loans[loanId].defaultingFeePt).div(1000000);

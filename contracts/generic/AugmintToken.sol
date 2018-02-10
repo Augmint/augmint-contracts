@@ -29,8 +29,8 @@ contract AugmintToken is AugmintTokenInterface {
 
     uint public issuedByMonetaryBoard; // supply issued manually by monetary board
 
-    uint public totalLoanAmount; // total amount of all loans with interest, in token
-    uint public totalLockedAmount; // total amount of all locks with interest, in token
+    uint public totalLoanAmount; // total amount of all loans without interest, in token
+    uint public totalLockedAmount; // total amount of all locks without premium, in token
     uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go BELOW with new lock
     uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go ABOVE with new loan
 
@@ -96,7 +96,7 @@ contract AugmintToken is AugmintTokenInterface {
         // NB: locker.createLock will validate lockProductId and amountToLock:
         Locker locker = Locker(lockerAddress);
         uint interestEarnedAmount = locker.createLock(lockProductId, msg.sender, amountToLock);
-        totalLockedAmount = totalLockedAmount.add(amountToLock).add(interestEarnedAmount);
+        totalLockedAmount = totalLockedAmount.add(amountToLock);
 
         _transfer(msg.sender, address(locker), amountToLock, "Funds locked", 0);
         _transfer(interestEarnedAccount, address(locker), interestEarnedAmount, "Accrue lock interest", 0);
@@ -104,16 +104,16 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     /* called by Locker.releaseFunds to maintain totalLockAmount */
-    function fundsReleased(uint releasedAmount) external {
+    function fundsReleased(uint amountLocked) external {
         require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
-        totalLockedAmount = totalLockedAmount.sub(releasedAmount);
+        totalLockedAmount = totalLockedAmount.sub(amountLocked);
     }
 
     function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
     external restrict("LoanManagerContracts") {
         require(loanAmount > 0);
         require(repaymentAmount > 0);
-        totalLoanAmount = totalLoanAmount.add(repaymentAmount);
+        totalLoanAmount = totalLoanAmount.add(loanAmount);
         _issue(this, loanAmount);
         _transfer(this, borrower, loanAmount, narrative, 0);
     }
@@ -126,7 +126,7 @@ contract AugmintToken is AugmintTokenInterface {
         var (borrower, , , repaymentAmount , loanAmount, interestAmount, ) = loanManager.loans(loanId);
         require(borrower == msg.sender);
 
-        totalLoanAmount = totalLoanAmount.sub(repaymentAmount);
+        totalLoanAmount = totalLoanAmount.sub(loanAmount);
         _transfer(msg.sender, this, repaymentAmount, "Loan repayment", 0);
         _burn(this, loanAmount);
         if (interestAmount > 0) {
@@ -138,9 +138,9 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     /* called by LoanManager.collect to maintain totalLoanAmount */
-    function loanCollected(uint repaymentAmount) external {
+    function loanCollected(uint loanAmount) external {
         require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted loanManagers
-        totalLoanAmount = totalLoanAmount.sub(repaymentAmount);
+        totalLoanAmount = totalLoanAmount.sub(loanAmount);
     }
 
     /* convenience function - alternative to Exchange.placeSellTokenOrder without approval required */
