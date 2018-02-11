@@ -11,23 +11,16 @@ control InterestEarnedAccount
 actor Releaser
 
 == Locking funds ==
-Depositor -> AugmintToken : transferAndCall\n(address: Locker, value: lockAmount, data: lockProductId)
+Depositor -> AugmintToken : transferAndNotify\n(address: Locker, value: lockAmount, data: lockProductId)
 
 activate AugmintToken
-    AugmintToken -> AugmintToken : _transfer(Depositor, Locker, lockAmount, "", fee: 0)
-    note over AugmintToken
-        0 transfer fee only if target contract is whitelisted
-    end note
+    AugmintToken -> AugmintToken : _transfer(Depositor, Locker, lockAmount, "")
     Depositor --> Locker : lockAmount transferred
-    AugmintToken -> Locker : tokenFallback\n(sender: AugmintToken, origin: Depositor, lockAmount, data: lockProductId)
+    AugmintToken -> Locker : transferNotification\n(sender: AugmintToken, origin: Depositor, lockAmount, data: lockProductId)
 deactivate AugmintToken
 
 activate Locker
     Locker -> Locker : checks & create new lock
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
-
     Locker -> MonetarySupervisor : lockFunds\n(lockAmount, interestAmount)\n//Q: function name?//
     note over MonetarySupervisor
         lockFunds is restricted to
@@ -46,9 +39,6 @@ activate InterestEarnedAccount
         MonetarySupervisor contract
     end note
     InterestEarnedAccount -> AugmintToken : transfer(Lender, interestAmount)
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
     InterestEarnedAccount --> Locker : lock interest transfered
     InterestEarnedAccount -> MonetarySupervisor : success (accrueInterest)
 deactivate InterestEarnedAccount
@@ -84,9 +74,6 @@ MonetarySupervisor -> Locker : success (releaseFundsHouseKeeping)
 
 activate Locker
     Locker -> AugmintToken : transfer(Depositor, lockAmount + interestAmount)
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
     Locker --> Depositor : lockAmount + interest transfered
 Locker -> Locker : emmit events
 deactivate Locker

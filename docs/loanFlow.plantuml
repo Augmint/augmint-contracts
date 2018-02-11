@@ -40,26 +40,18 @@ MonetarySupervisor -> Lender : success (issueAndDisburse)
 
 Lender -> Lender : emmit events
 
-
-
 == Repay loan  ==
-Borrower -> AugmintToken : transferAndCall\n(address: Lender, value: repaymentAmount, data: loanId)
+Borrower -> AugmintToken : transferAndNotify\n(address: Lender, value: repaymentAmount, data: loanId)
 
 activate AugmintToken
-    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "", fee: 0)
-    note over AugmintToken
-        0 transfer fee only if target contract is whitelisted
-    end note
+    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "")
     Borrower --> Lender : repaymentAmount transferred
-    AugmintToken -> Lender : tokenFallback\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
+    AugmintToken -> Lender : transferNotification\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
 deactivate AugmintToken
 
 activate Lender
     Lender -> Lender : checks + set loan status
     Lender -> AugmintToken : transfer(interestEarnedAcc, interestAmount)
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
     Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
     note over MonetarySupervisor
         repayAndBurn is restricted to

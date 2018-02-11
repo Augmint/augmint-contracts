@@ -8,14 +8,11 @@ control ExchangeContract
 actor Buyer
 actor MatchCaller
 
-== Token sell Token order ALT 1. (ERC667 transferAndCall, requires one TX only from seller) ==
-Seller -> AugmintToken : transferAndCall\n(address: exchangeAddress, tokenAmount, data: price)
-AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "", fee: 0)
-note over AugmintToken
-    0 transfer fee only if target contract is whitelisted
-end note
+== Token sell Token order ALT 1. - using transferAndNotify, requires one TX only from seller ==
+Seller -> AugmintToken : transferAndNotify\n(address: exchangeAddress, tokenAmount, data: price)
+AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "")
 Seller --> ExchangeContract : tokens to sell transfered
-AugmintToken -> ExchangeContract : tokenFallback\n(sender: augmintToken, origin: Seller, amount, data: price)
+AugmintToken -> ExchangeContract : transferNotification\n(sender: augmintToken, origin: Seller, amount, data: price)
 ExchangeContract -> ExchangeContract : check & save order
 
 == Token Buy Order  ==
@@ -27,25 +24,16 @@ Buyer -> ExchangeContract : takeSellOrder(orderId, {ethAMount});
 ExchangeContract -> ExchangeContract : fill/partially fill order
 ExchangeContract -> Seller : Seller.send( ethValue - tradeFee )
 ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amountSold)
-note over AugmintToken
-    0 transfer fee (only for whitelisted sender contracts)
-end note
 ExchangeContract --> Buyer : amountSold transferred
 
-== Take Buy Order Alt 1. - ERC667 transferAndCall requires one TX only ==
-Seller -> AugmintToken : transferAndCall\n(address: exchangeAddress, tokenAmount, data: orderId)
-AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "", fee: 0)
-note over AugmintToken
-    0 transfer fee only if target contract is whitelisted
-end note
+== Take Buy Order Alt 1. - using transferAndNotify, requires one TX only ==
+Seller -> AugmintToken : transferAndNotify\n(address: exchangeAddress, tokenAmount, data: orderId)
+AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "")
 Seller --> ExchangeContract : tokens to sell transfered
-AugmintToken -> ExchangeContract : tokenFallback\n(sender: augmintToken, origin: Seller, amount, data: orderId)
+AugmintToken -> ExchangeContract : transferNotification\n(sender: augmintToken, origin: Seller, amount, data: orderId)
 ExchangeContract -> ExchangeContract : fill/partially fill order
 ExchangeContract -> Seller : Seller.send( ethValue - tradeFee )
 ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amountSold)
-note over AugmintToken
-    0 transfer fee (only for whitelisted sender contracts)
-end note
 ExchangeContract --> Buyer : amountSold transferred
 
 == Order matching  ==
@@ -58,9 +46,6 @@ loop on each match, as many times as it fits to gas provided to tx call
     ExchangeContract -> ExchangeContract : fill/partially fill order
     ExchangeContract -> Seller : Seller.send( ethValue - tradeFee - matchReward )
     ExchangeContract -> AugmintToken : transfer\n(to: Buyer, amountSold)
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
     ExchangeContract --> Buyer : amountSold transferred
 end
 ExchangeContract -> ExchangeContract : feesAccount.send(sum tradeFee - sum matchReward)\n//fees in ETH//
@@ -87,13 +72,10 @@ end note
 Seller -> AugmintToken : Tx1: approve(ExchangeContract, amount)
 Seller -> ExchangeContract : Tx2: placeSellOrder(amount, price)
 ExchangeContract -> AugmintToken : transferFrom\n(from: msg.sender, to: ExchangeContract, amount)
-note over AugmintToken
-    0 transfer fee (only for whitelisted sender contracts)
-end note
 Seller --> ExchangeContract : tokens to sell transfered
 ExchangeContract -> ExchangeContract : save order
 
-== Take Buy Order Alt 2. - standard ERC20 calls, requires two TXs (todo) ==
+== Take Buy Order Alt 2. - standard ERC20 calls, requires two TXs ==
 note over AugmintToken, ExchangeContract
     Will not be implemented for pilot
 end note
