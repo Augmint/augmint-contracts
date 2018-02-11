@@ -50,7 +50,7 @@ contract Exchange is ExchangeInterface {
 
     /* this function requires previous approval to transfer tokens */
     function placeSellTokenOrder(uint price, uint tokenAmount) external returns (uint orderId) {
-        augmintToken.transferFromNoFee(msg.sender, this, tokenAmount, "Sell token order placed");
+        augmintToken.transferFromWithNarrative(msg.sender, this, tokenAmount, "Sell token order placed");
         return _placeSellTokenOrder(msg.sender, price, tokenAmount);
     }
 
@@ -82,7 +82,7 @@ contract Exchange is ExchangeInterface {
         order.amount = 0;
         _removeSellOrder(order);
 
-        augmintToken.transferNoFee(msg.sender, amount, "Sell token order cancelled");
+        augmintToken.transferWithNarrative(msg.sender, amount, "Sell token order cancelled");
 
         CancelledOrder(sellTokenId, msg.sender, amount, 0);
     }
@@ -168,7 +168,7 @@ contract Exchange is ExchangeInterface {
         }
 
         sellTokenOrder.maker.transfer(tradedWeiAmount);
-        augmintToken.transferNoFee(buyTokenOrder.maker, tradedTokenAmount, "Buy token order fill");
+        augmintToken.transferWithNarrative(buyTokenOrder.maker, tradedTokenAmount, "Buy token order fill");
 
         OrderFill(buyTokenOrder.maker, sellTokenOrder.maker, buyTokenId,
             sellTokenId, price, tradedWeiAmount, tradedTokenAmount);

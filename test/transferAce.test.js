@@ -7,20 +7,24 @@ contract("Transfer ACE tests", accounts => {
     before(async function() {
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         await tokenAce.issue(1000000000);
-        await Promise.all([
-            await tokenAce.withdrawTokens(accounts[0], 1000000000),
-            (minFee = await tokenAce.transferFeeMin()),
-            (maxFee = await tokenAce.transferFeeMax()),
-            (feePt = await tokenAce.transferFeePt())
+        [minFee, maxFee, feePt, ,] = await Promise.all([
+            tokenAce.transferFeeMin(),
+            tokenAce.transferFeeMax(),
+            tokenAce.transferFeePt(),
+            tokenAce.withdrawTokens(accounts[0], 500000000),
+            tokenAce.withdrawTokens(accounts[1], 500000000)
         ]);
+        // minFee = _minFee;
+        // maxFee = _maxFee;
+        // feePt = _feePt;
         minFeeAmount = minFee.div(feePt).mul(1000000);
         maxFeeAmount = maxFee.div(feePt).mul(1000000);
     });
 
     it("Should be able to transfer ACE between accounts (without narrative, min fee)", async function() {
         await tokenAceTestHelper.transferTest(this, {
-            from: accounts[0],
-            to: accounts[1],
+            from: accounts[1],
+            to: accounts[2],
             amount: minFeeAmount.sub(10),
             narrative: ""
         });
@@ -28,8 +32,8 @@ contract("Transfer ACE tests", accounts => {
 
     it("Should be able to transfer ACE between accounts (with narrative, max fee)", async function() {
         await tokenAceTestHelper.transferTest(this, {
-            from: accounts[0],
-            to: accounts[1],
+            from: accounts[1],
+            to: accounts[2],
             amount: maxFeeAmount.add(10),
             narrative: "test narrative"
         });
@@ -37,8 +41,8 @@ contract("Transfer ACE tests", accounts => {
 
     it("transfer fee % should deducted when fee % is between min and max fee", async function() {
         await tokenAceTestHelper.transferTest(this, {
-            from: accounts[0],
-            to: accounts[1],
+            from: accounts[1],
+            to: accounts[2],
             amount: maxFeeAmount.sub(10),
             narrative: ""
         });
@@ -46,8 +50,8 @@ contract("Transfer ACE tests", accounts => {
 
     it("Should be able to transfer 0 amount without narrative", async function() {
         await tokenAceTestHelper.transferTest(this, {
-            from: accounts[0],
-            to: accounts[1],
+            from: accounts[1],
+            to: accounts[2],
             amount: 0,
             narrative: ""
         });
@@ -55,8 +59,8 @@ contract("Transfer ACE tests", accounts => {
 
     it("Should be able to transfer 0 with narrative", async function() {
         await tokenAceTestHelper.transferTest(this, {
-            from: accounts[0],
-            to: accounts[1],
+            from: accounts[1],
+            to: accounts[2],
             amount: 0,
             narrative: "test narrative"
         });
@@ -72,8 +76,8 @@ contract("Transfer ACE tests", accounts => {
 
     it("Shouldn't be able to transfer ACE between the same accounts", async function() {
         await testHelper.expectThrow(
-            tokenAce.transfer(accounts[0], 20000, {
-                from: accounts[0]
+            tokenAce.transfer(accounts[1], 20000, {
+                from: accounts[1]
             })
         );
     });
@@ -81,42 +85,28 @@ contract("Transfer ACE tests", accounts => {
     it("Shouldn't be able to transfer to 0x0", async function() {
         await testHelper.expectThrow(
             tokenAce.transfer("0x0", 20000, {
-                from: accounts[0]
+                from: accounts[1]
             })
         );
     });
 
-    it("transferNoFee", async function() {
+    it("should have zero fee if 'to' is NoFeeTransferContracts", async function() {
         await tokenAceTestHelper.transferTest(this, {
             from: accounts[0],
             to: accounts[1],
             amount: 10000,
-            narrative: "transferNofee test",
+            narrative: "",
             fee: 0
         });
     });
 
-    it("transferNoFee to 0x should fail", async function() {
-        const amount = 10000;
-        await testHelper.expectThrow(
-            tokenAce.transferNoFee(accounts[0], amount, "transferNoFee to 0x0 should fail", {
-                from: accounts[0],
-                to: accounts[1],
-                amount: amount
-            })
-        );
-    });
-
-    it("transferNoFee only from allowed account", async function() {
-        const amount = 10000;
-        const fromAcc = accounts[1];
-        await tokenAce.transfer(fromAcc, amount + maxFee.toNumber(), { from: accounts[0] });
-        await testHelper.expectThrow(
-            tokenAce.transferNoFee(accounts[2], amount, "transferNo fee from unauthorised account should fail", {
-                from: fromAcc,
-                to: accounts[2],
-                amount: amount
-            })
-        );
+    it("should have zero fee if 'from' is NoFeeTransferContracts", async function() {
+        await tokenAceTestHelper.transferTest(this, {
+            from: accounts[0],
+            to: accounts[1],
+            amount: 10000,
+            narrative: "transfer 0 test",
+            fee: 0
+        });
     });
 });

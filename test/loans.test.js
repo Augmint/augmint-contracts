@@ -3,22 +3,36 @@ const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
 const ratesTestHelper = require("./helpers/ratesTestHelper.js");
 const testHelper = require("./helpers/testHelper.js");
 
-let tokenAce, loanManager, rates, products;
+let tokenAce, loanManager, rates;
+let products = {};
 
 contract("ACE Loans tests", accounts => {
     before(async function() {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        rates = await ratesTestHelper.newRatesMock("EUR", 9980000);
-        loanManager = await loanTestHelper.newLoanManagerMock(tokenAce, rates);
-        await tokenAce.issue(1000000000);
-        await tokenAce.withdrawTokens(accounts[0], 1000000000);
-        products = {
-            disabledProduct: await loanTestHelper.getProductInfo(4),
-            defaultingNoLeftOver: await loanTestHelper.getProductInfo(3),
-            defaulting: await loanTestHelper.getProductInfo(2),
-            repaying: await loanTestHelper.getProductInfo(1),
-            notDue: await loanTestHelper.getProductInfo(0)
-        };
+        [tokenAce, rates] = await Promise.all([
+            tokenAceTestHelper.newTokenAceMock(),
+            ratesTestHelper.newRatesMock("EUR", 9980000)
+        ]);
+
+        [loanManager] = await Promise.all([
+            loanTestHelper.newLoanManagerMock(tokenAce, rates),
+            tokenAce.issue(1000000000)
+        ]);
+
+        [
+            products.disabledProduct,
+            products.defaultingNoLeftOver,
+            products.defaulting,
+            products.repaying,
+            products.notDue,
+            ,
+        ] = await Promise.all([
+            loanTestHelper.getProductInfo(4),
+            loanTestHelper.getProductInfo(3),
+            loanTestHelper.getProductInfo(2),
+            loanTestHelper.getProductInfo(1),
+            loanTestHelper.getProductInfo(0),
+            tokenAce.withdrawTokens(accounts[0], 1000000000)
+        ]);
 
         // For test debug:
         // for (const key of Object.keys(products)) {
@@ -55,7 +69,6 @@ contract("ACE Loans tests", accounts => {
         await tokenAce.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
         });
-
         await loanTestHelper.repayLoan(this, loan, true); // repaymant via AugmintToken.repayLoan convenience func
     });
 

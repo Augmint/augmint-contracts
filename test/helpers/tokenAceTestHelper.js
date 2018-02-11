@@ -48,7 +48,7 @@ async function newTokenAceMock(tokenOwner = web3.eth.accounts[0]) {
 
 async function transferTest(testInstance, expTransfer) {
     // if fee is provided than we are testing transferNoFee
-    if (typeof expTransfer.fee === "undefined") expTransfer.fee = await getTransferFee(expTransfer.amount);
+    if (typeof expTransfer.fee === "undefined") expTransfer.fee = await getTransferFee(expTransfer);
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
 
     const balBefore = await getAllBalances({
@@ -58,12 +58,7 @@ async function transferTest(testInstance, expTransfer) {
     });
 
     let tx, txName;
-    if (expTransfer.fee === 0) {
-        txName = "transferNoFee";
-        tx = await tokenAce.transferNoFee(expTransfer.to, expTransfer.amount, expTransfer.narrative, {
-            from: expTransfer.from
-        });
-    } else if (expTransfer.narrative === "") {
+    if (expTransfer.narrative === "") {
         txName = "transfer";
         tx = await tokenAce.transfer(expTransfer.to, expTransfer.amount, {
             from: expTransfer.from
@@ -106,12 +101,11 @@ async function approveTest(testInstance, expApprove) {
 
 async function transferFromTest(testInstance, expTransfer) {
     // if fee is provided than we are testing transferFromNoFee
-    let isNoFeeTest = typeof expTransfer.fee === "undefined" ? false : true;
     if (!expTransfer.to) {
         expTransfer.to = expTransfer.spender;
     }
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
-    expTransfer.fee = isNoFeeTest ? 0 : (await getTransferFee(expTransfer.amount)).toNumber();
+    expTransfer.fee = typeof expTransfer.fee === "undefined" ? await getTransferFee(expTransfer) : expTransfer.fee;
 
     const allowanceBefore = await tokenAce.allowance(expTransfer.from, expTransfer.spender);
     const balBefore = await getAllBalances({
@@ -122,18 +116,7 @@ async function transferFromTest(testInstance, expTransfer) {
     });
 
     let tx, txName;
-    if (isNoFeeTest) {
-        txName = "transferFromNoFee";
-        tx = await tokenAce.transferFromNoFee(
-            expTransfer.from,
-            expTransfer.to,
-            expTransfer.amount,
-            expTransfer.narrative,
-            {
-                from: expTransfer.spender
-            }
-        );
-    } else if (expTransfer.narrative === "") {
+    if (expTransfer.narrative === "") {
         txName = "transferFrom";
         tx = await tokenAce.transferFrom(expTransfer.from, expTransfer.to, expTransfer.amount, {
             from: expTransfer.spender
@@ -183,9 +166,17 @@ async function transferFromTest(testInstance, expTransfer) {
     });
 }
 
-async function getTransferFee(_amount) {
+async function getTransferFee(transfer) {
+    const [fromAllowed, toAllowed] = await Promise.all([
+        tokenAce.permissions(transfer.from, "NoFeeTransferContracts"),
+        tokenAce.permissions(transfer.from, "NoFeeTransferContracts")
+    ]);
+    if (fromAllowed || toAllowed) {
+        return 0;
+    }
+
     let feePt, feeMin, feeMax;
-    let amount = new BigNumber(_amount);
+    const amount = new BigNumber(transfer.amount);
 
     await Promise.all([
         (feePt = await tokenAce.transferFeePt()),
@@ -196,9 +187,9 @@ async function getTransferFee(_amount) {
         amount === 0
             ? 0
             : amount
-                  .mul(feePt)
-                  .div(1000000)
-                  .round(0, BigNumber.ROUND_DOWN);
+                .mul(feePt)
+                .div(1000000)
+                .round(0, BigNumber.ROUND_DOWN);
     if (fee < feeMin) {
         fee = feeMin;
     } else if (fee > feeMax) {

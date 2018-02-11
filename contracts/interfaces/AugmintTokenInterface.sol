@@ -33,10 +33,8 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     event TokenBurned(uint amount);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function transferWithNarrative(address _to, uint256 _amount, string _narrative) external;
 
-    function transferNoFee(address _to, uint256 _amount, string _narrative)
-    external restrict("NoFeeTransferContracts");
+    function transferWithNarrative(address to, uint256 amount, string narrative) external;
 
     function fundsReleased(uint releasedAmount) external; // only for whitelisted LockerContracts
 
@@ -49,18 +47,15 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function placeSellTokenOrderOnExchange(address exchange, uint price, uint tokenAmount)
     external returns (uint sellTokenOrderId);
 
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    function allowance(address owner, address spender) public view returns (uint256 remaining);
     function transferFrom(address from, address to, uint value) public returns (bool);
     function approve(address spender, uint value) public returns (bool);
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool);
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool);
+    function increaseApproval(address spender, uint addedValue) public returns (bool);
+    function decreaseApproval(address spender, uint subtractedValue) public returns (bool);
 
     function balanceOf(address who) public view returns (uint);
     function transfer(address to, uint value) public returns (bool); // solhint-disable-line no-simple-event-func-name
 
-    function transferFromNoFee(address _from, address _to, uint256 _amount, string _narrative)
-        public restrict("NoFeeTransferContracts");
-
-    function transferFromWithNarrative(address _from, address _to, uint256 _amount, string _narrative) public;
+    function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) public;
 
 }
