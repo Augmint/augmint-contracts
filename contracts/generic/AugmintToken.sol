@@ -14,64 +14,33 @@
 */
 pragma solidity 0.4.19;
 import "../interfaces/AugmintTokenInterface.sol";
-import "../interfaces/LoanManagerInterface.sol";
-import "../interfaces/ExchangeInterface.sol";
-import "../Locker.sol";
 
 
 contract AugmintToken is AugmintTokenInterface {
 
     address public feeAccount;
-    address public interestEarnedAccount;
     uint public transferFeePt; // in parts per million (ppm) , ie. 2,000 = 0.2%
     uint public transferFeeMin; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
     uint public transferFeeMax; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
 
-    uint public issuedByMonetaryBoard; // supply issued manually by monetary board
-
-    uint public totalLoanAmount; // total amount of all loans without interest, in token
-    uint public totalLockedAmount; // total amount of all locks without premium, in token
-    uint public loanToDepositLockLimit; // in ppm - don't allow new lock if ratio would go BELOW with new lock
-    uint public loanToDepositLoanLimit; // in ppm - don't allow new loan if ratio would go ABOVE with new loan
-
-    // Parameters Used to avoid system halt when there totalLoanAmount or totalLockedAmount is 0 or very low.
-    uint public lockNoLimitAllowance;   // in token - if totalLockAmount is below this then a new lock is allowed
-                                        // up to this amount even if it will bring the loanToDepositRatio BELOW
-                                        // loanToDepositLoanLimit
-                                        // (interest earned account balance still applies a limit on top of it)
-    uint public loanNoLimitAllowance;   // in token - if totalLoanAmount is below this then a new loan is allowed
-                                        // up this amount even if it will bring the loanToDepositRatio
-                                        // ABOVE loanToDepositLoanLimit
-
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
-    event LoanToDepositLimitsChanged(uint loanToDepositLockLimit, uint loanToDepositLoanLimit);
-
-    event LoanAndLockParamsChanged(uint loanToDepositLockLimit, uint loanToDepositLoanLimit,
-                                    uint lockNoLimitAllowance, uint loanNoLimitAllowance);
-
     function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
-        address _interestEarnedAccount, uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax,
-        uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit,
-        uint _lockNoLimitAllowance, uint _loanNoLimitAllowance) public {
+        uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax) public {
 
         require(_feeAccount != address(0));
-        require(_interestEarnedAccount != address(0));
         require(bytes(_name).length > 0);
         name = _name;
         symbol = _symbol;
         peggedSymbol = _peggedSymbol;
         decimals = _decimals;
+
         feeAccount = _feeAccount;
-        interestEarnedAccount = _interestEarnedAccount;
+
         transferFeePt = _transferFeePt;
         transferFeeMin = _transferFeeMin;
         transferFeeMax = _transferFeeMax;
-        loanToDepositLockLimit = _loanToDepositLockLimit;
-        loanToDepositLoanLimit = _loanToDepositLoanLimit;
-        lockNoLimitAllowance = _lockNoLimitAllowance;
-        loanNoLimitAllowance = _loanNoLimitAllowance;
     }
 
     function () public payable { // solhint-disable-line no-empty-blocks
@@ -79,81 +48,33 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     // Issue tokens to Reserve
-    function issue(uint amount) external restrict("MonetaryBoard") {
-        issuedByMonetaryBoard = issuedByMonetaryBoard.add(amount);
-        _issue(this, amount);
+    function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
+        _issue(to, amount);
     }
 
     // Burn tokens from Reserve
-    function burn(uint amount) external restrict("MonetaryBoard") {
-        issuedByMonetaryBoard = issuedByMonetaryBoard.sub(amount);
-        _burn(this, amount);
+    function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContract") {
+        _burn(from, amount);
     }
 
-    function lockFunds(address lockerAddress, uint lockProductId, uint amountToLock) external {
-        require(permissions[lockerAddress]["LockerContracts"]); // only whitelisted LockerContracts
+    /*  Can be used for contracts which require token to be transfered to have only 1 tx (instead of approve + call)
+        Eg. repay loan, lock funds, token sell order on exchange
+        Will revert if  targetContract is an address targetContract doesn't have transferNotification or fallback fx
+    */
+    function transferAndNotify(TokenReceiver target, uint amount, bytes data) external returns (bool success) {
+        _transfer(msg.sender, target, amount, "");
 
-        // NB: locker.createLock will validate lockProductId and amountToLock:
-        Locker locker = Locker(lockerAddress);
-        uint interestEarnedAmount = locker.createLock(lockProductId, msg.sender, amountToLock);
-        totalLockedAmount = totalLockedAmount.add(amountToLock);
+        target.transferNotification(msg.sender, amount, data);
 
-        _transfer(msg.sender, address(locker), amountToLock, "Funds locked");
-        _transfer(interestEarnedAccount, address(locker), interestEarnedAmount, "Accrue lock interest");
-
-    }
-
-    /* called by Locker.releaseFunds to maintain totalLockAmount */
-    function fundsReleased(uint amountLocked) external {
-        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
-        totalLockedAmount = totalLockedAmount.sub(amountLocked);
-    }
-
-    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
-    external restrict("LoanManagerContracts") {
-        require(loanAmount > 0);
-        require(repaymentAmount > 0);
-        totalLoanAmount = totalLoanAmount.add(loanAmount);
-        _issue(msg.sender, loanAmount);
-        _transfer(msg.sender, borrower, loanAmount, narrative);
-    }
-
-    /* Users must repay through AugmintToken.repayLoan()*/
-    function repayLoan(address _loanManager, uint loanId) external {
-        require(permissions[_loanManager]["LoanManagerContracts"]); // only whitelisted loanManagers
-        LoanManagerInterface loanManager = LoanManagerInterface(_loanManager);
-        // solhint-disable-next-line space-after-comma
-        var (borrower, , , repaymentAmount , loanAmount, interestAmount, ) = loanManager.loans(loanId);
-        require(borrower == msg.sender);
-
-        totalLoanAmount = totalLoanAmount.sub(loanAmount);
-        _transfer(msg.sender, _loanManager, repaymentAmount, "Loan repayment");
-        _burn(_loanManager, loanAmount);
-        if (interestAmount > 0) {
-            // transfer interestAmount to InterestEarnedAccount (internal transfer, no need for Transfer events)
-            balances[_loanManager] = balances[_loanManager].sub(interestAmount);
-            balances[interestEarnedAccount] = balances[interestEarnedAccount].add(interestAmount);
-        }
-        loanManager.releaseCollateral(loanId);
-    }
-
-    /* called by LoanManager.collect to maintain totalLoanAmount */
-    function loanCollected(uint loanAmount) external {
-        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted loanManagers
-        totalLoanAmount = totalLoanAmount.sub(loanAmount);
-    }
-
-    /* convenience function - alternative to Exchange.placeSellTokenOrder without approval required */
-    function placeSellTokenOrderOnExchange(address _exchange, uint price, uint tokenAmount)
-    external returns (uint sellTokenOrderId) {
-        require(permissions[_exchange]["ExchangeContracts"]); // only whitelisted exchanges
-        ExchangeInterface exchange = ExchangeInterface(_exchange);
-        _transfer(msg.sender, _exchange, tokenAmount, "Sell token order placed");
-        return exchange.placeSellTokenOrderTrusted(msg.sender, price, tokenAmount);
+        return true;
     }
 
     function transferWithNarrative(address to, uint256 amount, string narrative) external {
         _transfer(msg.sender, to, amount, narrative);
+    }
+
+    function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) external {
+        _transferFrom(from, to, amount, narrative);
     }
 
     function setTransferFees(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax)
@@ -164,21 +85,9 @@ contract AugmintToken is AugmintTokenInterface {
         TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
     }
 
-    function setLoanAndLockParams(uint _loanToDepositLockLimit, uint _loanToDepositLoanLimit,
-                                    uint _lockNoLimitAllowance, uint _loanNoLimitAllowance)
-    external restrict("MonetaryBoard") {
-        loanToDepositLockLimit = _loanToDepositLockLimit;
-        loanToDepositLoanLimit = _loanToDepositLoanLimit;
-        lockNoLimitAllowance = _lockNoLimitAllowance;
-        loanNoLimitAllowance = _loanNoLimitAllowance;
-        LoanAndLockParamsChanged(loanToDepositLockLimit, loanToDepositLoanLimit,
-                                    lockNoLimitAllowance, loanNoLimitAllowance);
-    }
-
     /* helper function for FrontEnd to reduce calls */
-    function getParams() external view returns(uint[7]) {
-        return [transferFeePt, transferFeeMin, transferFeeMax,
-                loanToDepositLockLimit, loanToDepositLoanLimit, lockNoLimitAllowance, loanNoLimitAllowance];
+    function getParams() external view returns(uint[3]) {
+        return [transferFeePt, transferFeeMin, transferFeeMax];
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
@@ -226,15 +135,6 @@ contract AugmintToken is AugmintTokenInterface {
     function transferFrom(address from, address to, uint256 amount) public returns (bool) {
         _transferFrom(from, to, amount, "");
         return true;
-    }
-
-    function transferFromWithNarrative(
-        address from,
-        address to,
-        uint256 amount,
-        string narrative
-    ) public {
-        _transferFrom(from, to, amount, narrative);
     }
 
     function _increaseApproval(address _approver, address _spender, uint _addedValue) internal returns (bool) {

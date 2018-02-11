@@ -24,9 +24,9 @@ contract LoanManager is LoanManagerInterface {
     event LoanCollected(uint indexed loanId, address indexed borrower, uint collectedCollateral,
         uint releasedCollateral, uint defaultingFee);
 
-    function LoanManager(address _augmintTokenAddress, address _ratesAddress) public {
-        augmintToken = AugmintTokenInterface(_augmintTokenAddress);
-        rates = Rates(_ratesAddress);
+    function LoanManager(AugmintTokenInterface _augmintToken, Rates _rates) public {
+        augmintToken = _augmintToken;
+        rates = _rates;
     }
 
     function addLoanProduct(uint _term, uint _discountRate, uint _collateralRatio, uint _minDisbursedAmount,
@@ -77,7 +77,8 @@ contract LoanManager is LoanManagerInterface {
         if (repaymentAmount > loanAmount) {
             interestAmount = repaymentAmount.sub(loanAmount);
         }
-        augmintToken.issueAndDisburse(msg.sender, loanAmount, repaymentAmount, "Loan disbursement");
+        /* FIXME: finish this! */
+        // augmintToken.issueAndDisburse(msg.sender, loanAmount, repaymentAmount, "Loan disbursement");
 
         NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount);
     }
@@ -105,7 +106,8 @@ contract LoanManager is LoanManagerInterface {
             require(now >= loans[loanId].maturity);
             loans[loanId].state = LoanState.Defaulted;
 
-            augmintToken.loanCollected(loans[loanId].loanAmount); // to maintain totalLoanAmount
+            /* FIXME: finish this! */
+            // augmintToken.loanCollected(loans[loanId].loanAmount); // to maintain totalLoanAmount
 
             // send ETH collateral to augmintToken reserve
             uint defaultingFeeInToken = loans[loanId].repaymentAmount.mul(loans[loanId].defaultingFeePt).div(1000000);

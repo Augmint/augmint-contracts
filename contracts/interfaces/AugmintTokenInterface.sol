@@ -10,6 +10,7 @@ pragma solidity 0.4.19;
 import "../generic/SafeMath.sol";
 import "../generic/Restricted.sol";
 import "./ERC20Interface.sol";
+import "./TokenReceiver.sol";
 
 
 contract AugmintTokenInterface is Restricted, ERC20Interface {
@@ -33,19 +34,13 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     event TokenBurned(uint amount);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    function issueTo(address to, uint amount) external restrict("MonetarySupervisorContracts");
+    function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContracts");
+
+    function transferAndNotify(TokenReceiver target, uint amount, bytes data) external returns (bool success);
 
     function transferWithNarrative(address to, uint256 amount, string narrative) external;
-
-    function fundsReleased(uint releasedAmount) external; // only for whitelisted LockerContracts
-
-    function repayLoan(address loanManager, uint loanId) external;
-    function loanCollected(uint repaymentAmount) external; // only for whitelisted LoanManagerContracts
-
-    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
-    external restrict("LoanManagerContracts");
-
-    function placeSellTokenOrderOnExchange(address exchange, uint price, uint tokenAmount)
-    external returns (uint sellTokenOrderId);
+    function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) external;
 
     function allowance(address owner, address spender) public view returns (uint256 remaining);
     function transferFrom(address from, address to, uint value) public returns (bool);
@@ -56,6 +51,5 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function balanceOf(address who) public view returns (uint);
     function transfer(address to, uint value) public returns (bool); // solhint-disable-line no-simple-event-func-name
 
-    function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) public;
 
 }

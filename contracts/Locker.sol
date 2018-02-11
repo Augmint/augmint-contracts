@@ -17,9 +17,10 @@ pragma solidity 0.4.19;
 import "./generic/Restricted.sol";
 import "./generic/SafeMath.sol";
 import "./interfaces/AugmintTokenInterface.sol";
+import "./interfaces/TokenReceiver.sol";
 
 
-contract Locker is Restricted {
+contract Locker is Restricted, TokenReceiver {
 
     using SafeMath for uint256;
 
@@ -57,10 +58,18 @@ contract Locker is Restricted {
     // per account locks (i.e. an id for a lock is a tuple (owner, index)):
     mapping(address => Lock[]) public locks;
 
-    function Locker(address augmintTokenAddress) public {
+    function Locker(AugmintTokenInterface _augmintToken) public {
 
-        augmintToken = AugmintTokenInterface(augmintTokenAddress);
+        augmintToken = _augmintToken;
 
+    }
+
+    event TrasnferNotiDebug(address from, uint256 amount, bytes data);
+
+    /* lock funds, called from AugmintToken's trasnferAndNotify to lock funds */
+    function transferNotification(address from, uint256 amount, bytes data) external {
+        require(msg.sender == address(augmintToken));
+        TrasnferNotiDebug(from, amount, data);
     }
 
     function addLockProduct(uint perTermInterest, uint durationInSecs, uint minimumLockAmount, bool isActive)
@@ -124,10 +133,7 @@ contract Locker is Restricted {
     }
 
     // NB: totalAmountLocked includes both the lock amount AND the interest
-    function createLock(uint lockProductId, address lockOwner, uint amountToLock) external returns (uint) {
-
-        // only the token can call this:
-        require(msg.sender == address(augmintToken));
+    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns (uint) {
 
         // NB: calculateInterestForLockProduct will validate the lock product and amountToLock:
         uint interestEarned = calculateInterestForLockProduct(lockProductId, amountToLock);
@@ -152,7 +158,8 @@ contract Locker is Restricted {
         require(lock.isActive && now >= lock.lockedUntil);
 
         lock.isActive = false;
-        augmintToken.fundsReleased(lock.amountLocked); // to maintain totalLockAmount
+        /* FIXME: finsih this!!! */
+        // augmintToken.fundsReleased(lock.amountLocked); // to maintain totalLockAmount
         augmintToken.transferWithNarrative(lockOwner, lock.amountLocked.add(lock.interestEarned),
                                                                                 "Funds released from lock");
 

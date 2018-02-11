@@ -54,11 +54,12 @@ Sequence diagrams about the planned:
     * Issue and burn ACD for new loans and on loan repayment
     * Convenience functions: getLoan, placeSellOrder (see [Loan flow](docs/loanFlow.png) and [Exchange flow](docs/exchangeFlow.png).)
     * Holds ETH and Augmint Token reserves
-* MonetarySupervisor.sol - not implemented yet (to be split out from AugmintToken)
+* [MonetarySupervisor.sol](./contracts/MonetarySupervisor.sol)
     * maintains system wide KPIs (eg totalLockAmount, totalLoanAmount)
     * holds system wide parameters/limits
     * enforces system wide limits
     * Send funds from reserve to exchange when intervening (not implemented yet)
+      NB: refactor to all contracts to use in progress.
 * [TokenAEur.sol](./contracts/TokenAEur.sol)
     * First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Crypto Euro aka A€ )
     * Sets standard token parameters (name, symbol, decimals, peggedSymbol etc.)
