@@ -165,14 +165,9 @@ async function getTransferFee(transfer) {
         return 0;
     }
 
-    let feePt, feeMin, feeMax;
+    const [feePt, feeMin, feeMax] = await tokenAce.getParams();
     const amount = new BigNumber(transfer.amount);
 
-    await Promise.all([
-        (feePt = await tokenAce.transferFeePt()),
-        (feeMax = await tokenAce.transferFeeMax()),
-        (feeMin = await tokenAce.transferFeeMin())
-    ]);
     let fee =
         amount === 0
             ? 0
