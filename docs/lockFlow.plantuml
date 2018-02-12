@@ -21,29 +21,29 @@ deactivate AugmintToken
 
 activate Locker
     Locker -> Locker : checks & create new lock
-    Locker -> MonetarySupervisor : lockFundsNotification\n(lockAmount, interestAmount)
+    Locker -> MonetarySupervisor : requestInterest\n(lockAmount, interestAmount)
     note over MonetarySupervisor
-        lockFundsNotification is restricted to
+        requestInterest is restricted to
         trusted Locker contract(s)
     end note
 deactivate Locker
 
 activate MonetarySupervisor
     MonetarySupervisor -> MonetarySupervisor : enforce limits + update KPIs
-    MonetarySupervisor -> InterestEarnedAccount : accrueInterest(Locker, interestAmount)
+    MonetarySupervisor -> InterestEarnedAccount : transferInterest(Locker, interestAmount)
 deactivate MonetarySupervisor
 
 activate InterestEarnedAccount
     note over InterestEarnedAccount
-        accrueInterest is restricted to
+        transferInterest is restricted to
         MonetarySupervisor contract
     end note
     InterestEarnedAccount -> AugmintToken : transfer(Locker, interestAmount)
     InterestEarnedAccount --> Locker : lock interest transfered
-    InterestEarnedAccount -> MonetarySupervisor : success (accrueInterest)
+    InterestEarnedAccount -> MonetarySupervisor : success (transferInterest)
 deactivate InterestEarnedAccount
 
-MonetarySupervisor -> Locker : success (lockFundsNotification)
+MonetarySupervisor -> Locker : success (requestInterest)
 
 activate Locker
     Locker -> Locker : emmit events
@@ -73,7 +73,7 @@ deactivate MonetarySupervisor
 MonetarySupervisor -> Locker : success (releaseFundsNotification)
 
 activate Locker
-    Locker -> AugmintToken : transfer(Depositor, lockAmount + interestAmount)
+    Locker -> AugmintToken : transferWithNarrative(Depositor, lockAmount + interestAmount, "Funds released from lock")
     Locker --> Depositor : lockAmount + interest transfered
 Locker -> Locker : emmit events
 deactivate Locker

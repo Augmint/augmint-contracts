@@ -14,12 +14,12 @@ Borrower -> Lender : newEthBackedLoan(productId, {value: ethToEscrow})\n//ETH co
 
 activate Lender
     Lender -> Lender : calculate loanAmount from colllateral sent\ncreate new loan
-    Lender -> MonetarySupervisor : issueAndDisburse\n(borrower, loanAmount, interestAmount, narrative)
+    Lender -> MonetarySupervisor : issueForLoan\n(borrower, loanAmount, interestAmount, narrative)
 deactivate Lender
 
 activate MonetarySupervisor
     note over MonetarySupervisor
-        issueAndDisburse is restricted to
+        issueForLoan is restricted to
         trusted Lender contract(s)
     end note
     MonetarySupervisor -> MonetarySupervisor : enforce limits + update KPIs
@@ -36,7 +36,7 @@ activate AugmintToken
     AugmintToken -> MonetarySupervisor : success (isssueTo)
 deactivate AugmintToken
 
-MonetarySupervisor -> Lender : success (issueAndDisburse)
+MonetarySupervisor -> Lender : success (issueForLoan)
 
 Lender -> Lender : emmit events
 
@@ -52,9 +52,9 @@ deactivate AugmintToken
 activate Lender
     Lender -> Lender : checks + set loan status
     Lender -> AugmintToken : transfer(interestEarnedAcc, interestAmount)
-    Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
+    Lender -> MonetarySupervisor : burnLoanRepayment\n(repaymentAmount, interestAmount)
     note over MonetarySupervisor
-        repayAndBurn is restricted to
+        burnLoanRepayment is restricted to
         trusted Lender contract(s)
     end note
 deactivate Lender
@@ -73,7 +73,7 @@ activate AugmintToken
     AugmintToken -> MonetarySupervisor : success (burnFrom)
 deactivate AugmintToken
 
-MonetarySupervisor -> Lender : success (repayAndBurn)
+MonetarySupervisor -> Lender : success (burnLoanRepayment)
 
 activate Lender
 Lender -> Borrower : borrower.send(collateral)
