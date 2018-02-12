@@ -1,22 +1,28 @@
+/* contract for tracking locked funds etc.
 
-// contract for tracking locked funds etc.
+ requirements
+  -> lock funds
+  -> unlock funds
+  -> index locks by address
 
-// requirements
-// -> lock funds
-// -> unlock funds
-// -> index locks by address
+ For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/lockFlow.png
 
-// to do/think about:
-// -> self-destruct function?
-// -> return only active loan products from getLoanProducts?
-// -> need to update token contract? probably not? a new token contract would imply a fresh deployment?
-// -> test locking small (<10) amounts - need a min lock amount in lockProducts
+ TODO:
+  - create  MonetarySupervisorInterface and use it instead of MonetarySupervisor
+  - monetarySupervisor setter?
+  - store locks in array so we can iterate over them
+
+ to do/think about:
+  -> self-destruct function?
+  -> return only active loan products from getLoanProducts?
+*/
 
 pragma solidity 0.4.19;
 
 import "./generic/Restricted.sol";
 import "./generic/SafeMath.sol";
 import "./interfaces/AugmintTokenInterface.sol";
+import "./MonetarySupervisor.sol";
 import "./interfaces/TokenReceiver.sol";
 
 
@@ -53,23 +59,17 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     AugmintTokenInterface public augmintToken;
+    MonetarySupervisor public monetarySupervisor;
 
     LockProduct[] public lockProducts;
     // per account locks (i.e. an id for a lock is a tuple (owner, index)):
     mapping(address => Lock[]) public locks;
 
-    function Locker(AugmintTokenInterface _augmintToken) public {
+    function Locker(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor) public {
 
         augmintToken = _augmintToken;
+        monetarySupervisor = _monetarySupervisor;
 
-    }
-
-    event TrasnferNotiDebug(address from, uint256 amount, bytes data);
-
-    /* lock funds, called from AugmintToken's trasnferAndNotify to lock funds */
-    function transferNotification(address from, uint256 amount, bytes data) external {
-        require(msg.sender == address(augmintToken));
-        TrasnferNotiDebug(from, amount, data);
     }
 
     function addLockProduct(uint perTermInterest, uint durationInSecs, uint minimumLockAmount, bool isActive)
@@ -87,6 +87,20 @@ contract Locker is Restricted, TokenReceiver {
         lockProducts[lockProductId].isActive = isActive;
         LockProductActiveChange(lockProductId, isActive);
 
+    }
+
+    function releaseFunds(address lockOwner, uint lockIndex) external {
+
+        Lock storage lock = locks[lockOwner][lockIndex];
+
+        require(lock.isActive && now >= lock.lockedUntil);
+
+        lock.isActive = false;
+        monetarySupervisor.releaseFundsNotification(lock.amountLocked);   // to maintain totalLockAmount
+        augmintToken.transferWithNarrative(lockOwner, lock.amountLocked.add(lock.interestEarned),
+                                                                                "Funds released from lock");
+
+        LockReleased(lockOwner, lockIndex);
     }
 
     function getLockProductCount() external view returns (uint) {
@@ -114,56 +128,6 @@ contract Locker is Restricted, TokenReceiver {
 
         return response;
 
-    }
-
-    // the flow for locking tokens is:
-    // 1) user calls token contract to lock tokens
-    // 2) token contract calls createLock, which creates the locks and returns the interestEarned
-    // 3) token contract transfers tokens from user and interestEarnedPool to Locker
-    function calculateInterestForLockProduct(uint lockProductId, uint amountToLock) public view returns (uint) {
-
-        LockProduct storage lockProduct = lockProducts[lockProductId];
-        require(lockProduct.isActive);
-        require(amountToLock >= lockProduct.minimumLockAmount);
-
-        uint interestEarned = amountToLock.mul(lockProduct.perTermInterest).div(1000000);
-
-        return interestEarned;
-
-    }
-
-    // NB: totalAmountLocked includes both the lock amount AND the interest
-    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns (uint) {
-
-        // NB: calculateInterestForLockProduct will validate the lock product and amountToLock:
-        uint interestEarned = calculateInterestForLockProduct(lockProductId, amountToLock);
-
-        LockProduct storage lockProduct = lockProducts[lockProductId];
-
-        uint lockedUntil = now.add(lockProduct.durationInSecs);
-        uint lockIndex = locks[lockOwner].push(Lock(amountToLock, interestEarned, lockedUntil,
-                                                    lockProduct.perTermInterest, lockProduct.durationInSecs, true)) - 1;
-
-        NewLock(lockOwner, lockIndex, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
-                    lockProduct.durationInSecs, true);
-
-        return interestEarned;
-
-    }
-
-    function releaseFunds(address lockOwner, uint lockIndex) external {
-
-        Lock storage lock = locks[lockOwner][lockIndex];
-
-        require(lock.isActive && now >= lock.lockedUntil);
-
-        lock.isActive = false;
-        /* FIXME: finsih this!!! */
-        // augmintToken.fundsReleased(lock.amountLocked); // to maintain totalLockAmount
-        augmintToken.transferWithNarrative(lockOwner, lock.amountLocked.add(lock.interestEarned),
-                                                                                "Funds released from lock");
-
-        LockReleased(lockOwner, lockIndex);
     }
 
     function getLockCountForAddress(address lockOwner) external view returns (uint) {
@@ -194,6 +158,54 @@ contract Locker is Restricted, TokenReceiver {
 
         return response;
 
+    }
+
+    /* lock funds, called from AugmintToken's trasnferAndNotify
+     the flow for locking tokens is:
+        1) user calls token contract's transferAndNotify lockProductId assed in data arg
+        2) transferAndNotify transfer tokens to thi Lock contract
+        3) transferAndNotify calls Lock.transferNotification with lockProductId
+    */
+    function transferNotification(address from, uint256 amountToLock, uint lockProductId) public {
+        require(msg.sender == address(augmintToken));
+        /* TODO: make data arg generic bytes
+            uint productId;
+            assembly { // solhint-disable-line no-inline-assembly
+                productId := mload(data)
+        } */
+        _createLock(lockProductId, from, amountToLock);
+    }
+
+    function calculateInterestForLockProduct(uint lockProductId, uint amountToLock) public view returns (uint) {
+
+        LockProduct storage lockProduct = lockProducts[lockProductId];
+        require(lockProduct.isActive);
+        require(amountToLock >= lockProduct.minimumLockAmount);
+
+        uint interestEarned = amountToLock.mul(lockProduct.perTermInterest).div(1000000);
+
+        return interestEarned;
+
+    }
+
+    // Internal function. assumes amountToLock is already transferred to this Lock contract
+    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns (uint) {
+
+        // NB: calculateInterestForLockProduct will validate the lock product and amountToLock:
+        uint interestEarned = calculateInterestForLockProduct(lockProductId, amountToLock);
+
+        LockProduct storage lockProduct = lockProducts[lockProductId];
+
+        uint lockedUntil = now.add(lockProduct.durationInSecs);
+        uint lockIndex = locks[lockOwner].push(Lock(amountToLock, interestEarned, lockedUntil,
+                                                    lockProduct.perTermInterest, lockProduct.durationInSecs, true)) - 1;
+
+        monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
+
+        NewLock(lockOwner, lockIndex, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
+                    lockProduct.durationInSecs, true);
+
+        return interestEarned;
     }
 
 }

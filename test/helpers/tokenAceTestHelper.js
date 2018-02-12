@@ -201,6 +201,13 @@ async function assertBalances(before, exp) {
     // get addresses from before arg
     for (const ac of Object.keys(exp)) {
         exp[ac].address = before[ac].address;
+        // if no eth or ace specified then assume we don't expect change
+        if (!exp[ac].eth) {
+            exp[ac].eth = before[ac].eth;
+        }
+        if (!exp[ac].ace) {
+            exp[ac].ace = before[ac].ace;
+        }
     }
     const newBal = await getAllBalances(exp);
 

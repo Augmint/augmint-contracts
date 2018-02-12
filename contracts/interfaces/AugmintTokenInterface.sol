@@ -37,7 +37,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContracts");
     function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContracts");
 
-    function transferAndNotify(TokenReceiver target, uint amount, bytes data) external returns (bool success);
+    function transferAndNotify(TokenReceiver target, uint amount, uint data) external returns (bool success);
 
     function transferWithNarrative(address to, uint256 amount, string narrative) external;
     function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) external;

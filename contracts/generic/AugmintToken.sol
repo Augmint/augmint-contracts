@@ -60,8 +60,9 @@ contract AugmintToken is AugmintTokenInterface {
     /*  Can be used for contracts which require token to be transfered to have only 1 tx (instead of approve + call)
         Eg. repay loan, lock funds, token sell order on exchange
         Will revert if  targetContract is an address targetContract doesn't have transferNotification or fallback fx
+        TODO: make data param generic bytes (see receiver code attempt in Locker.transferNotification)
     */
-    function transferAndNotify(TokenReceiver target, uint amount, bytes data) external returns (bool success) {
+    function transferAndNotify(TokenReceiver target, uint amount, uint data) external returns (bool success) {
         _transfer(msg.sender, target, amount, "");
 
         target.transferNotification(msg.sender, amount, data);

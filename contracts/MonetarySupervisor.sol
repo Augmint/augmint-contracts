@@ -61,6 +61,21 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
         augmintToken.burnFrom(augmintToken, amount);
     }
 
+    // Locker requesting interest when locking funds
+    function requestInterest(uint amountToLock, uint interestAmount) external {
+        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
+        /* TODO: enforce LTD limits (ltdDifferenceLimit & allowedLtdDifferenceAmount) */
+
+        totalLockedAmount = totalLockedAmount.add(amountToLock);
+        interestEarnedAccount.transferInterest(augmintToken, msg.sender, interestAmount); // transfer interest to Locker
+    }
+
+    // Locker notifying when releasing funds to update KPIs
+    function releaseFundsNotification(uint lockedAmount) external {
+        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
+        totalLockedAmount = totalLockedAmount.sub(lockedAmount);
+    }
+
     function setParams(uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount)
     external restrict("MonetaryBoard") {
         ltdDifferenceLimit = _ltdDifferenceLimit;

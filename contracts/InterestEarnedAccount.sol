@@ -8,7 +8,7 @@ import "./interfaces/AugmintTokenInterface.sol";
 
 contract InterestEarnedAccount is SystemAccount {
 
-    function accrueInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)
+    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)
     external restrict("MonetarySupervisorContract") {
         augmintToken.transfer(locker, interestAmount);
     }

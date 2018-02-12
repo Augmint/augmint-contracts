@@ -100,7 +100,7 @@ contract("TokenAce tests", accounts => {
         await testHelper.expectThrow(monetarySupervisor.burn(1000, { from: accounts[1] }));
     });
 
-    it("should be possible to set loan and lock parameters", async function() {
+    it("should be possible to set parameters", async function() {
         const params = { ltdDifferenceLimit: 12345, allowedLtdDifferenceAmount: 1234 };
         const tx = await monetarySupervisor.setParams(params.ltdDifferenceLimit, params.allowedLtdDifferenceAmount, {
             from: accounts[0]
@@ -121,11 +121,11 @@ contract("TokenAce tests", accounts => {
         assert.equal(allowedLtdDifferenceAmount, params.allowedLtdDifferenceAmount);
     });
 
-    it("only allowed should set loanToDeposit limits ", async function() {
+    it("only allowed should set params ", async function() {
         await testHelper.expectThrow(monetarySupervisor.setParams(10000, 10000, { from: accounts[1] }));
     });
 
-    it("all params should be accesible via getParams", async function() {
+    it("all params should be accessible via getParams", async function() {
         const paramsOneByOne = await Promise.all([
             monetarySupervisor.ltdDifferenceLimit(),
             monetarySupervisor.allowedLtdDifferenceAmount()
