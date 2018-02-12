@@ -1,12 +1,14 @@
 const tokenAceTestHelper = new require("./helpers/tokenAceTestHelper.js");
+const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const testHelper = new require("./helpers/testHelper.js");
 
-let tokenAce, minFee, maxFee, feePt, minFeeAmount, maxFeeAmount;
+let tokenAce, monetarySupervisor, minFee, maxFee, feePt, minFeeAmount, maxFeeAmount;
 
 contract("Transfer ACE tests", accounts => {
     before(async function() {
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        await tokenAce.issue(1000000000);
+        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        await monetarySupervisor.issue(1000000000);
         [minFee, maxFee, feePt, ,] = await Promise.all([
             tokenAce.transferFeeMin(),
             tokenAce.transferFeeMax(),

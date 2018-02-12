@@ -1,15 +1,17 @@
 const testHelper = new require("./helpers/testHelper.js");
 const tokenAceTestHelper = new require("./helpers/tokenAceTestHelper.js");
+const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const ratesTestHelper = new require("./helpers/ratesTestHelper.js");
 const loanTestHelper = new require("./helpers/loanTestHelper.js");
 
-let loanManager, tokenAce, rates;
+let loanManager, tokenAce, monetarySupervisor, rates;
 
 contract("loanManager  tests", accounts => {
     before(async function() {
         rates = await ratesTestHelper.newRatesMock();
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        loanManager = await loanTestHelper.newLoanManagerMock(tokenAce, rates);
+        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        loanManager = await loanTestHelper.newLoanManagerMock(tokenAce, monetarySupervisor, rates);
     });
 
     it("Should add new product", async function() {

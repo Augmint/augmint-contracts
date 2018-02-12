@@ -1,12 +1,14 @@
 const Locker = artifacts.require("Locker");
 
 const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
+const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const testHelpers = require("./helpers/testHelper.js");
 
 let tokenHolder = "";
 let interestEarnedAddress = "";
 let lockerInstance = null;
 let tokenAceInstance = null;
+let monetarySupervisor = null;
 
 async function getBalances(tokenInstance, accounts) {
     const balances = {};
@@ -26,16 +28,17 @@ contract("Lock", accounts => {
         tokenHolder = accounts[1];
 
         tokenAceInstance = await tokenAceTestHelper.newTokenAceMock(superUserAddress);
+        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAceInstance);
         lockerInstance = await Locker.new(tokenAceInstance.address);
 
-        interestEarnedAddress = await tokenAceInstance.interestEarnedAccount();
+        interestEarnedAddress = await monetarySupervisor.interestEarnedAccount();
 
         await tokenAceInstance.grantMultiplePermissions(lockerInstance.address, [
             "LockerContracts",
             "NoFeeTransferContracts"
         ]);
 
-        await tokenAceInstance.issue(50000);
+        await monetarySupervisor.issue(50000);
         await tokenAceInstance.withdrawTokens(tokenHolder, 40000);
         await tokenAceInstance.withdrawTokens(interestEarnedAddress, 10000);
     });
@@ -177,7 +180,7 @@ contract("Lock", accounts => {
     it("should allow tokens to be locked", async function() {
         const [startingBalances, totalLockAmountBefore] = await Promise.all([
             getBalances(tokenAceInstance, [tokenHolder, lockerInstance.address, interestEarnedAddress]),
-            tokenAceInstance.totalLockedAmount()
+            monetarySupervisor.totalLockedAmount()
         ]);
         const amountToLock = 1000;
 

@@ -1,4 +1,5 @@
 const testHelper = new require("./helpers/testHelper.js");
+const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 const ratesTestHelper = new require("./helpers/ratesTestHelper.js");
@@ -7,7 +8,7 @@ const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 let snapshotId;
-let rates, tokenAce, exchange;
+let rates, monetarySupervisor, tokenAce, exchange;
 const marketEurEth = 5000000;
 const maker = web3.eth.accounts[1];
 const taker = web3.eth.accounts[2];
@@ -15,9 +16,11 @@ const taker = web3.eth.accounts[2];
 contract("Exchange matching tests", accounts => {
     before(async function() {
         rates = await ratesTestHelper.newRatesMock("EUR", marketEurEth);
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
 
-        await tokenAce.issue(1000000000);
+        tokenAce = await tokenAceTestHelper.newTokenAceMock();
+        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+
+        await monetarySupervisor.issue(1000000000);
         await tokenAce.withdrawTokens(maker, 100000000);
         await tokenAce.withdrawTokens(taker, 100000000);
 

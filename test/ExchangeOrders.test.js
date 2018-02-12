@@ -1,5 +1,6 @@
 const testHelper = new require("./helpers/testHelper.js");
 const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
+const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 const ratesTestHelper = new require("./helpers/ratesTestHelper.js");
 
@@ -7,15 +8,16 @@ const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 let snapshotId;
-let rates, tokenAce, exchange, minOrderAmount;
+let rates, tokenAce, exchange, monetarySupervisor, minOrderAmount;
 const makers = [web3.eth.accounts[1], web3.eth.accounts[2]];
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
         rates = await ratesTestHelper.newRatesMock("EUR", 9980000);
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
+        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
 
-        await tokenAce.issue(1000000000);
+        await monetarySupervisor.issue(1000000000);
 
         await Promise.all(makers.map(maker => tokenAce.withdrawTokens(maker, 100000000)));
 

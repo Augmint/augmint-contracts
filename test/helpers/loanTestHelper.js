@@ -9,7 +9,7 @@ const testHelper = require("./testHelper.js");
 
 const LoanManager = artifacts.require("./LoanManager.sol");
 
-let tokenAce, loanManager, rates, peggedSymbol;
+let tokenAce, monetarySupervisor, loanManager, rates, peggedSymbol;
 let reserveAcc;
 let interestEarnedAcc = null;
 
@@ -23,14 +23,15 @@ module.exports = {
     loanAsserts
 };
 
-async function newLoanManagerMock(_tokenAce, _rates) {
+async function newLoanManagerMock(_tokenAce, _monetarySupervisor, _rates) {
     tokenAce = _tokenAce;
+    monetarySupervisor = _monetarySupervisor;
     rates = _rates;
     reserveAcc = tokenAce.address;
     loanManager = await LoanManager.new(tokenAce.address, rates.address);
 
     [interestEarnedAcc, peggedSymbol, , ,] = await Promise.all([
-        tokenAce.interestEarnedAccount(),
+        monetarySupervisor.interestEarnedAccount(),
 
         tokenAce.peggedSymbol(),
 
@@ -62,7 +63,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
     loan.borrower = borrower;
     const [totalSupplyBefore, totalLoanAmountBefore, balBefore] = await Promise.all([
         tokenAce.totalSupply(),
-        tokenAce.totalLoanAmount(),
+        monetarySupervisor.totalLoanAmount(),
 
         tokenAceTestHelper.getAllBalances({
             reserve: reserveAcc,
@@ -108,7 +109,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
 
     const [totalSupplyAfter, totalLoanAmountAfter, ,] = await Promise.all([
         tokenAce.totalSupply(),
-        tokenAce.totalLoanAmount(),
+        monetarySupervisor.totalLoanAmount(),
 
         loanAsserts(loan),
 
@@ -149,7 +150,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
 async function repayLoan(testInstance, loan) {
     const [totalSupplyBefore, totalLoanAmountBefore, balBefore] = await Promise.all([
         tokenAce.totalSupply(),
-        tokenAce.totalLoanAmount(),
+        monetarySupervisor.totalLoanAmount(),
         tokenAceTestHelper.getAllBalances({
             reserve: reserveAcc,
             borrower: loan.borrower,
@@ -164,7 +165,7 @@ async function repayLoan(testInstance, loan) {
 
     const [totalSupplyAfter, totalLoanAmountAfter, , , ,] = await Promise.all([
         tokenAce.totalSupply(),
-        tokenAce.totalLoanAmount(),
+        monetarySupervisor.totalLoanAmount(),
 
         testHelper.assertEvent(loanManager, "LoanRepayed", {
             loanId: loan.id,
@@ -239,7 +240,7 @@ async function collectLoan(testInstance, loan, collector) {
         targetFeeInWei
     ] = await Promise.all([
         tokenAce.totalSupply(),
-        tokenAce.totalLoanAmount(),
+        monetarySupervisor.totalLoanAmount(),
 
         tokenAceTestHelper.getAllBalances({
             reserve: reserveAcc,
@@ -280,7 +281,7 @@ async function collectLoan(testInstance, loan, collector) {
 
     const [totalSupplyAfter, totalLoanAmountAfter, , ,] = await Promise.all([
         tokenAce.totalSupply(),
-        tokenAce.totalLoanAmount(),
+        monetarySupervisor.totalLoanAmount(),
 
         testHelper.assertEvent(loanManager, "LoanCollected", {
             loanId: loan.id,

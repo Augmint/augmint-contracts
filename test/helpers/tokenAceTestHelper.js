@@ -17,31 +17,21 @@ module.exports = {
 
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
-let tokenAce, feeAccount;
+let tokenAce, monetarySupervisor;
 
 async function newTokenAceMock(tokenOwner = web3.eth.accounts[0]) {
     tokenAce = await TokenAceMock.new(
         FeeAccount.address,
-        InterestEarnedAccount.address,
         2000, // transferFeePt in parts per million = 0.2%
-        200, // min: 0.02 ACE
-        50000, // max fee: 5 ACE
-        800000, // loanToDepositLockLimit: 80%
-        1200000, // loanToDepositLoanLimit: 120 %
-
-        // Parameters Used to avoid system halt when there totalLoanAmount or totalLockedAmount is 0 or very low.
-        5000000 /* lockNoLimitAllowance in token - if totalLockAmount is below this then a new lock is allowed
-                    up to this amount even if it will bring the loanToDepositRatio BELOW loanToDepositLoanLimit
-                    (interest earned account balance still applies a limit on top of it)
-                */,
-        5000000 /* loanNoLimitAllowance in token - if totalLoanAmount is below this then a new loan is allowed
-                    up this amount even if it will bring the loanToDepositRatio
-                    ABOVE loanToDepositLoanLimit
-                */
+        200, // min: 0.02 A-EUR
+        50000, // max fee: 5 A-EUR
+        { from: tokenOwner }
     );
-    feeAccount = FeeAccount.address;
 
+    await tokenAce.grantMultiplePermissions(FeeAccount.address, ["NoFeeTransferContracts"]);
     await tokenAce.grantMultiplePermissions(tokenOwner, ["MonetaryBoard", "NoFeeTransferContracts"]);
+
+    await tokenAce.grantMultiplePermissions(InterestEarnedAccount.address, ["NoFeeTransferContracts"]);
 
     return tokenAce;
 }
@@ -54,7 +44,7 @@ async function transferTest(testInstance, expTransfer) {
     const balBefore = await getAllBalances({
         from: expTransfer.from,
         to: expTransfer.to,
-        feeAccount: feeAccount
+        feeAccount: FeeAccount.address
     });
 
     let tx, txName;
@@ -112,7 +102,7 @@ async function transferFromTest(testInstance, expTransfer) {
         from: expTransfer.from,
         to: expTransfer.to,
         spender: expTransfer.spender,
-        feeAccount: feeAccount
+        feeAccount: FeeAccount.address
     });
 
     let tx, txName;

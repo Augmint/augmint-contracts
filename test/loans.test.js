@@ -1,9 +1,10 @@
 const loanTestHelper = require("./helpers/loanTestHelper.js");
 const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
+const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const ratesTestHelper = require("./helpers/ratesTestHelper.js");
 const testHelper = require("./helpers/testHelper.js");
 
-let tokenAce, loanManager, rates;
+let tokenAce, loanManager, monetarySupervisor, rates;
 let products = {};
 
 contract("ACE Loans tests", accounts => {
@@ -12,10 +13,11 @@ contract("ACE Loans tests", accounts => {
             tokenAceTestHelper.newTokenAceMock(),
             ratesTestHelper.newRatesMock("EUR", 9980000)
         ]);
+        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
 
         [loanManager] = await Promise.all([
-            loanTestHelper.newLoanManagerMock(tokenAce, rates),
-            tokenAce.issue(1000000000)
+            loanTestHelper.newLoanManagerMock(tokenAce, monetarySupervisor, rates),
+            monetarySupervisor.issue(1000000000)
         ]);
 
         [
