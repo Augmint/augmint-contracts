@@ -38,7 +38,7 @@ activate InterestEarnedAccount
         accrueInterest is restricted to
         MonetarySupervisor contract
     end note
-    InterestEarnedAccount -> AugmintToken : transfer(Lender, interestAmount)
+    InterestEarnedAccount -> AugmintToken : transfer(Locker, interestAmount)
     InterestEarnedAccount --> Locker : lock interest transfered
     InterestEarnedAccount -> MonetarySupervisor : success (accrueInterest)
 deactivate InterestEarnedAccount
