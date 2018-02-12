@@ -21,9 +21,9 @@ deactivate AugmintToken
 
 activate Locker
     Locker -> Locker : checks & create new lock
-    Locker -> MonetarySupervisor : lockFunds\n(lockAmount, interestAmount)\n//Q: function name?//
+    Locker -> MonetarySupervisor : lockFundsNotification\n(lockAmount, interestAmount)
     note over MonetarySupervisor
-        lockFunds is restricted to
+        lockFundsNotification is restricted to
         trusted Locker contract(s)
     end note
 deactivate Locker
@@ -43,7 +43,7 @@ activate InterestEarnedAccount
     InterestEarnedAccount -> MonetarySupervisor : success (accrueInterest)
 deactivate InterestEarnedAccount
 
-MonetarySupervisor -> Locker : success (lockFunds)
+MonetarySupervisor -> Locker : success (lockFundsNotification)
 
 activate Locker
     Locker -> Locker : emmit events
@@ -59,18 +59,18 @@ end note
 
 activate Locker
     Locker -> Locker : checks if release time passed
-    Locker -> MonetarySupervisor : releaseFundsHouseKeeping\n(Depositor, lockAmount, interestAmount)\n//Q: fx name?//
+    Locker -> MonetarySupervisor : releaseFundsNotification\n(lockAmount)\n//lockAmount is without interest//
 deactivate Locker
 
 activate MonetarySupervisor
     note over MonetarySupervisor
-        releaseFundsHouseKeeping is restricted to
+        releaseFundsNotification is restricted to
         trusted Locker contract(s)
     end note
     MonetarySupervisor -> MonetarySupervisor : update KPIs
 deactivate MonetarySupervisor
 
-MonetarySupervisor -> Locker : success (releaseFundsHouseKeeping)
+MonetarySupervisor -> Locker : success (releaseFundsNotification)
 
 activate Locker
     Locker -> AugmintToken : transfer(Depositor, lockAmount + interestAmount)
