@@ -160,10 +160,10 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
-    /* lock funds, called from AugmintToken's trasnferAndNotify
-     the flow for locking tokens is:
-        1) user calls token contract's transferAndNotify lockProductId assed in data arg
-        2) transferAndNotify transfer tokens to thi Lock contract
+    /* lock funds, called from AugmintToken's transferAndNotify
+     Flow for locking tokens:
+        1) user calls token contract's transferAndNotify lockProductId passed in data arg
+        2) transferAndNotify transfers tokens to the Lock contract
         3) transferAndNotify calls Lock.transferNotification with lockProductId
     */
     function transferNotification(address from, uint256 amountToLock, uint lockProductId) public {
