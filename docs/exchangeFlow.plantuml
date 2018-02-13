@@ -13,6 +13,10 @@ Seller -> AugmintToken : transferAndNotify\n(address: exchangeAddress, tokenAmou
 AugmintToken -> AugmintToken : _transfer\n(from: Seller, to: ExchangeContract, amount, narrative: "")
 Seller --> ExchangeContract : tokens to sell transfered
 AugmintToken -> ExchangeContract : transferNotification\n(sender: augmintToken, origin: Seller, amount, data: price)
+note over ExchangeContract
+    transferNotification is
+    restricted to AugmintToken
+end note
 ExchangeContract -> ExchangeContract : check & save order
 
 == Token Buy Order  ==
@@ -66,11 +70,8 @@ end note
 ExchangeContract --> Seller : unfilled amount transferred back
 
 == Token sell order ALT 2. - works with ERC20 standard calls (requires 2 TXs from seller) ==
-note over AugmintToken, ExchangeContract
-    Will not be implemented for pilot
-end note
 Seller -> AugmintToken : Tx1: approve(ExchangeContract, amount)
-Seller -> ExchangeContract : Tx2: placeSellOrder(amount, price)
+Seller -> ExchangeContract : Tx2: placeSellTokenOrder(amount, price)
 ExchangeContract -> AugmintToken : transferFrom\n(from: msg.sender, to: ExchangeContract, amount)
 Seller --> ExchangeContract : tokens to sell transfered
 ExchangeContract -> ExchangeContract : save order

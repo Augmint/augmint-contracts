@@ -47,6 +47,10 @@ activate AugmintToken
     AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "")
     Borrower --> Lender : repaymentAmount transferred
     AugmintToken -> Lender : transferNotification\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
+    note over Lender
+        transferNotification is
+        restricted to AugmintToken
+    end note
 deactivate AugmintToken
 
 activate Lender

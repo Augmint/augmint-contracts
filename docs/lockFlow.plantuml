@@ -17,6 +17,10 @@ activate AugmintToken
     AugmintToken -> AugmintToken : _transfer(Depositor, Locker, lockAmount, "")
     Depositor --> Locker : lockAmount transferred
     AugmintToken -> Locker : transferNotification\n(sender: AugmintToken, origin: Depositor, lockAmount, data: lockProductId)
+    note over Locker
+        transferNotification is
+        restricted to AugmintToken
+    end note
 deactivate AugmintToken
 
 activate Locker
