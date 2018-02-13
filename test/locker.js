@@ -31,13 +31,13 @@ contract("Lock", accounts => {
             tokenAceInstance.grantMultiplePermissions(lockerInstance.address, ["NoFeeTransferContracts"]),
             monetarySupervisor.grantMultiplePermissions(lockerInstance.address, ["LockerContracts"]),
 
-            monetarySupervisor.issue(50000),
+            monetarySupervisor.issueToReserve(50000),
             lockerInstance.addLockProduct(50000, 60, 100, true) // to be used in tests to make unit test independent
         ]);
 
         await Promise.all([
-            tokenAceInstance.withdrawTokens(tokenHolder, 40000),
-            tokenAceInstance.withdrawTokens(interestEarnedAddress, 10000)
+            monetarySupervisorTestHelpers.withdrawFromReserve(tokenHolder, 40000),
+            monetarySupervisorTestHelpers.withdrawFromReserve(interestEarnedAddress, 10000)
         ]);
     });
 

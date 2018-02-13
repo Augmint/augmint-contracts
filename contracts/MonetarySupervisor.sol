@@ -2,6 +2,7 @@
     - maintains system wide KPIs (eg totalLockAmount, totalLoanAmount)
     - holds system wide parameters/limits
     - enforces system wide limits
+    - burns and issues to AugmintReserves
     - Send funds from reserve to exchange when intervening (not implemented yet)
 
     TODO:
@@ -16,6 +17,7 @@ import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 import "./InterestEarnedAccount.sol";
+import "./AugmintReserves.sol";
 
 
 contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blocks
@@ -23,6 +25,7 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
 
     AugmintTokenInterface public augmintToken;
     InterestEarnedAccount public interestEarnedAccount;
+    AugmintReserves public augmintReserves;
 
     uint public issuedByMonetaryBoard; // supply issued manually by monetary board
 
@@ -38,25 +41,25 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
 
     event ParamsChanged(uint ltdDifferenceLimit, uint allowedLtdDifferenceAmount);
 
-    function MonetarySupervisor(AugmintTokenInterface _augmintToken, InterestEarnedAccount _interestEarnedAccount,
+    function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
+        InterestEarnedAccount _interestEarnedAccount,
         uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount) public {
         augmintToken = _augmintToken;
+        augmintReserves = _augmintReserves;
         interestEarnedAccount = _interestEarnedAccount;
 
         ltdDifferenceLimit = _ltdDifferenceLimit;
         allowedLtdDifferenceAmount = _allowedLtdDifferenceAmount;
     }
 
-    // Issue tokens to Reserve
-    function issue(uint amount) external restrict("MonetaryBoard") {
+    function issueToReserve(uint amount) external restrict("MonetaryBoard") {
         issuedByMonetaryBoard = issuedByMonetaryBoard.add(amount);
-        augmintToken.issueTo(augmintToken, amount);
+        augmintToken.issueTo(augmintReserves, amount);
     }
 
-    // Burn tokens from Reserve
-    function burn(uint amount) external restrict("MonetaryBoard") {
+    function burnFromReserve(uint amount) external restrict("MonetaryBoard") {
         issuedByMonetaryBoard = issuedByMonetaryBoard.sub(amount);
-        augmintToken.burnFrom(augmintToken, amount);
+        augmintReserves.burn(augmintToken, amount);
     }
 
     // Locker requesting interest when locking funds
@@ -80,10 +83,9 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
         augmintToken.issueTo(borrower, loanAmount);
     }
 
-    function burnLoan(uint loanAmount) external {
+    function loanRepaymentNotification(uint loanAmount) external {
         require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted Lender contracts
         totalLoanAmount = totalLoanAmount.sub(loanAmount);
-        augmintToken.burnFrom(msg.sender, loanAmount);
     }
 
     // NB: this is called by Lender contract with the sum of all loans collected in batch

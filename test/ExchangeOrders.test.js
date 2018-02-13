@@ -15,9 +15,9 @@ contract("Exchange orders tests", accounts => {
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
 
-        await monetarySupervisor.issue(1000000000);
+        await monetarySupervisor.issueToReserve(1000000000);
 
-        await Promise.all(makers.map(maker => tokenAce.withdrawTokens(maker, 100000000)));
+        await Promise.all(makers.map(maker => monetarySupervisorTestHelpers.withdrawFromReserve(maker, 100000000)));
 
         exchange = await exchangeTestHelper.newExchangeMock(tokenAce);
     });
