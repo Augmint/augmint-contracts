@@ -24,12 +24,11 @@ module.exports = {
     printOrderBook
 };
 
-let exchange, tokenAce, rates;
+let exchange, tokenAce;
 
-async function newExchangeMock(_tokenAce, _rates, minOrderAmount) {
+async function newExchangeMock(_tokenAce) {
     tokenAce = _tokenAce;
-    rates = _rates;
-    exchange = await Exchange.new(tokenAce.address, rates.address, minOrderAmount);
+    exchange = await Exchange.new(tokenAce.address);
     await exchange.grantMultiplePermissions(web3.eth.accounts[0], ["MonetaryBoard"]);
     await tokenAce.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
     return exchange;
@@ -204,7 +203,7 @@ async function cancelOrder(testInstance, order) {
     return;
 }
 
-async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder, marketRate) {
+async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const stateBefore = await getState();
     const balancesBefore = await tokenAceTestHelper.getAllBalances({
         exchange: exchange.address,
@@ -214,52 +213,13 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder, marketRa
     //await printOrderBook();
 
     const matchCaller = web3.eth.accounts[0];
-    let expPrice;
-    if (sellTokenOrder.price <= 10000 && buyTokenOrder.price >= 10000) {
-        expPrice = 10000;
-    } else {
-        expPrice =
-            Math.abs(sellTokenOrder.price - 10000) > Math.abs(buyTokenOrder.price - 10000)
-                ? buyTokenOrder.price
-                : sellTokenOrder.price;
-    }
-    const sellWeiValue = Math.round(sellTokenOrder.amount * expPrice / 10000 / marketRate * ONEWEI / 10000) * 10000;
-    const buyTokenValue = Math.round(buyTokenOrder.amount / ONEWEI * marketRate / expPrice * 10000);
+    const expPrice = Math.floor((sellTokenOrder.price + buyTokenOrder.price) / 2);
+    const sellWeiValue = Math.floor(sellTokenOrder.amount * ONEWEI / expPrice);
+    const buyTokenValue = Math.floor(buyTokenOrder.amount * expPrice / ONEWEI);
     const tradedWeiAmount = Math.min(buyTokenOrder.amount, sellWeiValue);
     const tradedTokenAmount = Math.min(sellTokenOrder.amount, buyTokenValue);
     const buyFilled = buyTokenOrder.amount.eq(tradedWeiAmount);
     const sellFilled = sellTokenOrder.amount.eq(tradedTokenAmount);
-    //if (expPrice !== 10000) {
-    //    if (buyTokenOrder.id === 55 && sellTokenOrder.id === 80) {
-    // console.log(await getBuyTokenOrder(buyTokenOrder.index));
-    // console.log(await getSellTokenOrder(sellTokenOrder.index));
-    // console.log(
-    //     `*** Match to be executed:
-    //     exchange balance: ${web3.fromWei(await web3.eth.getBalance(exchange.address)).toString()} ETH` +
-    //         ` | ${(await tokenAce.balanceOf(exchange.address)) / 10000} ACE
-    //     \tBUY\t\t   SELL
-    //     amount:\t${web3.fromWei(buyTokenOrder.amount).toString()} ETH\t${sellTokenOrder.amount / 10000} ACE
-    //     price:\t${buyTokenOrder.price / 10000}\t\t${sellTokenOrder.price / 10000}
-    //     id:   \t${buyTokenOrder.id}\t\t${sellTokenOrder.id}` +
-    //         `\n***`
-    // );
-    //
-    // console.log(
-    //     `*** Match expected on ETH/EUR rate: ${marketRate / 10000}
-    //     \tBUY\t\t   SELL
-    //     amount:\t${web3.fromWei(buyTokenOrder.amount).toString()} ETH\t${sellTokenOrder.amount / 10000} ACE
-    //     price:\t${buyTokenOrder.price / 10000}\t\t${sellTokenOrder.price / 10000}
-    //     value:\t${buyTokenValue / 10000} ACE\t${web3.fromWei(sellWeiValue).toString()} ETH
-    //     id:   \t${buyTokenOrder.id}\t\t${sellTokenOrder.id}
-    //     ---------------------------------------------
-    //     ${buyFilled ? "Buy fully filled" : "Buy partially filled"}\t${
-    //         sellFilled ? "Sell fully filled" : "Sell partially filled"
-    //     }
-    //         ACE/EUR price: ${expPrice / 10000}
-    //         tradedToken:   ${tradedTokenAmount / 10000} ACE
-    //         tradedETH:     ${web3.fromWei(tradedWeiAmount).toString()} ETH\n***`
-    // );
-    //}
 
     const expMatch = {
         sellTokenOrderId: sellTokenOrder.id,
@@ -398,7 +358,6 @@ async function getActiveSellOrders(offset) {
 
 async function printOrderBook(_limit) {
     const state = await getState();
-    const marketRate = (await rates.rates("EUR"))[0].toNumber();
 
     let limitText, limit;
     if (typeof _limit === "undefined") {
@@ -409,13 +368,13 @@ async function printOrderBook(_limit) {
         limitText = "(top " + _limit + " orders)";
     }
 
-    console.log(`========= Order Book  ${limitText} ETH/EUR: ${marketRate / 10000} =========
+    console.log(`========= Order Book  ${limitText} =========
               Sell token ct:  ${state.sellCount}    Buy token ct:  ${state.buyCount}`);
 
     for (let i = 0; i < state.sellCount && i < limit; i++) {
         const order = await getSellTokenOrder(i);
         console.log(
-            `SELL token: ACE/EUR: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
+            `SELL token: ACE/ETH: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
                 ` ${moment.unix(order.addedTime).format("HH:mm:ss")}` +
                 ` orderIdx: ${i} orderId: ${order.id} acc: ${order.maker}`
         );
