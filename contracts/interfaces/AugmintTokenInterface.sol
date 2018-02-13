@@ -10,6 +10,7 @@ pragma solidity 0.4.19;
 import "../generic/SafeMath.sol";
 import "../generic/Restricted.sol";
 import "./ERC20Interface.sol";
+import "./TokenReceiver.sol";
 
 
 contract AugmintTokenInterface is Restricted, ERC20Interface {
@@ -33,34 +34,22 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     event TokenBurned(uint amount);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function transferWithNarrative(address _to, uint256 _amount, string _narrative) external;
+    function issueTo(address to, uint amount) external restrict("MonetarySupervisorContracts");
+    function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContracts");
 
-    function transferNoFee(address _to, uint256 _amount, string _narrative)
-    external restrict("NoFeeTransferContracts");
+    function transferAndNotify(TokenReceiver target, uint amount, uint data) external returns (bool success);
 
-    function fundsReleased(uint releasedAmount) external; // only for whitelisted LockerContracts
+    function transferWithNarrative(address to, uint256 amount, string narrative) external;
+    function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) external;
 
-    function repayLoan(address loanManager, uint loanId) external;
-    function loanCollected(uint repaymentAmount) external; // only for whitelisted LoanManagerContracts
-
-    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
-    external restrict("LoanManagerContracts");
-
-    function placeSellTokenOrderOnExchange(address exchange, uint price, uint tokenAmount)
-    external returns (uint sellTokenOrderId);
-
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    function allowance(address owner, address spender) public view returns (uint256 remaining);
     function transferFrom(address from, address to, uint value) public returns (bool);
     function approve(address spender, uint value) public returns (bool);
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool);
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool);
+    function increaseApproval(address spender, uint addedValue) public returns (bool);
+    function decreaseApproval(address spender, uint subtractedValue) public returns (bool);
 
     function balanceOf(address who) public view returns (uint);
     function transfer(address to, uint value) public returns (bool); // solhint-disable-line no-simple-event-func-name
 
-    function transferFromNoFee(address _from, address _to, uint256 _amount, string _narrative)
-        public restrict("NoFeeTransferContracts");
-
-    function transferFromWithNarrative(address _from, address _to, uint256 _amount, string _narrative) public;
 
 }

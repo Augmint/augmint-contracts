@@ -1,6 +1,7 @@
 const RandomSeed = require("random-seed");
 const testHelper = new require("./helpers/testHelper.js");
 const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
+const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 const ratesTestHelper = new require("./helpers/ratesTestHelper.js");
 
@@ -20,7 +21,7 @@ const TEST_ACCS_CT = web3.eth.accounts.length;
 const ACC_INIT_ACE = 100000000;
 const CHUNK_SIZE = 100;
 
-let rates, tokenAce, exchange;
+let rates, tokenAce, monetarySupervisor, exchange;
 const random = new RandomSeed("Have the same test data");
 let buyTokenOrders = null;
 let sellTokenOrders = null;
@@ -68,7 +69,9 @@ contract("Exchange random tests", accounts => {
     before(async function() {
         rates = await ratesTestHelper.newRatesMock("EUR", MARKET_WEI_RATE);
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        await tokenAce.issue(TEST_ACCS_CT * ACC_INIT_ACE);
+        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        await monetarySupervisor.issue(TEST_ACCS_CT * ACC_INIT_ACE);
+
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
         await Promise.all(accounts.slice(0, TEST_ACCS_CT).map(acc => tokenAce.withdrawTokens(acc, ACC_INIT_ACE)));
 
@@ -99,7 +102,7 @@ contract("Exchange random tests", accounts => {
                 if (order.orderType === TOKEN_BUY) {
                     tx = exchange.placeBuyTokenOrder(order.price, { value: order.amount, from: order.maker });
                 } else {
-                    tx = tokenAce.placeSellTokenOrderOnExchange(exchange.address, order.price, order.amount, {
+                    tx = tokenAce.transferAndNotify(exchange.address, order.amount, order.price, {
                         from: order.maker
                     });
                 }
@@ -112,7 +115,7 @@ contract("Exchange random tests", accounts => {
                 tx,
                 typeof tx.logs[0].args.weiAmount === "undefined"
                     ? "placeBuyTokenOrder"
-                    : "tokenAce.placeSellTokenOrderOnExchange"
+                    : "transferAndNotify - token sell"
             )
         );
         assert(txs.length, ORDER_COUNT);

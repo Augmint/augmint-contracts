@@ -1,14 +1,38 @@
-/* Augmint's internal Exchange
-    TODO: deduct fee
-    TODO: consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
+/* Augmint's Internal Exchange
+
+  For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/exchangeFlow.png
+
+    TODO:
+        - deduct fee
+        - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
+        - uint32 for addedTime?
+        - rates setter?
+        - make a rates interface and use it instead?
 */
 pragma solidity 0.4.19;
-import "./interfaces/ExchangeInterface.sol";
+import "./generic/SafeMath.sol";
+import "./generic/Restricted.sol";
+import "./interfaces/AugmintTokenInterface.sol";
+import "./Rates.sol";
 
 
-contract Exchange is ExchangeInterface {
+contract Exchange is Restricted {
+    using SafeMath for uint256;
+    AugmintTokenInterface public augmintToken;
+    Rates public rates;
 
     uint public constant CHUNK_SIZE = 100;
+
+    struct Order {
+        uint index;
+        address maker;
+        uint addedTime;
+        uint price;
+        uint amount; // buy token: amount in wei sell token: token amount with 4 decimals
+    }
+
+    Order[] public buyTokenOrders;
+    Order[] public sellTokenOrders;
 
     uint[] private activeBuyOrders;
     uint[] private activeSellOrders;
@@ -29,9 +53,9 @@ contract Exchange is ExchangeInterface {
 
     event MinOrderAmountChanged(uint newMinOrderAmount);
 
-    function Exchange(address augmintTokenAddress, address ratesAddress, uint _minOrderAmount) public {
-        augmintToken = AugmintTokenInterface(augmintTokenAddress);
-        rates = Rates(ratesAddress);
+    function Exchange(AugmintTokenInterface _augmintToken, Rates _rates, uint _minOrderAmount) public {
+        augmintToken = _augmintToken;
+        rates = _rates;
         minOrderAmount = _minOrderAmount;
     }
 
@@ -50,16 +74,8 @@ contract Exchange is ExchangeInterface {
 
     /* this function requires previous approval to transfer tokens */
     function placeSellTokenOrder(uint price, uint tokenAmount) external returns (uint orderId) {
-        augmintToken.transferFromNoFee(msg.sender, this, tokenAmount, "Sell token order placed");
+        augmintToken.transferFrom(msg.sender, this, tokenAmount);
         return _placeSellTokenOrder(msg.sender, price, tokenAmount);
-    }
-
-    /* This func assuming that token already transferred to Exchange so it can be only called
-        via AugmintToken.placeSellTokenOrderOnExchange() convenience function */
-    function placeSellTokenOrderTrusted(address maker, uint price, uint tokenAmount)
-    external returns (uint orderId) {
-        require(msg.sender == address(augmintToken));
-        return _placeSellTokenOrder(maker, price, tokenAmount);
     }
 
     function cancelBuyTokenOrder(uint buyTokenId) external {
@@ -82,7 +98,7 @@ contract Exchange is ExchangeInterface {
         order.amount = 0;
         _removeSellOrder(order);
 
-        augmintToken.transferNoFee(msg.sender, amount, "Sell token order cancelled");
+        augmintToken.transferWithNarrative(msg.sender, amount, "Sell token order cancelled");
 
         CancelledOrder(sellTokenId, msg.sender, amount, 0);
     }
@@ -136,6 +152,17 @@ contract Exchange is ExchangeInterface {
         }
     }
 
+    /* place sell token order called from AugmintToken's transferAndNotify
+     Flow:
+        1) user calls token contract's transferAndNotify price passed in data arg
+        2) transferAndNotify transfers tokens to the Exchange contract
+        3) transferAndNotify calls Exchange.transferNotification with lockProductId
+    */
+    function transferNotification(address maker, uint tokenAmount, uint price) public {
+        require(msg.sender == address(augmintToken));
+        _placeSellTokenOrder(maker, price, tokenAmount);
+    }
+
     function _fillOrder(uint buyTokenId, uint sellTokenId) private {
         Order storage buyTokenOrder = buyTokenOrders[buyTokenId];
         Order storage sellTokenOrder = sellTokenOrders[sellTokenId];
@@ -168,7 +195,7 @@ contract Exchange is ExchangeInterface {
         }
 
         sellTokenOrder.maker.transfer(tradedWeiAmount);
-        augmintToken.transferNoFee(buyTokenOrder.maker, tradedTokenAmount, "Buy token order fill");
+        augmintToken.transferWithNarrative(buyTokenOrder.maker, tradedTokenAmount, "Buy token order fill");
 
         OrderFill(buyTokenOrder.maker, sellTokenOrder.maker, buyTokenId,
             sellTokenId, price, tradedWeiAmount, tradedTokenAmount);

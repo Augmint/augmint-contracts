@@ -14,12 +14,12 @@ Borrower -> Lender : newEthBackedLoan(productId, {value: ethToEscrow})\n//ETH co
 
 activate Lender
     Lender -> Lender : calculate loanAmount from colllateral sent\ncreate new loan
-    Lender -> MonetarySupervisor : issueAndDisburse\n(borrower, loanAmount, interestAmount, narrative)
+    Lender -> MonetarySupervisor : issueLoan\n(Borrower, loanAmount)
 deactivate Lender
 
 activate MonetarySupervisor
     note over MonetarySupervisor
-        issueAndDisburse is restricted to
+        issueLoan is restricted to
         trusted Lender contract(s)
     end note
     MonetarySupervisor -> MonetarySupervisor : enforce limits + update KPIs
@@ -36,33 +36,29 @@ activate AugmintToken
     AugmintToken -> MonetarySupervisor : success (isssueTo)
 deactivate AugmintToken
 
-MonetarySupervisor -> Lender : success (issueAndDisburse)
+MonetarySupervisor -> Lender : success (issueLoan)
 
 Lender -> Lender : emmit events
 
-
-
 == Repay loan  ==
-Borrower -> AugmintToken : transferAndCall\n(address: Lender, value: repaymentAmount, data: loanId)
+Borrower -> AugmintToken : transferAndNotify\n(address: Lender, value: repaymentAmount, data: loanId)
 
 activate AugmintToken
-    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "", fee: 0)
-    note over AugmintToken
-        0 transfer fee only if target contract is whitelisted
-    end note
+    AugmintToken -> AugmintToken : _transfer(borrower, Lender, repaymentAmount, "")
     Borrower --> Lender : repaymentAmount transferred
-    AugmintToken -> Lender : tokenFallback\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
+    AugmintToken -> Lender : transferNotification\n(sender: AugmintToken, origin: borrower, repaymentAmount, data: loanId)
+    note over Lender
+        transferNotification is
+        restricted to AugmintToken
+    end note
 deactivate AugmintToken
 
 activate Lender
     Lender -> Lender : checks + set loan status
     Lender -> AugmintToken : transfer(interestEarnedAcc, interestAmount)
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
-    Lender -> MonetarySupervisor : repayAndBurn\n(repaymentAmount, interestAmount)
+    Lender -> MonetarySupervisor : burnLoan\n(loanAmount)
     note over MonetarySupervisor
-        repayAndBurn is restricted to
+        burnLoan is restricted to
         trusted Lender contract(s)
     end note
 deactivate Lender
@@ -81,7 +77,7 @@ activate AugmintToken
     AugmintToken -> MonetarySupervisor : success (burnFrom)
 deactivate AugmintToken
 
-MonetarySupervisor -> Lender : success (repayAndBurn)
+MonetarySupervisor -> Lender : success (burnLoan)
 
 activate Lender
 Lender -> Borrower : borrower.send(collateral)
@@ -101,6 +97,11 @@ loop as many times as fits to gas provided to tx call
     Lender --> AugmintToken : AugmintToken.send({loanValueInEth + defaultingFee - collectionReward})
     Lender --> Borrower : Borrower.send({collaterInEscrow - loanValueInEth - defaultingFee})
 end
+Lender -> MonetarySupervisor : loanCollectionNotification(totalLoanAmountCollected)\n//To update KPIs//
+note over MonetarySupervisor
+    loanCollectionNotification is restricted to
+    trusted Lender contract(s)
+end note
 Lender --> Collector : Collector.send(sum of collectionRewards )
 
 deactivate Lender

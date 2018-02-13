@@ -17,53 +17,38 @@ module.exports = {
 
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
-let tokenAce, feeAccount;
+let tokenAce, monetarySupervisor;
 
 async function newTokenAceMock(tokenOwner = web3.eth.accounts[0]) {
     tokenAce = await TokenAceMock.new(
         FeeAccount.address,
-        InterestEarnedAccount.address,
         2000, // transferFeePt in parts per million = 0.2%
-        200, // min: 0.02 ACE
-        50000, // max fee: 5 ACE
-        800000, // loanToDepositLockLimit: 80%
-        1200000, // loanToDepositLoanLimit: 120 %
-
-        // Parameters Used to avoid system halt when there totalLoanAmount or totalLockedAmount is 0 or very low.
-        5000000 /* lockNoLimitAllowance in token - if totalLockAmount is below this then a new lock is allowed
-                    up to this amount even if it will bring the loanToDepositRatio BELOW loanToDepositLoanLimit
-                    (interest earned account balance still applies a limit on top of it)
-                */,
-        5000000 /* loanNoLimitAllowance in token - if totalLoanAmount is below this then a new loan is allowed
-                    up this amount even if it will bring the loanToDepositRatio
-                    ABOVE loanToDepositLoanLimit
-                */
+        200, // min: 0.02 A-EUR
+        50000, // max fee: 5 A-EUR
+        { from: tokenOwner }
     );
-    feeAccount = FeeAccount.address;
 
+    await tokenAce.grantMultiplePermissions(FeeAccount.address, ["NoFeeTransferContracts"]);
     await tokenAce.grantMultiplePermissions(tokenOwner, ["MonetaryBoard", "NoFeeTransferContracts"]);
+
+    await tokenAce.grantMultiplePermissions(InterestEarnedAccount.address, ["NoFeeTransferContracts"]);
 
     return tokenAce;
 }
 
 async function transferTest(testInstance, expTransfer) {
     // if fee is provided than we are testing transferNoFee
-    if (typeof expTransfer.fee === "undefined") expTransfer.fee = await getTransferFee(expTransfer.amount);
+    if (typeof expTransfer.fee === "undefined") expTransfer.fee = await getTransferFee(expTransfer);
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
 
     const balBefore = await getAllBalances({
         from: expTransfer.from,
         to: expTransfer.to,
-        feeAccount: feeAccount
+        feeAccount: FeeAccount.address
     });
 
     let tx, txName;
-    if (expTransfer.fee === 0) {
-        txName = "transferNoFee";
-        tx = await tokenAce.transferNoFee(expTransfer.to, expTransfer.amount, expTransfer.narrative, {
-            from: expTransfer.from
-        });
-    } else if (expTransfer.narrative === "") {
+    if (expTransfer.narrative === "") {
         txName = "transfer";
         tx = await tokenAce.transfer(expTransfer.to, expTransfer.amount, {
             from: expTransfer.from
@@ -106,34 +91,22 @@ async function approveTest(testInstance, expApprove) {
 
 async function transferFromTest(testInstance, expTransfer) {
     // if fee is provided than we are testing transferFromNoFee
-    let isNoFeeTest = typeof expTransfer.fee === "undefined" ? false : true;
     if (!expTransfer.to) {
         expTransfer.to = expTransfer.spender;
     }
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
-    expTransfer.fee = isNoFeeTest ? 0 : (await getTransferFee(expTransfer.amount)).toNumber();
+    expTransfer.fee = typeof expTransfer.fee === "undefined" ? await getTransferFee(expTransfer) : expTransfer.fee;
 
     const allowanceBefore = await tokenAce.allowance(expTransfer.from, expTransfer.spender);
     const balBefore = await getAllBalances({
         from: expTransfer.from,
         to: expTransfer.to,
         spender: expTransfer.spender,
-        feeAccount: feeAccount
+        feeAccount: FeeAccount.address
     });
 
     let tx, txName;
-    if (isNoFeeTest) {
-        txName = "transferFromNoFee";
-        tx = await tokenAce.transferFromNoFee(
-            expTransfer.from,
-            expTransfer.to,
-            expTransfer.amount,
-            expTransfer.narrative,
-            {
-                from: expTransfer.spender
-            }
-        );
-    } else if (expTransfer.narrative === "") {
+    if (expTransfer.narrative === "") {
         txName = "transferFrom";
         tx = await tokenAce.transferFrom(expTransfer.from, expTransfer.to, expTransfer.amount, {
             from: expTransfer.spender
@@ -183,22 +156,25 @@ async function transferFromTest(testInstance, expTransfer) {
     });
 }
 
-async function getTransferFee(_amount) {
-    let feePt, feeMin, feeMax;
-    let amount = new BigNumber(_amount);
-
-    await Promise.all([
-        (feePt = await tokenAce.transferFeePt()),
-        (feeMax = await tokenAce.transferFeeMax()),
-        (feeMin = await tokenAce.transferFeeMin())
+async function getTransferFee(transfer) {
+    const [fromAllowed, toAllowed] = await Promise.all([
+        tokenAce.permissions(transfer.from, "NoFeeTransferContracts"),
+        tokenAce.permissions(transfer.from, "NoFeeTransferContracts")
     ]);
+    if (fromAllowed || toAllowed) {
+        return 0;
+    }
+
+    const [feePt, feeMin, feeMax] = await tokenAce.getParams();
+    const amount = new BigNumber(transfer.amount);
+
     let fee =
         amount === 0
             ? 0
             : amount
-                  .mul(feePt)
-                  .div(1000000)
-                  .round(0, BigNumber.ROUND_DOWN);
+                .mul(feePt)
+                .div(1000000)
+                .round(0, BigNumber.ROUND_DOWN);
     if (fee < feeMin) {
         fee = feeMin;
     } else if (fee > feeMax) {
@@ -225,6 +201,13 @@ async function assertBalances(before, exp) {
     // get addresses from before arg
     for (const ac of Object.keys(exp)) {
         exp[ac].address = before[ac].address;
+        // if no eth or ace specified then assume we don't expect change
+        if (!exp[ac].eth) {
+            exp[ac].eth = before[ac].eth;
+        }
+        if (!exp[ac].ace) {
+            exp[ac].ace = before[ac].ace;
+        }
     }
     const newBal = await getAllBalances(exp);
 
