@@ -16,7 +16,6 @@ import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 import "./InterestEarnedAccount.sol";
-import "./Locker.sol";
 
 
 contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blocks
