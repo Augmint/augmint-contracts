@@ -2,18 +2,16 @@ const testHelper = new require("./helpers/testHelper.js");
 const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
 const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
-const ratesTestHelper = new require("./helpers/ratesTestHelper.js");
 
 const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 let snapshotId;
-let rates, tokenAce, exchange, monetarySupervisor, minOrderAmount;
+let tokenAce, exchange, monetarySupervisor;
 const makers = [web3.eth.accounts[1], web3.eth.accounts[2]];
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
-        rates = await ratesTestHelper.newRatesMock("EUR", 9980000);
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
 
@@ -21,8 +19,7 @@ contract("Exchange orders tests", accounts => {
 
         await Promise.all(makers.map(maker => monetarySupervisorTestHelpers.withdrawFromReserve(maker, 100000000)));
 
-        minOrderAmount = 1000000;
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce, rates, minOrderAmount);
+        exchange = await exchangeTestHelper.newExchangeMock(tokenAce);
     });
 
     beforeEach(async function() {
@@ -79,83 +76,25 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelper.newOrder(this, order);
     });
 
-    it("only the owner should set minOrderAmount", async function() {
-        await testHelper.expectThrow(exchange.setMinOrderAmount(500, { from: accounts[1] }));
-    });
-
-    it("should place a SELL token order at minOrderAmount", async function() {
-        const price = 11000;
-        const order = { amount: minOrderAmount, maker: makers[0], price: price, orderType: TOKEN_SELL };
+    it("should place a BUY token order", async function() {
+        const order = { amount: 1000000, maker: makers[0], price: 11000, orderType: TOKEN_BUY };
 
         await exchangeTestHelper.newOrder(this, order);
     });
 
-    it("should place a BUY token order at minOrderAmount", async function() {
+    it("shouldn't place a SELL token order with 0 price", async function() {
         const price = 11000;
-        //in solidity:
-        // uint tokenAmount = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value.roundedDiv(price)).mul(10000);
-        const orderValue = Math.round(minOrderAmount * price / 10000);
-        const weiValue = await rates.convertToWei("EUR", orderValue);
-        const order = { amount: weiValue, maker: makers[0], price: price, orderType: TOKEN_BUY };
-
-        await exchangeTestHelper.newOrder(this, order);
-    });
-
-    it("shouldn't place a SELL token order below minOrderAmount", async function() {
-        const price = 11000;
-        await testHelper.expectThrow(
-            tokenAce.transferAndNotify(exchange.address, minOrderAmount - 1, price, { from: makers[0] })
-        );
-    });
-
-    it("shouldn't place a BUY token order below minOrderAmount", async function() {
-        const price = 11000;
-        const orderValue = Math.round((minOrderAmount - 1) * price / 10000);
-        const weiValue = await rates.convertToWei("EUR", orderValue);
-
-        await testHelper.expectThrow(exchange.placeBuyTokenOrder(price, { value: weiValue }));
-    });
-
-    it("should place a low SELL token order amount if minOrderAmount set to 0", async function() {
-        const price = 11000;
-        const order = { amount: 1, maker: makers[0], price: price, orderType: TOKEN_SELL };
-        const tx = await exchange.setMinOrderAmount(0);
-        testHelper.logGasUse(this, tx, "setMinOrderAmount");
-
-        await exchangeTestHelper.newOrder(this, order);
-    });
-
-    it("should place a low BUY token order amount if minOrderAmount is set to 0", async function() {
-        const price = 11000;
-        const weiValue = await rates.convertToWei("EUR", 1);
-        const order = { amount: weiValue, maker: makers[0], price: price, orderType: TOKEN_BUY };
-        const tx = await exchange.setMinOrderAmount(0);
-        testHelper.logGasUse(this, tx, "setMinOrderAmount");
-
-        await exchangeTestHelper.newOrder(this, order);
-    });
-
-    it("shouldn't place a SELL token order with 0 price even if minOrderAmount is 0", async function() {
-        const price = 11000;
-        const tx = await exchange.setMinOrderAmount(0);
-        testHelper.logGasUse(this, tx, "setMinOrderAmount");
         await testHelper.expectThrow(tokenAce.transferAndNotify(exchange.address, 0, price, { from: makers[0] }));
     });
 
-    it("shouldn't place a BUY token order with 0 price even if minOrderAmount is 0", async function() {
+    it("shouldn't place a BUY token order with 0 price", async function() {
         const price = 11000;
-        const tx = await exchange.setMinOrderAmount(0);
-        testHelper.logGasUse(this, tx, "setMinOrderAmount");
         await testHelper.expectThrow(exchange.placeBuyTokenOrder(price, { value: 0 }));
     });
-
-    // this is redundant, ethereum core func & 0 value is tested previously:
-    // it("no BUY token order when user doesn't have enough ETH");
 
     it("no SELL token order when user doesn't have enough ACE", async function() {
         const price = 11000;
         const userBal = await tokenAce.balanceOf(makers[0]);
-        assert(userBal > minOrderAmount, "user doesn't have enough balance for test");
         await testHelper.expectThrow(
             tokenAce.transferAndNotify(exchange.address, userBal + 1, price, { from: makers[0] })
         );
@@ -219,7 +158,7 @@ contract("Exchange orders tests", accounts => {
         const orders = [];
         for (let i = 0; i < orderCount; i++) {
             orders.push(
-                tokenAce.transferAndNotify(exchange.address, minOrderAmount + i, 10000 + i, {
+                tokenAce.transferAndNotify(exchange.address, i + 1, 10000 + i, {
                     from: makers[0]
                 })
             );
@@ -243,15 +182,6 @@ contract("Exchange orders tests", accounts => {
         ];
 
         await Promise.all(orderQueries);
-    });
-
-    it("should not place orders when rate == 0", async function() {
-        await rates.setRate("EUR", 0);
-        const buyOrder = { amount: web3.toWei(1.750401), maker: accounts[1], price: 10710, orderType: TOKEN_BUY };
-        const sellOrder = { amount: 5614113, maker: accounts[2], price: 10263, orderType: TOKEN_SELL };
-
-        await testHelper.expectThrow(exchangeTestHelper.newOrder(this, buyOrder));
-        await testHelper.expectThrow(exchangeTestHelper.newOrder(this, sellOrder));
     });
 
     it("should only allow the token contract call transferNotification", async function() {
