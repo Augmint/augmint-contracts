@@ -31,7 +31,7 @@ async function newExchangeMock(_tokenAce, _rates, minOrderAmount) {
     rates = _rates;
     exchange = await Exchange.new(tokenAce.address, rates.address, minOrderAmount);
     await exchange.grantMultiplePermissions(web3.eth.accounts[0], ["MonetaryBoard"]);
-    await tokenAce.grantMultiplePermissions(exchange.address, ["ExchangeContracts", "NoFeeTransferContracts"]);
+    await tokenAce.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
     return exchange;
 }
 
@@ -52,16 +52,16 @@ async function newOrder(testInstance, order) {
         order.weiAmount = order.amount;
     } else {
         if (order.viaAugmintToken) {
-            tx = await tokenAce.placeSellTokenOrderOnExchange(exchange.address, order.price, order.amount, {
+            tx = await tokenAce.transferAndNotify(exchange.address, order.amount, order.price, {
                 from: order.maker
             });
-            testHelper.logGasUse(testInstance, tx, "tokenAce.placeSellTokenOrderOnExchange");
+            testHelper.logGasUse(testInstance, tx, "transferAndNotify - token sell");
         } else {
             const approvedBefore = await tokenAce.allowed(order.maker, exchange.address);
             tx = await exchange.placeSellTokenOrder(order.price, order.amount, {
                 from: order.maker
             });
-            testHelper.logGasUse(testInstance, tx, "tokenAce.placeSellTokenOrderOnExchange");
+            testHelper.logGasUse(testInstance, tx, "placeSellTokenOrder");
             const approvedAfter = await tokenAce.allowed(order.maker, exchange.address);
             assert.equal(
                 approvedAfter.toString(),
@@ -135,7 +135,7 @@ async function newOrderEventAsserts(order) {
             to: exchange.address,
             amount: order.tokenAmount.toString(),
             fee: 0,
-            narrative: "Sell token order placed"
+            narrative: ""
         });
     }
     return res;
@@ -275,10 +275,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder, marketRa
         buyCount: buyFilled ? stateBefore.buyCount - 1 : stateBefore.buyCount
     };
 
-    const tx = await exchange.matchOrders(
-        buyTokenOrder.id,
-        sellTokenOrder.id
-    );
+    const tx = await exchange.matchOrders(buyTokenOrder.id, sellTokenOrder.id);
     testHelper.logGasUse(testInstance, tx, "matchOrders");
 
     await testHelper.assertEvent(exchange, "OrderFill", {
@@ -377,16 +374,16 @@ function parseOrder(order) {
 }
 
 function parseOrders(orderType, orders) {
-    return orders
-        .filter(order => order[4].toNumber() != 0)
-        .map(function(order) { return {
-                orderType: orderType,
-                id: order[0].toNumber(),
-                maker: "0x" + order[1].toString(16),
-                addedTime: order[2].toNumber(),
-                price: order[3].toNumber(),
-                amount: order[4]
-            }});
+    return orders.filter(order => order[4].toNumber() != 0).map(function(order) {
+        return {
+            orderType: orderType,
+            id: order[0].toNumber(),
+            maker: "0x" + order[1].toString(16),
+            addedTime: order[2].toNumber(),
+            price: order[3].toNumber(),
+            amount: order[4]
+        };
+    });
 }
 
 async function getActiveBuyOrders(offset) {

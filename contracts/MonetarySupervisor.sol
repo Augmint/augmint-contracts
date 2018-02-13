@@ -106,16 +106,4 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
         return [ltdDifferenceLimit, allowedLtdDifferenceAmount];
     }
 
-    /*
-
-    // convenience function - alternative to Exchange.placeSellTokenOrder without approval required
-    function placeSellTokenOrderOnExchange(address _exchange, uint price, uint tokenAmount)
-    external returns (uint sellTokenOrderId) {
-        require(permissions[_exchange]["ExchangeContracts"]); // only whitelisted exchanges
-        ExchangeInterface exchange = ExchangeInterface(_exchange);
-        _transfer(msg.sender, _exchange, tokenAmount, "Sell token order placed");
-        return exchange.placeSellTokenOrderTrusted(msg.sender, price, tokenAmount);
-    } */
-
-
 }

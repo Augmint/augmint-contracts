@@ -102,7 +102,7 @@ contract("Exchange random tests", accounts => {
                 if (order.orderType === TOKEN_BUY) {
                     tx = exchange.placeBuyTokenOrder(order.price, { value: order.amount, from: order.maker });
                 } else {
-                    tx = tokenAce.placeSellTokenOrderOnExchange(exchange.address, order.price, order.amount, {
+                    tx = tokenAce.transferAndNotify(exchange.address, order.amount, order.price, {
                         from: order.maker
                     });
                 }
@@ -115,7 +115,7 @@ contract("Exchange random tests", accounts => {
                 tx,
                 typeof tx.logs[0].args.weiAmount === "undefined"
                     ? "placeBuyTokenOrder"
-                    : "tokenAce.placeSellTokenOrderOnExchange"
+                    : "transferAndNotify - token sell"
             )
         );
         assert(txs.length, ORDER_COUNT);

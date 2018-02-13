@@ -57,19 +57,6 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelper.newOrder(this, order);
     });
 
-    it("only whitelisted exchanges should be accepted by AugmintToken.placeSellTokenOrderOnExchange", async function() {
-        const Exchange = artifacts.require("./Exchange.sol");
-        const price = 11000;
-        const wrongExchange = await Exchange.new(tokenAce.address, rates.address, minOrderAmount);
-        // no "Exchange" permission for wrongExchange instance:
-        await tokenAce.grantMultiplePermissions(wrongExchange.address, ["transferNoFee", "transferFromNoFee"]);
-        await testHelper.expectThrow(
-            tokenAce.placeSellTokenOrderOnExchange(wrongExchange.address, price, minOrderAmount * 2, {
-                from: makers[0]
-            })
-        );
-    });
-
     it("shouldn't place a sell token order directly if approval < amount", async function() {
         const order = {
             amount: 1000000,
@@ -117,7 +104,7 @@ contract("Exchange orders tests", accounts => {
     it("shouldn't place a SELL token order below minOrderAmount", async function() {
         const price = 11000;
         await testHelper.expectThrow(
-            tokenAce.placeSellTokenOrderOnExchange(exchange.address, price, minOrderAmount - 1, { from: makers[0] })
+            tokenAce.transferAndNotify(exchange.address, minOrderAmount - 1, price, { from: makers[0] })
         );
     });
 
@@ -152,9 +139,7 @@ contract("Exchange orders tests", accounts => {
         const price = 11000;
         const tx = await exchange.setMinOrderAmount(0);
         testHelper.logGasUse(this, tx, "setMinOrderAmount");
-        await testHelper.expectThrow(
-            tokenAce.placeSellTokenOrderOnExchange(exchange.address, price, 0, { from: makers[0] })
-        );
+        await testHelper.expectThrow(tokenAce.transferAndNotify(exchange.address, 0, price, { from: makers[0] }));
     });
 
     it("shouldn't place a BUY token order with 0 price even if minOrderAmount is 0", async function() {
@@ -172,7 +157,7 @@ contract("Exchange orders tests", accounts => {
         const userBal = await tokenAce.balanceOf(makers[0]);
         assert(userBal > minOrderAmount, "user doesn't have enough balance for test");
         await testHelper.expectThrow(
-            tokenAce.placeSellTokenOrderOnExchange(exchange.address, price, userBal + 1, { from: makers[0] })
+            tokenAce.transferAndNotify(exchange.address, userBal + 1, price, { from: makers[0] })
         );
     });
 
@@ -234,7 +219,7 @@ contract("Exchange orders tests", accounts => {
         const orders = [];
         for (let i = 0; i < orderCount; i++) {
             orders.push(
-                tokenAce.placeSellTokenOrderOnExchange(exchange.address, 10000 + i, minOrderAmount + i, {
+                tokenAce.transferAndNotify(exchange.address, minOrderAmount + i, 10000 + i, {
                     from: makers[0]
                 })
             );
