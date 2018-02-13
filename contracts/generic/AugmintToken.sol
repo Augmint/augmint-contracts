@@ -146,11 +146,7 @@ contract AugmintToken is AugmintTokenInterface {
 
     function calculateFee(address from, address to, uint amount) internal view returns (uint256 fee) {
         if (!permissions[from]["NoFeeTransferContracts"] && !permissions[to]["NoFeeTransferContracts"]) {
-            if (amount > 0) {
-                fee = amount.mul(transferFeePt).div(1000000);
-            } else {
-                fee = 0;
-            }
+            fee = amount.mul(transferFeePt).div(1000000);
             if (fee > transferFeeMax) {
                 fee = transferFeeMax;
             } else if (fee < transferFeeMin) {
