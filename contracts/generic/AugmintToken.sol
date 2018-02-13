@@ -1,14 +1,8 @@
 /* Generic Augmint Token implementation (ERC20 token)
     This contract manages:
         * Balances of Augmint holders and transactions between them
-        * Issues and burns tokens when loan issued or repaid
-        * Holds reserves:
-            - ETH as regular ETH balance of the contract
-            - ERC20 token reserve (stored as regular Token balance under the contract address)
+        * Issues/burns tokens
 
-        Note that all reserves are held under the contract address,
-          therefore any transaction on the reserve is limited to the tx-s defined here
-          (ie. transfer of reserve is not possible by the contract owner)
     TODO:
         - consider generic bytes arg instead of uint for transferAndNotify
         - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
