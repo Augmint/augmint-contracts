@@ -5,8 +5,9 @@
     - Send funds from reserve to exchange when intervening (not implemented yet)
 
     TODO:
-     - MonetarySupervisorInterface (and use it everywhere)
-    - interestEarnedAccount setter?
+        - MonetarySupervisorInterface (and use it everywhere)
+        - interestEarnedAccount setter?
+        - create and use InterestEarnedAccount interface instead?
 
 */
 
@@ -15,8 +16,6 @@ import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 import "./InterestEarnedAccount.sol";
-import "./interfaces/LoanManagerInterface.sol";
-import "./interfaces/ExchangeInterface.sol";
 import "./Locker.sol";
 
 
@@ -76,6 +75,24 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
         totalLockedAmount = totalLockedAmount.sub(lockedAmount);
     }
 
+    function issueLoan(address borrower, uint loanAmount) external {
+        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted LoanManager contracts
+        totalLoanAmount = totalLoanAmount.add(loanAmount);
+        augmintToken.issueTo(borrower, loanAmount);
+    }
+
+    function burnLoan(uint loanAmount) external {
+        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted Lender contracts
+        totalLoanAmount = totalLoanAmount.sub(loanAmount);
+        augmintToken.burnFrom(msg.sender, loanAmount);
+    }
+
+    // NB: this is called by Lender contract with the sum of all loans collected in batch
+    function loanCollectionNotification(uint totalLoanAmountCollected) external {
+        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted Lender contracts
+        totalLoanAmount = totalLoanAmount.sub(totalLoanAmountCollected);
+    }
+
     function setParams(uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount)
     external restrict("MonetaryBoard") {
         ltdDifferenceLimit = _ltdDifferenceLimit;
@@ -90,58 +107,6 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
     }
 
     /*
-    function lockFunds(address lockerAddress, uint lockProductId, uint amountToLock) external {
-        require(permissions[lockerAddress]["LockerContracts"]); // only whitelisted LockerContracts
-
-        // NB: locker.createLock will validate lockProductId and amountToLock:
-        Locker locker = Locker(lockerAddress);
-        uint interestEarnedAmount = locker.createLock(lockProductId, msg.sender, amountToLock);
-        totalLockedAmount = totalLockedAmount.add(amountToLock);
-
-        _transfer(msg.sender, address(locker), amountToLock, "Funds locked");
-        _transfer(interestEarnedAccount, address(locker), interestEarnedAmount, "Accrue lock interest");
-
-    }
-
-    // called by Locker.releaseFunds to maintain totalLockAmount
-    function fundsReleased(uint amountLocked) external {
-        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
-        totalLockedAmount = totalLockedAmount.sub(amountLocked);
-    }
-
-    function issueAndDisburse(address borrower, uint loanAmount, uint repaymentAmount, string narrative)
-    external restrict("LoanManagerContracts") {
-        require(loanAmount > 0);
-        require(repaymentAmount > 0);
-        totalLoanAmount = totalLoanAmount.add(loanAmount);
-        _issue(msg.sender, loanAmount);
-        _transfer(msg.sender, borrower, loanAmount, narrative);
-    }
-
-    // Users must repay through AugmintToken.repayLoan()
-    function repayLoan(address _loanManager, uint loanId) external {
-        require(permissions[_loanManager]["LoanManagerContracts"]); // only whitelisted loanManagers
-        LoanManagerInterface loanManager = LoanManagerInterface(_loanManager);
-        // solhint-disable-next-line space-after-comma
-        var (borrower, , , repaymentAmount , loanAmount, interestAmount, ) = loanManager.loans(loanId);
-        require(borrower == msg.sender);
-
-        totalLoanAmount = totalLoanAmount.sub(loanAmount);
-        _transfer(msg.sender, _loanManager, repaymentAmount, "Loan repayment");
-        _burn(_loanManager, loanAmount);
-        if (interestAmount > 0) {
-            // transfer interestAmount to InterestEarnedAccount (internal transfer, no need for Transfer events)
-            balances[_loanManager] = balances[_loanManager].sub(interestAmount);
-            balances[interestEarnedAccount] = balances[interestEarnedAccount].add(interestAmount);
-        }
-        loanManager.releaseCollateral(loanId);
-    }
-
-    // called by LoanManager.collect to maintain totalLoanAmount
-    function loanCollected(uint loanAmount) external {
-        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted loanManagers
-        totalLoanAmount = totalLoanAmount.sub(loanAmount);
-    }
 
     // convenience function - alternative to Exchange.placeSellTokenOrder without approval required
     function placeSellTokenOrderOnExchange(address _exchange, uint price, uint tokenAmount)

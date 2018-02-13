@@ -191,11 +191,13 @@ contract AugmintToken is AugmintTokenInterface {
         balances[from] = balances[from].sub(amount);
         totalSupply = totalSupply.sub(amount);
         Transfer(from, 0x0, amount);
+        AugmintTransfer(from, 0x0, amount, "", 0);
     }
 
     function _issue(address to, uint amount) private {
         balances[to] = balances[to].add(amount);
         totalSupply = totalSupply.add(amount);
         Transfer(0x0, to, amount);
+        AugmintTransfer(0x0, to, amount, "", 0);
     }
 }
