@@ -253,4 +253,8 @@ contract("Exchange orders tests", accounts => {
         await testHelper.expectThrow(exchangeTestHelper.newOrder(this, buyOrder));
         await testHelper.expectThrow(exchangeTestHelper.newOrder(this, sellOrder));
     });
+
+    it("should only allow the token contract call transferNotification", async function() {
+        await testHelper.expectThrow(exchange.transferNotification(accounts[0], 1000, 0, { from: accounts[0] }));
+    });
 });
