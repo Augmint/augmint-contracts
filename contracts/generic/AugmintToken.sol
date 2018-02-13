@@ -9,8 +9,9 @@
         Note that all reserves are held under the contract address,
           therefore any transaction on the reserve is limited to the tx-s defined here
           (ie. transfer of reserve is not possible by the contract owner)
-    TODO: ERC20 short address attack protection? https://github.com/DecentLabs/dcm-poc/issues/62
-    TODO: create a LockerInterface and use that instead of Locker.sol ?
+    TODO:
+        - consider generic bytes arg instead of uint for transferAndNotify
+        - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
 */
 pragma solidity 0.4.19;
 import "../interfaces/AugmintTokenInterface.sol";
@@ -47,27 +48,29 @@ contract AugmintToken is AugmintTokenInterface {
         // to accept ETH sent into reserve (from defaulted loan's collateral )
     }
 
-    // Issue tokens to Reserve
+    // Issue and burn tokens
+    // Only by MonetarySupervisor contract. See MonetarySupervisor but as a rule of thumb issueTo/burnFrom is only
+    //      allowed on new loan / repayment or strictly to/from reserve by MonetaryBoard
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
         _issue(to, amount);
     }
 
-    // Burn tokens from Reserve
     function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContract") {
         _burn(from, amount);
     }
 
-    /*  Can be used for contracts which require token to be transfered to have only 1 tx (instead of approve + call)
+    /*  transferAndNotify can be used by contracts which require tokens to have only 1 tx (instead of approve + call)
         Eg. repay loan, lock funds, token sell order on exchange
-        Will revert if  targetContract is an address targetContract doesn't have transferNotification or fallback fx
+        Reverts on failue:
+            - transfer fails
+            - if transferNotification fails (callee must revert on failure)
+            - if targetContract is an account or targetContract doesn't have neither transferNotification or fallback fx
         TODO: make data param generic bytes (see receiver code attempt in Locker.transferNotification)
     */
-    function transferAndNotify(TokenReceiver target, uint amount, uint data) external returns (bool success) {
+    function transferAndNotify(TokenReceiver target, uint amount, uint data) external {
         _transfer(msg.sender, target, amount, "");
 
         target.transferNotification(msg.sender, amount, data);
-
-        return true;
     }
 
     function transferWithNarrative(address to, uint256 amount, string narrative) external {

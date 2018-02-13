@@ -3,8 +3,6 @@
 TODO: overload transfer() & transferFrom() instead of transferWithNarrative() & transferFromWithNarrative()
       when this fix available in web3& truffle also uses that web3: https://github.com/ethereum/web3.js/pull/1185
 TODO: shall we use bytes for narrative?
-TODO: shall we replace repayLoan with a generic approveAndCall ?
-TODO: shall we put protection against accidentally sending in ETH?
  */
 pragma solidity 0.4.19;
 import "../generic/SafeMath.sol";
@@ -37,7 +35,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContracts");
     function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContracts");
 
-    function transferAndNotify(TokenReceiver target, uint amount, uint data) external returns (bool success);
+    function transferAndNotify(TokenReceiver target, uint amount, uint data) external;
 
     function transferWithNarrative(address to, uint256 amount, string narrative) external;
     function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) external;
