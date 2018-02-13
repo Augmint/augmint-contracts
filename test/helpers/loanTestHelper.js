@@ -12,7 +12,7 @@ const testHelper = require("./testHelper.js");
 const LoanManager = artifacts.require("./LoanManager.sol");
 
 let tokenAce, monetarySupervisor, loanManager, rates, peggedSymbol;
-let reserveAcc;
+let reserveAcc = null;
 let interestEarnedAcc = null;
 
 module.exports = {
@@ -29,8 +29,10 @@ async function newLoanManagerMock(_tokenAce, _monetarySupervisor, _rates) {
     tokenAce = _tokenAce;
     monetarySupervisor = _monetarySupervisor;
     rates = _rates;
-    reserveAcc = tokenAce.address;
-    interestEarnedAcc = await monetarySupervisor.interestEarnedAccount();
+    [reserveAcc, interestEarnedAcc] = await Promise.all([
+        monetarySupervisor.augmintReserves(),
+        monetarySupervisor.interestEarnedAccount()
+    ]);
     loanManager = await LoanManager.new(tokenAce.address, monetarySupervisor.address, rates.address, interestEarnedAcc);
 
     [peggedSymbol, , ,] = await Promise.all([

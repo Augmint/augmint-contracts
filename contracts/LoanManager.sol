@@ -135,6 +135,7 @@ contract LoanManager is Restricted {
          TODO: optimise defaulting fee calculations
         */
         uint totalLoanAmountCollected;
+        uint totalCollateralToCollect;
         for (uint i = 0; i < loanIds.length; i++) {
             uint loanId = loanIds[i];
             require(loans[loanId].state == LoanState.Open);
@@ -154,14 +155,18 @@ contract LoanManager is Restricted {
                 releasedCollateral = loans[loanId].collateralAmount.sub(targetCollection);
                 loans[loanId].borrower.transfer(releasedCollateral);
             }
-            uint collectedCollateral = loans[loanId].collateralAmount.sub(releasedCollateral);
-            if (defaultingFee > collectedCollateral) {
-                defaultingFee = collectedCollateral;
+            uint collateralToCollect = loans[loanId].collateralAmount.sub(releasedCollateral);
+            if (defaultingFee > collateralToCollect) {
+                defaultingFee = collateralToCollect;
             }
 
-            address(augmintToken).transfer(collectedCollateral);
+            totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
 
-            LoanCollected(loanId, loans[loanId].borrower, collectedCollateral, releasedCollateral, defaultingFee);
+            LoanCollected(loanId, loans[loanId].borrower, collateralToCollect, releasedCollateral, defaultingFee);
+        }
+
+        if (totalCollateralToCollect > 0) {
+            monetarySupervisor.augmintReserves().transfer(totalCollateralToCollect);
         }
 
         monetarySupervisor.loanCollectionNotification(totalLoanAmountCollected);// update KPIs

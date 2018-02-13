@@ -38,10 +38,6 @@ contract AugmintToken is AugmintTokenInterface {
         transferFeeMax = _transferFeeMax;
     }
 
-    function () public payable { // solhint-disable-line no-empty-blocks
-        // to accept ETH sent into reserve (from defaulted loan's collateral )
-    }
-
     // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is
     //               only allowed on new loan (by trusted Lender contracts) or strictly to reserve by MonetaryBoard
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
