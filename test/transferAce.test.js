@@ -9,16 +9,11 @@ contract("Transfer ACE tests", accounts => {
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
         await monetarySupervisor.issue(1000000000);
-        [minFee, maxFee, feePt, ,] = await Promise.all([
-            tokenAce.transferFeeMin(),
-            tokenAce.transferFeeMax(),
-            tokenAce.transferFeePt(),
+        await Promise.all([
             tokenAce.withdrawTokens(accounts[0], 500000000),
             tokenAce.withdrawTokens(accounts[1], 500000000)
         ]);
-        // minFee = _minFee;
-        // maxFee = _maxFee;
-        // feePt = _feePt;
+        [feePt, minFee, maxFee] = await tokenAce.getParams();
         minFeeAmount = minFee.div(feePt).mul(1000000);
         maxFeeAmount = maxFee.div(feePt).mul(1000000);
     });
