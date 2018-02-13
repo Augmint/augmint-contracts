@@ -8,10 +8,10 @@ contract("Transfer ACE tests", accounts => {
     before(async function() {
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
-        await monetarySupervisor.issue(1000000000);
+        await monetarySupervisor.issueToReserve(1000000000);
         await Promise.all([
-            tokenAce.withdrawTokens(accounts[0], 500000000),
-            tokenAce.withdrawTokens(accounts[1], 500000000)
+            monetarySupervisorTestHelpers.withdrawFromReserve(accounts[0], 500000000),
+            monetarySupervisorTestHelpers.withdrawFromReserve(accounts[1], 500000000)
         ]);
         [feePt, minFee, maxFee] = await tokenAce.getParams();
         minFeeAmount = minFee.div(feePt).mul(1000000);

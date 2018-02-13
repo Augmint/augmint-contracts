@@ -200,7 +200,9 @@ contract LoanManager is Restricted {
         loans[loanId].state = LoanState.Repaid;
 
         augmintToken.transfer(interestEarnedAccount, loans[loanId].interestAmount);
-        monetarySupervisor.burnLoan(loans[loanId].loanAmount); // burn repayment & update KPIs
+
+        augmintToken.burn(loans[loanId].loanAmount);
+        monetarySupervisor.loanRepaymentNotification(loans[loanId].loanAmount); // update KPIs
 
         loans[loanId].borrower.transfer(loans[loanId].collateralAmount); // send back ETH collateral
 

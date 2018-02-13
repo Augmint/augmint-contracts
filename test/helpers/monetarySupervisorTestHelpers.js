@@ -1,16 +1,20 @@
+const AugmintReserves = artifacts.require("./AugmintReserves.sol");
+
 module.exports = {
-    newMonetarySupervisorMock
+    newMonetarySupervisorMock,
+    withdrawFromReserve
 };
 
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
-let tokenAEur, monetarySupervisor, interestEarnedAccount;
+let tokenAEur, monetarySupervisor, augmintReserves, interestEarnedAccount;
 
 async function newMonetarySupervisorMock(augmintToken, tokenOwner = web3.eth.accounts[0]) {
     tokenAEur = augmintToken;
-
+    augmintReserves = await AugmintReserves.new();
     monetarySupervisor = await MonetarySupervisor.new(
         tokenAEur.address,
+        augmintReserves.address,
         InterestEarnedAccount.address,
 
         /* Parameters Used to ensure totalLoanAmount or totalLockedAmount difference is withing limit and system also works
@@ -25,6 +29,12 @@ async function newMonetarySupervisorMock(augmintToken, tokenOwner = web3.eth.acc
     interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
     await interestEarnedAccount.grantMultiplePermissions(monetarySupervisor.address, ["MonetarySupervisorContract"]);
     await tokenAEur.grantMultiplePermissions(monetarySupervisor.address, ["MonetarySupervisorContract"]);
-
+    await augmintReserves.grantMultiplePermissions(monetarySupervisor.address, ["MonetarySupervisorContract"]);
+    await tokenAEur.grantMultiplePermissions(monetarySupervisor.address, ["NoFeeTransferContracts"]);
+    await tokenAEur.grantMultiplePermissions(augmintReserves.address, ["NoFeeTransferContracts"]);
     return monetarySupervisor;
+}
+
+async function withdrawFromReserve(to, amount) {
+    await augmintReserves.withdrawTokens(tokenAEur.address, to, amount, "withdrawal for tests");
 }

@@ -1,6 +1,7 @@
 const SafeMath = artifacts.require("./SafeMath.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
+const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 
 module.exports = async function(deployer, network, accounts) {
     deployer.link(SafeMath, TokenAEur);
@@ -15,4 +16,5 @@ module.exports = async function(deployer, network, accounts) {
     const tokenAEur = TokenAEur.at(TokenAEur.address);
     await tokenAEur.grantMultiplePermissions(accounts[0], ["MonetaryBoard"]);
     await tokenAEur.grantMultiplePermissions(FeeAccount.address, ["NoFeeTransferContracts"]);
+    await tokenAEur.grantMultiplePermissions(AugmintReserves.address, ["NoFeeTransferContracts"]);
 };

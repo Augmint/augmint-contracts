@@ -2,6 +2,7 @@ const SafeMath = artifacts.require("./SafeMath.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
+const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 
 module.exports = async function(deployer) {
     deployer.link(SafeMath, MonetarySupervisor);
@@ -9,6 +10,7 @@ module.exports = async function(deployer) {
     await deployer.deploy(
         MonetarySupervisor,
         TokenAEur.address,
+        AugmintReserves.address,
         InterestEarnedAccount.address,
 
         /* Parameters Used to ensure totalLoanAmount or totalLockedAmount difference is withing limit and system also works
@@ -23,5 +25,5 @@ module.exports = async function(deployer) {
 
     const tokenAEur = TokenAEur.at(TokenAEur.address);
     await tokenAEur.grantMultiplePermissions(MonetarySupervisor.address, ["MonetarySupervisorContract"]);
-    // TODO: check MonetarySupervisor need "NoFeeTransferContracts"
+    await tokenAEur.grantMultiplePermissions(MonetarySupervisor.address, ["NoFeeTransferContracts"]);
 };

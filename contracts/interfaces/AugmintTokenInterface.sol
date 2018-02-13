@@ -32,8 +32,8 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     event TokenBurned(uint amount);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function issueTo(address to, uint amount) external restrict("MonetarySupervisorContracts");
-    function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContracts");
+    function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract");
+    function burn(uint amount) external;
 
     function transferAndNotify(TokenReceiver target, uint amount, uint data) external;
 

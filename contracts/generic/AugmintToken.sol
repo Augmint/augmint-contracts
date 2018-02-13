@@ -20,10 +20,10 @@ import "../interfaces/AugmintTokenInterface.sol";
 contract AugmintToken is AugmintTokenInterface {
 
     address public feeAccount;
+
     uint public transferFeePt; // in parts per million (ppm) , ie. 2,000 = 0.2%
     uint public transferFeeMin; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
     uint public transferFeeMax; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
-
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
@@ -48,15 +48,22 @@ contract AugmintToken is AugmintTokenInterface {
         // to accept ETH sent into reserve (from defaulted loan's collateral )
     }
 
-    // Issue and burn tokens
-    // Only by MonetarySupervisor contract. See MonetarySupervisor but as a rule of thumb issueTo/burnFrom is only
-    //      allowed on new loan / repayment or strictly to/from reserve by MonetaryBoard
+    // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is
+    //               only allowed on new loan (by trusted Lender contracts) or strictly to reserve by MonetaryBoard
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
-        _issue(to, amount);
+        balances[to] = balances[to].add(amount);
+        totalSupply = totalSupply.add(amount);
+        Transfer(0x0, to, amount);
+        AugmintTransfer(0x0, to, amount, "", 0);
     }
 
-    function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContract") {
-        _burn(from, amount);
+    // Burn tokens. Anyone can burn from its own account. YOLO.
+    // Used by to burn from Augmint reserve or by Lender contract after loan repayment
+    function burn(uint amount) external {
+        balances[msg.sender] = balances[msg.sender].sub(amount);
+        totalSupply = totalSupply.sub(amount);
+        Transfer(msg.sender, 0x0, amount);
+        AugmintTransfer(msg.sender, 0x0, amount, "", 0);
     }
 
     /*  transferAndNotify can be used by contracts which require tokens to have only 1 tx (instead of approve + call)
@@ -186,17 +193,4 @@ contract AugmintToken is AugmintTokenInterface {
         AugmintTransfer(from, to, amount, narrative, fee);
     }
 
-    function _burn(address from, uint amount) private {
-        balances[from] = balances[from].sub(amount);
-        totalSupply = totalSupply.sub(amount);
-        Transfer(from, 0x0, amount);
-        AugmintTransfer(from, 0x0, amount, "", 0);
-    }
-
-    function _issue(address to, uint amount) private {
-        balances[to] = balances[to].add(amount);
-        totalSupply = totalSupply.add(amount);
-        Transfer(0x0, to, amount);
-        AugmintTransfer(0x0, to, amount, "", 0);
-    }
 }
