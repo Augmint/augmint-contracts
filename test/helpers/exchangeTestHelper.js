@@ -26,10 +26,10 @@ module.exports = {
 
 let exchange, tokenAce, rates;
 
-async function newExchangeMock(_tokenAce, _rates, minOrderAmount) {
+async function newExchangeMock(_tokenAce, _rates) {
     tokenAce = _tokenAce;
     rates = _rates;
-    exchange = await Exchange.new(tokenAce.address, rates.address, minOrderAmount);
+    exchange = await Exchange.new(tokenAce.address, rates.address);
     await exchange.grantMultiplePermissions(web3.eth.accounts[0], ["MonetaryBoard"]);
     await tokenAce.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
     return exchange;

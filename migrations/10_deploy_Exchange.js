@@ -5,7 +5,7 @@ const Exchange = artifacts.require("./Exchange.sol");
 
 module.exports = function(deployer, network, accounts) {
     deployer.link(SafeMath, Exchange);
-    deployer.deploy(Exchange, TokenAEur.address, Rates.address, 1000000);
+    deployer.deploy(Exchange, TokenAEur.address, Rates.address);
     deployer.then(async () => {
         const exchange = Exchange.at(Exchange.address);
         await exchange.grantMultiplePermissions(accounts[0], ["MonetaryBoard"]);

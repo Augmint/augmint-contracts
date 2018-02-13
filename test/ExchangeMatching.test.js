@@ -24,7 +24,7 @@ contract("Exchange matching tests", accounts => {
         await tokenAce.withdrawTokens(maker, 100000000);
         await tokenAce.withdrawTokens(taker, 100000000);
 
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce, rates, 1000000);
+        exchange = await exchangeTestHelper.newExchangeMock(tokenAce, rates);
     });
 
     beforeEach(async function() {

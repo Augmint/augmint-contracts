@@ -75,7 +75,7 @@ contract("Exchange random tests", accounts => {
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
         await Promise.all(accounts.slice(0, TEST_ACCS_CT).map(acc => tokenAce.withdrawTokens(acc, ACC_INIT_ACE)));
 
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce, rates, MIN_TOKEN);
+        exchange = await exchangeTestHelper.newExchangeMock(tokenAce, rates);
     });
 
     it("place x buy / sell orders", async function() {

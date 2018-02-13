@@ -37,8 +37,6 @@ contract Exchange is Restricted {
     uint[] private activeBuyOrders;
     uint[] private activeSellOrders;
 
-    uint public minOrderAmount; // 0: no limit. For placeBuyTokenOrder it's calculated on current rate & price provided
-
     /* used to stop executing matchMultiple when running out of gas.
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
     uint32 public constant ORDER_MATCH_WORST_GAS = 200000;
@@ -51,20 +49,14 @@ contract Exchange is Restricted {
 
     event CancelledOrder(uint indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
-    event MinOrderAmountChanged(uint newMinOrderAmount);
-
-    function Exchange(AugmintTokenInterface _augmintToken, Rates _rates, uint _minOrderAmount) public {
+    function Exchange(AugmintTokenInterface _augmintToken, Rates _rates) public {
         augmintToken = _augmintToken;
         rates = _rates;
-        minOrderAmount = _minOrderAmount;
     }
 
     function placeBuyTokenOrder(uint price) external payable returns (uint orderId) {
         require(price > 0);
         require(msg.value > 0);
-
-        uint tokenAmount = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value.roundedDiv(price).mul(10000));
-        require(tokenAmount >= minOrderAmount);
 
         orderId = buyTokenOrders.push(Order(activeBuyOrders.length, msg.sender, now, price, msg.value)) - 1;
         activeBuyOrders.push(orderId);
@@ -122,12 +114,6 @@ contract Exchange is Restricted {
             _fillOrder(buyTokenIds[i], sellTokenIds[i]);
             matchCount++;
         }
-    }
-
-    /* only allowed for Monetary Board. */
-    function setMinOrderAmount(uint _minOrderAmount) external restrict("MonetaryBoard") {
-        minOrderAmount = _minOrderAmount;
-        MinOrderAmountChanged(minOrderAmount);
     }
 
     function getActiveOrderCounts() external view returns(uint buyTokenOrderCount, uint sellTokenOrderCount) {
@@ -217,7 +203,6 @@ contract Exchange is Restricted {
     private returns (uint orderId) {
         require(price > 0);
         require(tokenAmount > 0);
-        require(tokenAmount >= minOrderAmount);
         require(rates.convertToWei(augmintToken.peggedSymbol(), tokenAmount) > 0);
 
         orderId = sellTokenOrders.push(Order(activeSellOrders.length, maker, now, price, tokenAmount)) - 1;
