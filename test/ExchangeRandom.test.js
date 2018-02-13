@@ -70,10 +70,14 @@ contract("Exchange random tests", accounts => {
         rates = await ratesTestHelper.newRatesMock("EUR", MARKET_WEI_RATE);
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
-        await monetarySupervisor.issue(TEST_ACCS_CT * ACC_INIT_ACE);
+        await monetarySupervisor.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
 
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
-        await Promise.all(accounts.slice(0, TEST_ACCS_CT).map(acc => tokenAce.withdrawTokens(acc, ACC_INIT_ACE)));
+        await Promise.all(
+            accounts
+                .slice(0, TEST_ACCS_CT)
+                .map(acc => monetarySupervisorTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
+        );
 
         exchange = await exchangeTestHelper.newExchangeMock(tokenAce, rates, MIN_TOKEN);
     });

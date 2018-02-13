@@ -18,7 +18,7 @@ contract("ACE Loans tests", accounts => {
 
         [loanManager] = await Promise.all([
             loanTestHelper.newLoanManagerMock(tokenAce, monetarySupervisor, rates),
-            monetarySupervisor.issue(1000000000)
+            monetarySupervisor.issueToReserve(1000000000)
         ]);
 
         [
@@ -34,7 +34,7 @@ contract("ACE Loans tests", accounts => {
             loanTestHelper.getProductInfo(2),
             loanTestHelper.getProductInfo(1),
             loanTestHelper.getProductInfo(0),
-            tokenAce.withdrawTokens(accounts[0], 1000000000)
+            monetarySupervisorTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
 
         // For test debug:
@@ -179,14 +179,14 @@ contract("ACE Loans tests", accounts => {
     });
 
     it("only allowed contract should call MonetarySupervisor.issueLoan", async function() {
-        await testHelper.expectThrow(monetarySupervisor.issueLoan(accounts[0], 1000, { from: accounts[0] }));
+        await testHelper.expectThrow(monetarySupervisor.issueLoan(accounts[0], 0, { from: accounts[0] }));
     });
 
-    it("only allowed contract should call MonetarySupervisor.burnLoan", async function() {
-        await testHelper.expectThrow(monetarySupervisor.burnLoan(1000, { from: accounts[0] }));
+    it("only allowed contract should call MonetarySupervisor.loanRepaymentNotification", async function() {
+        await testHelper.expectThrow(monetarySupervisor.loanRepaymentNotification(0, { from: accounts[0] }));
     });
 
     it("only allowed contract should call MonetarySupervisor.loanCollectionNotification", async function() {
-        await testHelper.expectThrow(monetarySupervisor.loanCollectionNotification(1000, { from: accounts[0] }));
+        await testHelper.expectThrow(monetarySupervisor.loanCollectionNotification(0, { from: accounts[0] }));
     });
 });

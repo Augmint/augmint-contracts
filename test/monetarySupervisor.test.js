@@ -3,34 +3,35 @@ const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestH
 const testHelper = require("./helpers/testHelper.js");
 
 const NULL_ACC = "0x0000000000000000000000000000000000000000";
-let tokenAce, monetarySupervisor;
+let tokenAce, monetarySupervisor, augmintReserves;
 
-contract("TokenAce tests", accounts => {
+contract("MonetarySupervisor tests", accounts => {
     before(async () => {
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        augmintReserves = await monetarySupervisor.augmintReserves();
     });
 
     it("should be possible to issue new tokens to reserve", async function() {
         const amount = 100000;
         const [totalSupplyBefore, reserveBalBefore, issuedByMonetaryBoardBefore] = await Promise.all([
             tokenAce.totalSupply(),
-            tokenAce.balanceOf(tokenAce.address),
+            tokenAce.balanceOf(augmintReserves),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
 
-        const tx = await monetarySupervisor.issue(amount);
+        const tx = await monetarySupervisor.issueToReserve(amount);
         testHelper.logGasUse(this, tx, "issue");
 
         await testHelper.assertEvent(tokenAce, "Transfer", {
             from: NULL_ACC,
-            to: tokenAce.address,
+            to: augmintReserves,
             amount: amount
         });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             tokenAce.totalSupply(),
-            tokenAce.balanceOf(tokenAce.address),
+            tokenAce.balanceOf(augmintReserves),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
 
@@ -52,30 +53,30 @@ contract("TokenAce tests", accounts => {
     });
 
     it("only allowed should issue tokens", async function() {
-        await testHelper.expectThrow(monetarySupervisor.issue(1000, { from: accounts[1] }));
+        await testHelper.expectThrow(monetarySupervisor.issueToReserve(1000, { from: accounts[1] }));
     });
 
     it("should be possible to burn tokens from reserve", async function() {
         const amount = 900;
-        await monetarySupervisor.issue(amount);
+        await monetarySupervisor.issueToReserve(amount);
         const [totalSupplyBefore, reserveBalBefore, issuedByMonetaryBoardBefore] = await Promise.all([
             tokenAce.totalSupply(),
-            tokenAce.balanceOf(tokenAce.address),
+            tokenAce.balanceOf(augmintReserves),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
 
-        const tx = await monetarySupervisor.burn(amount);
+        const tx = await monetarySupervisor.burnFromReserve(amount);
         testHelper.logGasUse(this, tx, "burn");
 
         await testHelper.assertEvent(tokenAce, "Transfer", {
-            from: tokenAce.address,
+            from: augmintReserves,
             to: NULL_ACC,
             amount: amount
         });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             tokenAce.totalSupply(),
-            tokenAce.balanceOf(tokenAce.address),
+            tokenAce.balanceOf(augmintReserves),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
         assert.equal(
@@ -96,8 +97,8 @@ contract("TokenAce tests", accounts => {
     });
 
     it("only allowed should burn tokens", async function() {
-        await monetarySupervisor.issue(2000);
-        await testHelper.expectThrow(monetarySupervisor.burn(1000, { from: accounts[1] }));
+        await monetarySupervisor.issueToReserve(2000);
+        await testHelper.expectThrow(monetarySupervisor.burnFromReserve(1000, { from: accounts[1] }));
     });
 
     it("should be possible to set parameters", async function() {

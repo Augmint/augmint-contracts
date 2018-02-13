@@ -1,16 +1,11 @@
 /* Generic Augmint Token implementation (ERC20 token)
     This contract manages:
         * Balances of Augmint holders and transactions between them
-        * Issues and burns tokens when loan issued or repaid
-        * Holds reserves:
-            - ETH as regular ETH balance of the contract
-            - ERC20 token reserve (stored as regular Token balance under the contract address)
+        * Issues/burns tokens
 
-        Note that all reserves are held under the contract address,
-          therefore any transaction on the reserve is limited to the tx-s defined here
-          (ie. transfer of reserve is not possible by the contract owner)
-    TODO: ERC20 short address attack protection? https://github.com/DecentLabs/dcm-poc/issues/62
-    TODO: create a LockerInterface and use that instead of Locker.sol ?
+    TODO:
+        - consider generic bytes arg instead of uint for transferAndNotify
+        - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
 */
 pragma solidity 0.4.19;
 import "../interfaces/AugmintTokenInterface.sol";
@@ -19,10 +14,10 @@ import "../interfaces/AugmintTokenInterface.sol";
 contract AugmintToken is AugmintTokenInterface {
 
     address public feeAccount;
+
     uint public transferFeePt; // in parts per million (ppm) , ie. 2,000 = 0.2%
     uint public transferFeeMin; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
     uint public transferFeeMax; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
-
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
@@ -47,27 +42,36 @@ contract AugmintToken is AugmintTokenInterface {
         // to accept ETH sent into reserve (from defaulted loan's collateral )
     }
 
-    // Issue tokens to Reserve
+    // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is
+    //               only allowed on new loan (by trusted Lender contracts) or strictly to reserve by MonetaryBoard
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
-        _issue(to, amount);
+        balances[to] = balances[to].add(amount);
+        totalSupply = totalSupply.add(amount);
+        Transfer(0x0, to, amount);
+        AugmintTransfer(0x0, to, amount, "", 0);
     }
 
-    // Burn tokens from Reserve
-    function burnFrom(address from, uint amount) external restrict("MonetarySupervisorContract") {
-        _burn(from, amount);
+    // Burn tokens. Anyone can burn from its own account. YOLO.
+    // Used by to burn from Augmint reserve or by Lender contract after loan repayment
+    function burn(uint amount) external {
+        balances[msg.sender] = balances[msg.sender].sub(amount);
+        totalSupply = totalSupply.sub(amount);
+        Transfer(msg.sender, 0x0, amount);
+        AugmintTransfer(msg.sender, 0x0, amount, "", 0);
     }
 
-    /*  Can be used for contracts which require token to be transfered to have only 1 tx (instead of approve + call)
+    /*  transferAndNotify can be used by contracts which require tokens to have only 1 tx (instead of approve + call)
         Eg. repay loan, lock funds, token sell order on exchange
-        Will revert if  targetContract is an address targetContract doesn't have transferNotification or fallback fx
+        Reverts on failue:
+            - transfer fails
+            - if transferNotification fails (callee must revert on failure)
+            - if targetContract is an account or targetContract doesn't have neither transferNotification or fallback fx
         TODO: make data param generic bytes (see receiver code attempt in Locker.transferNotification)
     */
-    function transferAndNotify(TokenReceiver target, uint amount, uint data) external returns (bool success) {
+    function transferAndNotify(TokenReceiver target, uint amount, uint data) external {
         _transfer(msg.sender, target, amount, "");
 
         target.transferNotification(msg.sender, amount, data);
-
-        return true;
     }
 
     function transferWithNarrative(address to, uint256 amount, string narrative) external {
@@ -183,17 +187,4 @@ contract AugmintToken is AugmintTokenInterface {
         AugmintTransfer(from, to, amount, narrative, fee);
     }
 
-    function _burn(address from, uint amount) private {
-        balances[from] = balances[from].sub(amount);
-        totalSupply = totalSupply.sub(amount);
-        Transfer(from, 0x0, amount);
-        AugmintTransfer(from, 0x0, amount, "", 0);
-    }
-
-    function _issue(address to, uint amount) private {
-        balances[to] = balances[to].add(amount);
-        totalSupply = totalSupply.add(amount);
-        Transfer(0x0, to, amount);
-        AugmintTransfer(0x0, to, amount, "", 0);
-    }
 }

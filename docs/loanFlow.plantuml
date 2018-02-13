@@ -56,28 +56,15 @@ deactivate AugmintToken
 activate Lender
     Lender -> Lender : checks + set loan status
     Lender -> AugmintToken : transfer(interestEarnedAcc, interestAmount)
-    Lender -> MonetarySupervisor : burnLoan\n(loanAmount)
-    note over MonetarySupervisor
-        burnLoan is restricted to
-        trusted Lender contract(s)
-    end note
+    Lender -> AugmintToken : burn(loanAmount)
+    Lender -> MonetarySupervisor : loanRepaymentNotification\n(loanAmount)
 deactivate Lender
 
 activate MonetarySupervisor
     MonetarySupervisor -> MonetarySupervisor : update KPIs
-    MonetarySupervisor -> AugmintToken : burnFrom(Lender, loanAmount)
-    note over AugmintToken
-        burnFrom is restricted to
-        MonetarySupervisor contract
-    end note
 deactivate MonetarySupervisor
 
-activate AugmintToken
-    AugmintToken -> AugmintToken : _burnFrom(Lender, loanAmount)
-    AugmintToken -> MonetarySupervisor : success (burnFrom)
-deactivate AugmintToken
-
-MonetarySupervisor -> Lender : success (burnLoan)
+MonetarySupervisor -> Lender : success (loanRepaymentNotification)
 
 activate Lender
 Lender -> Borrower : borrower.send(collateral)

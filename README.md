@@ -43,6 +43,8 @@ Sequence diagrams about the planned:
   Standard [ERC20](https://theethereum.wiki/w/index.php/ERC20_Token_Standard) token interface.
 * [SystemAccount.sol](./contracts/generic/ERC20.sol)
   Generic contract to maintain balances of Augmint system accounts
+* [AugmintReserves](./contracts/AugmintReserves.sol)
+    * Holds Augmint's ETH and token reserves
 * [InterestEarnedAccount](./contracts/InterestEarnedAccount.sol)
     * Holds interest from lending (token) - only repaid loans, ie. already "earned"
     * Provides interest for Locks
@@ -50,16 +52,17 @@ Sequence diagrams about the planned:
     * holds all fees (ETH & Token)
     * calculates fees (not implemented yet, to be split out from AugmintToken & Exchange & LoanManager)
 * [AugmintToken.sol](./contracts/generic/AugmintToken.sol)  
-  Base contract for all Augmint tokens. ERC20.
-    * Issue and burn ACD for new loans and on loan repayment
-    * Convenience functions: getLoan, placeSellOrder (see [Loan flow](docs/loanFlow.png) and [Exchange flow](docs/exchangeFlow.png).)
-    * Holds ETH and Augmint Token reserves
+  Base contract for all Augmint tokens.
+    * ERC20 standard functions
+    * maintains account token balances
+    * Generic `transferAndNotify` "convenience" function
+    * allow MonetarySupervisor to issue tokens on loan disbursement and for reserve
+    * allows accounts to burn their tokens (used by repay loan and burn from reserves via MonetarySupervisor contract)
 * [MonetarySupervisor.sol](./contracts/MonetarySupervisor.sol)
     * maintains system wide KPIs (eg totalLockAmount, totalLoanAmount)
     * holds system wide parameters/limits
     * enforces system wide limits
-    * Send funds from reserve to exchange when intervening (not implemented yet)
-      NB: refactor to all contracts to use in progress.
+    * issue to & from reserve functions
 * [TokenAEur.sol](./contracts/TokenAEur.sol)
     * First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Crypto Euro aka A€ )
     * Sets standard token parameters (name, symbol, decimals, peggedSymbol etc.)

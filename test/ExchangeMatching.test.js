@@ -20,9 +20,9 @@ contract("Exchange matching tests", accounts => {
         tokenAce = await tokenAceTestHelper.newTokenAceMock();
         monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
 
-        await monetarySupervisor.issue(1000000000);
-        await tokenAce.withdrawTokens(maker, 100000000);
-        await tokenAce.withdrawTokens(taker, 100000000);
+        await monetarySupervisor.issueToReserve(1000000000);
+        await monetarySupervisorTestHelpers.withdrawFromReserve(maker, 100000000);
+        await monetarySupervisorTestHelpers.withdrawFromReserve(taker, 100000000);
 
         exchange = await exchangeTestHelper.newExchangeMock(tokenAce, rates, 1000000);
     });

@@ -1,6 +1,6 @@
 const BigNumber = require("bignumber.js");
 const testHelper = new require("./testHelper.js");
-const TokenAceMock = artifacts.require("./mocks/TokenAceMock.sol");
+const TokenAEur = artifacts.require("./mocks/TokenAEur.sol");
 const TRANSFER_MAXFEE = web3.toWei(0.01); // TODO: set this to expected value (+set gasPrice)
 
 module.exports = {
@@ -17,10 +17,10 @@ module.exports = {
 
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
-let tokenAce, monetarySupervisor;
+let tokenAce;
 
 async function newTokenAceMock(tokenOwner = web3.eth.accounts[0]) {
-    tokenAce = await TokenAceMock.new(
+    tokenAce = await TokenAEur.new(
         FeeAccount.address,
         2000, // transferFeePt in parts per million = 0.2%
         200, // min: 0.02 A-EUR
