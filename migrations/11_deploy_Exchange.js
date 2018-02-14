@@ -7,7 +7,6 @@ module.exports = function(deployer, network, accounts) {
     deployer.deploy(Exchange, TokenAEur.address);
     deployer.then(async () => {
         const exchange = Exchange.at(Exchange.address);
-        await exchange.grantMultiplePermissions(accounts[0], ["MonetaryBoard"]);
 
         const tokenAEur = TokenAEur.at(TokenAEur.address);
         await tokenAEur.grantMultiplePermissions(Exchange.address, ["NoFeeTransferContracts"]);

@@ -29,7 +29,6 @@ let exchange, tokenAce;
 async function newExchangeMock(_tokenAce) {
     tokenAce = _tokenAce;
     exchange = await Exchange.new(tokenAce.address);
-    await exchange.grantMultiplePermissions(web3.eth.accounts[0], ["MonetaryBoard"]);
     await tokenAce.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
     return exchange;
 }

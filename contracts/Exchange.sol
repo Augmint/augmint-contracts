@@ -8,12 +8,11 @@
         - uint32 for addedTime?
 */
 pragma solidity 0.4.19;
+
 import "./generic/SafeMath.sol";
-import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 
-
-contract Exchange is Restricted {
+contract Exchange {
     using SafeMath for uint256;
     AugmintTokenInterface public augmintToken;
 
@@ -24,11 +23,11 @@ contract Exchange is Restricted {
         address maker;
         uint addedTime;
 
-        // tokens per ether (4 decimals)
+        // tokens per ether
         uint price;
 
         // buy order: amount in wei 
-        // sell order: token amount (4 decimals)
+        // sell order: token amount
         uint amount;    
     }
 
@@ -40,7 +39,7 @@ contract Exchange is Restricted {
 
     /* used to stop executing matchMultiple when running out of gas.
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
-    uint32 public constant ORDER_MATCH_WORST_GAS = 200000;
+    uint32 private constant ORDER_MATCH_WORST_GAS = 100000;
 
     event NewOrder(uint indexed orderId, address indexed maker, uint price, uint tokenAmount,
         uint weiAmount);
@@ -77,6 +76,7 @@ contract Exchange is Restricted {
         uint amount = order.amount;
         order.amount = 0;
         _removeBuyOrder(order);
+
         msg.sender.transfer(amount);
 
         CancelledOrder(buyTokenId, msg.sender, 0, amount);
@@ -180,8 +180,8 @@ contract Exchange is Restricted {
             _removeSellOrder(sell);
         }
 
-        sell.maker.transfer(tradedWei);
         augmintToken.transferWithNarrative(buy.maker, tradedTokens, "Buy token order fill");
+        sell.maker.transfer(tradedWei);
 
         OrderFill(buy.maker, sell.maker, buyTokenId,
             sellTokenId, price, tradedWei, tradedTokens);
