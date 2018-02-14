@@ -5,7 +5,6 @@
     TODO:
         - deduct fee
         - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
-        - uint32 for addedTime?
 */
 pragma solidity 0.4.19;
 
@@ -21,7 +20,6 @@ contract Exchange {
     struct Order {
         uint index;
         address maker;
-        uint addedTime;
 
         // tokens per ether
         uint price;
@@ -57,7 +55,7 @@ contract Exchange {
         require(price > 0);
         require(msg.value > 0);
 
-        orderId = buyTokenOrders.push(Order(activeBuyOrders.length, msg.sender, now, price, msg.value)) - 1;
+        orderId = buyTokenOrders.push(Order(activeBuyOrders.length, msg.sender, price, msg.value)) - 1;
         activeBuyOrders.push(orderId);
 
         NewOrder(orderId, msg.sender, price, 0, msg.value);
@@ -121,20 +119,20 @@ contract Exchange {
     }
 
     // returns CHUNK_SIZE orders starting from offset
-    // orders are encoded as [id, maker, addedTime, price, amount]
-    function getActiveBuyOrders(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
+    // orders are encoded as [id, maker, price, amount]
+    function getActiveBuyOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeBuyOrders.length; i++) {
             uint orderId = activeBuyOrders[offset + i];
             Order storage order = buyTokenOrders[orderId];
-            response[i] = [orderId, uint(order.maker), order.addedTime, order.price, order.amount];
+            response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
     }
 
-    function getActiveSellOrders(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
+    function getActiveSellOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeSellOrders.length; i++) {
             uint orderId = activeSellOrders[offset + i];
             Order storage order = sellTokenOrders[orderId];
-            response[i] = [orderId, uint(order.maker), order.addedTime, order.price, order.amount];
+            response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
     }
 
@@ -193,7 +191,7 @@ contract Exchange {
         require(price > 0);
         require(tokenAmount > 0);
 
-        orderId = sellTokenOrders.push(Order(activeSellOrders.length, maker, now, price, tokenAmount)) - 1;
+        orderId = sellTokenOrders.push(Order(activeSellOrders.length, maker, price, tokenAmount)) - 1;
         activeSellOrders.push(orderId);
 
         NewOrder(orderId, maker, price, tokenAmount, 0);
