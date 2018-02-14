@@ -14,6 +14,10 @@ import "./interfaces/AugmintTokenInterface.sol";
 
 contract AugmintReserves is SystemAccount {
 
+    function () public payable { // solhint-disable-line no-empty-blocks
+        // to accept ETH sent into reserve (from defaulted loan's collateral )
+    }
+
     function burn(AugmintTokenInterface augmintToken, uint amount) external restrict("MonetarySupervisorContract") {
         augmintToken.burn(amount);
     }
