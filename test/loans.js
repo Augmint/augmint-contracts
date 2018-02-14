@@ -4,7 +4,7 @@ const Rates = artifacts.require("./Rates.sol");
 
 const testHelpers = require("./helpers/testHelpers.js");
 const augmintTokenTestHelper = require("./helpers/tokenTestHelpers.js");
-const loanTestHelpers = require("./helpers/loantestHelpers.js");
+const loanTestHelpers = require("./helpers/loanTestHelpers.js");
 
 let augmintToken = null;
 let loanManager = null;

@@ -1,5 +1,5 @@
 const testHelpers = require("./helpers/testHelpers.js");
-const loanTestHelpers = require("./helpers/loantestHelpers.js");
+const loanTestHelpers = require("./helpers/loanTestHelpers.js");
 
 let loanManager = null;
 
