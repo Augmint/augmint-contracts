@@ -1,21 +1,21 @@
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
+const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
 const testHelper = require("./helpers/testHelper.js");
 
-let tokenAce;
+let augmintToken;
 
 contract("TokenAce tests", accounts => {
     before(async () => {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
+        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
     });
 
     it("should be possible to set transfer fees ", async function() {
         const fee = { pt: 100000, max: 80, min: 90 };
-        const tx = await tokenAce.setTransferFees(fee.pt, fee.min, fee.max, { from: accounts[0] });
+        const tx = await augmintToken.setTransferFees(fee.pt, fee.min, fee.max, { from: accounts[0] });
         testHelper.logGasUse(this, tx, "setTransferFees");
 
-        const [feePt, feeMin, feeMax] = await tokenAce.getParams();
+        const [feePt, feeMin, feeMax] = await augmintToken.getParams();
 
-        await testHelper.assertEvent(tokenAce, "TransferFeesChanged", {
+        await testHelper.assertEvent(augmintToken, "TransferFeesChanged", {
             transferFeePt: fee.pt,
             transferFeeMin: fee.min,
             transferFeeMax: fee.max
@@ -27,17 +27,17 @@ contract("TokenAce tests", accounts => {
     });
 
     it("only allowed should set transfer fees ", async function() {
-        await testHelper.expectThrow(tokenAce.setTransferFees(10000, 10000, 10000, { from: accounts[1] }));
+        await testHelper.expectThrow(augmintToken.setTransferFees(10000, 10000, 10000, { from: accounts[1] }));
     });
 
     it("all params should be accesible via getParams", async function() {
         const paramsOneByOne = await Promise.all([
-            tokenAce.transferFeePt(),
-            tokenAce.transferFeeMin(),
-            tokenAce.transferFeeMax()
+            augmintToken.transferFeePt(),
+            augmintToken.transferFeeMin(),
+            augmintToken.transferFeeMax()
         ]);
 
-        const paramsViaHelper = await tokenAce.getParams();
+        const paramsViaHelper = await augmintToken.getParams();
 
         assert.deepEqual(paramsOneByOne, paramsViaHelper);
     });

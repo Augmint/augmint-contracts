@@ -1,16 +1,18 @@
-const tokenAceTestHelper = new require("./helpers/tokenAceTestHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
+const augmintTokenTestHelpers = new require("./helpers/tokenAceTestHelper.js");
 const testHelper = new require("./helpers/testHelper.js");
-let tokenAce, monetarySupervisor, maxFee;
 
-contract("TransferFrom ACE tests", accounts => {
+let augmintToken = null;
+let maxFee = null;
+
+contract("TransferFrom AugmintToken tests", accounts => {
     before(async function() {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
-        await monetarySupervisor.issueToReserve(1000000000);
-        await monetarySupervisorTestHelpers.withdrawFromReserve(accounts[0], 500000000);
-        await monetarySupervisorTestHelpers.withdrawFromReserve(accounts[1], 500000000);
-        maxFee = await tokenAce.transferFeeMax();
+        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+        await augmintTokenTestHelpers.issueToReserve(1000000000);
+        [maxFee, ,] = await Promise.all([
+            augmintToken.transferFeeMax(),
+            augmintTokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
+            augmintTokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
+        ]);
     });
 
     it("transferFrom", async function() {
@@ -20,15 +22,15 @@ contract("TransferFrom ACE tests", accounts => {
             value: 100000
         };
 
-        await tokenAceTestHelper.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.approveTest(this, expApprove);
 
-        await tokenAceTestHelper.transferFromTest(this, {
+        await augmintTokenTestHelpers.transferFromTest(this, {
             from: expApprove.owner,
             spender: expApprove.spender,
             amount: Math.round(expApprove.value / 2)
         });
 
-        await tokenAceTestHelper.transferFromTest(this, {
+        await augmintTokenTestHelpers.transferFromTest(this, {
             from: expApprove.owner,
             spender: expApprove.spender,
             amount: Math.round(expApprove.value / 2),
@@ -43,9 +45,9 @@ contract("TransferFrom ACE tests", accounts => {
             value: 200000
         };
 
-        await tokenAceTestHelper.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.approveTest(this, expApprove);
 
-        await tokenAceTestHelper.transferFromTest(this, {
+        await augmintTokenTestHelpers.transferFromTest(this, {
             from: expApprove.owner,
             spender: expApprove.spender,
             to: accounts[2],
@@ -56,7 +58,7 @@ contract("TransferFrom ACE tests", accounts => {
 
     it("Shouldn't approve 0x0 spender", async function() {
         await testHelper.expectThrow(
-            tokenAce.approve("0x0", 100, {
+            augmintToken.approve("0x0", 100, {
                 from: accounts[2]
             })
         );
@@ -64,7 +66,7 @@ contract("TransferFrom ACE tests", accounts => {
 
     it("transferFrom only if approved", async function() {
         await testHelper.expectThrow(
-            tokenAce.transferFrom(accounts[0], accounts[2], 100, {
+            augmintToken.transferFrom(accounts[0], accounts[2], 100, {
                 from: accounts[2]
             })
         );
@@ -77,8 +79,8 @@ contract("TransferFrom ACE tests", accounts => {
             value: 100000
         };
 
-        await tokenAceTestHelper.approveTest(this, expApprove);
-        await tokenAceTestHelper.transferFromTest(this, {
+        await augmintTokenTestHelpers.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.transferFromTest(this, {
             from: expApprove.owner,
             spender: expApprove.spender,
             amount: 0,
@@ -93,9 +95,9 @@ contract("TransferFrom ACE tests", accounts => {
             value: 0
         };
 
-        await tokenAceTestHelper.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.approveTest(this, expApprove);
         await testHelper.expectThrow(
-            tokenAce.transferFrom(expApprove.owner, expApprove.spender, 0, {
+            augmintToken.transferFrom(expApprove.owner, expApprove.spender, 0, {
                 from: expApprove.spender
             })
         );
@@ -108,9 +110,9 @@ contract("TransferFrom ACE tests", accounts => {
             value: 10000
         };
 
-        await tokenAceTestHelper.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.approveTest(this, expApprove);
         await testHelper.expectThrow(
-            tokenAce.transferFrom(expApprove.owner, "0x0", 0, {
+            augmintToken.transferFrom(expApprove.owner, "0x0", 0, {
                 from: expApprove.spender
             })
         );
@@ -123,63 +125,65 @@ contract("TransferFrom ACE tests", accounts => {
             value: 200000
         };
 
-        await tokenAceTestHelper.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.approveTest(this, expApprove);
         await testHelper.expectThrow(
-            tokenAce.transferFrom(expApprove.owner, expApprove.spender, expApprove.value + 1, {
+            augmintToken.transferFrom(expApprove.owner, expApprove.spender, expApprove.value + 1, {
                 from: expApprove.spender
             })
         );
     });
 
     it("transferFrom only if balance is enough", async function() {
-        await tokenAce.transfer(accounts[1], maxFee, { from: accounts[0] }); // to cover the transfer fee
-        const amount = await tokenAce.balanceOf(accounts[0]);
+        await augmintToken.transfer(accounts[1], maxFee, { from: accounts[0] }); // to cover the transfer fee
+        const amount = await augmintToken.balanceOf(accounts[0]);
         const expApprove = {
             owner: accounts[1],
             spender: accounts[2],
             value: amount
         };
-        await tokenAceTestHelper.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.approveTest(this, expApprove);
 
         await testHelper.expectThrow(
-            tokenAce.transferFrom(expApprove.owner, expApprove.spender, expApprove.value + 1, {
+            augmintToken.transferFrom(expApprove.owner, expApprove.spender, expApprove.value + 1, {
                 from: expApprove.spender
             })
         );
     });
 
-    it("should have zero fee for transferFrom if 'to' is NoFeeTransferContracts", async function() {
-        const expApprove = {
-            owner: accounts[1],
-            spender: accounts[0],
-            to: accounts[0],
-            value: 100000
-        };
-        await tokenAceTestHelper.approveTest(this, expApprove);
+    it("should have zero fee for transferFrom if 'to' is NoFeeTransferContracts", async function() {});
 
-        await tokenAceTestHelper.transferFromTest(this, {
-            from: expApprove.owner,
-            spender: expApprove.spender,
-            to: expApprove.to,
-            amount: expApprove.value,
-            fee: 0
-        });
-    });
+    it("should have zero fee for transferFrom if 'from' or 'to' is NoFeeTransferContracts ", async function() {
+        await augmintToken.grantPermission(accounts[0], "NoFeeTransferContracts");
 
-    it("should have zero fee for transferFrom if 'from' is NoFeeTransferContracts ", async function() {
-        const expApprove = {
+        const expApprove1 = {
             owner: accounts[0],
             spender: accounts[1],
             to: accounts[2],
             value: 100000
         };
-        await tokenAceTestHelper.approveTest(this, expApprove);
+        await augmintTokenTestHelpers.approveTest(this, expApprove1);
 
-        await tokenAceTestHelper.transferFromTest(this, {
-            from: expApprove.owner,
-            spender: expApprove.spender,
-            to: expApprove.to,
-            amount: expApprove.value,
+        await augmintTokenTestHelpers.transferFromTest(this, {
+            from: expApprove1.owner,
+            spender: expApprove1.spender,
+            to: expApprove1.to,
+            amount: expApprove1.value,
+            fee: 0
+        });
+
+        const expApprove2 = {
+            owner: accounts[1],
+            spender: accounts[0],
+            to: accounts[0],
+            value: 100000
+        };
+        await augmintTokenTestHelpers.approveTest(this, expApprove2);
+
+        await augmintTokenTestHelpers.transferFromTest(this, {
+            from: expApprove2.owner,
+            spender: expApprove2.spender,
+            to: expApprove2.to,
+            amount: expApprove2.value,
             fee: 0
         });
     });

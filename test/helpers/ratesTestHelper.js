@@ -2,18 +2,14 @@ const Rates = artifacts.require("./Rates.sol");
 const moment = require("moment");
 
 module.exports = {
-    newRatesMock,
+    getRates,
     newRatesAsserts
 };
 
-let rates;
+let rates = null;
 
-async function newRatesMock(symbol, rate) {
-    rates = await Rates.new();
-    await rates.grantPermission(web3.eth.accounts[0], "setRate");
-    if (symbol) {
-        await rates.setRate(symbol, rate);
-    }
+async function getRates() {
+    rates = Rates.at(Rates.address);
 
     return rates;
 }

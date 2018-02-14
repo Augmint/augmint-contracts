@@ -1,25 +1,42 @@
-const loanTestHelper = require("./helpers/loanTestHelper.js");
 const LoanManager = artifacts.require("./LoanManager.sol");
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
-const ratesTestHelper = require("./helpers/ratesTestHelper.js");
-const testHelper = require("./helpers/testHelper.js");
+const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+const Rates = artifacts.require("./Rates.sol");
 
-let tokenAce, loanManager, monetarySupervisor, rates;
+const testHelper = require("./helpers/testHelper.js");
+const augmintTokenTestHelper = require("./helpers/tokenAceTestHelper.js");
+const loanTestHelper = require("./helpers/loanTestHelper.js");
+
+let augmintToken = null;
+let loanManager = null;
+let monetarySupervisor = null;
+let rates = null;
 let products = {};
 
-contract("ACE Loans tests", accounts => {
+contract("Augmint Loans tests", accounts => {
     before(async function() {
-        [tokenAce, rates] = await Promise.all([
-            tokenAceTestHelper.newTokenAceMock(),
-            ratesTestHelper.newRatesMock("EUR", 9980000)
-        ]);
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        rates = Rates.at(Rates.address);
+        monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+        augmintToken = await augmintTokenTestHelper.getAugmintToken();
 
         [loanManager] = await Promise.all([
-            loanTestHelper.newLoanManagerMock(tokenAce, monetarySupervisor, rates),
-            monetarySupervisor.issueToReserve(1000000000)
+            loanTestHelper.getLoanManager(),
+            augmintTokenTestHelper.issueToReserve(1000000000)
         ]);
+
+        // These neeed to be sequantial b/c ids hardcoded in tests.
+        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
+        // notDue: (due in 1 day)
+        const prodCount = (await loanManager.getProductCount()).toNumber();
+
+        await loanManager.addLoanProduct(86400, 970000, 850000, 300000, 50000, true);
+        // repaying: due in 60 sec for testing repayment
+        await loanManager.addLoanProduct(60, 985000, 900000, 200000, 50000, true);
+        // defaulting: due in 1 sec, repay in 1sec for testing defaults
+        await loanManager.addLoanProduct(1, 990000, 600000, 100000, 50000, true);
+        // defaulting no left over collateral: due in 1 sec, repay in 1sec for testing defaults without leftover
+        await loanManager.addLoanProduct(1, 900000, 900000, 100000, 100000, true);
+        // disabled product
+        await loanManager.addLoanProduct(1, 990000, 990000, 100000, 50000, false);
 
         [
             products.disabledProduct,
@@ -29,23 +46,13 @@ contract("ACE Loans tests", accounts => {
             products.notDue,
             ,
         ] = await Promise.all([
-            loanTestHelper.getProductInfo(4),
-            loanTestHelper.getProductInfo(3),
-            loanTestHelper.getProductInfo(2),
-            loanTestHelper.getProductInfo(1),
-            loanTestHelper.getProductInfo(0),
-            monetarySupervisorTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
+            loanTestHelper.getProductInfo(prodCount + 4),
+            loanTestHelper.getProductInfo(prodCount + 3),
+            loanTestHelper.getProductInfo(prodCount + 2),
+            loanTestHelper.getProductInfo(prodCount + 1),
+            loanTestHelper.getProductInfo(prodCount),
+            augmintTokenTestHelper.withdrawFromReserve(accounts[0], 1000000000)
         ]);
-
-        // For test debug:
-        // for (const key of Object.keys(products)) {
-        //     console.log({
-        //         product: key,
-        //         id: products[key].id,
-        //         term: products[key].term.toString(),
-        //         repayPeriod: products[key].repayPeriod.toString()
-        //     });
-        // }
     });
 
     it("Should get an ACE loan", async function() {
@@ -69,7 +76,7 @@ contract("ACE Loans tests", accounts => {
     it("Should repay an ACE loan before maturity", async function() {
         const loan = await loanTestHelper.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
         // send interest to borrower to have enough ACE to repay in test
-        await tokenAce.transfer(loan.borrower, loan.interestAmount, {
+        await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
         });
         await loanTestHelper.repayLoan(this, loan, true); // repaymant via AugmintToken.repayLoan convenience func
@@ -149,7 +156,7 @@ contract("ACE Loans tests", accounts => {
     it("should only allow whitelisted loan contract to be used", async function() {
         const interestEarnedAcc = await monetarySupervisor.interestEarnedAccount();
         const craftedLender = await LoanManager.new(
-            tokenAce.address,
+            augmintToken.address,
             monetarySupervisor.address,
             rates.address,
             interestEarnedAcc
@@ -168,7 +175,7 @@ contract("ACE Loans tests", accounts => {
         // revoke permission and try to repay
         await monetarySupervisor.revokePermission(craftedLender.address, "LoanManagerContracts"),
         await testHelper.expectThrow(
-            tokenAce.transferAndNotify(craftedLender.address, 9980000, 0, {
+            augmintToken.transferAndNotify(craftedLender.address, 9980000, 0, {
                 from: accounts[0]
             })
         );

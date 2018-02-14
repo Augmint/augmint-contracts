@@ -1,8 +1,8 @@
 /* TODO: create lockHelpers to make this test more readable and manegable */
 const Locker = artifacts.require("Locker");
+const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
 
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
 const testHelpers = require("./helpers/testHelper.js");
 
 const MAX_LOCK_GAS = web3.toWei(0.028); // TODO: use gas cost and calculate wei fee
@@ -11,33 +11,28 @@ const MAX_RELEASE_GAS = web3.toWei(0.001);
 let tokenHolder = "";
 let interestEarnedAddress = "";
 let lockerInstance = null;
-let tokenAceInstance = null;
+let augmintToken = null;
 let monetarySupervisor = null;
 
 contract("Lock", accounts => {
     before(async function() {
-        const superUserAddress = accounts[0];
         tokenHolder = accounts[1];
 
-        tokenAceInstance = await tokenAceTestHelper.newTokenAceMock(superUserAddress);
+        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
 
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAceInstance);
+        monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
 
-        lockerInstance = await Locker.new(tokenAceInstance.address, monetarySupervisor.address);
+        lockerInstance = Locker.at(Locker.address);
 
         [interestEarnedAddress, , , ,] = await Promise.all([
             monetarySupervisor.interestEarnedAccount(),
 
-            tokenAceInstance.grantMultiplePermissions(lockerInstance.address, ["NoFeeTransferContracts"]),
-            monetarySupervisor.grantMultiplePermissions(lockerInstance.address, ["LockerContracts"]),
-
-            monetarySupervisor.issueToReserve(50000),
-            lockerInstance.addLockProduct(50000, 60, 100, true) // to be used in tests to make unit test independent
+            monetarySupervisor.issueToReserve(50000)
         ]);
 
         await Promise.all([
-            monetarySupervisorTestHelpers.withdrawFromReserve(tokenHolder, 40000),
-            monetarySupervisorTestHelpers.withdrawFromReserve(interestEarnedAddress, 10000)
+            augmintTokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),
+            augmintTokenTestHelpers.withdrawFromReserve(interestEarnedAddress, 10000)
         ]);
     });
 
@@ -179,7 +174,7 @@ contract("Lock", accounts => {
 
     it("should allow tokens to be locked", async function() {
         const [startingBalances, totalLockAmountBefore] = await Promise.all([
-            tokenAceTestHelper.getAllBalances({
+            augmintTokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -191,7 +186,7 @@ contract("Lock", accounts => {
         // lock funds, and get the product that was used:
         const [product, lockingTransaction] = await Promise.all([
             lockerInstance.lockProducts(0),
-            tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, 0, {
+            augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, {
                 from: tokenHolder
             })
         ]);
@@ -222,13 +217,13 @@ contract("Lock", accounts => {
             }),
 
             // TODO: events are emitted but can't retrieve them
-            // testHelpers.assertEvent(tokenAceInstance, "Transfer", {
+            // testHelpers.assertEvent(augmintToken, "Transfer", {
             //     from: tokenHolder,
             //     to: lockerInstance.address,
             //     amount: amountToLock
             // }),
             //
-            // testHelpers.assertEvent(tokenAceInstance, "AugmintTransfer", {
+            // testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
             //     from: tokenHolder,
             //     to: lockerInstance.address,
             //     amount: amountToLock,
@@ -236,7 +231,7 @@ contract("Lock", accounts => {
             //     narrative: "Funds locked"
             // })
 
-            tokenAceTestHelper.assertBalances(startingBalances, {
+            augmintTokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(amountToLock), gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace.add(amountToLock + interestEarned) },
                 interestEarned: { ace: startingBalances.interestEarned.ace.sub(interestEarned) }
@@ -254,7 +249,7 @@ contract("Lock", accounts => {
         const startingNumLocks = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber();
         const amountToLock = 1000;
 
-        await tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, 0, {
+        await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, {
             from: tokenHolder
         });
 
@@ -265,7 +260,7 @@ contract("Lock", accounts => {
 
     it("should allow tokens to be unlocked", async function() {
         const [startingBalances, addProdTx] = await Promise.all([
-            tokenAceTestHelper.getAllBalances({
+            augmintTokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -279,14 +274,9 @@ contract("Lock", accounts => {
         const interestEarned = Math.floor(amountToLock / 10); // 10%
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
 
-        const lockTx = await tokenAceInstance.transferAndNotify(
-            lockerInstance.address,
-            amountToLock,
-            newLockProductId,
-            {
-                from: tokenHolder
-            }
-        );
+        const lockTx = await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
+            from: tokenHolder
+        });
         testHelpers.logGasUse(this, lockTx, "transferAndNotify - lockFunds");
 
         await testHelpers.waitFor(2500);
@@ -304,7 +294,7 @@ contract("Lock", accounts => {
         const [totalLockAmountAfter, , , ,] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
 
-            tokenAceTestHelper.assertBalances(startingBalances, {
+            augmintTokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: {
                     ace: startingBalances.tokenHolder.ace.add(interestEarned),
                     gasFee: MAX_LOCK_GAS + MAX_RELEASE_GAS
@@ -318,7 +308,7 @@ contract("Lock", accounts => {
                 lockIndex: newestLockIndex
             }),
 
-            testHelpers.assertEvent(tokenAceInstance, "AugmintTransfer", {
+            testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
                 from: lockerInstance.address,
                 to: tokenHolder,
                 amount: amountToLock + interestEarned,
@@ -326,7 +316,7 @@ contract("Lock", accounts => {
                 narrative: "Funds released from lock"
             }),
 
-            testHelpers.assertEvent(tokenAceInstance, "Transfer", {
+            testHelpers.assertEvent(augmintToken, "Transfer", {
                 from: lockerInstance.address,
                 to: tokenHolder,
                 amount: amountToLock + interestEarned
@@ -346,7 +336,7 @@ contract("Lock", accounts => {
         // lock funds, and get the product that was used:
         const [product, lockingTransaction] = await Promise.all([
             lockerInstance.lockProducts(0),
-            tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
+            augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
         ]);
 
         const expectedPerTermInterest = product[0].toNumber();
@@ -385,7 +375,7 @@ contract("Lock", accounts => {
         // lock funds, and get the product that was used:
         const [product, lockingTransaction] = await Promise.all([
             lockerInstance.lockProducts(0),
-            tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
+            augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
         ]);
 
         const expectedPerTermInterest = product[0].toNumber();
@@ -462,7 +452,7 @@ contract("Lock", accounts => {
 
     it("should prevent someone from locking more tokens than they have", async function() {
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            tokenAceTestHelper.getAllBalances({
+            augmintTokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -474,14 +464,14 @@ contract("Lock", accounts => {
         const amountToLock = startingBalances.tokenHolder.ace + 1000;
 
         await testHelpers.expectThrow(
-            tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
+            augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
         );
         await testHelpers.assertNoEvents(lockerInstance, "NewLock");
 
         const [totalLockAmountAfter, finishingNumLocks] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCountForAddress(tokenHolder),
-            tokenAceTestHelper.assertBalances(startingBalances, {
+            augmintTokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace },
                 interestEarned: { ace: startingBalances.interestEarned.ace }
@@ -503,7 +493,7 @@ contract("Lock", accounts => {
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
 
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            tokenAceTestHelper.getAllBalances({
+            augmintTokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -520,7 +510,7 @@ contract("Lock", accounts => {
         assert(startingBalances.tokenHolder.ace.gte(amountToLock));
 
         await testHelpers.expectThrow(
-            tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
+            augmintToken.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
                 from: tokenHolder
             })
         );
@@ -529,7 +519,7 @@ contract("Lock", accounts => {
         const [totalLockAmountAfter, finishingNumLocks] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCountForAddress(tokenHolder),
-            tokenAceTestHelper.assertBalances(startingBalances, {
+            augmintTokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace },
                 interestEarned: { ace: startingBalances.interestEarned.ace }
@@ -555,7 +545,7 @@ contract("Lock", accounts => {
 
         // can't lock less than the minimumLockAmount:
         await testHelpers.expectThrow(
-            tokenAceInstance.transferAndNotify(lockerInstance.address, minimumLockAmount - 1, newLockProductId, {
+            augmintToken.transferAndNotify(lockerInstance.address, minimumLockAmount - 1, newLockProductId, {
                 from: tokenHolder
             })
         );
@@ -563,7 +553,7 @@ contract("Lock", accounts => {
 
     it("should allow someone to lock exactly the minimum", async function() {
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            tokenAceTestHelper.getAllBalances({
+            augmintTokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -578,14 +568,9 @@ contract("Lock", accounts => {
 
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
 
-        const tx = await tokenAceInstance.transferAndNotify(
-            lockerInstance.address,
-            minimumLockAmount,
-            newLockProductId,
-            {
-                from: tokenHolder
-            }
-        );
+        const tx = await augmintToken.transferAndNotify(lockerInstance.address, minimumLockAmount, newLockProductId, {
+            from: tokenHolder
+        });
         testHelpers.logGasUse(this, tx, "transferAndNotify - lockFunds");
 
         const eventResults = await testHelpers.assertEvent(lockerInstance, "NewLock", {
@@ -604,7 +589,7 @@ contract("Lock", accounts => {
 
             lockerInstance.getLockCountForAddress(tokenHolder),
 
-            tokenAceTestHelper.assertBalances(startingBalances, {
+            augmintTokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(minimumLockAmount), gasFee: MAX_LOCK_GAS },
                 lockerInstance: {
                     ace: startingBalances.lockerInstance.ace.add(minimumLockAmount).add(eventResults.interestEarned)
@@ -625,7 +610,7 @@ contract("Lock", accounts => {
     it("should prevent someone from releasing a lock early", async function() {
         const amountToLock = 1000;
         const [startingBalances, totalLockAmountBefore] = await Promise.all([
-            tokenAceTestHelper.getAllBalances({
+            augmintTokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -637,7 +622,7 @@ contract("Lock", accounts => {
         const [product] = await Promise.all([
             lockerInstance.lockProducts(0),
 
-            tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, 0, {
+            augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, {
                 from: tokenHolder
             })
         ]);
@@ -654,7 +639,7 @@ contract("Lock", accounts => {
 
             testHelpers.assertNoEvents(lockerInstance, "NewLock"),
 
-            tokenAceTestHelper.assertBalances(startingBalances, {
+            augmintTokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(amountToLock), gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace.add(amountToLock + interestEarned) },
                 interestEarned: { ace: startingBalances.interestEarned.ace.sub(interestEarned) }
@@ -670,7 +655,7 @@ contract("Lock", accounts => {
 
     it("should prevent someone from unlocking an unlocked lock", async function() {
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            tokenAceTestHelper.getAllBalances({
+            augmintTokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -686,7 +671,7 @@ contract("Lock", accounts => {
 
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
 
-        await tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
+        await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
             from: tokenHolder
         });
 
@@ -703,7 +688,7 @@ contract("Lock", accounts => {
 
             lockerInstance.getLockCountForAddress(tokenHolder),
 
-            tokenAceTestHelper.assertBalances(startingBalances, {
+            augmintTokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: {
                     ace: startingBalances.tokenHolder.ace.add(interestEarned),
                     gasFee: MAX_LOCK_GAS + MAX_RELEASE_GAS
@@ -729,11 +714,11 @@ contract("Lock", accounts => {
     });
 
     it("should only allow whitelisted lock contract to be used", async function() {
-        const craftedLocker = await Locker.new(tokenAceInstance.address, monetarySupervisor.address);
+        const craftedLocker = await Locker.new(augmintToken.address, monetarySupervisor.address);
         await craftedLocker.addLockProduct(1000000, 120, 0, true);
         const newLockProductId = (await craftedLocker.getLockProductCount()).toNumber() - 1;
         await testHelpers.expectThrow(
-            tokenAceInstance.transferAndNotify(craftedLocker.address, 10000, newLockProductId, {
+            augmintToken.transferAndNotify(craftedLocker.address, 10000, newLockProductId, {
                 from: tokenHolder
             })
         );
@@ -746,13 +731,13 @@ contract("Lock", accounts => {
     it("only allowed contract should call requestInterest ", async function() {
         const interestAmount = 100;
         // make sure it's not reverting b/c not enough interest
-        assert((await tokenAceInstance.balanceOf(interestEarnedAddress)).gte(interestAmount));
+        assert((await augmintToken.balanceOf(interestEarnedAddress)).gte(interestAmount));
         await testHelpers.expectThrow(monetarySupervisor.requestInterest(1000, interestAmount, { from: accounts[0] }));
     });
 
     it("only allowed contract should call releaseFundsNotification ", async function() {
         const amountToLock = 10000;
-        await tokenAceInstance.transferAndNotify(lockerInstance.address, amountToLock, 0, {
+        await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, {
             from: tokenHolder
         });
         await testHelpers.expectThrow(monetarySupervisor.releaseFundsNotification(amountToLock, { from: accounts[0] }));

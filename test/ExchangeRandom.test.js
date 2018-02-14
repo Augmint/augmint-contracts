@@ -1,7 +1,7 @@
 const RandomSeed = require("random-seed");
+
 const testHelper = new require("./helpers/testHelper.js");
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
+const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 
 const ONEWEI = 1000000000000000000;
@@ -19,9 +19,10 @@ const MAX_TOKEN = 10000000; // 1,000 ACE
 const TEST_ACCS_CT = web3.eth.accounts.length;
 const ACC_INIT_ACE = 100000000;
 const CHUNK_SIZE = 100;
-
-let tokenAce, monetarySupervisor, exchange;
 const random = new RandomSeed("Have the same test data");
+
+let augmintToken = null;
+let exchange = null;
 let buyTokenOrders = null;
 let sellTokenOrders = null;
 let matches = [];
@@ -66,18 +67,15 @@ const getOrderToFill = async () => {
 */
 contract("Exchange random tests", accounts => {
     before(async function() {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
-        await monetarySupervisor.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
+        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+        await augmintTokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
 
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
         await Promise.all(
-            accounts
-                .slice(0, TEST_ACCS_CT)
-                .map(acc => monetarySupervisorTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
+            accounts.slice(0, TEST_ACCS_CT).map(acc => augmintTokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
         );
 
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce);
+        exchange = await exchangeTestHelper.getExchange();
     });
 
     it("place x buy / sell orders", async function() {
@@ -104,7 +102,7 @@ contract("Exchange random tests", accounts => {
                 if (order.orderType === TOKEN_BUY) {
                     tx = exchange.placeBuyTokenOrder(order.price, { value: order.amount, from: order.maker });
                 } else {
-                    tx = tokenAce.transferAndNotify(exchange.address, order.amount, order.price, {
+                    tx = augmintToken.transferAndNotify(exchange.address, order.amount, order.price, {
                         from: order.maker
                     });
                 }

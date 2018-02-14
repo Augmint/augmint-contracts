@@ -1,26 +1,28 @@
 const testHelper = new require("./helpers/testHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
+const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 
 const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 let snapshotId;
-let monetarySupervisor, tokenAce, exchange;
+let augmintToken = null;
+let exchange = null;
 const maker = web3.eth.accounts[1];
 const taker = web3.eth.accounts[2];
 
 contract("Exchange matching tests", accounts => {
     before(async function() {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        const startTime = new Date();
+        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
 
-        await monetarySupervisor.issueToReserve(1000000000);
-        await monetarySupervisorTestHelpers.withdrawFromReserve(maker, 100000000);
-        await monetarySupervisorTestHelpers.withdrawFromReserve(taker, 100000000);
+        await augmintTokenTestHelpers.issueToReserve(1000000000);
+        await augmintTokenTestHelpers.withdrawFromReserve(maker, 100000000);
+        await augmintTokenTestHelpers.withdrawFromReserve(taker, 100000000);
 
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce);
+        exchange = await exchangeTestHelper.newExchangeMock(augmintToken);
+        const endTime = new Date();
+        console.log(startTime, endTime, endTime - startTime);
     });
 
     beforeEach(async function() {

@@ -1,11 +1,11 @@
 const ratesTestHelper = require("./helpers/ratesTestHelper");
 const testHelper = require("./helpers/testHelper.js");
 
-let rates;
+let rates = null;
 
 contract("Rates tests", accounts => {
     before(async function() {
-        rates = await ratesTestHelper.newRatesMock();
+        rates = await ratesTestHelper.getRates();
     });
 
     it("should be possible to set 1 rate", async function() {

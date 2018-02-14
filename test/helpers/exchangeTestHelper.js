@@ -1,8 +1,9 @@
 const BigNumber = require("bignumber.js");
 const moment = require("moment");
-const testHelper = new require("./testHelper.js");
-const tokenAceTestHelper = require("./tokenAceTestHelper.js");
+
 const Exchange = artifacts.require("./Exchange.sol");
+const testHelper = new require("./testHelper.js");
+const augmintTokenTestHelpers = require("./tokenAceTestHelper.js");
 
 const ONEWEI = 1000000000000000000;
 const PLACE_ORDER_MAXFEE = web3.toWei(0.03);
@@ -12,6 +13,7 @@ const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 module.exports = {
+    getExchange,
     newExchangeMock,
     newOrder,
     cancelOrder,
@@ -24,18 +26,26 @@ module.exports = {
     printOrderBook
 };
 
-let exchange, tokenAce;
+let exchange = null;
+let augmintToken = null;
 
-async function newExchangeMock(_tokenAce) {
-    tokenAce = _tokenAce;
-    exchange = await Exchange.new(tokenAce.address);
-    await tokenAce.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
+async function getExchange() {
+    augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+    exchange = Exchange.at(Exchange.address);
+    return exchange;
+}
+
+/ * get rid of this */;
+async function newExchangeMock(_augmintToken) {
+    augmintToken = _augmintToken;
+    exchange = await Exchange.new(augmintToken.address);
+    await augmintToken.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
     return exchange;
 }
 
 async function newOrder(testInstance, order) {
     const stateBefore = await getState();
-    const balBefore = await tokenAceTestHelper.getAllBalances({ exchange: exchange.address, maker: order.maker });
+    const balBefore = await augmintTokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
     order.amount = new BigNumber(order.amount); // to handle numbers, strings and BigNumbers passed
     order.viaAugmintToken =
         typeof order.viaAugmintToken === "undefined" && order.orderType === TOKEN_SELL ? true : order.viaAugmintToken;
@@ -50,17 +60,17 @@ async function newOrder(testInstance, order) {
         order.weiAmount = order.amount;
     } else {
         if (order.viaAugmintToken) {
-            tx = await tokenAce.transferAndNotify(exchange.address, order.amount, order.price, {
+            tx = await augmintToken.transferAndNotify(exchange.address, order.amount, order.price, {
                 from: order.maker
             });
             testHelper.logGasUse(testInstance, tx, "transferAndNotify - token sell");
         } else {
-            const approvedBefore = await tokenAce.allowed(order.maker, exchange.address);
+            const approvedBefore = await augmintToken.allowed(order.maker, exchange.address);
             tx = await exchange.placeSellTokenOrder(order.price, order.amount, {
                 from: order.maker
             });
             testHelper.logGasUse(testInstance, tx, "placeSellTokenOrder");
-            const approvedAfter = await tokenAce.allowed(order.maker, exchange.address);
+            const approvedAfter = await augmintToken.allowed(order.maker, exchange.address);
             assert.equal(
                 approvedAfter.toString(),
                 approvedBefore.sub(order.amount).toString(),
@@ -100,7 +110,7 @@ async function newOrder(testInstance, order) {
         "amount should be set in contract's order array"
     );
 
-    await tokenAceTestHelper.assertBalances(balBefore, {
+    await augmintTokenTestHelpers.assertBalances(balBefore, {
         exchange: {
             eth: balBefore.exchange.eth.add(order.weiAmount),
             ace: balBefore.exchange.ace.add(order.tokenAmount)
@@ -123,12 +133,12 @@ async function newOrderEventAsserts(order) {
     });
 
     if (order.orderType === TOKEN_SELL) {
-        await testHelper.assertEvent(tokenAce, "Transfer", {
+        await testHelper.assertEvent(augmintToken, "Transfer", {
             from: order.maker,
             to: exchange.address,
             amount: order.tokenAmount.toString()
         });
-        await testHelper.assertEvent(tokenAce, "AugmintTransfer", {
+        await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
             from: order.maker,
             to: exchange.address,
             amount: order.tokenAmount.toString(),
@@ -142,7 +152,7 @@ async function newOrderEventAsserts(order) {
 async function cancelOrder(testInstance, order) {
     const stateBefore = await getState();
 
-    const balBefore = await tokenAceTestHelper.getAllBalances({ exchange: exchange.address, maker: order.maker });
+    const balBefore = await augmintTokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
 
     const sell = order.orderType === TOKEN_SELL;
     if (sell) {
@@ -170,7 +180,7 @@ async function cancelOrder(testInstance, order) {
 
     let expSellCount, expBuyCount;
     if (order.orderType === TOKEN_SELL) {
-        await testHelper.assertEvent(tokenAce, "AugmintTransfer", {
+        await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
             amount: order.amount.toString(),
             from: exchange.address,
             to: order.maker,
@@ -187,7 +197,7 @@ async function cancelOrder(testInstance, order) {
     const stateAfter = await getState();
     assert.equal(stateAfter.sellCount, expSellCount, "sell order count should be set");
     assert.equal(stateAfter.buyCount, expBuyCount, "buy order count should be set");
-    await tokenAceTestHelper.assertBalances(balBefore, {
+    await augmintTokenTestHelpers.assertBalances(balBefore, {
         exchange: {
             eth: balBefore.exchange.eth.sub(order.weiAmount),
             ace: balBefore.exchange.ace.sub(order.tokenAmount)
@@ -204,7 +214,7 @@ async function cancelOrder(testInstance, order) {
 
 async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const stateBefore = await getState();
-    const balancesBefore = await tokenAceTestHelper.getAllBalances({
+    const balancesBefore = await augmintTokenTestHelpers.getAllBalances({
         exchange: exchange.address,
         seller: sellTokenOrder.maker,
         buyer: buyTokenOrder.maker
@@ -247,12 +257,12 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         tokenAmount: expMatch.tokenAmount.toString()
     });
 
-    await testHelper.assertEvent(tokenAce, "Transfer", {
+    await testHelper.assertEvent(augmintToken, "Transfer", {
         from: exchange.address,
         to: expMatch.tokenBuyer,
         amount: expMatch.tokenAmount.toString()
     });
-    await testHelper.assertEvent(tokenAce, "AugmintTransfer", {
+    await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
         from: exchange.address,
         to: expMatch.tokenBuyer,
         amount: expMatch.tokenAmount.toString(),
@@ -264,14 +274,14 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     assert.equal(stateAfter.sellCount, expMatch.sellCount, "sell order count should be as expected");
     assert.equal(stateAfter.buyCount, expMatch.buyCount, "buy order count should be as expected");
 
-    await tokenAceTestHelper.assertBalances(balancesBefore, {
+    await augmintTokenTestHelpers.assertBalances(balancesBefore, {
         exchange: {
             eth: balancesBefore.exchange.eth.sub(expMatch.weiAmount),
             ace: balancesBefore.exchange.ace.sub(expMatch.tokenAmount)
         }
     });
     if (balancesBefore.seller.address === balancesBefore.buyer.address) {
-        await tokenAceTestHelper.assertBalances(balancesBefore, {
+        await augmintTokenTestHelpers.assertBalances(balancesBefore, {
             seller: {
                 eth: balancesBefore.seller.eth.add(expMatch.weiAmount),
                 ace: balancesBefore.seller.ace.add(expMatch.tokenAmount),
@@ -279,7 +289,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
             }
         });
     } else {
-        await tokenAceTestHelper.assertBalances(balancesBefore, {
+        await augmintTokenTestHelpers.assertBalances(balancesBefore, {
             seller: {
                 eth: balancesBefore.seller.eth.add(expMatch.weiAmount),
                 ace: balancesBefore.seller.ace,

@@ -14,7 +14,9 @@ module.exports = async function(deployer, network, accounts) {
     );
 
     const tokenAEur = TokenAEur.at(TokenAEur.address);
-    await tokenAEur.grantMultiplePermissions(accounts[0], ["MonetaryBoard"]);
-    await tokenAEur.grantMultiplePermissions(FeeAccount.address, ["NoFeeTransferContracts"]);
-    await tokenAEur.grantMultiplePermissions(AugmintReserves.address, ["NoFeeTransferContracts"]);
+    await Promise.all([
+        tokenAEur.grantPermission(accounts[0], "MonetaryBoard"),
+        tokenAEur.grantPermission(FeeAccount.address, "NoFeeTransferContracts"),
+        tokenAEur.grantPermission(AugmintReserves.address, "NoFeeTransferContracts")
+    ]);
 };

@@ -8,8 +8,12 @@ module.exports = function(deployer) {
     deployer.deploy(Locker, TokenAEur.address, MonetarySupervisor.address);
     deployer.then(async () => {
         const tokenAEur = TokenAEur.at(TokenAEur.address);
-        await tokenAEur.grantMultiplePermissions(Locker.address, ["NoFeeTransferContracts"]);
-        const monetarySupervisor = await MonetarySupervisor.at(MonetarySupervisor.address);
-        await monetarySupervisor.grantMultiplePermissions(Locker.address, ["LockerContracts"]);
+        const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+        const locker = Locker.at(Locker.address);
+        await Promise.all([
+            tokenAEur.grantPermission(Locker.address, "NoFeeTransferContracts"),
+            monetarySupervisor.grantPermission(Locker.address, "LockerContracts"),
+            locker.addLockProduct(50000, 60, 100, true) // to be used in tests to make unit test independent
+        ]);
     });
 };
