@@ -18,11 +18,11 @@ contract Exchange {
     uint public constant CHUNK_SIZE = 100;
 
     struct Order {
-        uint index;
+        uint64 index;
         address maker;
 
         // tokens per ether
-        uint price;
+        uint32 price;
 
         // buy order: amount in wei 
         // sell order: token amount
@@ -32,42 +32,43 @@ contract Exchange {
     Order[] public buyTokenOrders;
     Order[] public sellTokenOrders;
 
-    uint[] private activeBuyOrders;
-    uint[] private activeSellOrders;
+    uint64[] private activeBuyOrders;
+    uint64[] private activeSellOrders;
 
     /* used to stop executing matchMultiple when running out of gas.
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
     uint32 private constant ORDER_MATCH_WORST_GAS = 100000;
 
-    event NewOrder(uint indexed orderId, address indexed maker, uint price, uint tokenAmount,
+    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount,
         uint weiAmount);
 
-    event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint buyTokenOrderId,
-        uint sellTokenOrderId, uint price, uint weiAmount, uint tokenAmount);
+    event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint64 buyTokenOrderId,
+        uint64 sellTokenOrderId, uint32 price, uint weiAmount, uint tokenAmount);
 
-    event CancelledOrder(uint indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
+    event CancelledOrder(uint64 indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
     function Exchange(AugmintTokenInterface _augmintToken) public {
         augmintToken = _augmintToken;
     }
 
-    function placeBuyTokenOrder(uint price) external payable returns (uint orderId) {
+    function placeBuyTokenOrder(uint32 price) external payable returns (uint64 orderId) {
         require(price > 0);
         require(msg.value > 0);
 
-        orderId = buyTokenOrders.push(Order(activeBuyOrders.length, msg.sender, price, msg.value)) - 1;
+        uint64 index = uint64(activeBuyOrders.length);
+        orderId = uint64(buyTokenOrders.push(Order(index, msg.sender, price, msg.value)) - 1);
         activeBuyOrders.push(orderId);
 
         NewOrder(orderId, msg.sender, price, 0, msg.value);
     }
 
     /* this function requires previous approval to transfer tokens */
-    function placeSellTokenOrder(uint price, uint tokenAmount) external returns (uint orderId) {
+    function placeSellTokenOrder(uint32 price, uint tokenAmount) external returns (uint orderId) {
         augmintToken.transferFrom(msg.sender, this, tokenAmount);
         return _placeSellTokenOrder(msg.sender, price, tokenAmount);
     }
 
-    function cancelBuyTokenOrder(uint buyTokenId) external {
+    function cancelBuyTokenOrder(uint64 buyTokenId) external {
         Order storage order = buyTokenOrders[buyTokenId];
         require(order.maker == msg.sender);
 
@@ -80,7 +81,7 @@ contract Exchange {
         CancelledOrder(buyTokenId, msg.sender, 0, amount);
     }
 
-    function cancelSellTokenOrder(uint sellTokenId) external {
+    function cancelSellTokenOrder(uint64 sellTokenId) external {
         Order storage order = sellTokenOrders[sellTokenId];
         require(order.maker == msg.sender);
 
@@ -97,7 +98,7 @@ contract Exchange {
         trade price meets in the middle
         reverts if any of the orders have been removed
     */
-    function matchOrders(uint buyTokenId, uint sellTokenId) external {
+    function matchOrders(uint64 buyTokenId, uint64 sellTokenId) external {
         _fillOrder(buyTokenId, sellTokenId);
     }
 
@@ -105,7 +106,7 @@ contract Exchange {
         Runs as long as gas is available for the call.
         Stops if any match is invalid (case when any of the orders removed after client generated the match list sent)
     */
-    function matchMultipleOrders(uint[] buyTokenIds, uint[] sellTokenIds) external returns(uint matchCount) {
+    function matchMultipleOrders(uint64[] buyTokenIds, uint64[] sellTokenIds) external returns(uint matchCount) {
         uint len = buyTokenIds.length;
         require(len == sellTokenIds.length);
         for (uint i = 0; i < len && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
@@ -144,17 +145,17 @@ contract Exchange {
     */
     function transferNotification(address maker, uint tokenAmount, uint price) public {
         require(msg.sender == address(augmintToken));
-        _placeSellTokenOrder(maker, price, tokenAmount);
+        _placeSellTokenOrder(maker, uint32(price), tokenAmount);
     }
 
-    function _fillOrder(uint buyTokenId, uint sellTokenId) private {
+    function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
 
         require(buy.price >= sell.price);
 
         // meet in the middle
-        uint price = buy.price.add(sell.price).div(2);
+        uint price = uint(buy.price).add(sell.price).div(2);
 
         uint sellWei = sell.amount.mul(1 ether).div(price);
 
@@ -182,16 +183,17 @@ contract Exchange {
         sell.maker.transfer(tradedWei);
 
         OrderFill(buy.maker, sell.maker, buyTokenId,
-            sellTokenId, price, tradedWei, tradedTokens);
+            sellTokenId, uint32(price), tradedWei, tradedTokens);
     }
 
 
-    function _placeSellTokenOrder(address maker, uint price, uint tokenAmount)
-    private returns (uint orderId) {
+    function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
+    private returns (uint64 orderId) {
         require(price > 0);
         require(tokenAmount > 0);
 
-        orderId = sellTokenOrders.push(Order(activeSellOrders.length, maker, price, tokenAmount)) - 1;
+        uint64 index = uint64(activeSellOrders.length);
+        orderId = uint64(sellTokenOrders.push(Order(index, maker, price, tokenAmount)) - 1);
         activeSellOrders.push(orderId);
 
         NewOrder(orderId, maker, price, tokenAmount, 0);
@@ -205,7 +207,7 @@ contract Exchange {
         _removeOrder(activeSellOrders, order.index);
     }
 
-    function _removeOrder(uint[] storage orders, uint index) private {
+    function _removeOrder(uint64[] storage orders, uint64 index) private {
         if (index < orders.length - 1) {
             orders[index] = orders[orders.length - 1];
         }
