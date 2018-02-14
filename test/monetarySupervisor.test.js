@@ -1,6 +1,6 @@
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
-const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelper = require("./helpers/testHelper.js");
 
 const NULL_ACC = "0x0000000000000000000000000000000000000000";
@@ -9,7 +9,7 @@ let monetarySupervisor = null;
 
 contract("MonetarySupervisor tests", accounts => {
     before(async () => {
-        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.getAugmintToken();
         monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     });
 

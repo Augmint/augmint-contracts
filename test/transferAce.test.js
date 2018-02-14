@@ -1,16 +1,16 @@
 const testHelper = new require("./helpers/testHelper.js");
-const augmintTokenTestHelpers = new require("./helpers/tokenAceTestHelper.js");
+const tokenTestHelpers = new require("./helpers/tokenTestHelpers.js");
 
 let augmintToken = null;
 let minFee, maxFee, feePt, minFeeAmount, maxFeeAmount;
 
 contract("Transfer Augmint tokens tests", accounts => {
     before(async function() {
-        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
-        await augmintTokenTestHelpers.issueToReserve(1000000000);
+        augmintToken = await tokenTestHelpers.getAugmintToken();
+        await tokenTestHelpers.issueToReserve(1000000000);
         await Promise.all([
-            augmintTokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
-            augmintTokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
+            tokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
+            tokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
         ]);
         [feePt, minFee, maxFee] = await augmintToken.getParams();
         minFeeAmount = minFee.div(feePt).mul(1000000);
@@ -18,7 +18,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("Should be able to transfer ACE between accounts (without narrative, min fee)", async function() {
-        await augmintTokenTestHelpers.transferTest(this, {
+        await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[2],
             amount: minFeeAmount.sub(10),
@@ -27,7 +27,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("Should be able to transfer ACE between accounts (with narrative, max fee)", async function() {
-        await augmintTokenTestHelpers.transferTest(this, {
+        await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[2],
             amount: maxFeeAmount.add(10),
@@ -36,7 +36,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("transfer fee % should deducted when fee % is between min and max fee", async function() {
-        await augmintTokenTestHelpers.transferTest(this, {
+        await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[2],
             amount: maxFeeAmount.sub(10),
@@ -45,7 +45,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("Should be able to transfer 0 amount without narrative", async function() {
-        await augmintTokenTestHelpers.transferTest(this, {
+        await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[2],
             amount: 0,
@@ -54,7 +54,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("Should be able to transfer 0 with narrative", async function() {
-        await augmintTokenTestHelpers.transferTest(this, {
+        await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[2],
             amount: 0,
@@ -88,7 +88,7 @@ contract("Transfer Augmint tokens tests", accounts => {
 
     it("should have zero fee if 'to' or from is NoFeeTransferContracts", async function() {
         await augmintToken.grantPermission(accounts[0], "NoFeeTransferContracts");
-        await augmintTokenTestHelpers.transferTest(this, {
+        await tokenTestHelpers.transferTest(this, {
             from: accounts[0],
             to: accounts[1],
             amount: 10000,
@@ -96,7 +96,7 @@ contract("Transfer Augmint tokens tests", accounts => {
             fee: 0
         });
 
-        await augmintTokenTestHelpers.transferTest(this, {
+        await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[0],
             amount: 10000,

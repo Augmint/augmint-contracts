@@ -11,7 +11,7 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const Rates = artifacts.require("./Rates.sol");
 
-const augmintTokenTestHelpers = require("./tokenAceTestHelper.js");
+const tokenTestHelpers = require("./tokenTestHelpers.js");
 const testHelper = require("./testHelper.js");
 
 let augmintToken = null;
@@ -35,7 +35,7 @@ module.exports = {
 async function getLoanManager() {
     loanManager = LoanManager.at(LoanManager.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-    augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+    augmintToken = await tokenTestHelpers.getAugmintToken();
     rates = Rates.at(Rates.address);
 
     [peggedSymbol, reserveAcc, interestEarnedAcc] = await Promise.all([
@@ -56,7 +56,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         augmintToken.totalSupply(),
         monetarySupervisor.totalLoanAmount(),
 
-        augmintTokenTestHelpers.getAllBalances({
+        tokenTestHelpers.getAllBalances({
             reserve: reserveAcc,
             borrower: loan.borrower,
             loanManager: loanManager.address,
@@ -104,7 +104,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
 
         loanAsserts(loan),
 
-        augmintTokenTestHelpers.assertBalances(balBefore, {
+        tokenTestHelpers.assertBalances(balBefore, {
             reserve: {},
             borrower: {
                 ace: balBefore.borrower.ace.add(loan.loanAmount),
@@ -135,7 +135,7 @@ async function repayLoan(testInstance, loan) {
     const [totalSupplyBefore, totalLoanAmountBefore, balBefore] = await Promise.all([
         augmintToken.totalSupply(),
         monetarySupervisor.totalLoanAmount(),
-        augmintTokenTestHelpers.getAllBalances({
+        tokenTestHelpers.getAllBalances({
             reserve: reserveAcc,
             borrower: loan.borrower,
             loanManager: loanManager.address,
@@ -174,7 +174,7 @@ async function repayLoan(testInstance, loan) {
 
         loanAsserts(loan),
 
-        augmintTokenTestHelpers.assertBalances(balBefore, {
+        tokenTestHelpers.assertBalances(balBefore, {
             reserve: {},
             borrower: {
                 ace: balBefore.borrower.ace.sub(loan.repaymentAmount),
@@ -222,7 +222,7 @@ async function collectLoan(testInstance, loan, collector) {
         augmintToken.totalSupply(),
         monetarySupervisor.totalLoanAmount(),
 
-        augmintTokenTestHelpers.getAllBalances({
+        tokenTestHelpers.getAllBalances({
             reserve: reserveAcc,
             collector: loan.collector,
             borrower: loan.borrower,
@@ -273,7 +273,7 @@ async function collectLoan(testInstance, loan, collector) {
 
         loanAsserts(loan),
 
-        augmintTokenTestHelpers.assertBalances(balBefore, {
+        tokenTestHelpers.assertBalances(balBefore, {
             reserve: {
                 eth: balBefore.reserve.eth.add(collectedCollateral)
             },

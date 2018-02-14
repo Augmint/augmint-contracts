@@ -3,7 +3,7 @@ const moment = require("moment");
 
 const Exchange = artifacts.require("./Exchange.sol");
 const testHelper = new require("./testHelper.js");
-const augmintTokenTestHelpers = require("./tokenAceTestHelper.js");
+const tokenTestHelpers = require("./tokenTestHelpers.js");
 
 const ONEWEI = 1000000000000000000;
 const PLACE_ORDER_MAXFEE = web3.toWei(0.03);
@@ -30,7 +30,7 @@ let exchange = null;
 let augmintToken = null;
 
 async function getExchange() {
-    augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+    augmintToken = await tokenTestHelpers.getAugmintToken();
     exchange = Exchange.at(Exchange.address);
     return exchange;
 }
@@ -45,7 +45,7 @@ async function newExchangeMock(_augmintToken) {
 
 async function newOrder(testInstance, order) {
     const stateBefore = await getState();
-    const balBefore = await augmintTokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
+    const balBefore = await tokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
     order.amount = new BigNumber(order.amount); // to handle numbers, strings and BigNumbers passed
     order.viaAugmintToken =
         typeof order.viaAugmintToken === "undefined" && order.orderType === TOKEN_SELL ? true : order.viaAugmintToken;
@@ -110,7 +110,7 @@ async function newOrder(testInstance, order) {
         "amount should be set in contract's order array"
     );
 
-    await augmintTokenTestHelpers.assertBalances(balBefore, {
+    await tokenTestHelpers.assertBalances(balBefore, {
         exchange: {
             eth: balBefore.exchange.eth.add(order.weiAmount),
             ace: balBefore.exchange.ace.add(order.tokenAmount)
@@ -152,7 +152,7 @@ async function newOrderEventAsserts(order) {
 async function cancelOrder(testInstance, order) {
     const stateBefore = await getState();
 
-    const balBefore = await augmintTokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
+    const balBefore = await tokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
 
     const sell = order.orderType === TOKEN_SELL;
     if (sell) {
@@ -197,7 +197,7 @@ async function cancelOrder(testInstance, order) {
     const stateAfter = await getState();
     assert.equal(stateAfter.sellCount, expSellCount, "sell order count should be set");
     assert.equal(stateAfter.buyCount, expBuyCount, "buy order count should be set");
-    await augmintTokenTestHelpers.assertBalances(balBefore, {
+    await tokenTestHelpers.assertBalances(balBefore, {
         exchange: {
             eth: balBefore.exchange.eth.sub(order.weiAmount),
             ace: balBefore.exchange.ace.sub(order.tokenAmount)
@@ -214,7 +214,7 @@ async function cancelOrder(testInstance, order) {
 
 async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const stateBefore = await getState();
-    const balancesBefore = await augmintTokenTestHelpers.getAllBalances({
+    const balancesBefore = await tokenTestHelpers.getAllBalances({
         exchange: exchange.address,
         seller: sellTokenOrder.maker,
         buyer: buyTokenOrder.maker
@@ -274,14 +274,14 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     assert.equal(stateAfter.sellCount, expMatch.sellCount, "sell order count should be as expected");
     assert.equal(stateAfter.buyCount, expMatch.buyCount, "buy order count should be as expected");
 
-    await augmintTokenTestHelpers.assertBalances(balancesBefore, {
+    await tokenTestHelpers.assertBalances(balancesBefore, {
         exchange: {
             eth: balancesBefore.exchange.eth.sub(expMatch.weiAmount),
             ace: balancesBefore.exchange.ace.sub(expMatch.tokenAmount)
         }
     });
     if (balancesBefore.seller.address === balancesBefore.buyer.address) {
-        await augmintTokenTestHelpers.assertBalances(balancesBefore, {
+        await tokenTestHelpers.assertBalances(balancesBefore, {
             seller: {
                 eth: balancesBefore.seller.eth.add(expMatch.weiAmount),
                 ace: balancesBefore.seller.ace.add(expMatch.tokenAmount),
@@ -289,7 +289,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
             }
         });
     } else {
-        await augmintTokenTestHelpers.assertBalances(balancesBefore, {
+        await tokenTestHelpers.assertBalances(balancesBefore, {
             seller: {
                 eth: balancesBefore.seller.eth.add(expMatch.weiAmount),
                 ace: balancesBefore.seller.ace,

@@ -1,7 +1,7 @@
 const RandomSeed = require("random-seed");
 
 const testHelper = new require("./helpers/testHelper.js");
-const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 
 const ONEWEI = 1000000000000000000;
@@ -67,12 +67,12 @@ const getOrderToFill = async () => {
 */
 contract("Exchange random tests", accounts => {
     before(async function() {
-        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
-        await augmintTokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
+        augmintToken = await tokenTestHelpers.getAugmintToken();
+        await tokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
 
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
         await Promise.all(
-            accounts.slice(0, TEST_ACCS_CT).map(acc => augmintTokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
+            accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
         );
 
         exchange = await exchangeTestHelper.getExchange();

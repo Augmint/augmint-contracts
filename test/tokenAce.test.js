@@ -1,11 +1,11 @@
-const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelper = require("./helpers/testHelper.js");
 
 let augmintToken;
 
 contract("TokenAce tests", accounts => {
     before(async () => {
-        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.getAugmintToken();
     });
 
     it("should be possible to set transfer fees ", async function() {

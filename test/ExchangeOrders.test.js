@@ -1,5 +1,5 @@
 const testHelper = new require("./helpers/testHelper.js");
-const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 
 const TOKEN_BUY = 0;
@@ -12,11 +12,11 @@ let exchange = null;
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
-        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.getAugmintToken();
 
-        await augmintTokenTestHelpers.issueToReserve(1000000000);
+        await tokenTestHelpers.issueToReserve(1000000000);
 
-        await Promise.all(makers.map(maker => augmintTokenTestHelpers.withdrawFromReserve(maker, 100000000)));
+        await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 100000000)));
 
         exchange = await exchangeTestHelper.getExchange();
     });

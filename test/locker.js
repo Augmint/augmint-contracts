@@ -1,7 +1,7 @@
 /* TODO: create lockHelpers to make this test more readable and manegable */
 const Locker = artifacts.require("Locker");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
-const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 
 const testHelpers = require("./helpers/testHelper.js");
 
@@ -18,7 +18,7 @@ contract("Lock", accounts => {
     before(async function() {
         tokenHolder = accounts[1];
 
-        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.getAugmintToken();
 
         monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
 
@@ -31,8 +31,8 @@ contract("Lock", accounts => {
         ]);
 
         await Promise.all([
-            augmintTokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),
-            augmintTokenTestHelpers.withdrawFromReserve(interestEarnedAddress, 10000)
+            tokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),
+            tokenTestHelpers.withdrawFromReserve(interestEarnedAddress, 10000)
         ]);
     });
 
@@ -174,7 +174,7 @@ contract("Lock", accounts => {
 
     it("should allow tokens to be locked", async function() {
         const [startingBalances, totalLockAmountBefore] = await Promise.all([
-            augmintTokenTestHelpers.getAllBalances({
+            tokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -231,7 +231,7 @@ contract("Lock", accounts => {
             //     narrative: "Funds locked"
             // })
 
-            augmintTokenTestHelpers.assertBalances(startingBalances, {
+            tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(amountToLock), gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace.add(amountToLock + interestEarned) },
                 interestEarned: { ace: startingBalances.interestEarned.ace.sub(interestEarned) }
@@ -260,7 +260,7 @@ contract("Lock", accounts => {
 
     it("should allow tokens to be unlocked", async function() {
         const [startingBalances, addProdTx] = await Promise.all([
-            augmintTokenTestHelpers.getAllBalances({
+            tokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -294,7 +294,7 @@ contract("Lock", accounts => {
         const [totalLockAmountAfter, , , ,] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
 
-            augmintTokenTestHelpers.assertBalances(startingBalances, {
+            tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: {
                     ace: startingBalances.tokenHolder.ace.add(interestEarned),
                     gasFee: MAX_LOCK_GAS + MAX_RELEASE_GAS
@@ -452,7 +452,7 @@ contract("Lock", accounts => {
 
     it("should prevent someone from locking more tokens than they have", async function() {
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            augmintTokenTestHelpers.getAllBalances({
+            tokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -471,7 +471,7 @@ contract("Lock", accounts => {
         const [totalLockAmountAfter, finishingNumLocks] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCountForAddress(tokenHolder),
-            augmintTokenTestHelpers.assertBalances(startingBalances, {
+            tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace },
                 interestEarned: { ace: startingBalances.interestEarned.ace }
@@ -493,7 +493,7 @@ contract("Lock", accounts => {
         const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
 
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            augmintTokenTestHelpers.getAllBalances({
+            tokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -519,7 +519,7 @@ contract("Lock", accounts => {
         const [totalLockAmountAfter, finishingNumLocks] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCountForAddress(tokenHolder),
-            augmintTokenTestHelpers.assertBalances(startingBalances, {
+            tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace },
                 interestEarned: { ace: startingBalances.interestEarned.ace }
@@ -553,7 +553,7 @@ contract("Lock", accounts => {
 
     it("should allow someone to lock exactly the minimum", async function() {
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            augmintTokenTestHelpers.getAllBalances({
+            tokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -589,7 +589,7 @@ contract("Lock", accounts => {
 
             lockerInstance.getLockCountForAddress(tokenHolder),
 
-            augmintTokenTestHelpers.assertBalances(startingBalances, {
+            tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(minimumLockAmount), gasFee: MAX_LOCK_GAS },
                 lockerInstance: {
                     ace: startingBalances.lockerInstance.ace.add(minimumLockAmount).add(eventResults.interestEarned)
@@ -610,7 +610,7 @@ contract("Lock", accounts => {
     it("should prevent someone from releasing a lock early", async function() {
         const amountToLock = 1000;
         const [startingBalances, totalLockAmountBefore] = await Promise.all([
-            augmintTokenTestHelpers.getAllBalances({
+            tokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -639,7 +639,7 @@ contract("Lock", accounts => {
 
             testHelpers.assertNoEvents(lockerInstance, "NewLock"),
 
-            augmintTokenTestHelpers.assertBalances(startingBalances, {
+            tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(amountToLock), gasFee: MAX_LOCK_GAS },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace.add(amountToLock + interestEarned) },
                 interestEarned: { ace: startingBalances.interestEarned.ace.sub(interestEarned) }
@@ -655,7 +655,7 @@ contract("Lock", accounts => {
 
     it("should prevent someone from unlocking an unlocked lock", async function() {
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
-            augmintTokenTestHelpers.getAllBalances({
+            tokenTestHelpers.getAllBalances({
                 tokenHolder: tokenHolder,
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
@@ -688,7 +688,7 @@ contract("Lock", accounts => {
 
             lockerInstance.getLockCountForAddress(tokenHolder),
 
-            augmintTokenTestHelpers.assertBalances(startingBalances, {
+            tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: {
                     ace: startingBalances.tokenHolder.ace.add(interestEarned),
                     gasFee: MAX_LOCK_GAS + MAX_RELEASE_GAS

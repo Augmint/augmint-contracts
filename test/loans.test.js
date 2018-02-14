@@ -3,7 +3,7 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Rates = artifacts.require("./Rates.sol");
 
 const testHelper = require("./helpers/testHelper.js");
-const augmintTokenTestHelper = require("./helpers/tokenAceTestHelper.js");
+const augmintTokenTestHelper = require("./helpers/tokenTestHelpers.js");
 const loanTestHelper = require("./helpers/loanTestHelper.js");
 
 let augmintToken = null;

@@ -1,5 +1,5 @@
 const testHelper = new require("./helpers/testHelper.js");
-const augmintTokenTestHelpers = require("./helpers/tokenAceTestHelper.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
 
 const TOKEN_BUY = 0;
@@ -14,11 +14,11 @@ const taker = web3.eth.accounts[2];
 contract("Exchange matching tests", accounts => {
     before(async function() {
         const startTime = new Date();
-        augmintToken = await augmintTokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.getAugmintToken();
 
-        await augmintTokenTestHelpers.issueToReserve(1000000000);
-        await augmintTokenTestHelpers.withdrawFromReserve(maker, 100000000);
-        await augmintTokenTestHelpers.withdrawFromReserve(taker, 100000000);
+        await tokenTestHelpers.issueToReserve(1000000000);
+        await tokenTestHelpers.withdrawFromReserve(maker, 100000000);
+        await tokenTestHelpers.withdrawFromReserve(taker, 100000000);
 
         exchange = await exchangeTestHelper.newExchangeMock(augmintToken);
         const endTime = new Date();
