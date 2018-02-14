@@ -2,7 +2,7 @@ const RandomSeed = require("random-seed");
 
 const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
-const exchangeTestHelper = require("./helpers/exchangetestHelpers.js");
+const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
 const ONEWEI = 1000000000000000000;
 const ETH_ROUND = 1000000000000; // 6 decimals places max in ETH
