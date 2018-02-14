@@ -12,7 +12,7 @@ let exchange = null;
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
-        augmintToken = await tokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.initAugmintToken();
 
         await tokenTestHelpers.issueToReserve(1000000000);
 

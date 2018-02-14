@@ -13,7 +13,7 @@ const taker = web3.eth.accounts[2];
 
 contract("Exchange matching tests", accounts => {
     before(async function() {
-        augmintToken = await tokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.initAugmintToken();
 
         await tokenTestHelpers.issueToReserve(1000000000);
         await tokenTestHelpers.withdrawFromReserve(maker, 100000000);

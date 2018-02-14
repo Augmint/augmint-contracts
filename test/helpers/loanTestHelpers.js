@@ -23,7 +23,7 @@ let reserveAcc = null;
 let interestEarnedAcc = null;
 
 module.exports = {
-    getLoanManager,
+    initLoanManager,
     createLoan,
     repayLoan,
     collectLoan,
@@ -32,10 +32,10 @@ module.exports = {
     loanAsserts
 };
 
-async function getLoanManager() {
+async function initLoanManager() {
     loanManager = LoanManager.at(LoanManager.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-    augmintToken = await tokenTestHelpers.getAugmintToken();
+    augmintToken = await tokenTestHelpers.initAugmintToken();
     rates = Rates.at(Rates.address);
 
     [peggedSymbol, reserveAcc, interestEarnedAcc] = await Promise.all([

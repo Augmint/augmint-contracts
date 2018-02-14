@@ -16,10 +16,10 @@ contract("Augmint Loans tests", accounts => {
     before(async function() {
         rates = Rates.at(Rates.address);
         monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-        augmintToken = await augmintTokenTestHelper.getAugmintToken();
+        augmintToken = await augmintTokenTestHelper.initAugmintToken();
 
         [loanManager] = await Promise.all([
-            loanTestHelpers.getLoanManager(),
+            loanTestHelpers.initLoanManager(),
             augmintTokenTestHelper.issueToReserve(1000000000)
         ]);
 

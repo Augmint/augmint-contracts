@@ -8,7 +8,7 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const TRANSFER_MAXFEE = web3.toWei(0.01); // TODO: set this to expected value (+set gasPrice)
 
 module.exports = {
-    getAugmintToken,
+    initAugmintToken,
     issueToReserve,
     withdrawFromReserve,
     transferTest,
@@ -27,7 +27,7 @@ let augmintToken = null;
 let augmintReserves = null;
 let monetarySupervisor = null;
 
-async function getAugmintToken() {
+async function initAugmintToken() {
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);

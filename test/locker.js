@@ -18,7 +18,7 @@ contract("Lock", accounts => {
     before(async function() {
         tokenHolder = accounts[1];
 
-        augmintToken = await tokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.initAugmintToken();
 
         monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
 

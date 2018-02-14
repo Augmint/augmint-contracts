@@ -9,7 +9,7 @@ let monetarySupervisor = null;
 
 contract("MonetarySupervisor tests", accounts => {
     before(async () => {
-        augmintToken = await tokenTestHelpers.getAugmintToken();
+        augmintToken = await tokenTestHelpers.initAugmintToken();
         monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     });
 
