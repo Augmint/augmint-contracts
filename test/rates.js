@@ -1,11 +1,11 @@
-const ratesTestHelper = require("./helpers/ratesTestHelper");
-const testHelper = require("./helpers/testHelper.js");
+const ratesTestHelpers = require("./helpers/ratesTestHelpers");
+const testHelpers = require("./helpers/testHelpers.js");
 
-let rates;
+let rates = null;
 
 contract("Rates tests", accounts => {
     before(async function() {
-        rates = await ratesTestHelper.newRatesMock();
+        rates = await ratesTestHelpers.getRates();
     });
 
     it("should be possible to set 1 rate", async function() {
@@ -13,13 +13,13 @@ contract("Rates tests", accounts => {
 
         // change the symbol 1st time
         let tx = await rates.setRate(symbol, 12340000);
-        testHelper.logGasUse(this, tx, "setRate 1st");
-        await ratesTestHelper.newRatesAsserts(tx, [symbol], [12340000]);
+        testHelpers.logGasUse(this, tx, "setRate 1st");
+        await ratesTestHelpers.newRatesAsserts(tx, [symbol], [12340000]);
 
         // change the same symbol again
         tx = await rates.setRate(symbol, 12350000);
-        testHelper.logGasUse(this, tx, "setRate");
-        await ratesTestHelper.newRatesAsserts(tx, [symbol], [12350000]);
+        testHelpers.logGasUse(this, tx, "setRate");
+        await ratesTestHelpers.newRatesAsserts(tx, [symbol], [12350000]);
     });
 
     it("should be possible to set multiple rates", async function() {
@@ -28,14 +28,14 @@ contract("Rates tests", accounts => {
 
         // change the symbols 1st time
         let tx = await rates.setMultipleRates(symbols, newRates);
-        testHelper.logGasUse(this, tx, "setMultipleRates 2 1st");
-        await ratesTestHelper.newRatesAsserts(tx, symbols, newRates);
+        testHelpers.logGasUse(this, tx, "setMultipleRates 2 1st");
+        await ratesTestHelpers.newRatesAsserts(tx, symbols, newRates);
 
         // change the symbols 2nd time
         newRates = [123460000, 11120000];
         tx = await rates.setMultipleRates(symbols, newRates);
-        testHelper.logGasUse(this, tx, "setMultipleRates 2");
-        await ratesTestHelper.newRatesAsserts(tx, symbols, newRates);
+        testHelpers.logGasUse(this, tx, "setMultipleRates 2");
+        await ratesTestHelpers.newRatesAsserts(tx, symbols, newRates);
     });
 
     it("should be possible to convert WEI to/from EUR", async function() {
@@ -52,29 +52,29 @@ contract("Rates tests", accounts => {
 
     it("setRate should allow to set 0 rate", async function() {
         let tx = await rates.setRate("XXX", 0);
-        testHelper.logGasUse(this, tx, "setRate to 0 1st");
-        await ratesTestHelper.newRatesAsserts(tx, ["XXX"], [0]);
+        testHelpers.logGasUse(this, tx, "setRate to 0 1st");
+        await ratesTestHelpers.newRatesAsserts(tx, ["XXX"], [0]);
 
         tx = await rates.setRate("XXX", 0);
-        testHelper.logGasUse(this, tx, "setRate to 0");
-        await ratesTestHelper.newRatesAsserts(tx, ["XXX"], [0]);
+        testHelpers.logGasUse(this, tx, "setRate to 0");
+        await ratesTestHelpers.newRatesAsserts(tx, ["XXX"], [0]);
     });
 
     it("setMultipleRates should allow 0 rate set", async function() {
         let tx = await rates.setMultipleRates(["AAA", "BBB"], [0, 0]);
-        testHelper.logGasUse(this, tx, "setMultipleRates 2 to 0 1st");
-        await ratesTestHelper.newRatesAsserts(tx, ["AAA", "BBB"], [0, 0]);
+        testHelpers.logGasUse(this, tx, "setMultipleRates 2 to 0 1st");
+        await ratesTestHelpers.newRatesAsserts(tx, ["AAA", "BBB"], [0, 0]);
 
         tx = await rates.setMultipleRates(["AAA", "BBB"], [0, 0]);
-        testHelper.logGasUse(this, tx, "setMultipleRates 2 to 0");
-        await ratesTestHelper.newRatesAsserts(tx, ["AAA", "BBB"], [0, 0]);
+        testHelpers.logGasUse(this, tx, "setMultipleRates 2 to 0");
+        await ratesTestHelpers.newRatesAsserts(tx, ["AAA", "BBB"], [0, 0]);
     });
 
     it("convert should throw when 0 rate set", async function() {
-        await testHelper.expectThrow(rates.convertToWei("NOTSETYET", 1230000));
-        await testHelper.expectThrow(rates.convertFromWei("NOTSETYET", 1230000));
+        await testHelpers.expectThrow(rates.convertToWei("NOTSETYET", 1230000));
+        await testHelpers.expectThrow(rates.convertFromWei("NOTSETYET", 1230000));
         await rates.setRate("SETTOZERO", 0);
-        await testHelper.expectThrow(rates.convertToWei("SETTOZERO", 1230000));
-        await testHelper.expectThrow(rates.convertFromWei("SETTOZERO", 1230000));
+        await testHelpers.expectThrow(rates.convertToWei("SETTOZERO", 1230000));
+        await testHelpers.expectThrow(rates.convertFromWei("SETTOZERO", 1230000));
     });
 });

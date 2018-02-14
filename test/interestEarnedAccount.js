@@ -1,5 +1,5 @@
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
-const testHelper = require("./helpers/testHelper.js");
+const testHelpers = require("./helpers/testHelpers.js");
 
 contract("InterestEarnedAccount", accounts => {
     it("should allow permitted contracts to transfer interest");

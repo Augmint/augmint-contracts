@@ -1,33 +1,32 @@
-const testHelper = new require("./helpers/testHelper.js");
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
-const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
+const testHelpers = new require("./helpers/testHelpers.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
+const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
 const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
+const makers = [web3.eth.accounts[1], web3.eth.accounts[2]];
 
 let snapshotId;
-let tokenAce, exchange, monetarySupervisor;
-const makers = [web3.eth.accounts[1], web3.eth.accounts[2]];
+let augmintToken = null;
+let exchange = null;
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        augmintToken = await tokenTestHelpers.initAugmintToken();
 
-        await monetarySupervisor.issueToReserve(1000000000);
+        await tokenTestHelpers.issueToReserve(1000000000);
 
-        await Promise.all(makers.map(maker => monetarySupervisorTestHelpers.withdrawFromReserve(maker, 100000000)));
+        await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 100000000)));
 
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce);
+        exchange = await exchangeTestHelper.getExchange();
     });
 
     beforeEach(async function() {
-        snapshotId = await testHelper.takeSnapshot();
+        snapshotId = await testHelpers.takeSnapshot();
     });
 
     afterEach(async function() {
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("place buy token orders", async function() {
@@ -47,8 +46,8 @@ contract("Exchange orders tests", accounts => {
             viaAugmintToken: false
         };
 
-        const tx = await tokenAce.approve(exchange.address, order.amount * 2, { from: order.maker });
-        testHelper.logGasUse(this, tx, "approve");
+        const tx = await augmintToken.approve(exchange.address, order.amount * 2, { from: order.maker });
+        testHelpers.logGasUse(this, tx, "approve");
 
         await exchangeTestHelper.newOrder(this, order);
         await exchangeTestHelper.newOrder(this, order);
@@ -63,10 +62,10 @@ contract("Exchange orders tests", accounts => {
             viaAugmintToken: false
         };
 
-        const tx = await tokenAce.approve(exchange.address, order.amount - 1, { from: order.maker });
-        testHelper.logGasUse(this, tx, "approve");
+        const tx = await augmintToken.approve(exchange.address, order.amount - 1, { from: order.maker });
+        testHelpers.logGasUse(this, tx, "approve");
 
-        await testHelper.expectThrow(exchange.placeSellTokenOrder(order.price, order.amount, { from: order.maker }));
+        await testHelpers.expectThrow(exchange.placeSellTokenOrder(order.price, order.amount, { from: order.maker }));
     });
 
     it("place a sell token order via AugmintToken", async function() {
@@ -84,19 +83,19 @@ contract("Exchange orders tests", accounts => {
 
     it("shouldn't place a SELL token order with 0 price", async function() {
         const price = 11000;
-        await testHelper.expectThrow(tokenAce.transferAndNotify(exchange.address, 0, price, { from: makers[0] }));
+        await testHelpers.expectThrow(augmintToken.transferAndNotify(exchange.address, 0, price, { from: makers[0] }));
     });
 
     it("shouldn't place a BUY token order with 0 price", async function() {
         const price = 11000;
-        await testHelper.expectThrow(exchange.placeBuyTokenOrder(price, { value: 0 }));
+        await testHelpers.expectThrow(exchange.placeBuyTokenOrder(price, { value: 0 }));
     });
 
     it("no SELL token order when user doesn't have enough ACE", async function() {
         const price = 11000;
-        const userBal = await tokenAce.balanceOf(makers[0]);
-        await testHelper.expectThrow(
-            tokenAce.transferAndNotify(exchange.address, userBal + 1, price, { from: makers[0] })
+        const userBal = await augmintToken.balanceOf(makers[0]);
+        await testHelpers.expectThrow(
+            augmintToken.transferAndNotify(exchange.address, userBal + 1, price, { from: makers[0] })
         );
     });
 
@@ -120,8 +119,8 @@ contract("Exchange orders tests", accounts => {
 
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
-        await testHelper.expectThrow(exchange.cancelBuyTokenOrder(buyOrder.id, { from: accounts[0] }));
-        await testHelper.expectThrow(exchange.cancelSellTokenOrder(sellOrder.id, { from: accounts[0] }));
+        await testHelpers.expectThrow(exchange.cancelBuyTokenOrder(buyOrder.id, { from: accounts[0] }));
+        await testHelpers.expectThrow(exchange.cancelSellTokenOrder(sellOrder.id, { from: accounts[0] }));
     });
 
     it("should return x buy orders from offset", async function() {
@@ -158,7 +157,7 @@ contract("Exchange orders tests", accounts => {
         const orders = [];
         for (let i = 0; i < orderCount; i++) {
             orders.push(
-                tokenAce.transferAndNotify(exchange.address, i + 1, 10000 + i, {
+                augmintToken.transferAndNotify(exchange.address, i + 1, 10000 + i, {
                     from: makers[0]
                 })
             );
@@ -185,6 +184,6 @@ contract("Exchange orders tests", accounts => {
     });
 
     it("should only allow the token contract call transferNotification", async function() {
-        await testHelper.expectThrow(exchange.transferNotification(accounts[0], 1000, 0, { from: accounts[0] }));
+        await testHelpers.expectThrow(exchange.transferNotification(accounts[0], 1000, 0, { from: accounts[0] }));
     });
 });

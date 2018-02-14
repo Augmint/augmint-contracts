@@ -20,10 +20,14 @@ module.exports = async function(deployer) {
         50000000 /* allowedLtdDifferenceAmount =5,000 A-EUR - if totalLoan and totalLock difference is less than that
                                         then allow loan or lock even if ltdDifference limit would go off with it */
     );
-    const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
-    await interestEarnedAccount.grantMultiplePermissions(MonetarySupervisor.address, ["MonetarySupervisorContract"]);
 
+    const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
     const tokenAEur = TokenAEur.at(TokenAEur.address);
-    await tokenAEur.grantMultiplePermissions(MonetarySupervisor.address, ["MonetarySupervisorContract"]);
-    await tokenAEur.grantMultiplePermissions(MonetarySupervisor.address, ["NoFeeTransferContracts"]);
+    const augmintReserves = AugmintReserves.at(AugmintReserves.address);
+    await Promise.all([
+        interestEarnedAccount.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
+        tokenAEur.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
+        tokenAEur.grantPermission(MonetarySupervisor.address, "NoFeeTransferContracts"),
+        augmintReserves.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract")
+    ]);
 };
