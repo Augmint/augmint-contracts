@@ -1,8 +1,8 @@
 const RandomSeed = require("random-seed");
 
-const testHelper = new require("./helpers/testHelper.js");
+const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
-const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
+const exchangeTestHelper = require("./helpers/exchangetestHelpers.js");
 
 const ONEWEI = 1000000000000000000;
 const ETH_ROUND = 1000000000000; // 6 decimals places max in ETH
@@ -110,7 +110,7 @@ contract("Exchange random tests", accounts => {
             })
         );
         txs.map(tx =>
-            testHelper.logGasUse(
+            testHelpers.logGasUse(
                 this,
                 tx,
                 typeof tx.logs[0].args.weiAmount === "undefined"
@@ -123,7 +123,7 @@ contract("Exchange random tests", accounts => {
     });
 
     it("should fill x matching orders", async function() {
-        const snapshotId = await testHelper.takeSnapshot();
+        const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
 
         let match = await getOrderToFill();
@@ -146,11 +146,11 @@ contract("Exchange random tests", accounts => {
 
         //await exchangeTestHelper.printOrderBook(10);
 
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("should match x orders at once (matchMultipleOrders)", async function() {
-        const snapshotId = await testHelper.takeSnapshot();
+        const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
 
         // convert & transpose matches to the format required by matchMultipleOrders
@@ -165,7 +165,7 @@ contract("Exchange random tests", accounts => {
         );
 
         const tx = await exchange.matchMultipleOrders(matchArgs.buyTokenIds, matchArgs.sellTokenIds);
-        testHelper.logGasUse(this, tx, "matchMultipleOrders");
+        testHelpers.logGasUse(this, tx, "matchMultipleOrders");
 
         //await exchangeTestHelper.printOrderBook(10);
 
@@ -173,11 +173,11 @@ contract("Exchange random tests", accounts => {
         assert.equal(stateAfter.sellCount, stateAfterAllMatch.sellCount, "sellCount should == after 1by1 matching all");
         assert.equal(stateAfter.buyCount, stateAfterAllMatch.buyCount, "buyCount should == after 1by1 matching all");
 
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("should cancel all orders", async function() {
-        const snapshotId = await testHelper.takeSnapshot();
+        const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
         //const stateBefore = await exchangeTestHelper.getState();
 
@@ -197,6 +197,6 @@ contract("Exchange random tests", accounts => {
         assert.equal(stateAfter.sellCount, 0);
         assert.equal(stateAfter.buyCount, 0);
 
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 });

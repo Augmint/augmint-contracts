@@ -2,9 +2,9 @@ const LoanManager = artifacts.require("./LoanManager.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Rates = artifacts.require("./Rates.sol");
 
-const testHelper = require("./helpers/testHelper.js");
+const testHelpers = require("./helpers/testHelpers.js");
 const augmintTokenTestHelper = require("./helpers/tokenTestHelpers.js");
-const loanTestHelper = require("./helpers/loanTestHelper.js");
+const loanTestHelpers = require("./helpers/loantestHelpers.js");
 
 let augmintToken = null;
 let loanManager = null;
@@ -19,7 +19,7 @@ contract("Augmint Loans tests", accounts => {
         augmintToken = await augmintTokenTestHelper.getAugmintToken();
 
         [loanManager] = await Promise.all([
-            loanTestHelper.getLoanManager(),
+            loanTestHelpers.getLoanManager(),
             augmintTokenTestHelper.issueToReserve(1000000000)
         ]);
 
@@ -46,23 +46,23 @@ contract("Augmint Loans tests", accounts => {
             products.notDue,
             ,
         ] = await Promise.all([
-            loanTestHelper.getProductInfo(prodCount + 4),
-            loanTestHelper.getProductInfo(prodCount + 3),
-            loanTestHelper.getProductInfo(prodCount + 2),
-            loanTestHelper.getProductInfo(prodCount + 1),
-            loanTestHelper.getProductInfo(prodCount),
+            loanTestHelpers.getProductInfo(prodCount + 4),
+            loanTestHelpers.getProductInfo(prodCount + 3),
+            loanTestHelpers.getProductInfo(prodCount + 2),
+            loanTestHelpers.getProductInfo(prodCount + 1),
+            loanTestHelpers.getProductInfo(prodCount),
             augmintTokenTestHelper.withdrawFromReserve(accounts[0], 1000000000)
         ]);
     });
 
     it("Should get an ACE loan", async function() {
-        await loanTestHelper.createLoan(this, products.repaying, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.createLoan(this, products.repaying, accounts[0], web3.toWei(0.5));
     });
 
     it("Should NOT get a loan less than minLoanAmount");
 
     it("Shouldn't get a loan for a disabled product", async function() {
-        await testHelper.expectThrow(
+        await testHelpers.expectThrow(
             loanManager.newEthBackedLoan(products.disabledProduct.id, { from: accounts[0], value: web3.toWei(0.5) })
         );
     });
@@ -74,66 +74,66 @@ contract("Augmint Loans tests", accounts => {
     it("Should not repay with invalid loanId");
 
     it("Should repay an ACE loan before maturity", async function() {
-        const loan = await loanTestHelper.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
         // send interest to borrower to have enough ACE to repay in test
         await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
         });
-        await loanTestHelper.repayLoan(this, loan, true); // repaymant via AugmintToken.repayLoan convenience func
+        await loanTestHelpers.repayLoan(this, loan, true); // repaymant via AugmintToken.repayLoan convenience func
     });
 
     it("Should collect a defaulted ACE loan and send back leftover collateral ", async function() {
-        const loan = await loanTestHelper.createLoan(this, products.defaulting, accounts[1], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.defaulting, accounts[1], web3.toWei(0.5));
 
-        await testHelper.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber());
+        await testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber());
 
-        await loanTestHelper.collectLoan(this, loan, accounts[2]);
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
     it("Should collect a defaulted ACE loan when no leftover collateral (collection exactly covered)", async function() {
         await rates.setRate("EUR", 10000000);
-        const loan = await loanTestHelper.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
+        const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
 
         await Promise.all([
             rates.setRate("EUR", 9900000),
-            testHelper.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
         ]);
 
-        await loanTestHelper.collectLoan(this, loan, accounts[2]);
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
     it("Should collect a defaulted ACE loan when no leftover collateral (collection partially covered)", async function() {
         await rates.setRate("EUR", 10000000);
-        const loan = await loanTestHelper.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
+        const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
 
         await Promise.all([
             rates.setRate("EUR", 9890000),
-            testHelper.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
         ]);
 
-        await loanTestHelper.collectLoan(this, loan, accounts[2]);
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
     it("Should collect a defaulted ACE loan when no leftover collateral (only fee covered)", async function() {
         await rates.setRate("EUR", 9980000);
-        const loan = await loanTestHelper.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
+        const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
         await Promise.all([
             rates.setRate("EUR", 1),
-            testHelper.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
         ]);
 
-        await loanTestHelper.collectLoan(this, loan, accounts[2]);
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
     it("Should not collect when rate = 0", async function() {
         await rates.setRate("EUR", 9980000);
-        const loan = await loanTestHelper.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
+        const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
         await Promise.all([
             rates.setRate("EUR", 0),
-            testHelper.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
         ]);
 
-        testHelper.expectThrow(loanTestHelper.collectLoan(this, loan, accounts[2]));
+        testHelpers.expectThrow(loanTestHelpers.collectLoan(this, loan, accounts[2]));
     });
 
     it("Should get loans from offset"); // contract func to be implemented
@@ -166,7 +166,7 @@ contract("Augmint Loans tests", accounts => {
         await craftedLender.addLoanProduct(100000, 1000000, 1000000, 100000, 50000, true);
 
         // testing Lender not having "LoanManagerContracts" permission on monetarySupervisor:
-        await testHelper.expectThrow(craftedLender.newEthBackedLoan(0, { value: web3.toWei(1) }));
+        await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: web3.toWei(1) }));
 
         // grant permission to create new loan
         await monetarySupervisor.grantPermission(craftedLender.address, "LoanManagerContracts");
@@ -174,7 +174,7 @@ contract("Augmint Loans tests", accounts => {
 
         // revoke permission and try to repay
         await monetarySupervisor.revokePermission(craftedLender.address, "LoanManagerContracts"),
-        await testHelper.expectThrow(
+        await testHelpers.expectThrow(
             augmintToken.transferAndNotify(craftedLender.address, 9980000, 0, {
                 from: accounts[0]
             })
@@ -182,18 +182,18 @@ contract("Augmint Loans tests", accounts => {
     });
 
     it("should only allow the token contract to call transferNotification", async function() {
-        await testHelper.expectThrow(loanManager.transferNotification(accounts[0], 1000, 0, { from: accounts[0] }));
+        await testHelpers.expectThrow(loanManager.transferNotification(accounts[0], 1000, 0, { from: accounts[0] }));
     });
 
     it("only allowed contract should call MonetarySupervisor.issueLoan", async function() {
-        await testHelper.expectThrow(monetarySupervisor.issueLoan(accounts[0], 0, { from: accounts[0] }));
+        await testHelpers.expectThrow(monetarySupervisor.issueLoan(accounts[0], 0, { from: accounts[0] }));
     });
 
     it("only allowed contract should call MonetarySupervisor.loanRepaymentNotification", async function() {
-        await testHelper.expectThrow(monetarySupervisor.loanRepaymentNotification(0, { from: accounts[0] }));
+        await testHelpers.expectThrow(monetarySupervisor.loanRepaymentNotification(0, { from: accounts[0] }));
     });
 
     it("only allowed contract should call MonetarySupervisor.loanCollectionNotification", async function() {
-        await testHelper.expectThrow(monetarySupervisor.loanCollectionNotification(0, { from: accounts[0] }));
+        await testHelpers.expectThrow(monetarySupervisor.loanCollectionNotification(0, { from: accounts[0] }));
     });
 });

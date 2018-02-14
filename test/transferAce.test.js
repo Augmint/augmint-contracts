@@ -1,4 +1,4 @@
-const testHelper = new require("./helpers/testHelper.js");
+const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = new require("./helpers/tokenTestHelpers.js");
 
 let augmintToken = null;
@@ -63,7 +63,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("Shouldn't be able to transfer ACE when ACE balance is insufficient", async function() {
-        await testHelper.expectThrow(
+        await testHelpers.expectThrow(
             augmintToken.transfer(accounts[2], (await augmintToken.balanceOf(accounts[1])).plus(1), {
                 from: accounts[1]
             })
@@ -71,7 +71,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("Shouldn't be able to transfer ACE between the same accounts", async function() {
-        await testHelper.expectThrow(
+        await testHelpers.expectThrow(
             augmintToken.transfer(accounts[1], 20000, {
                 from: accounts[1]
             })
@@ -79,7 +79,7 @@ contract("Transfer Augmint tokens tests", accounts => {
     });
 
     it("Shouldn't be able to transfer to 0x0", async function() {
-        await testHelper.expectThrow(
+        await testHelpers.expectThrow(
             augmintToken.transfer("0x0", 20000, {
                 from: accounts[1]
             })

@@ -1,6 +1,6 @@
-const testHelper = new require("./helpers/testHelper.js");
+const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
-const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
+const exchangeTestHelper = require("./helpers/exchangetestHelpers.js");
 
 const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
@@ -13,24 +13,21 @@ const taker = web3.eth.accounts[2];
 
 contract("Exchange matching tests", accounts => {
     before(async function() {
-        const startTime = new Date();
         augmintToken = await tokenTestHelpers.getAugmintToken();
 
         await tokenTestHelpers.issueToReserve(1000000000);
         await tokenTestHelpers.withdrawFromReserve(maker, 100000000);
         await tokenTestHelpers.withdrawFromReserve(taker, 100000000);
 
-        exchange = await exchangeTestHelper.newExchangeMock(augmintToken);
-        const endTime = new Date();
-        console.log(startTime, endTime, endTime - startTime);
+        exchange = await exchangeTestHelper.getExchange();
     });
 
     beforeEach(async function() {
-        snapshotId = await testHelper.takeSnapshot();
+        snapshotId = await testHelpers.takeSnapshot();
     });
 
     afterEach(async function() {
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("should match two matching orders (buy token fully filled)", async function() {
@@ -96,7 +93,7 @@ contract("Exchange matching tests", accounts => {
 
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
-        await testHelper.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
+        await testHelpers.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
     });
 
     it("should match multiple orders"); // ensure edge cases of passing the same order twice

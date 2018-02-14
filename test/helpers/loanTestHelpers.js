@@ -12,7 +12,7 @@ const LoanManager = artifacts.require("./LoanManager.sol");
 const Rates = artifacts.require("./Rates.sol");
 
 const tokenTestHelpers = require("./tokenTestHelpers.js");
-const testHelper = require("./testHelper.js");
+const testHelpers = require("./testHelpers.js");
 
 let augmintToken = null;
 let monetarySupervisor = null;
@@ -68,10 +68,10 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         from: loan.borrower,
         value: loan.collateral
     });
-    testHelper.logGasUse(testInstance, tx, "newEthBackedLoan");
+    testHelpers.logGasUse(testInstance, tx, "newEthBackedLoan");
 
     const [newLoanEvenResult, ,] = await Promise.all([
-        testHelper.assertEvent(loanManager, "NewLoan", {
+        testHelpers.assertEvent(loanManager, "NewLoan", {
             loanId: x => x,
             productId: loan.product.id,
             borrower: loan.borrower,
@@ -80,7 +80,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             repaymentAmount: loan.repaymentAmount.toString()
         }),
 
-        testHelper.assertEvent(augmintToken, "AugmintTransfer", {
+        testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
             from: NULL_ACC,
             to: loan.borrower,
             amount: loan.loanAmount.toString(),
@@ -89,7 +89,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         })
 
         // TODO: it's emmited  but why  not picked up by assertEvent?
-        // testHelper.assertEvent(augmintToken, "Transfer", {
+        // testHelpers.assertEvent(augmintToken, "Transfer", {
         //     from: augmintToken.address,
         //     to: expLoan.borrower,
         //     amount: expLoan.loanAmount.toString()
@@ -147,26 +147,26 @@ async function repayLoan(testInstance, loan) {
     const tx = await augmintToken.transferAndNotify(loanManager.address, loan.repaymentAmount, loan.id, {
         from: loan.borrower
     });
-    testHelper.logGasUse(testInstance, tx, "transferAndNotify - repayLoan");
+    testHelpers.logGasUse(testInstance, tx, "transferAndNotify - repayLoan");
 
     const [totalSupplyAfter, totalLoanAmountAfter, , , ,] = await Promise.all([
         augmintToken.totalSupply(),
         monetarySupervisor.totalLoanAmount(),
 
-        testHelper.assertEvent(loanManager, "LoanRepayed", {
+        testHelpers.assertEvent(loanManager, "LoanRepayed", {
             loanId: loan.id,
             borrower: loan.borrower
         }),
 
         /* TODO: these are emmited  but why not picked up by assertEvent? */
-        // testHelper.assertEvent(augmintToken, "AugmintTransfer", {
+        // testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
         //     from: loan.borrower,
         //     to: loanManager.address,
         //     amount: loan.repaymentAmount.toString(),
         //     fee: 0,
         //     narrative: ""
         // }),
-        // testHelper.assertEvent(augmintToken, "Transfer", {
+        // testHelpers.assertEvent(augmintToken, "Transfer", {
         //     from: loan.borrower,
         //     to: loanManager.address,
         //     amount: loan.repaymentAmount.toString()
@@ -257,13 +257,13 @@ async function collectLoan(testInstance, loan, collector) {
     // );
 
     const tx = await loanManager.collect([loan.id], { from: loan.collector });
-    testHelper.logGasUse(testInstance, tx, "collect 1");
+    testHelpers.logGasUse(testInstance, tx, "collect 1");
 
     const [totalSupplyAfter, totalLoanAmountAfter, , ,] = await Promise.all([
         augmintToken.totalSupply(),
         monetarySupervisor.totalLoanAmount(),
 
-        testHelper.assertEvent(loanManager, "LoanCollected", {
+        testHelpers.assertEvent(loanManager, "LoanCollected", {
             loanId: loan.id,
             borrower: loan.borrower,
             collectedCollateral: collectedCollateral.toString(),

@@ -1,5 +1,5 @@
 const BigNumber = require("bignumber.js");
-const testHelper = new require("./testHelper.js");
+const testHelper = new require("./testHelpers.js");
 
 const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");

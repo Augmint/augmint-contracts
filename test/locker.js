@@ -3,7 +3,7 @@ const Locker = artifacts.require("Locker");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 
-const testHelpers = require("./helpers/testHelper.js");
+const testHelpers = require("./helpers/testHelpers.js");
 
 const MAX_LOCK_GAS = web3.toWei(0.028); // TODO: use gas cost and calculate wei fee
 const MAX_RELEASE_GAS = web3.toWei(0.001);

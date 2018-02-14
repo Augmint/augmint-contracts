@@ -2,7 +2,7 @@ const BigNumber = require("bignumber.js");
 const moment = require("moment");
 
 const Exchange = artifacts.require("./Exchange.sol");
-const testHelper = new require("./testHelper.js");
+const testHelpers = new require("./testHelpers.js");
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 
 const ONEWEI = 1000000000000000000;
@@ -14,7 +14,6 @@ const TOKEN_SELL = 1;
 
 module.exports = {
     getExchange,
-    newExchangeMock,
     newOrder,
     cancelOrder,
     matchOrders,
@@ -35,14 +34,6 @@ async function getExchange() {
     return exchange;
 }
 
-/ * get rid of this */;
-async function newExchangeMock(_augmintToken) {
-    augmintToken = _augmintToken;
-    exchange = await Exchange.new(augmintToken.address);
-    await augmintToken.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
-    return exchange;
-}
-
 async function newOrder(testInstance, order) {
     const stateBefore = await getState();
     const balBefore = await tokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
@@ -55,7 +46,7 @@ async function newOrder(testInstance, order) {
             value: order.amount,
             from: order.maker
         });
-        testHelper.logGasUse(testInstance, tx, "placeBuyTokenOrder");
+        testHelpers.logGasUse(testInstance, tx, "placeBuyTokenOrder");
         order.tokenAmount = 0;
         order.weiAmount = order.amount;
     } else {
@@ -63,13 +54,13 @@ async function newOrder(testInstance, order) {
             tx = await augmintToken.transferAndNotify(exchange.address, order.amount, order.price, {
                 from: order.maker
             });
-            testHelper.logGasUse(testInstance, tx, "transferAndNotify - token sell");
+            testHelpers.logGasUse(testInstance, tx, "transferAndNotify - token sell");
         } else {
             const approvedBefore = await augmintToken.allowed(order.maker, exchange.address);
             tx = await exchange.placeSellTokenOrder(order.price, order.amount, {
                 from: order.maker
             });
-            testHelper.logGasUse(testInstance, tx, "placeSellTokenOrder");
+            testHelpers.logGasUse(testInstance, tx, "placeSellTokenOrder");
             const approvedAfter = await augmintToken.allowed(order.maker, exchange.address);
             assert.equal(
                 approvedAfter.toString(),
@@ -124,7 +115,7 @@ async function newOrder(testInstance, order) {
 }
 
 async function newOrderEventAsserts(order) {
-    const res = await testHelper.assertEvent(exchange, "NewOrder", {
+    const res = await testHelpers.assertEvent(exchange, "NewOrder", {
         orderId: x => x,
         maker: order.maker,
         price: order.price,
@@ -133,12 +124,12 @@ async function newOrderEventAsserts(order) {
     });
 
     if (order.orderType === TOKEN_SELL) {
-        await testHelper.assertEvent(augmintToken, "Transfer", {
+        await testHelpers.assertEvent(augmintToken, "Transfer", {
             from: order.maker,
             to: exchange.address,
             amount: order.tokenAmount.toString()
         });
-        await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
+        await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
             from: order.maker,
             to: exchange.address,
             amount: order.tokenAmount.toString(),
@@ -157,10 +148,10 @@ async function cancelOrder(testInstance, order) {
     const sell = order.orderType === TOKEN_SELL;
     if (sell) {
         const tx = await exchange.cancelSellTokenOrder(order.id, { from: order.maker });
-        testHelper.logGasUse(testInstance, tx, "cancelSellTokenOrder");
+        testHelpers.logGasUse(testInstance, tx, "cancelSellTokenOrder");
     } else {
         const tx = await exchange.cancelBuyTokenOrder(order.id, { from: order.maker });
-        testHelper.logGasUse(testInstance, tx, "cancelBuyTokenOrder");
+        testHelpers.logGasUse(testInstance, tx, "cancelBuyTokenOrder");
     }
 
     if (sell) {
@@ -171,7 +162,7 @@ async function cancelOrder(testInstance, order) {
         order.weiAmount = order.amount;
     }
 
-    await testHelper.assertEvent(exchange, "CancelledOrder", {
+    await testHelpers.assertEvent(exchange, "CancelledOrder", {
         orderId: order.id,
         maker: order.maker,
         tokenAmount: order.tokenAmount.toString(),
@@ -180,7 +171,7 @@ async function cancelOrder(testInstance, order) {
 
     let expSellCount, expBuyCount;
     if (order.orderType === TOKEN_SELL) {
-        await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
+        await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
             amount: order.amount.toString(),
             from: exchange.address,
             to: order.maker,
@@ -245,9 +236,9 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     };
 
     const tx = await exchange.matchOrders(buyTokenOrder.id, sellTokenOrder.id);
-    testHelper.logGasUse(testInstance, tx, "matchOrders");
+    testHelpers.logGasUse(testInstance, tx, "matchOrders");
 
-    await testHelper.assertEvent(exchange, "OrderFill", {
+    await testHelpers.assertEvent(exchange, "OrderFill", {
         sellTokenOrderId: expMatch.sellTokenOrderId,
         buyTokenOrderId: expMatch.buyTokenOrderId,
         tokenSeller: expMatch.tokenSeller,
@@ -257,12 +248,12 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         tokenAmount: expMatch.tokenAmount.toString()
     });
 
-    await testHelper.assertEvent(augmintToken, "Transfer", {
+    await testHelpers.assertEvent(augmintToken, "Transfer", {
         from: exchange.address,
         to: expMatch.tokenBuyer,
         amount: expMatch.tokenAmount.toString()
     });
-    await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
+    await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
         from: exchange.address,
         to: expMatch.tokenBuyer,
         amount: expMatch.tokenAmount.toString(),
