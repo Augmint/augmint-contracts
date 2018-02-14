@@ -16,12 +16,14 @@ module.exports = function(deployer, network, accounts) {
     );
     deployer.then(async () => {
         const lm = LoanManager.at(LoanManager.address);
-        await lm.grantMultiplePermissions(accounts[0], ["MonetaryBoard"]);
         const tokenAEur = TokenAEur.at(TokenAEur.address);
-        await tokenAEur.grantMultiplePermissions(LoanManager.address, ["NoFeeTransferContracts"]);
-
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-        await monetarySupervisor.grantMultiplePermissions(LoanManager.address, ["LoanManagerContracts"]);
+
+        await Promise.all([
+            lm.grantPermission(accounts[0], "MonetaryBoard"),
+            tokenAEur.grantPermission(LoanManager.address, "NoFeeTransferContracts"),
+            monetarySupervisor.grantPermission(LoanManager.address, "LoanManagerContracts")
+        ]);
 
         const onTest =
             web3.version.network == 999 ||

@@ -1,8 +1,9 @@
 const BigNumber = require("bignumber.js");
 const moment = require("moment");
-const testHelper = new require("./testHelper.js");
-const tokenAceTestHelper = require("./tokenAceTestHelper.js");
+
 const Exchange = artifacts.require("./Exchange.sol");
+const testHelpers = new require("./testHelpers.js");
+const tokenTestHelpers = require("./tokenTestHelpers.js");
 
 const ONEWEI = 1000000000000000000;
 const PLACE_ORDER_MAXFEE = web3.toWei(0.03);
@@ -12,7 +13,7 @@ const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 module.exports = {
-    newExchangeMock,
+    getExchange,
     newOrder,
     cancelOrder,
     matchOrders,
@@ -24,19 +25,18 @@ module.exports = {
     printOrderBook
 };
 
-let exchange, tokenAce;
+let exchange = null;
+let augmintToken = null;
 
-async function newExchangeMock(_tokenAce) {
-    tokenAce = _tokenAce;
-    exchange = await Exchange.new(tokenAce.address);
-    await exchange.grantMultiplePermissions(web3.eth.accounts[0], ["MonetaryBoard"]);
-    await tokenAce.grantMultiplePermissions(exchange.address, ["NoFeeTransferContracts"]);
+async function getExchange() {
+    augmintToken = await tokenTestHelpers.initAugmintToken();
+    exchange = Exchange.at(Exchange.address);
     return exchange;
 }
 
 async function newOrder(testInstance, order) {
     const stateBefore = await getState();
-    const balBefore = await tokenAceTestHelper.getAllBalances({ exchange: exchange.address, maker: order.maker });
+    const balBefore = await tokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
     order.amount = new BigNumber(order.amount); // to handle numbers, strings and BigNumbers passed
     order.viaAugmintToken =
         typeof order.viaAugmintToken === "undefined" && order.orderType === TOKEN_SELL ? true : order.viaAugmintToken;
@@ -46,22 +46,22 @@ async function newOrder(testInstance, order) {
             value: order.amount,
             from: order.maker
         });
-        testHelper.logGasUse(testInstance, tx, "placeBuyTokenOrder");
+        testHelpers.logGasUse(testInstance, tx, "placeBuyTokenOrder");
         order.tokenAmount = 0;
         order.weiAmount = order.amount;
     } else {
         if (order.viaAugmintToken) {
-            tx = await tokenAce.transferAndNotify(exchange.address, order.amount, order.price, {
+            tx = await augmintToken.transferAndNotify(exchange.address, order.amount, order.price, {
                 from: order.maker
             });
-            testHelper.logGasUse(testInstance, tx, "transferAndNotify - token sell");
+            testHelpers.logGasUse(testInstance, tx, "transferAndNotify - token sell");
         } else {
-            const approvedBefore = await tokenAce.allowed(order.maker, exchange.address);
+            const approvedBefore = await augmintToken.allowed(order.maker, exchange.address);
             tx = await exchange.placeSellTokenOrder(order.price, order.amount, {
                 from: order.maker
             });
-            testHelper.logGasUse(testInstance, tx, "placeSellTokenOrder");
-            const approvedAfter = await tokenAce.allowed(order.maker, exchange.address);
+            testHelpers.logGasUse(testInstance, tx, "placeSellTokenOrder");
+            const approvedAfter = await augmintToken.allowed(order.maker, exchange.address);
             assert.equal(
                 approvedAfter.toString(),
                 approvedBefore.sub(order.amount).toString(),
@@ -93,7 +93,6 @@ async function newOrder(testInstance, order) {
     assert.equal(state.sellCount, expSellCount, "sellCount should be set");
     assert.equal(actualOrder.id, order.id, "orderId should be set in contract's order array");
     assert.equal(actualOrder.maker, order.maker, "maker should be the userAccount in contract's order array");
-    // TODO: assert order.addedTime
     assert.equal(actualOrder.price, order.price, "price should be set in contract's order array");
     assert.equal(
         actualOrder.amount.toString(),
@@ -101,7 +100,7 @@ async function newOrder(testInstance, order) {
         "amount should be set in contract's order array"
     );
 
-    await tokenAceTestHelper.assertBalances(balBefore, {
+    await tokenTestHelpers.assertBalances(balBefore, {
         exchange: {
             eth: balBefore.exchange.eth.add(order.weiAmount),
             ace: balBefore.exchange.ace.add(order.tokenAmount)
@@ -115,7 +114,7 @@ async function newOrder(testInstance, order) {
 }
 
 async function newOrderEventAsserts(order) {
-    const res = await testHelper.assertEvent(exchange, "NewOrder", {
+    const res = await testHelpers.assertEvent(exchange, "NewOrder", {
         orderId: x => x,
         maker: order.maker,
         price: order.price,
@@ -124,12 +123,12 @@ async function newOrderEventAsserts(order) {
     });
 
     if (order.orderType === TOKEN_SELL) {
-        await testHelper.assertEvent(tokenAce, "Transfer", {
+        await testHelpers.assertEvent(augmintToken, "Transfer", {
             from: order.maker,
             to: exchange.address,
             amount: order.tokenAmount.toString()
         });
-        await testHelper.assertEvent(tokenAce, "AugmintTransfer", {
+        await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
             from: order.maker,
             to: exchange.address,
             amount: order.tokenAmount.toString(),
@@ -143,15 +142,15 @@ async function newOrderEventAsserts(order) {
 async function cancelOrder(testInstance, order) {
     const stateBefore = await getState();
 
-    const balBefore = await tokenAceTestHelper.getAllBalances({ exchange: exchange.address, maker: order.maker });
+    const balBefore = await tokenTestHelpers.getAllBalances({ exchange: exchange.address, maker: order.maker });
 
     const sell = order.orderType === TOKEN_SELL;
     if (sell) {
         const tx = await exchange.cancelSellTokenOrder(order.id, { from: order.maker });
-        testHelper.logGasUse(testInstance, tx, "cancelSellTokenOrder");
+        testHelpers.logGasUse(testInstance, tx, "cancelSellTokenOrder");
     } else {
         const tx = await exchange.cancelBuyTokenOrder(order.id, { from: order.maker });
-        testHelper.logGasUse(testInstance, tx, "cancelBuyTokenOrder");
+        testHelpers.logGasUse(testInstance, tx, "cancelBuyTokenOrder");
     }
 
     if (sell) {
@@ -162,7 +161,7 @@ async function cancelOrder(testInstance, order) {
         order.weiAmount = order.amount;
     }
 
-    await testHelper.assertEvent(exchange, "CancelledOrder", {
+    await testHelpers.assertEvent(exchange, "CancelledOrder", {
         orderId: order.id,
         maker: order.maker,
         tokenAmount: order.tokenAmount.toString(),
@@ -171,7 +170,7 @@ async function cancelOrder(testInstance, order) {
 
     let expSellCount, expBuyCount;
     if (order.orderType === TOKEN_SELL) {
-        await testHelper.assertEvent(tokenAce, "AugmintTransfer", {
+        await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
             amount: order.amount.toString(),
             from: exchange.address,
             to: order.maker,
@@ -188,7 +187,7 @@ async function cancelOrder(testInstance, order) {
     const stateAfter = await getState();
     assert.equal(stateAfter.sellCount, expSellCount, "sell order count should be set");
     assert.equal(stateAfter.buyCount, expBuyCount, "buy order count should be set");
-    await tokenAceTestHelper.assertBalances(balBefore, {
+    await tokenTestHelpers.assertBalances(balBefore, {
         exchange: {
             eth: balBefore.exchange.eth.sub(order.weiAmount),
             ace: balBefore.exchange.ace.sub(order.tokenAmount)
@@ -205,7 +204,7 @@ async function cancelOrder(testInstance, order) {
 
 async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const stateBefore = await getState();
-    const balancesBefore = await tokenAceTestHelper.getAllBalances({
+    const balancesBefore = await tokenTestHelpers.getAllBalances({
         exchange: exchange.address,
         seller: sellTokenOrder.maker,
         buyer: buyTokenOrder.maker
@@ -236,9 +235,9 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     };
 
     const tx = await exchange.matchOrders(buyTokenOrder.id, sellTokenOrder.id);
-    testHelper.logGasUse(testInstance, tx, "matchOrders");
+    testHelpers.logGasUse(testInstance, tx, "matchOrders");
 
-    await testHelper.assertEvent(exchange, "OrderFill", {
+    await testHelpers.assertEvent(exchange, "OrderFill", {
         sellTokenOrderId: expMatch.sellTokenOrderId,
         buyTokenOrderId: expMatch.buyTokenOrderId,
         tokenSeller: expMatch.tokenSeller,
@@ -248,12 +247,12 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         tokenAmount: expMatch.tokenAmount.toString()
     });
 
-    await testHelper.assertEvent(tokenAce, "Transfer", {
+    await testHelpers.assertEvent(augmintToken, "Transfer", {
         from: exchange.address,
         to: expMatch.tokenBuyer,
         amount: expMatch.tokenAmount.toString()
     });
-    await testHelper.assertEvent(tokenAce, "AugmintTransfer", {
+    await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
         from: exchange.address,
         to: expMatch.tokenBuyer,
         amount: expMatch.tokenAmount.toString(),
@@ -265,14 +264,14 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     assert.equal(stateAfter.sellCount, expMatch.sellCount, "sell order count should be as expected");
     assert.equal(stateAfter.buyCount, expMatch.buyCount, "buy order count should be as expected");
 
-    await tokenAceTestHelper.assertBalances(balancesBefore, {
+    await tokenTestHelpers.assertBalances(balancesBefore, {
         exchange: {
             eth: balancesBefore.exchange.eth.sub(expMatch.weiAmount),
             ace: balancesBefore.exchange.ace.sub(expMatch.tokenAmount)
         }
     });
     if (balancesBefore.seller.address === balancesBefore.buyer.address) {
-        await tokenAceTestHelper.assertBalances(balancesBefore, {
+        await tokenTestHelpers.assertBalances(balancesBefore, {
             seller: {
                 eth: balancesBefore.seller.eth.add(expMatch.weiAmount),
                 ace: balancesBefore.seller.ace.add(expMatch.tokenAmount),
@@ -280,7 +279,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
             }
         });
     } else {
-        await tokenAceTestHelper.assertBalances(balancesBefore, {
+        await tokenTestHelpers.assertBalances(balancesBefore, {
             seller: {
                 eth: balancesBefore.seller.eth.add(expMatch.weiAmount),
                 ace: balancesBefore.seller.ace,
@@ -327,21 +326,19 @@ function parseOrder(order) {
     return {
         index: order[0],
         maker: order[1],
-        addedTime: order[2].toNumber(),
-        price: order[3].toNumber(),
-        amount: order[4]
+        price: order[2].toNumber(),
+        amount: order[3]
     };
 }
 
 function parseOrders(orderType, orders) {
-    return orders.filter(order => order[4].toNumber() != 0).map(function(order) {
+    return orders.filter(order => order[3].toNumber() != 0).map(function(order) {
         return {
             orderType: orderType,
             id: order[0].toNumber(),
             maker: "0x" + order[1].toString(16),
-            addedTime: order[2].toNumber(),
-            price: order[3].toNumber(),
-            amount: order[4]
+            price: order[2].toNumber(),
+            amount: order[3]
         };
     });
 }
@@ -375,7 +372,6 @@ async function printOrderBook(_limit) {
         const order = await getSellTokenOrder(i);
         console.log(
             `SELL token: ACE/ETH: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
-                ` ${moment.unix(order.addedTime).format("HH:mm:ss")}` +
                 ` orderIdx: ${i} orderId: ${order.id} acc: ${order.maker}`
         );
     }
@@ -384,7 +380,6 @@ async function printOrderBook(_limit) {
         const order = await getBuyTokenOrder(i);
         console.log(
             `        BUY token: ACE/EUR: ${order.price / 10000} amount: ${web3.fromWei(order.amount)} ETH` +
-                ` ${moment.unix(order.addedTime).format("HH:mm:ss")}` +
                 ` orderIdx: ${i} orderId: ${order.id} acc: ${order.maker}`
         );
     }

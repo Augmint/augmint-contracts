@@ -1,8 +1,8 @@
 const RandomSeed = require("random-seed");
-const testHelper = new require("./helpers/testHelper.js");
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
-const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
+
+const testHelpers = new require("./helpers/testHelpers.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
+const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
 const ONEWEI = 1000000000000000000;
 const ETH_ROUND = 1000000000000; // 6 decimals places max in ETH
@@ -19,9 +19,10 @@ const MAX_TOKEN = 10000000; // 1,000 ACE
 const TEST_ACCS_CT = web3.eth.accounts.length;
 const ACC_INIT_ACE = 100000000;
 const CHUNK_SIZE = 100;
-
-let tokenAce, monetarySupervisor, exchange;
 const random = new RandomSeed("Have the same test data");
+
+let augmintToken = null;
+let exchange = null;
 let buyTokenOrders = null;
 let sellTokenOrders = null;
 let matches = [];
@@ -66,18 +67,15 @@ const getOrderToFill = async () => {
 */
 contract("Exchange random tests", accounts => {
     before(async function() {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
-        await monetarySupervisor.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
+        augmintToken = await tokenTestHelpers.initAugmintToken();
+        await tokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
 
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
         await Promise.all(
-            accounts
-                .slice(0, TEST_ACCS_CT)
-                .map(acc => monetarySupervisorTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
+            accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
         );
 
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce);
+        exchange = await exchangeTestHelper.getExchange();
     });
 
     it("place x buy / sell orders", async function() {
@@ -104,7 +102,7 @@ contract("Exchange random tests", accounts => {
                 if (order.orderType === TOKEN_BUY) {
                     tx = exchange.placeBuyTokenOrder(order.price, { value: order.amount, from: order.maker });
                 } else {
-                    tx = tokenAce.transferAndNotify(exchange.address, order.amount, order.price, {
+                    tx = augmintToken.transferAndNotify(exchange.address, order.amount, order.price, {
                         from: order.maker
                     });
                 }
@@ -112,7 +110,7 @@ contract("Exchange random tests", accounts => {
             })
         );
         txs.map(tx =>
-            testHelper.logGasUse(
+            testHelpers.logGasUse(
                 this,
                 tx,
                 typeof tx.logs[0].args.weiAmount === "undefined"
@@ -125,7 +123,7 @@ contract("Exchange random tests", accounts => {
     });
 
     it("should fill x matching orders", async function() {
-        const snapshotId = await testHelper.takeSnapshot();
+        const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
 
         let match = await getOrderToFill();
@@ -148,11 +146,11 @@ contract("Exchange random tests", accounts => {
 
         //await exchangeTestHelper.printOrderBook(10);
 
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("should match x orders at once (matchMultipleOrders)", async function() {
-        const snapshotId = await testHelper.takeSnapshot();
+        const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
 
         // convert & transpose matches to the format required by matchMultipleOrders
@@ -167,7 +165,7 @@ contract("Exchange random tests", accounts => {
         );
 
         const tx = await exchange.matchMultipleOrders(matchArgs.buyTokenIds, matchArgs.sellTokenIds);
-        testHelper.logGasUse(this, tx, "matchMultipleOrders");
+        testHelpers.logGasUse(this, tx, "matchMultipleOrders");
 
         //await exchangeTestHelper.printOrderBook(10);
 
@@ -175,11 +173,11 @@ contract("Exchange random tests", accounts => {
         assert.equal(stateAfter.sellCount, stateAfterAllMatch.sellCount, "sellCount should == after 1by1 matching all");
         assert.equal(stateAfter.buyCount, stateAfterAllMatch.buyCount, "buyCount should == after 1by1 matching all");
 
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("should cancel all orders", async function() {
-        const snapshotId = await testHelper.takeSnapshot();
+        const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
         //const stateBefore = await exchangeTestHelper.getState();
 
@@ -199,6 +197,6 @@ contract("Exchange random tests", accounts => {
         assert.equal(stateAfter.sellCount, 0);
         assert.equal(stateAfter.buyCount, 0);
 
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 });

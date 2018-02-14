@@ -1,34 +1,33 @@
-const testHelper = new require("./helpers/testHelper.js");
-const monetarySupervisorTestHelpers = require("./helpers/monetarySupervisorTestHelpers.js");
-const tokenAceTestHelper = require("./helpers/tokenAceTestHelper.js");
-const exchangeTestHelper = require("./helpers/exchangeTestHelper.js");
+const testHelpers = new require("./helpers/testHelpers.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
+const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
 const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 let snapshotId;
-let monetarySupervisor, tokenAce, exchange;
+let augmintToken = null;
+let exchange = null;
 const maker = web3.eth.accounts[1];
 const taker = web3.eth.accounts[2];
 
 contract("Exchange matching tests", accounts => {
     before(async function() {
-        tokenAce = await tokenAceTestHelper.newTokenAceMock();
-        monetarySupervisor = await monetarySupervisorTestHelpers.newMonetarySupervisorMock(tokenAce);
+        augmintToken = await tokenTestHelpers.initAugmintToken();
 
-        await monetarySupervisor.issueToReserve(1000000000);
-        await monetarySupervisorTestHelpers.withdrawFromReserve(maker, 100000000);
-        await monetarySupervisorTestHelpers.withdrawFromReserve(taker, 100000000);
+        await tokenTestHelpers.issueToReserve(1000000000);
+        await tokenTestHelpers.withdrawFromReserve(maker, 100000000);
+        await tokenTestHelpers.withdrawFromReserve(taker, 100000000);
 
-        exchange = await exchangeTestHelper.newExchangeMock(tokenAce);
+        exchange = await exchangeTestHelper.getExchange();
     });
 
     beforeEach(async function() {
-        snapshotId = await testHelper.takeSnapshot();
+        snapshotId = await testHelpers.takeSnapshot();
     });
 
     afterEach(async function() {
-        await testHelper.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("should match two matching orders (buy token fully filled)", async function() {
@@ -94,7 +93,7 @@ contract("Exchange matching tests", accounts => {
 
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
-        await testHelper.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
+        await testHelpers.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
     });
 
     it("should match multiple orders"); // ensure edge cases of passing the same order twice
