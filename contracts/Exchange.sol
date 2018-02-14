@@ -180,8 +180,8 @@ contract Exchange {
             _removeSellOrder(sell);
         }
 
-        sell.maker.transfer(tradedWei);
         augmintToken.transferWithNarrative(buy.maker, tradedTokens, "Buy token order fill");
+        sell.maker.transfer(tradedWei);
 
         OrderFill(buy.maker, sell.maker, buyTokenId,
             sellTokenId, price, tradedWei, tradedTokens);
