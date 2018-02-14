@@ -29,8 +29,9 @@ contract Exchange {
         uint amount;    
     }
 
-    Order[] public buyTokenOrders;
-    Order[] public sellTokenOrders;
+    uint64 public orderCount;
+    mapping(uint64 => Order) public buyTokenOrders;
+    mapping(uint64 => Order) public sellTokenOrders;
 
     uint64[] private activeBuyOrders;
     uint64[] private activeSellOrders;
@@ -55,8 +56,8 @@ contract Exchange {
         require(price > 0);
         require(msg.value > 0);
 
-        uint64 index = uint64(activeBuyOrders.length);
-        orderId = uint64(buyTokenOrders.push(Order(index, msg.sender, price, msg.value)) - 1);
+        orderId = ++orderCount;        
+        buyTokenOrders[orderId] = Order(uint64(activeBuyOrders.length), msg.sender, price, msg.value);
         activeBuyOrders.push(orderId);
 
         NewOrder(orderId, msg.sender, price, 0, msg.value);
@@ -123,7 +124,7 @@ contract Exchange {
     // orders are encoded as [id, maker, price, amount]
     function getActiveBuyOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeBuyOrders.length; i++) {
-            uint orderId = activeBuyOrders[offset + i];
+            uint64 orderId = activeBuyOrders[offset + i];
             Order storage order = buyTokenOrders[orderId];
             response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
@@ -131,7 +132,7 @@ contract Exchange {
 
     function getActiveSellOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeSellOrders.length; i++) {
-            uint orderId = activeSellOrders[offset + i];
+            uint64 orderId = activeSellOrders[offset + i];
             Order storage order = sellTokenOrders[orderId];
             response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
@@ -192,8 +193,8 @@ contract Exchange {
         require(price > 0);
         require(tokenAmount > 0);
 
-        uint64 index = uint64(activeSellOrders.length);
-        orderId = uint64(sellTokenOrders.push(Order(index, maker, price, tokenAmount)) - 1);
+        orderId = ++orderCount;
+        sellTokenOrders[orderId] = Order(uint64(activeSellOrders.length), maker, price, tokenAmount);
         activeSellOrders.push(orderId);
 
         NewOrder(orderId, maker, price, tokenAmount, 0);
