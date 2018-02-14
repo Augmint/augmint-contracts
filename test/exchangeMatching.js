@@ -1,6 +1,6 @@
 const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
-const exchangeTestHelper = require("./helpers/exchangetestHelpers.js");
+const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
 const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
