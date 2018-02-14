@@ -3,7 +3,7 @@ const testHelpers = require("./helpers/testHelpers.js");
 
 let augmintToken;
 
-contract("TokenAce tests", accounts => {
+contract("AugmintToken tests", accounts => {
     before(async () => {
         augmintToken = await tokenTestHelpers.getAugmintToken();
     });
