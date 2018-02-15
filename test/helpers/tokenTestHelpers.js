@@ -1,10 +1,16 @@
 const BigNumber = require("bignumber.js");
-const testHelper = new require("./testHelper.js");
-const TokenAceMock = artifacts.require("./mocks/TokenAceMock.sol");
+const testHelper = new require("./testHelpers.js");
+
+const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
+const AugmintReserves = artifacts.require("./AugmintReserves.sol");
+const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+
 const TRANSFER_MAXFEE = web3.toWei(0.01); // TODO: set this to expected value (+set gasPrice)
 
 module.exports = {
-    newTokenAceMock,
+    initAugmintToken,
+    issueToReserve,
+    withdrawFromReserve,
     transferTest,
     getTransferFee,
     getAllBalances,
@@ -16,61 +22,46 @@ module.exports = {
 };
 
 const FeeAccount = artifacts.require("./FeeAccount.sol");
-const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
-let tokenAce, feeAccount;
 
-async function newTokenAceMock(tokenOwner = web3.eth.accounts[0]) {
-    tokenAce = await TokenAceMock.new(
-        FeeAccount.address,
-        InterestEarnedAccount.address,
-        2000, // transferFeePt in parts per million = 0.2%
-        200, // min: 0.02 ACE
-        50000, // max fee: 5 ACE
-        800000, // loanToDepositLockLimit: 80%
-        1200000, // loanToDepositLoanLimit: 120 %
+let augmintToken = null;
+let augmintReserves = null;
+let monetarySupervisor = null;
 
-        // Parameters Used to avoid system halt when there totalLoanAmount or totalLockedAmount is 0 or very low.
-        5000000 /* lockNoLimitAllowance in token - if totalLockAmount is below this then a new lock is allowed
-                    up to this amount even if it will bring the loanToDepositRatio BELOW loanToDepositLoanLimit
-                    (interest earned account balance still applies a limit on top of it)
-                */,
-        5000000 /* loanNoLimitAllowance in token - if totalLoanAmount is below this then a new loan is allowed
-                    up this amount even if it will bring the loanToDepositRatio
-                    ABOVE loanToDepositLoanLimit
-                */
-    );
-    feeAccount = FeeAccount.address;
+async function initAugmintToken() {
+    augmintToken = AugmintToken.at(AugmintToken.address);
+    augmintReserves = AugmintReserves.at(AugmintReserves.address);
+    monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+    return augmintToken;
+}
 
-    await tokenAce.grantMultiplePermissions(tokenOwner, ["MonetaryBoard", "NoFeeTransferContracts"]);
+async function issueToReserve(amount) {
+    await monetarySupervisor.issueToReserve(amount);
+}
 
-    return tokenAce;
+async function withdrawFromReserve(to, amount) {
+    await augmintReserves.withdrawTokens(augmintToken.address, to, amount, "withdrawal for tests");
 }
 
 async function transferTest(testInstance, expTransfer) {
     // if fee is provided than we are testing transferNoFee
-    if (typeof expTransfer.fee === "undefined") expTransfer.fee = await getTransferFee(expTransfer.amount);
+    if (typeof expTransfer.fee === "undefined") expTransfer.fee = await getTransferFee(expTransfer);
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
 
     const balBefore = await getAllBalances({
         from: expTransfer.from,
         to: expTransfer.to,
-        feeAccount: feeAccount
+        feeAccount: FeeAccount.address
     });
 
     let tx, txName;
-    if (expTransfer.fee === 0) {
-        txName = "transferNoFee";
-        tx = await tokenAce.transferNoFee(expTransfer.to, expTransfer.amount, expTransfer.narrative, {
-            from: expTransfer.from
-        });
-    } else if (expTransfer.narrative === "") {
+    if (expTransfer.narrative === "") {
         txName = "transfer";
-        tx = await tokenAce.transfer(expTransfer.to, expTransfer.amount, {
+        tx = await augmintToken.transfer(expTransfer.to, expTransfer.amount, {
             from: expTransfer.from
         });
     } else {
         txName = "transferWithNarrative";
-        tx = await tokenAce.transferWithNarrative(expTransfer.to, expTransfer.amount, expTransfer.narrative, {
+        tx = await augmintToken.transferWithNarrative(expTransfer.to, expTransfer.amount, expTransfer.narrative, {
             from: expTransfer.from
         });
     }
@@ -95,52 +86,40 @@ async function transferTest(testInstance, expTransfer) {
 }
 
 async function approveTest(testInstance, expApprove) {
-    const tx = await tokenAce.approve(expApprove.spender, expApprove.value, {
+    const tx = await augmintToken.approve(expApprove.spender, expApprove.value, {
         from: expApprove.owner
     });
     await approveEventAsserts(expApprove);
     testHelper.logGasUse(testInstance, tx, "approve");
-    const newAllowance = await tokenAce.allowance(expApprove.owner, expApprove.spender);
+    const newAllowance = await augmintToken.allowance(expApprove.owner, expApprove.spender);
     assert.equal(newAllowance.toString(), expApprove.value.toString(), "allowance value should be set");
 }
 
 async function transferFromTest(testInstance, expTransfer) {
     // if fee is provided than we are testing transferFromNoFee
-    let isNoFeeTest = typeof expTransfer.fee === "undefined" ? false : true;
     if (!expTransfer.to) {
         expTransfer.to = expTransfer.spender;
     }
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
-    expTransfer.fee = isNoFeeTest ? 0 : (await getTransferFee(expTransfer.amount)).toNumber();
+    expTransfer.fee = typeof expTransfer.fee === "undefined" ? await getTransferFee(expTransfer) : expTransfer.fee;
 
-    const allowanceBefore = await tokenAce.allowance(expTransfer.from, expTransfer.spender);
+    const allowanceBefore = await augmintToken.allowance(expTransfer.from, expTransfer.spender);
     const balBefore = await getAllBalances({
         from: expTransfer.from,
         to: expTransfer.to,
         spender: expTransfer.spender,
-        feeAccount: feeAccount
+        feeAccount: FeeAccount.address
     });
 
     let tx, txName;
-    if (isNoFeeTest) {
-        txName = "transferFromNoFee";
-        tx = await tokenAce.transferFromNoFee(
-            expTransfer.from,
-            expTransfer.to,
-            expTransfer.amount,
-            expTransfer.narrative,
-            {
-                from: expTransfer.spender
-            }
-        );
-    } else if (expTransfer.narrative === "") {
+    if (expTransfer.narrative === "") {
         txName = "transferFrom";
-        tx = await tokenAce.transferFrom(expTransfer.from, expTransfer.to, expTransfer.amount, {
+        tx = await augmintToken.transferFrom(expTransfer.from, expTransfer.to, expTransfer.amount, {
             from: expTransfer.spender
         });
     } else {
         txName = "transferFromWithNarrative";
-        tx = await tokenAce.transferFromWithNarrative(
+        tx = await augmintToken.transferFromWithNarrative(
             expTransfer.from,
             expTransfer.to,
             expTransfer.amount,
@@ -154,7 +133,7 @@ async function transferFromTest(testInstance, expTransfer) {
 
     await transferEventAsserts(expTransfer);
 
-    const allowanceAfter = await tokenAce.allowance(expTransfer.from, expTransfer.spender);
+    const allowanceAfter = await augmintToken.allowance(expTransfer.from, expTransfer.spender);
     assert.equal(
         allowanceBefore.sub(expTransfer.amount).toString(),
         allowanceAfter.toString(),
@@ -183,22 +162,25 @@ async function transferFromTest(testInstance, expTransfer) {
     });
 }
 
-async function getTransferFee(_amount) {
-    let feePt, feeMin, feeMax;
-    let amount = new BigNumber(_amount);
-
-    await Promise.all([
-        (feePt = await tokenAce.transferFeePt()),
-        (feeMax = await tokenAce.transferFeeMax()),
-        (feeMin = await tokenAce.transferFeeMin())
+async function getTransferFee(transfer) {
+    const [fromAllowed, toAllowed] = await Promise.all([
+        augmintToken.permissions(transfer.from, "NoFeeTransferContracts"),
+        augmintToken.permissions(transfer.from, "NoFeeTransferContracts")
     ]);
+    if (fromAllowed || toAllowed) {
+        return 0;
+    }
+
+    const [feePt, feeMin, feeMax] = await augmintToken.getParams();
+    const amount = new BigNumber(transfer.amount);
+
     let fee =
         amount === 0
             ? 0
             : amount
-                  .mul(feePt)
-                  .div(1000000)
-                  .round(0, BigNumber.ROUND_DOWN);
+                .mul(feePt)
+                .div(1000000)
+                .round(0, BigNumber.ROUND_DOWN);
     if (fee < feeMin) {
         fee = feeMin;
     } else if (fee > feeMax) {
@@ -215,7 +197,7 @@ async function getAllBalances(accs) {
         ret[ac] = {};
         ret[ac].address = address;
         ret[ac].eth = await web3.eth.getBalance(address);
-        ret[ac].ace = await tokenAce.balanceOf(address);
+        ret[ac].ace = await augmintToken.balanceOf(address);
     }
 
     return ret;
@@ -225,6 +207,13 @@ async function assertBalances(before, exp) {
     // get addresses from before arg
     for (const ac of Object.keys(exp)) {
         exp[ac].address = before[ac].address;
+        // if no eth or ace specified then assume we don't expect change
+        if (!exp[ac].eth) {
+            exp[ac].eth = before[ac].eth;
+        }
+        if (!exp[ac].ace) {
+            exp[ac].ace = before[ac].ace;
+        }
     }
     const newBal = await getAllBalances(exp);
 
@@ -252,7 +241,7 @@ async function assertBalances(before, exp) {
 }
 
 async function transferEventAsserts(expTransfer) {
-    await testHelper.assertEvent(tokenAce, "AugmintTransfer", {
+    await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString(),
@@ -260,7 +249,7 @@ async function transferEventAsserts(expTransfer) {
         narrative: expTransfer.narrative
     });
 
-    await testHelper.assertEvent(tokenAce, "Transfer", {
+    await testHelper.assertEvent(augmintToken, "Transfer", {
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString()
@@ -268,7 +257,7 @@ async function transferEventAsserts(expTransfer) {
 }
 
 async function approveEventAsserts(expApprove) {
-    await testHelper.assertEvent(tokenAce, "Approval", {
+    await testHelper.assertEvent(augmintToken, "Approval", {
         _owner: expApprove.owner,
         _spender: expApprove.spender,
         _value: expApprove.value.toString()
