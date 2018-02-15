@@ -9,6 +9,7 @@
         "es6": true
     },
     "rules": {
+        "indent": ["warn", 4],
         max-len: "off",
         radix: "off",
         no-unused-vars: "warn",

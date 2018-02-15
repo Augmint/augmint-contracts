@@ -1,13 +1,16 @@
-/* Contract to temporarly hold "unearned" interest of not defaulted (and collected) or not yet repaid loans
-    Interest moved to this account on disbursment
-    On repayment interest moves to InterestEarningsAccount
-    If loan defaults then interest moves to MIR (Market Intervention Reserve held in AugmntToken contract)
- */
+/* Contract to hold earned interest from loans repaid
+   premiums for locks are being accrued (i.e. transferred) to Locker */
 
 pragma solidity 0.4.19;
 import "./generic/SystemAccount.sol";
+import "./interfaces/AugmintTokenInterface.sol";
 
 
-contract InterestEarnedAccount is SystemAccount { // solhint-disable-line no-empty-blocks
+contract InterestEarnedAccount is SystemAccount {
+
+    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)
+    external restrict("MonetarySupervisorContract") {
+        augmintToken.transfer(locker, interestAmount);
+    }
 
 }

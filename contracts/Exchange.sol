@@ -1,80 +1,88 @@
-/* Augmint's internal Exchange
-    TODO: deduct fee
-    TODO: consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
+/* Augmint's Internal Exchange
+
+  For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/exchangeFlow.png
+
+    TODO:
+        - deduct fee
+        - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
 */
 pragma solidity 0.4.19;
-import "./interfaces/ExchangeInterface.sol";
 
+import "./generic/SafeMath.sol";
+import "./interfaces/AugmintTokenInterface.sol";
 
-contract Exchange is ExchangeInterface {
+contract Exchange {
+    using SafeMath for uint256;
+    AugmintTokenInterface public augmintToken;
 
     uint public constant CHUNK_SIZE = 100;
 
-    uint[] private activeBuyOrders;
-    uint[] private activeSellOrders;
+    struct Order {
+        uint64 index;
+        address maker;
 
-    uint public minOrderAmount; // 0: no limit. For placeBuyTokenOrder it's calculated on current rate & price provided
+        // tokens per ether
+        uint32 price;
+
+        // buy order: amount in wei 
+        // sell order: token amount
+        uint amount;    
+    }
+
+    uint64 public orderCount;
+    mapping(uint64 => Order) public buyTokenOrders;
+    mapping(uint64 => Order) public sellTokenOrders;
+
+    uint64[] private activeBuyOrders;
+    uint64[] private activeSellOrders;
 
     /* used to stop executing matchMultiple when running out of gas.
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
-    uint32 public constant ORDER_MATCH_WORST_GAS = 200000;
+    uint32 private constant ORDER_MATCH_WORST_GAS = 100000;
 
-    event NewOrder(uint indexed orderId, address indexed maker, uint price, uint tokenAmount,
+    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount,
         uint weiAmount);
 
-    event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint buyTokenOrderId,
-        uint sellTokenOrderId, uint price, uint weiAmount, uint tokenAmount);
+    event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint64 buyTokenOrderId,
+        uint64 sellTokenOrderId, uint32 price, uint weiAmount, uint tokenAmount);
 
-    event CancelledOrder(uint indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
+    event CancelledOrder(uint64 indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
-    event MinOrderAmountChanged(uint newMinOrderAmount);
-
-    function Exchange(address augmintTokenAddress, address ratesAddress, uint _minOrderAmount) public {
-        augmintToken = AugmintTokenInterface(augmintTokenAddress);
-        rates = Rates(ratesAddress);
-        minOrderAmount = _minOrderAmount;
+    function Exchange(AugmintTokenInterface _augmintToken) public {
+        augmintToken = _augmintToken;
     }
 
-    function placeBuyTokenOrder(uint price) external payable returns (uint orderId) {
+    function placeBuyTokenOrder(uint32 price) external payable returns (uint64 orderId) {
         require(price > 0);
         require(msg.value > 0);
 
-        uint tokenAmount = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value.roundedDiv(price).mul(10000));
-        require(tokenAmount >= minOrderAmount);
-
-        orderId = buyTokenOrders.push(Order(activeBuyOrders.length, msg.sender, now, price, msg.value)) - 1;
+        orderId = ++orderCount;        
+        buyTokenOrders[orderId] = Order(uint64(activeBuyOrders.length), msg.sender, price, msg.value);
         activeBuyOrders.push(orderId);
 
         NewOrder(orderId, msg.sender, price, 0, msg.value);
     }
 
     /* this function requires previous approval to transfer tokens */
-    function placeSellTokenOrder(uint price, uint tokenAmount) external returns (uint orderId) {
-        augmintToken.transferFromNoFee(msg.sender, this, tokenAmount, "Sell token order placed");
+    function placeSellTokenOrder(uint32 price, uint tokenAmount) external returns (uint orderId) {
+        augmintToken.transferFrom(msg.sender, this, tokenAmount);
         return _placeSellTokenOrder(msg.sender, price, tokenAmount);
     }
 
-    /* This func assuming that token already transferred to Exchange so it can be only called
-        via AugmintToken.placeSellTokenOrderOnExchange() convenience function */
-    function placeSellTokenOrderTrusted(address maker, uint price, uint tokenAmount)
-    external returns (uint orderId) {
-        require(msg.sender == address(augmintToken));
-        return _placeSellTokenOrder(maker, price, tokenAmount);
-    }
-
-    function cancelBuyTokenOrder(uint buyTokenId) external {
+    function cancelBuyTokenOrder(uint64 buyTokenId) external {
         Order storage order = buyTokenOrders[buyTokenId];
         require(order.maker == msg.sender);
 
         uint amount = order.amount;
         order.amount = 0;
         _removeBuyOrder(order);
+
         msg.sender.transfer(amount);
 
         CancelledOrder(buyTokenId, msg.sender, 0, amount);
     }
 
-    function cancelSellTokenOrder(uint sellTokenId) external {
+    function cancelSellTokenOrder(uint64 sellTokenId) external {
         Order storage order = sellTokenOrders[sellTokenId];
         require(order.maker == msg.sender);
 
@@ -82,16 +90,16 @@ contract Exchange is ExchangeInterface {
         order.amount = 0;
         _removeSellOrder(order);
 
-        augmintToken.transferNoFee(msg.sender, amount, "Sell token order cancelled");
+        augmintToken.transferWithNarrative(msg.sender, amount, "Sell token order cancelled");
 
         CancelledOrder(sellTokenId, msg.sender, amount, 0);
     }
 
     /* matches any two orders if the sell price >= buy price
-        trade price is the price which is closer to par.
-        reverts if any of the orders been removed
+        trade price meets in the middle
+        reverts if any of the orders have been removed
     */
-    function matchOrders(uint buyTokenId, uint sellTokenId) external {
+    function matchOrders(uint64 buyTokenId, uint64 sellTokenId) external {
         _fillOrder(buyTokenId, sellTokenId);
     }
 
@@ -99,7 +107,7 @@ contract Exchange is ExchangeInterface {
         Runs as long as gas is available for the call.
         Stops if any match is invalid (case when any of the orders removed after client generated the match list sent)
     */
-    function matchMultipleOrders(uint[] buyTokenIds, uint[] sellTokenIds) external returns(uint matchCount) {
+    function matchMultipleOrders(uint64[] buyTokenIds, uint64[] sellTokenIds) external returns(uint matchCount) {
         uint len = buyTokenIds.length;
         require(len == sellTokenIds.length);
         for (uint i = 0; i < len && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
@@ -108,92 +116,85 @@ contract Exchange is ExchangeInterface {
         }
     }
 
-    /* only allowed for Monetary Board. */
-    function setMinOrderAmount(uint _minOrderAmount) external restrict("MonetaryBoard") {
-        minOrderAmount = _minOrderAmount;
-        MinOrderAmountChanged(minOrderAmount);
-    }
-
     function getActiveOrderCounts() external view returns(uint buyTokenOrderCount, uint sellTokenOrderCount) {
         return(activeBuyOrders.length, activeSellOrders.length);
     }
 
     // returns CHUNK_SIZE orders starting from offset
-    // orders are encoded as [id, maker, addedTime, price, amount]
-    function getActiveBuyOrders(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
+    // orders are encoded as [id, maker, price, amount]
+    function getActiveBuyOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeBuyOrders.length; i++) {
-            uint orderId = activeBuyOrders[offset + i];
+            uint64 orderId = activeBuyOrders[offset + i];
             Order storage order = buyTokenOrders[orderId];
-            response[i] = [orderId, uint(order.maker), order.addedTime, order.price, order.amount];
+            response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
     }
 
-    function getActiveSellOrders(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
+    function getActiveSellOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeSellOrders.length; i++) {
-            uint orderId = activeSellOrders[offset + i];
+            uint64 orderId = activeSellOrders[offset + i];
             Order storage order = sellTokenOrders[orderId];
-            response[i] = [orderId, uint(order.maker), order.addedTime, order.price, order.amount];
+            response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
     }
 
-    function _fillOrder(uint buyTokenId, uint sellTokenId) private {
-        Order storage buyTokenOrder = buyTokenOrders[buyTokenId];
-        Order storage sellTokenOrder = sellTokenOrders[sellTokenId];
+    /* place sell token order called from AugmintToken's transferAndNotify
+     Flow:
+        1) user calls token contract's transferAndNotify price passed in data arg
+        2) transferAndNotify transfers tokens to the Exchange contract
+        3) transferAndNotify calls Exchange.transferNotification with lockProductId
+    */
+    function transferNotification(address maker, uint tokenAmount, uint price) public {
+        require(msg.sender == address(augmintToken));
+        _placeSellTokenOrder(maker, uint32(price), tokenAmount);
+    }
 
-        require(buyTokenOrders[buyTokenId].price >= sellTokenOrders[sellTokenId].price);
+    function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private {
+        Order storage buy = buyTokenOrders[buyTokenId];
+        Order storage sell = sellTokenOrders[sellTokenId];
 
-        uint price = getMatchPrice(buyTokenOrder.price, sellTokenOrder.price); // use price which is closer to par
-        uint sellTokenWeiAmount = rates.convertToWei(augmintToken.peggedSymbol(),
-                                    sellTokenOrder.amount.mul(price)).roundedDiv(10000);
-        uint tradedWeiAmount;
-        uint tradedTokenAmount;
+        require(buy.price >= sell.price);
 
-        if (sellTokenWeiAmount <= buyTokenOrder.amount) {
-            tradedWeiAmount = sellTokenWeiAmount;
-            tradedTokenAmount = sellTokenOrder.amount;
+        // meet in the middle
+        uint price = uint(buy.price).add(sell.price).div(2);
+
+        uint sellWei = sell.amount.mul(1 ether).div(price);
+
+        uint tradedWei;
+        uint tradedTokens;
+        if (sellWei <= buy.amount) {
+            tradedWei = sellWei;
+            tradedTokens = sell.amount;
         } else {
-            tradedWeiAmount = buyTokenOrder.amount;
-            tradedTokenAmount = rates.convertFromWei(augmintToken.peggedSymbol(),
-                                                        buyTokenOrder.amount.roundedDiv(price).mul(10000));
+            tradedWei = buy.amount;
+            tradedTokens = buy.amount.mul(price).div(1 ether);
         }
 
-        buyTokenOrder.amount = buyTokenOrder.amount.sub(tradedWeiAmount);
-        if (buyTokenOrder.amount == 0) {
-            _removeBuyOrder(buyTokenOrder);
+        buy.amount = buy.amount.sub(tradedWei);
+        if (buy.amount == 0) {
+            _removeBuyOrder(buy);
         }
 
-        sellTokenOrder.amount = sellTokenOrder.amount.sub(tradedTokenAmount);
-        if (sellTokenOrder.amount == 0) {
-            _removeSellOrder(sellTokenOrder);
+        sell.amount = sell.amount.sub(tradedTokens);
+        if (sell.amount == 0) {
+            _removeSellOrder(sell);
         }
 
-        sellTokenOrder.maker.transfer(tradedWeiAmount);
-        augmintToken.transferNoFee(buyTokenOrder.maker, tradedTokenAmount, "Buy token order fill");
+        augmintToken.transferWithNarrative(buy.maker, tradedTokens, "Buy token order fill");
+        sell.maker.transfer(tradedWei);
 
-        OrderFill(buyTokenOrder.maker, sellTokenOrder.maker, buyTokenId,
-            sellTokenId, price, tradedWeiAmount, tradedTokenAmount);
+        OrderFill(buy.maker, sell.maker, buyTokenId,
+            sellTokenId, uint32(price), tradedWei, tradedTokens);
     }
 
-    // return par if it's between par otherwise the price which is closer to par
-    function getMatchPrice(uint buyPrice, uint sellPrice) private pure returns(uint price) {
-        if (sellPrice <= 10000 && buyPrice >= 10000) {
-            price = 10000;
-        } else {
-            uint sellPriceDeviationFromPar = sellPrice > 10000 ? sellPrice - 10000 : 10000 - sellPrice;
-            uint buyPriceDeviationFromPar = buyPrice > 10000 ? buyPrice - 10000 : 10000 - buyPrice;
-            price = sellPriceDeviationFromPar > buyPriceDeviationFromPar ? buyPrice : sellPrice;
-        }
-        return price;
-    }
 
-    function _placeSellTokenOrder(address maker, uint price, uint tokenAmount)
-    private returns (uint orderId) {
+    function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
+    private returns (uint64 orderId) {
         require(price > 0);
         require(tokenAmount > 0);
-        require(tokenAmount >= minOrderAmount);
-        require(rates.convertToWei(augmintToken.peggedSymbol(), tokenAmount) > 0);
 
-        orderId = sellTokenOrders.push(Order(activeSellOrders.length, maker, now, price, tokenAmount)) - 1;
+        orderId = ++orderCount;
+        sellTokenOrders[orderId] = Order(uint64(activeSellOrders.length), maker, price, tokenAmount);
         activeSellOrders.push(orderId);
 
         NewOrder(orderId, maker, price, tokenAmount, 0);
@@ -207,7 +208,7 @@ contract Exchange is ExchangeInterface {
         _removeOrder(activeSellOrders, order.index);
     }
 
-    function _removeOrder(uint[] storage orders, uint index) private {
+    function _removeOrder(uint64[] storage orders, uint64 index) private {
         if (index < orders.length - 1) {
             orders[index] = orders[orders.length - 1];
         }

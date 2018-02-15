@@ -11,49 +11,43 @@ control InterestEarnedAccount
 actor Releaser
 
 == Locking funds ==
-Depositor -> AugmintToken : transferAndCall\n(address: Locker, value: lockAmount, data: lockProductId)
+Depositor -> AugmintToken : transferAndNotify\n(address: Locker, value: lockAmount, data: lockProductId)
 
 activate AugmintToken
-    AugmintToken -> AugmintToken : _transfer(Depositor, Locker, lockAmount, "", fee: 0)
-    note over AugmintToken
-        0 transfer fee only if target contract is whitelisted
-    end note
+    AugmintToken -> AugmintToken : _transfer(Depositor, Locker, lockAmount, "")
     Depositor --> Locker : lockAmount transferred
-    AugmintToken -> Locker : tokenFallback\n(sender: AugmintToken, origin: Depositor, lockAmount, data: lockProductId)
+    AugmintToken -> Locker : transferNotification\n(sender: AugmintToken, origin: Depositor, lockAmount, data: lockProductId)
+    note over Locker
+        transferNotification is
+        restricted to AugmintToken
+    end note
 deactivate AugmintToken
 
 activate Locker
     Locker -> Locker : checks & create new lock
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
-
-    Locker -> MonetarySupervisor : lockFunds\n(lockAmount, interestAmount)\n//Q: function name?//
+    Locker -> MonetarySupervisor : requestInterest\n(lockAmount, interestAmount)
     note over MonetarySupervisor
-        lockFunds is restricted to
+        requestInterest is restricted to
         trusted Locker contract(s)
     end note
 deactivate Locker
 
 activate MonetarySupervisor
     MonetarySupervisor -> MonetarySupervisor : enforce limits + update KPIs
-    MonetarySupervisor -> InterestEarnedAccount : accrueInterest(Locker, interestAmount)
+    MonetarySupervisor -> InterestEarnedAccount : transferInterest(Locker, interestAmount)
 deactivate MonetarySupervisor
 
 activate InterestEarnedAccount
     note over InterestEarnedAccount
-        accrueInterest is restricted to
+        transferInterest is restricted to
         MonetarySupervisor contract
     end note
-    InterestEarnedAccount -> AugmintToken : transfer(Lender, interestAmount)
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
+    InterestEarnedAccount -> AugmintToken : transfer(Locker, interestAmount)
     InterestEarnedAccount --> Locker : lock interest transfered
-    InterestEarnedAccount -> MonetarySupervisor : success (accrueInterest)
+    InterestEarnedAccount -> MonetarySupervisor : success (transferInterest)
 deactivate InterestEarnedAccount
 
-MonetarySupervisor -> Locker : success (lockFunds)
+MonetarySupervisor -> Locker : success (requestInterest)
 
 activate Locker
     Locker -> Locker : emmit events
@@ -69,24 +63,21 @@ end note
 
 activate Locker
     Locker -> Locker : checks if release time passed
-    Locker -> MonetarySupervisor : releaseFundsHouseKeeping\n(Depositor, lockAmount, interestAmount)\n//Q: fx name?//
+    Locker -> MonetarySupervisor : releaseFundsNotification\n(lockAmount)\n//lockAmount is without interest//
 deactivate Locker
 
 activate MonetarySupervisor
     note over MonetarySupervisor
-        releaseFundsHouseKeeping is restricted to
+        releaseFundsNotification is restricted to
         trusted Locker contract(s)
     end note
     MonetarySupervisor -> MonetarySupervisor : update KPIs
 deactivate MonetarySupervisor
 
-MonetarySupervisor -> Locker : success (releaseFundsHouseKeeping)
+MonetarySupervisor -> Locker : success (releaseFundsNotification)
 
 activate Locker
-    Locker -> AugmintToken : transfer(Depositor, lockAmount + interestAmount)
-    note over AugmintToken
-        0 transfer fee (only for whitelisted sender contracts)
-    end note
+    Locker -> AugmintToken : transferWithNarrative(Depositor, lockAmount + interestAmount, "Funds released from lock")
     Locker --> Depositor : lockAmount + interest transfered
 Locker -> Locker : emmit events
 deactivate Locker
