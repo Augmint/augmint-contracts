@@ -13,7 +13,7 @@ module.exports = async function(deployer, network, accounts) {
         // on Rinkeby testnet
         monetaryBoardAccounts = [
             accounts[0],
-            "0x101Bf57079C2A668DDBF9A4a57656A6ee45b4782" /* Krosza */,
+            "0x14A9dc091053fCbA9474c5734078238ff9904364" /* Krosza */,
             "0xe71E9636e31B838aF0A3c38B3f3449cdC2b7aa87" /* Phraktle */
         ];
     } else {
