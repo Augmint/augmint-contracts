@@ -73,6 +73,26 @@ contract("Exchange matching tests", accounts => {
         assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
     });
 
+    it.only("should fully fill both orders when token amount is ", async function() {
+        /* from users perspective:
+         Sell: 100A€ / 998 A€/ETH = 0.1002004008 ETH
+         Buy: 0.1002004008 ETH * 998 A€/ETH = 99.9999999984 A€ wich is 100A€ b/c A€ is w/ 4 decimals
+        */
+        const buyOrder = { amount: web3.toWei(0.1002004008), maker: maker, price: 9980000, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 1000000, maker: maker, price: 9980000, orderType: TOKEN_SELL };
+
+        await exchangeTestHelper.newOrder(this, buyOrder);
+        await exchangeTestHelper.newOrder(this, sellOrder);
+
+        await exchangeTestHelper.printOrderBook(10);
+        await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
+        await exchangeTestHelper.printOrderBook(10);
+
+        const stateAfter = await exchangeTestHelper.getState();
+        assert.equal(stateAfter.sellCount, 0, "Sell token order count should be 0");
+        assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
+    });
+
     it("should match two matching orders from the same account", async function() {
         const buyOrder = { amount: web3.toWei(1.750401), maker: maker, price: 11000000, orderType: TOKEN_BUY };
         const sellOrder = { amount: 5614113, maker: maker, price: 9000000, orderType: TOKEN_SELL };
