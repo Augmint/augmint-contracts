@@ -5,8 +5,9 @@ const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 
 const testHelpers = require("./helpers/testHelpers.js");
 
-const MAX_LOCK_GAS = web3.toWei(0.028); // TODO: use gas cost and calculate wei fee
-const MAX_RELEASE_GAS = web3.toWei(0.001);
+// these "constants" set in init because getGasCost is async
+let MAX_LOCK_GAS = null;
+let MAX_RELEASE_GAS = null;
 
 let tokenHolder = "";
 let interestEarnedAddress = "";
@@ -16,6 +17,9 @@ let monetarySupervisor = null;
 
 contract("Lock", accounts => {
     before(async function() {
+        MAX_LOCK_GAS = await testHelpers.getGasCost(260000);
+        MAX_RELEASE_GAS = await testHelpers.getGasCost(100000);
+
         tokenHolder = accounts[1];
 
         augmintToken = await tokenTestHelpers.initAugmintToken();

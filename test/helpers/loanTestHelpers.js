@@ -1,9 +1,3 @@
-const NEWLOAN_MAXFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-const REPAY_MAXFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-const COLLECT_BASEFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-
-const NULL_ACC = "0x0000000000000000000000000000000000000000";
-
 const BigNumber = require("bignumber.js");
 const moment = require("moment");
 
@@ -13,6 +7,13 @@ const Rates = artifacts.require("./Rates.sol");
 
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 const testHelpers = require("./testHelpers.js");
+
+// these "constants" set in init because getPrice is async
+let NEWLOAN_MAXFEE = null;
+let REPAY_MAXFEE = null;
+let COLLECT_BASEFEE = null;
+
+const NULL_ACC = "0x0000000000000000000000000000000000000000";
 
 let augmintToken = null;
 let monetarySupervisor = null;
@@ -33,6 +34,10 @@ module.exports = {
 };
 
 async function initLoanManager() {
+    NEWLOAN_MAXFEE = await testHelpers.getGasCost(350000);
+    REPAY_MAXFEE = await testHelpers.getGasCost(150000);
+    COLLECT_BASEFEE = await testHelpers.getGasCost(100000);
+
     loanManager = LoanManager.at(LoanManager.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     augmintToken = await tokenTestHelpers.initAugmintToken();

@@ -5,7 +5,8 @@ const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 
-const TRANSFER_MAXFEE = web3.toWei(0.01); // TODO: set this to expected value (+set gasPrice)
+// this "constant" set in init because getGasCost is async
+let TRANSFER_MAXFEE = null;
 
 module.exports = {
     initAugmintToken,
@@ -28,6 +29,7 @@ let augmintReserves = null;
 let monetarySupervisor = null;
 
 async function initAugmintToken() {
+    TRANSFER_MAXFEE = await testHelpers.getGasCost(100000);
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);

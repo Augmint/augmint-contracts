@@ -1,8 +1,11 @@
 const stringifier = require("stringifier");
 var gasUseLog = [];
+let gasPrice = null;
 
 module.exports = {
     stringify,
+    getGasCost,
+    getGasPrice,
     getEvents,
     assertEvent,
     assertNoEvents,
@@ -27,6 +30,28 @@ function getEvents(contractInstance, eventName) {
             }
 
             resolve(res);
+        });
+    });
+}
+
+async function getGasCost(gas) {
+    if (gasPrice === null) {
+        gasPrice = await getGasPrice();
+    }
+
+    return gasPrice.mul(gas);
+}
+
+async function getGasPrice() {
+    // TODO: could we read gasPrice (and other global params) in a global beforeAll somehow ?
+    // web3 0.x doesn't seem to have promisified fx for this
+    return new Promise(function(resolve, reject) {
+        web3.eth.getGasPrice((error, gasPrice) => {
+            if (error) {
+                reject(new Error("Can't get gasprice from web3 (getGasPrice).\n " + error));
+            } else {
+                resolve(gasPrice);
+            }
         });
     });
 }
@@ -61,23 +86,23 @@ async function assertEvent(contractInstance, eventName, expectedArgs) {
         const expectedValue = expectedArgs[argName];
         let value;
         switch (typeof expectedValue) {
-            case "function":
-                value = expectedValue(event.args[argName]);
-                break;
-            case "number":
-                value =
+        case "function":
+            value = expectedValue(event.args[argName]);
+            break;
+        case "number":
+            value =
                     typeof event.args[argName].toNumber === "function"
                         ? event.args[argName].toNumber()
                         : event.args[argName];
-                break;
-            case "string":
-                value =
+            break;
+        case "string":
+            value =
                     typeof event.args[argName].toString === "function"
                         ? event.args[argName].toString()
                         : event.args[argName];
-                break;
-            default:
-                value = event.args[argName];
+            break;
+        default:
+            value = event.args[argName];
         }
 
         if (typeof expectedValue !== "function") {

@@ -6,9 +6,11 @@ const testHelpers = new require("./testHelpers.js");
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 
 const ONEWEI = 1000000000000000000;
-const PLACE_ORDER_MAXFEE = web3.toWei(0.03);
-const CANCEL_SELL_MAXFEE = web3.toWei(0.03);
-const MATCH_ORDER_MAXFEE = web3.toWei(0.03);
+
+// these "constants" set in init because getGasCost is async
+let PLACE_ORDER_MAXFEE = null;
+let CANCEL_SELL_MAXFEE = null;
+let MATCH_ORDER_MAXFEE = null;
 const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
@@ -29,6 +31,9 @@ let exchange = null;
 let augmintToken = null;
 
 async function initExchange() {
+    PLACE_ORDER_MAXFEE = await testHelpers.getGasCost(200000);
+    CANCEL_SELL_MAXFEE = await testHelpers.getGasCost(150000);
+    MATCH_ORDER_MAXFEE = await testHelpers.getGasCost(60000);
     augmintToken = await tokenTestHelpers.initAugmintToken();
     exchange = Exchange.at(Exchange.address);
     return exchange;

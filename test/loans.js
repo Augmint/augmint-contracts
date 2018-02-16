@@ -32,7 +32,8 @@ contract("Augmint Loans tests", accounts => {
         // repaying: due in 60 sec for testing repayment
         await loanManager.addLoanProduct(60, 985000, 900000, 200000, 50000, true);
         // defaulting: due in 1 sec, repay in 1sec for testing defaults
-        await loanManager.addLoanProduct(1, 990000, 600000, 100000, 50000, true);
+        //await loanManager.addLoanProduct(1, 990000, 600000, 100000, 50000, true);
+        await loanManager.addLoanProduct(1, 970000, 850000, 100000, 50000, true);
         // defaulting no left over collateral: due in 1 sec, repay in 1sec for testing defaults without leftover
         await loanManager.addLoanProduct(1, 900000, 900000, 100000, 100000, true);
         // disabled product
