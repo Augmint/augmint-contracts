@@ -1,5 +1,5 @@
 const BigNumber = require("bignumber.js");
-const testHelper = new require("./testHelpers.js");
+const testHelpers = new require("./testHelpers.js");
 
 const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
@@ -66,7 +66,7 @@ async function transferTest(testInstance, expTransfer) {
         });
     }
     await transferEventAsserts(expTransfer);
-    testHelper.logGasUse(testInstance, tx, txName);
+    testHelpers.logGasUse(testInstance, tx, txName);
 
     await assertBalances(balBefore, {
         from: {
@@ -90,7 +90,7 @@ async function approveTest(testInstance, expApprove) {
         from: expApprove.owner
     });
     await approveEventAsserts(expApprove);
-    testHelper.logGasUse(testInstance, tx, "approve");
+    testHelpers.logGasUse(testInstance, tx, "approve");
     const newAllowance = await augmintToken.allowance(expApprove.owner, expApprove.spender);
     assert.equal(newAllowance.toString(), expApprove.value.toString(), "allowance value should be set");
 }
@@ -129,7 +129,7 @@ async function transferFromTest(testInstance, expTransfer) {
             }
         );
     }
-    testHelper.logGasUse(testInstance, tx, txName);
+    testHelpers.logGasUse(testInstance, tx, txName);
 
     await transferEventAsserts(expTransfer);
 
@@ -241,7 +241,7 @@ async function assertBalances(before, exp) {
 }
 
 async function transferEventAsserts(expTransfer) {
-    await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
+    await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString(),
@@ -249,7 +249,7 @@ async function transferEventAsserts(expTransfer) {
         narrative: expTransfer.narrative
     });
 
-    await testHelper.assertEvent(augmintToken, "Transfer", {
+    await testHelpers.assertEvent(augmintToken, "Transfer", {
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString()
@@ -257,7 +257,7 @@ async function transferEventAsserts(expTransfer) {
 }
 
 async function approveEventAsserts(expApprove) {
-    await testHelper.assertEvent(augmintToken, "Approval", {
+    await testHelpers.assertEvent(augmintToken, "Approval", {
         _owner: expApprove.owner,
         _spender: expApprove.spender,
         _value: expApprove.value.toString()
