@@ -33,7 +33,7 @@ let augmintToken = null;
 async function initExchange() {
     PLACE_ORDER_MAXFEE = await testHelpers.getGasCost(200000);
     CANCEL_SELL_MAXFEE = await testHelpers.getGasCost(150000);
-    MATCH_ORDER_MAXFEE = await testHelpers.getGasCost(60000);
+    MATCH_ORDER_MAXFEE = await testHelpers.getGasCost(80000);
     augmintToken = await tokenTestHelpers.initAugmintToken();
     exchange = Exchange.at(Exchange.address);
     return exchange;
