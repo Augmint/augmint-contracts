@@ -13,7 +13,8 @@ module.exports = {
             host: "localhost",
             port: 8545,
             network_id: "999",
-            gas: 4707806
+            gas: 4707806,
+            gasPrice: 1
         },
         truffleLocal: {
             host: "localhost",
