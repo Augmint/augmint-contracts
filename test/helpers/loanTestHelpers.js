@@ -283,8 +283,7 @@ async function collectLoan(testInstance, loan, collector) {
             },
 
             borrower: {
-                eth: balBefore.borrower.eth.add(releasedCollateral),
-                gasFee: REPAY_MAXFEE
+                eth: balBefore.borrower.eth.add(releasedCollateral)
             },
 
             loanManager: {
