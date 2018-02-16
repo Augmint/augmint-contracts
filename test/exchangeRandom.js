@@ -75,7 +75,7 @@ contract("Exchange random tests", accounts => {
             accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
         );
 
-        exchange = await exchangeTestHelper.getExchange();
+        exchange = await exchangeTestHelper.initExchange();
     });
 
     it("place x buy / sell orders", async function() {

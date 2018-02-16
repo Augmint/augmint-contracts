@@ -13,7 +13,7 @@ const TOKEN_BUY = 0;
 const TOKEN_SELL = 1;
 
 module.exports = {
-    getExchange,
+    initExchange,
     newOrder,
     cancelOrder,
     matchOrders,
@@ -28,7 +28,7 @@ module.exports = {
 let exchange = null;
 let augmintToken = null;
 
-async function getExchange() {
+async function initExchange() {
     augmintToken = await tokenTestHelpers.initAugmintToken();
     exchange = Exchange.at(Exchange.address);
     return exchange;

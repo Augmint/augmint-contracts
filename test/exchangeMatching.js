@@ -19,7 +19,7 @@ contract("Exchange matching tests", accounts => {
         await tokenTestHelpers.withdrawFromReserve(maker, 100000000);
         await tokenTestHelpers.withdrawFromReserve(taker, 100000000);
 
-        exchange = await exchangeTestHelper.getExchange();
+        exchange = await exchangeTestHelper.initExchange();
     });
 
     beforeEach(async function() {

@@ -18,7 +18,7 @@ contract("Exchange orders tests", accounts => {
 
         await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 100000000)));
 
-        exchange = await exchangeTestHelper.getExchange();
+        exchange = await exchangeTestHelper.initExchange();
     });
 
     beforeEach(async function() {
