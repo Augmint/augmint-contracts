@@ -73,7 +73,7 @@ contract("Exchange matching tests", accounts => {
         assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
     });
 
-    it.only("should fully fill both orders when token amount is ", async function() {
+    it.skip("should fully fill both orders when token amount is ", async function() {
         /* from users perspective:
          Sell: 100A€ / 998 A€/ETH = 0.1002004008 ETH
          Buy: 0.1002004008 ETH * 998 A€/ETH = 99.9999999984 A€ wich is 100A€ b/c A€ is w/ 4 decimals
