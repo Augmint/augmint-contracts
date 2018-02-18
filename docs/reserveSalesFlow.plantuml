@@ -1,0 +1,79 @@
+@startuml
+title **Augmint** - Sales from reserves flows
+skinparam ArrowColor #blue
+skinparam noteBackgroundColor #lightgrey
+
+actor MonetaryBoard
+control AugmintReserves
+control ReserveSales
+control AugmintToken
+actor Buyer
+
+== Place sell token order from reserve ==
+MonetaryBoard -> AugmintReserves : sellTokenFromReserve\n(AugmintToken, tokenAmount, price)
+note over AugmintReserves
+    sellTokenFromReserve is
+    restricted to MonetaryBoard
+end note
+
+activate AugmintReserves
+    AugmintReserves -> ReserveSales : AugmintToken.transfer(ReserveSales, tokenAmount)
+    AugmintReserves -> ReserveSales : addTokenSellOrder(AugmintToken, tokenAmount, price)
+deactivate AugmintReserves
+
+note over ReserveSales
+    addTokenSaleOrder is
+    restricted to AugmintReserves
+end note
+
+== Buy token from ReserveSales ==
+Buyer -> ReserveSales : takeSellTokenOrder\n(AugmintToken, tokenAmount, price, {value: ethAmount})
+activate ReserveSales
+    ReserveSales -> ReserveSales : calculate tokenAmount from ethAmount sent\nwith A-EUR/EUR price and current ETH/EUR rates
+    ReserveSales -> AugmintReserves : AugmintReserves.transfer(ethAmount)
+    ReserveSales -> Buyer : AugmintToken.transfer(Buyer, tokenAmount)
+deactivate ReserveSales
+
+== Place sell ETH order from reserve ==
+MonetaryBoard -> AugmintReserves : sellEthFromReserve\n(AugmintToken, ethAmount, price)
+note over AugmintReserves
+    sellEthFromReserve is
+    restricted to MonetaryBoard
+end note
+
+AugmintReserves -> ReserveSales : addEthSellOrder(AugmintToken, price, {value: ethAmount})
+
+note over ReserveSales
+    addTokenSaleOrder is
+    restricted to AugmintReserves
+end note
+ReserveSales -> ReserveSales : save order
+
+== Buy ETH from ReserveSales ==
+Buyer -> AugmintToken : transferAndNotify\n(address: ReserveSales, tokenAmount, data: price)
+
+activate AugmintToken
+    AugmintToken -> AugmintToken : _transfer\n(from: Buyer, to: ReserveSales, tokenAmount, narrative: "")
+    Buyer --> ReserveSales : tokens to sell transfered
+    AugmintToken -> ReserveSales : transferNotification\n(sender: augmintToken, origin: Buyer, tokenAmount, data: price)
+deactivate AugmintToken
+
+note over ReserveSales
+    transferNotification is
+    restricted to AugmintTokens
+end note
+activate ReserveSales
+    ReserveSales -> ReserveSales : calculate ethAmount from tokenAmount sent\nwith A-EUR/EUR price and current ETH/EUR rates
+    ReserveSales -> AugmintReserves : AugmintToken.transfer(AugmintReserves, tokenAmount)
+    ReserveSales -> Buyer : transfer(Buyer, ethAmount)
+deactivate ReserveSales
+
+== Cancel token sell order ==
+MonetaryBoard -> ReserveSales : cancelTokenSellOrder\n(AugmintToken)
+ReserveSales -> AugmintReserves : AugmintToken.transfer(tokenAmountOnSale)
+
+== Cancel ETH sell order ==
+MonetaryBoard -> ReserveSales : cancelEthSellOrder\n(AugmintToken)
+ReserveSales -> AugmintReserves : transfer(AugmintReserves, ethAmountOnSale)
+
+@enduml
