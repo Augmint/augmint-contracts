@@ -20,16 +20,18 @@ let reserveAcc = null;
 let interestEarnedAcc = null;
 
 module.exports = {
-    initLoanManager,
     createLoan,
     repayLoan,
     collectLoan,
     getProductInfo,
     calcLoanValues,
-    loanAsserts
+    loanAsserts,
+    get loanManager() {
+        return loanManager;
+    }
 };
 
-async function initLoanManager() {
+before(async function() {
     loanManager = LoanManager.at(LoanManager.address);
     augmintToken = tokenTestHelpers.augmintToken;
     monetarySupervisor = tokenTestHelpers.monetarySupervisor;
@@ -39,9 +41,7 @@ async function initLoanManager() {
     peggedSymbol = tokenTestHelpers.peggedSymbol;
 
     rates = Rates.at(Rates.address);
-
-    return loanManager;
-}
+});
 
 async function createLoan(testInstance, product, borrower, collateralWei) {
     const loan = await calcLoanValues(rates, product, collateralWei);

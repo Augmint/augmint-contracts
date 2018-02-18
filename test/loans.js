@@ -16,11 +16,8 @@ contract("Augmint Loans tests", accounts => {
         rates = Rates.at(Rates.address);
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
         augmintToken = tokenTestHelpers.augmintToken;
-
-        [loanManager] = await Promise.all([
-            loanTestHelpers.initLoanManager(),
-            tokenTestHelpers.issueToReserve(1000000000)
-        ]);
+        loanManager = loanTestHelpers.loanManager;
+        await tokenTestHelpers.issueToReserve(1000000000);
 
         // These neeed to be sequantial b/c ids hardcoded in tests.
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
