@@ -20,13 +20,11 @@ contract("Lock", accounts => {
         augmintToken = await tokenTestHelpers.augmintToken;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
+        interestEarnedAddress = tokenTestHelpers.interestEarnedAccount.address;
+
         lockerInstance = Locker.at(Locker.address);
 
-        [interestEarnedAddress, , , ,] = await Promise.all([
-            monetarySupervisor.interestEarnedAccount(),
-
-            monetarySupervisor.issueToReserve(50000)
-        ]);
+        await monetarySupervisor.issueToReserve(50000);
 
         await Promise.all([
             tokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),

@@ -4,6 +4,7 @@ const testHelpers = new require("./testHelpers.js");
 const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 const TRANSFER_MAX_GAS = 100000;
@@ -22,22 +23,33 @@ module.exports = {
     get augmintToken() {
         return augmintToken;
     },
+    get peggedSymbol() {
+        return peggedSymbol;
+    },
     get augmintReserves() {
         return augmintReserves;
     },
     get monetarySupervisor() {
         return monetarySupervisor;
+    },
+    get interestEarnedAccount() {
+        return interestEarnedAccount;
     }
 };
 
 let augmintToken = null;
 let augmintReserves = null;
 let monetarySupervisor = null;
+let peggedSymbol = null;
+let interestEarnedAccount = null;
 
 before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+    interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
+
+    peggedSymbol = web3.toAscii(await augmintToken.peggedSymbol());
 });
 
 async function issueToReserve(amount) {

@@ -31,17 +31,15 @@ module.exports = {
 
 async function initLoanManager() {
     loanManager = LoanManager.at(LoanManager.address);
-    monetarySupervisor = augmintToken.monetarySupervisor;
     augmintToken = tokenTestHelpers.augmintToken;
-    reserveAcc = augmintToken.augmintReserves.address;
+    monetarySupervisor = tokenTestHelpers.monetarySupervisor;
+
+    reserveAcc = tokenTestHelpers.augmintReserves.address;
+    interestEarnedAcc = tokenTestHelpers.interestEarnedAccount.address;
+    peggedSymbol = tokenTestHelpers.peggedSymbol;
+
     rates = Rates.at(Rates.address);
 
-    [peggedSymbol, interestEarnedAcc] = await Promise.all([
-        augmintToken.peggedSymbol(),
-        monetarySupervisor.interestEarnedAccount()
-    ]);
-
-    peggedSymbol = web3.toAscii(peggedSymbol);
     return loanManager;
 }
 
