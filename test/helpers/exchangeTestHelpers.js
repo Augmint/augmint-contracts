@@ -98,7 +98,6 @@ async function newOrder(testInstance, order) {
     assert.equal(state.sellCount, expSellCount, "sellCount should be set");
     assert.equal(actualOrder.id, order.id, "orderId should be set in contract's order array");
     assert.equal(actualOrder.maker, order.maker, "maker should be the userAccount in contract's order array");
-    // TODO: assert order.addedTime
     assert.equal(actualOrder.price, order.price, "price should be set in contract's order array");
     assert.equal(
         actualOrder.amount.toString(),
@@ -332,21 +331,19 @@ function parseOrder(order) {
     return {
         index: order[0],
         maker: order[1],
-        addedTime: order[2].toNumber(),
-        price: order[3].toNumber(),
-        amount: order[4]
+        price: order[2].toNumber(),
+        amount: order[3]
     };
 }
 
 function parseOrders(orderType, orders) {
-    return orders.filter(order => order[4].toNumber() != 0).map(function(order) {
+    return orders.filter(order => order[3].toNumber() != 0).map(function(order) {
         return {
             orderType: orderType,
             id: order[0].toNumber(),
             maker: "0x" + order[1].toString(16),
-            addedTime: order[2].toNumber(),
-            price: order[3].toNumber(),
-            amount: order[4]
+            price: order[2].toNumber(),
+            amount: order[3]
         };
     });
 }
@@ -380,7 +377,6 @@ async function printOrderBook(_limit) {
         const order = await getSellTokenOrder(i);
         console.log(
             `SELL token: ACE/ETH: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
-                ` ${moment.unix(order.addedTime).format("HH:mm:ss")}` +
                 ` orderIdx: ${i} orderId: ${order.id} acc: ${order.maker}`
         );
     }
@@ -389,7 +385,6 @@ async function printOrderBook(_limit) {
         const order = await getBuyTokenOrder(i);
         console.log(
             `        BUY token: ACE/EUR: ${order.price / 10000} amount: ${web3.fromWei(order.amount)} ETH` +
-                ` ${moment.unix(order.addedTime).format("HH:mm:ss")}` +
                 ` orderIdx: ${i} orderId: ${order.id} acc: ${order.maker}`
         );
     }
