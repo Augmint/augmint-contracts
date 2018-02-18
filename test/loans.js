@@ -3,7 +3,7 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Rates = artifacts.require("./Rates.sol");
 
 const testHelpers = require("./helpers/testHelpers.js");
-const augmintTokenTestHelper = require("./helpers/tokenTestHelpers.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const loanTestHelpers = require("./helpers/loanTestHelpers.js");
 
 let augmintToken = null;
@@ -16,11 +16,11 @@ contract("Augmint Loans tests", accounts => {
     before(async function() {
         rates = Rates.at(Rates.address);
         monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-        augmintToken = await augmintTokenTestHelper.initAugmintToken();
+        augmintToken = await tokenTestHelpers.initAugmintToken();
 
         [loanManager] = await Promise.all([
             loanTestHelpers.initLoanManager(),
-            augmintTokenTestHelper.issueToReserve(1000000000)
+            tokenTestHelpers.issueToReserve(1000000000)
         ]);
 
         // These neeed to be sequantial b/c ids hardcoded in tests.
@@ -52,7 +52,7 @@ contract("Augmint Loans tests", accounts => {
             loanTestHelpers.getProductInfo(prodCount + 2),
             loanTestHelpers.getProductInfo(prodCount + 1),
             loanTestHelpers.getProductInfo(prodCount),
-            augmintTokenTestHelper.withdrawFromReserve(accounts[0], 1000000000)
+            tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
     });
 
