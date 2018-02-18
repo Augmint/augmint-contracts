@@ -12,13 +12,12 @@ let exchange = null;
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
+        exchange = exchangeTestHelper.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
 
         await tokenTestHelpers.issueToReserve(1000000000);
 
         await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 100000000)));
-
-        exchange = await exchangeTestHelper.initExchange();
     });
 
     beforeEach(async function() {

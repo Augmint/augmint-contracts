@@ -9,7 +9,6 @@ const CANCEL_SELL_MAX_GAS = 150000;
 const MATCH_ORDER_MAX_GAS = 80000;
 
 module.exports = {
-    initExchange,
     newOrder,
     cancelOrder,
     matchOrders,
@@ -18,17 +17,19 @@ module.exports = {
     getSellTokenOrder,
     getActiveBuyOrders,
     getActiveSellOrders,
-    printOrderBook
+    printOrderBook,
+    get exchange() {
+        return exchange;
+    }
 };
 
 let exchange = null;
 let augmintToken = null;
 
-async function initExchange() {
+before(async function() {
     augmintToken = tokenTestHelpers.augmintToken;
     exchange = Exchange.at(Exchange.address);
-    return exchange;
-}
+});
 
 async function newOrder(testInstance, order) {
     const stateBefore = await getState();

@@ -12,11 +12,11 @@ const taker = web3.eth.accounts[2];
 
 contract("Exchange matching tests", accounts => {
     before(async function() {
+        exchange = exchangeTestHelper.exchange;
+
         await tokenTestHelpers.issueToReserve(1000000000);
         await tokenTestHelpers.withdrawFromReserve(maker, 100000000);
         await tokenTestHelpers.withdrawFromReserve(taker, 100000000);
-
-        exchange = await exchangeTestHelper.initExchange();
     });
 
     beforeEach(async function() {
