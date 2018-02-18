@@ -9,8 +9,8 @@ control ReserveSales
 control AugmintToken
 actor Buyer
 
-== Place sell token order from reserve ==
-MonetaryBoard -> AugmintReserves : sellTokenFromReserve\n(ReserveSales, AugmintToken, tokenAmount, price)
+== Increase token amount on sale from reserve ==
+MonetaryBoard -> AugmintReserves : increaseReserveTokenSale\n(ReserveSales, AugmintToken, tokenAmount, price)
 note over AugmintReserves
     sellTokenFromReserve is
     restricted to MonetaryBoard and
@@ -19,14 +19,15 @@ end note
 
 activate AugmintReserves
     AugmintReserves -> ReserveSales : AugmintToken.transfer(ReserveSales, tokenAmount)
-    AugmintReserves -> ReserveSales : addTokenSellOrder(AugmintToken, tokenAmount, price)
+    AugmintReserves -> ReserveSales : increaseTokenSale(AugmintToken, tokenAmount, price)
 deactivate AugmintReserves
 
 note over ReserveSales
-    addTokenSaleOrder is
+    increaseTokenSale is
     restricted to AugmintReserves and
     only to the AugmintToken handled by ReserveSales
 end note
+ReserveSales -> ReserveSales : update price\n//NB: amount to sell is ReserveSales own token balance//
 
 == Buy token from ReserveSales ==
 Buyer -> ReserveSales : takeSellTokenOrder\n(tokenAmount, price, {value: ethAmount})
@@ -36,22 +37,22 @@ activate ReserveSales
     ReserveSales -> Buyer : AugmintToken.transfer(Buyer, tokenAmount)
 deactivate ReserveSales
 
-== Place sell ETH order from reserve ==
-MonetaryBoard -> AugmintReserves : sellEthFromReserve\n(ReserveSales, AugmintToken, ethAmount, price)
+== Increase ETH amoount on sale from reserve  ==
+MonetaryBoard -> AugmintReserves : increaseReserveEthSale\n(ReserveSales, AugmintToken, ethAmount, price)
 note over AugmintReserves
     sellEthFromReserve is
     restricted to MonetaryBoard
     and whitelisted ReserveSales only
 end note
 
-AugmintReserves -> ReserveSales : addEthSellOrder(AugmintToken, price, {value: ethAmount})
+AugmintReserves -> ReserveSales : increaseEthSale(AugmintToken, price, {value: ethAmount})
 
 note over ReserveSales
-    addTokenSaleOrder is
+    increaseEthSale is
     restricted to AugmintReserves transferAndNotify
     and only to the AugmintToken handled by ReserveSales
 end note
-ReserveSales -> ReserveSales : save order
+ReserveSales -> ReserveSales : update price\n//NB: amount to sell is ReserveSales own ETH balance//
 
 == Buy ETH from ReserveSales ==
 Buyer -> AugmintToken : transferAndNotify\n(address: ReserveSales, tokenAmount, data: price)
@@ -72,12 +73,12 @@ activate ReserveSales
     ReserveSales -> Buyer : transfer(Buyer, ethAmount)
 deactivate ReserveSales
 
-== Cancel token sell order ==
-MonetaryBoard -> ReserveSales : cancelTokenSellOrder\n()
-ReserveSales -> AugmintReserves : AugmintToken.transfer(tokenAmountOnSale)
+== Reduce token sell order ==
+MonetaryBoard -> ReserveSales : reduceTokenSellOrder\n(amount)
+ReserveSales -> AugmintReserves : AugmintToken.transfer(amount)
 
-== Cancel ETH sell order ==
-MonetaryBoard -> ReserveSales : cancelEthSellOrder\n()
-ReserveSales -> AugmintReserves : transfer(AugmintReserves, ethAmountOnSale)
+== Reduce ETH sell order ==
+MonetaryBoard -> ReserveSales : reduceEthSellOrder\n()
+ReserveSales -> AugmintReserves : transfer(AugmintReserves, amount)
 
 @enduml
