@@ -12,8 +12,6 @@ const NEWLOAN_MAX_GAS = 350000;
 const REPAY_MAX_GAS = 150000;
 const COLLECT_BASE_GAS = 100000;
 
-const NULL_ACC = "0x0000000000000000000000000000000000000000";
-
 let augmintToken = null;
 let monetarySupervisor = null;
 let loanManager = null;
@@ -81,7 +79,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         }),
 
         testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
-            from: NULL_ACC,
+            from: testHelpers.NULL_ACC,
             to: loan.borrower,
             amount: loan.loanAmount.toString(),
             fee: 0,
