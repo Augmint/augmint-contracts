@@ -35,7 +35,7 @@ module.exports = {
 async function initLoanManager() {
     loanManager = LoanManager.at(LoanManager.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-    augmintToken = await tokenTestHelpers.initAugmintToken();
+    augmintToken = tokenTestHelpers.augmintToken;
     rates = Rates.at(Rates.address);
 
     [peggedSymbol, reserveAcc, interestEarnedAcc] = await Promise.all([

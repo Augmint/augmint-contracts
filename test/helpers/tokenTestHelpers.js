@@ -9,7 +9,6 @@ const FeeAccount = artifacts.require("./FeeAccount.sol");
 const TRANSFER_MAX_GAS = 100000;
 
 module.exports = {
-    initAugmintToken,
     issueToReserve,
     withdrawFromReserve,
     transferTest,
@@ -19,19 +18,27 @@ module.exports = {
     assertBalances,
     approveEventAsserts,
     transferFromTest,
-    approveTest
+    approveTest,
+    get augmintToken() {
+        return augmintToken;
+    },
+    get augmintReserves() {
+        return augmintReserves;
+    },
+    get monetarySupervisor() {
+        return monetarySupervisor;
+    }
 };
 
 let augmintToken = null;
 let augmintReserves = null;
 let monetarySupervisor = null;
 
-async function initAugmintToken() {
+before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-    return augmintToken;
-}
+});
 
 async function issueToReserve(amount) {
     await monetarySupervisor.issueToReserve(amount);

@@ -6,15 +6,12 @@ const TOKEN_BUY = testHelpers.TOKEN_BUY;
 const TOKEN_SELL = testHelpers.TOKEN_SELL;
 
 let snapshotId;
-let augmintToken = null;
 let exchange = null;
 const maker = web3.eth.accounts[1];
 const taker = web3.eth.accounts[2];
 
 contract("Exchange matching tests", accounts => {
     before(async function() {
-        augmintToken = await tokenTestHelpers.initAugmintToken();
-
         await tokenTestHelpers.issueToReserve(1000000000);
         await tokenTestHelpers.withdrawFromReserve(maker, 100000000);
         await tokenTestHelpers.withdrawFromReserve(taker, 100000000);

@@ -25,7 +25,7 @@ let exchange = null;
 let augmintToken = null;
 
 async function initExchange() {
-    augmintToken = await tokenTestHelpers.initAugmintToken();
+    augmintToken = tokenTestHelpers.augmintToken;
     exchange = Exchange.at(Exchange.address);
     return exchange;
 }

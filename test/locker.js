@@ -1,6 +1,5 @@
 /* TODO: create lockHelpers to make this test more readable and manegable */
 const Locker = artifacts.require("Locker");
-const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 
 const testHelpers = require("./helpers/testHelpers.js");
@@ -18,9 +17,8 @@ contract("Lock", accounts => {
     before(async function() {
         tokenHolder = accounts[1];
 
-        augmintToken = await tokenTestHelpers.initAugmintToken();
-
-        monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+        augmintToken = await tokenTestHelpers.augmintToken;
+        monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
         lockerInstance = Locker.at(Locker.address);
 

@@ -1,5 +1,4 @@
 const LoanManager = artifacts.require("./LoanManager.sol");
-const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Rates = artifacts.require("./Rates.sol");
 
 const testHelpers = require("./helpers/testHelpers.js");
@@ -15,8 +14,8 @@ let products = {};
 contract("Augmint Loans tests", accounts => {
     before(async function() {
         rates = Rates.at(Rates.address);
-        monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-        augmintToken = await tokenTestHelpers.initAugmintToken();
+        monetarySupervisor = tokenTestHelpers.monetarySupervisor;
+        augmintToken = tokenTestHelpers.augmintToken;
 
         [loanManager] = await Promise.all([
             loanTestHelpers.initLoanManager(),

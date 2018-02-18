@@ -65,7 +65,7 @@ const getOrderToFill = async () => {
 */
 contract("Exchange random tests", accounts => {
     before(async function() {
-        augmintToken = await tokenTestHelpers.initAugmintToken();
+        augmintToken = tokenTestHelpers.augmintToken;
         await tokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
 
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
