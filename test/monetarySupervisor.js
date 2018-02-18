@@ -1,21 +1,22 @@
-const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 
 let augmintToken = null;
 let monetarySupervisor = null;
+let augmintReserves = null;
 
 contract("MonetarySupervisor tests", accounts => {
     before(async () => {
         augmintToken = tokenTestHelpers.augmintToken;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
+        augmintReserves = tokenTestHelpers.augmintReserves;
     });
 
     it("should be possible to issue new tokens to reserve", async function() {
         const amount = 100000;
         const [totalSupplyBefore, reserveBalBefore, issuedByMonetaryBoardBefore] = await Promise.all([
             augmintToken.totalSupply(),
-            augmintToken.balanceOf(AugmintReserves.address),
+            augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
 
@@ -24,13 +25,13 @@ contract("MonetarySupervisor tests", accounts => {
 
         await testHelpers.assertEvent(augmintToken, "Transfer", {
             from: testHelpers.NULL_ACC,
-            to: AugmintReserves.address,
+            to: augmintReserves.address,
             amount: amount
         });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             augmintToken.totalSupply(),
-            augmintToken.balanceOf(AugmintReserves.address),
+            augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
 
@@ -60,7 +61,7 @@ contract("MonetarySupervisor tests", accounts => {
         await monetarySupervisor.issueToReserve(amount);
         const [totalSupplyBefore, reserveBalBefore, issuedByMonetaryBoardBefore] = await Promise.all([
             augmintToken.totalSupply(),
-            augmintToken.balanceOf(AugmintReserves.address),
+            augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
 
@@ -68,14 +69,14 @@ contract("MonetarySupervisor tests", accounts => {
         testHelpers.logGasUse(this, tx, "burnFromReserve");
 
         await testHelpers.assertEvent(augmintToken, "Transfer", {
-            from: AugmintReserves.address,
+            from: augmintReserves.address,
             to: testHelpers.NULL_ACC,
             amount: amount
         });
 
         const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
             augmintToken.totalSupply(),
-            augmintToken.balanceOf(AugmintReserves.address),
+            augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByMonetaryBoard()
         ]);
         assert.equal(

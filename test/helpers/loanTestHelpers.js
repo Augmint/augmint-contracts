@@ -1,7 +1,6 @@
 const BigNumber = require("bignumber.js");
 const moment = require("moment");
 
-const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const Rates = artifacts.require("./Rates.sol");
 
@@ -32,13 +31,13 @@ module.exports = {
 
 async function initLoanManager() {
     loanManager = LoanManager.at(LoanManager.address);
-    monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+    monetarySupervisor = augmintToken.monetarySupervisor;
     augmintToken = tokenTestHelpers.augmintToken;
+    reserveAcc = augmintToken.augmintReserves.address;
     rates = Rates.at(Rates.address);
 
-    [peggedSymbol, reserveAcc, interestEarnedAcc] = await Promise.all([
+    [peggedSymbol, interestEarnedAcc] = await Promise.all([
         augmintToken.peggedSymbol(),
-        monetarySupervisor.augmintReserves(),
         monetarySupervisor.interestEarnedAccount()
     ]);
 
