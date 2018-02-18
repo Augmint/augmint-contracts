@@ -4,9 +4,9 @@ const testHelpers = new require("./testHelpers.js");
 const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+const FeeAccount = artifacts.require("./FeeAccount.sol");
 
-// this "constant" set in init because getGasCost is async
-let TRANSFER_MAXFEE = null;
+const TRANSFER_MAX_GAS = 100000;
 
 module.exports = {
     initAugmintToken,
@@ -22,14 +22,11 @@ module.exports = {
     approveTest
 };
 
-const FeeAccount = artifacts.require("./FeeAccount.sol");
-
 let augmintToken = null;
 let augmintReserves = null;
 let monetarySupervisor = null;
 
 async function initAugmintToken() {
-    TRANSFER_MAXFEE = await testHelpers.getGasCost(100000);
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
@@ -74,7 +71,7 @@ async function transferTest(testInstance, expTransfer) {
         from: {
             ace: balBefore.from.ace.minus(expTransfer.amount).minus(expTransfer.fee),
             eth: balBefore.from.eth,
-            gasFee: TRANSFER_MAXFEE
+            gasFee: testHelpers.GAS_PRICE * TRANSFER_MAX_GAS
         },
         to: {
             ace: balBefore.to.ace.add(expTransfer.amount),
@@ -150,12 +147,12 @@ async function transferFromTest(testInstance, expTransfer) {
         to: {
             ace: balBefore.to.ace.plus(expTransfer.amount),
             eth: balBefore.to.eth,
-            gasFee: expTransfer.to === expTransfer.spender ? TRANSFER_MAXFEE : 0
+            gasFee: expTransfer.to === expTransfer.spender ? testHelpers.GAS_PRICE * TRANSFER_MAX_GAS : 0
         },
         spender: {
             ace: balBefore.spender.ace.plus(expTransfer.to === expTransfer.spender ? expTransfer.amount : 0),
             eth: balBefore.spender.eth,
-            gasFee: TRANSFER_MAXFEE
+            gasFee: testHelpers.GAS_PRICE * TRANSFER_MAX_GAS
         },
         feeAccount: {
             ace: balBefore.feeAccount.ace.plus(expTransfer.fee),

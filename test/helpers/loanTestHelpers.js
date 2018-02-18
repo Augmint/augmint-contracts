@@ -8,10 +8,9 @@ const Rates = artifacts.require("./Rates.sol");
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 const testHelpers = require("./testHelpers.js");
 
-// these "constants" set in init because getPrice is async
-let NEWLOAN_MAXFEE = null;
-let REPAY_MAXFEE = null;
-let COLLECT_BASEFEE = null;
+const NEWLOAN_MAX_GAS = 350000;
+const REPAY_MAX_GAS = 150000;
+const COLLECT_BASE_GAS = 100000;
 
 const NULL_ACC = "0x0000000000000000000000000000000000000000";
 
@@ -34,10 +33,6 @@ module.exports = {
 };
 
 async function initLoanManager() {
-    NEWLOAN_MAXFEE = await testHelpers.getGasCost(350000);
-    REPAY_MAXFEE = await testHelpers.getGasCost(150000);
-    COLLECT_BASEFEE = await testHelpers.getGasCost(100000);
-
     loanManager = LoanManager.at(LoanManager.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     augmintToken = await tokenTestHelpers.initAugmintToken();
@@ -114,7 +109,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             borrower: {
                 ace: balBefore.borrower.ace.add(loan.loanAmount),
                 eth: balBefore.borrower.eth.minus(loan.collateral),
-                gasFee: NEWLOAN_MAXFEE
+                gasFee: NEWLOAN_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
                 eth: balBefore.loanManager.eth.plus(loan.collateral)
@@ -184,7 +179,7 @@ async function repayLoan(testInstance, loan) {
             borrower: {
                 ace: balBefore.borrower.ace.sub(loan.repaymentAmount),
                 eth: balBefore.borrower.eth.add(loan.collateral),
-                gasFee: REPAY_MAXFEE
+                gasFee: REPAY_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
                 eth: balBefore.loanManager.eth.minus(loan.collateral)
@@ -292,7 +287,7 @@ async function collectLoan(testInstance, loan, collector) {
             },
 
             collector: {
-                gasFee: COLLECT_BASEFEE
+                gasFee: COLLECT_BASE_GAS * testHelpers.GAS_PRICE
             },
 
             borrower: {

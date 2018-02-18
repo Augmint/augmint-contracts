@@ -5,7 +5,6 @@ let gasPrice = null;
 module.exports = {
     stringify,
     getGasCost,
-    getGasPrice,
     getEvents,
     assertEvent,
     assertNoEvents,
@@ -14,9 +13,35 @@ module.exports = {
     logGasUse,
     expectThrow,
     waitForTimeStamp,
-    waitFor
+    waitFor,
+
+    /* CONSTANT getters */
+    get ONE_ETH() {
+        return 1000000000000000000;
+    },
+    get NULL_ACC() {
+        return "0x0000000000000000000000000000000000000000";
+    },
+    get TOKEN_BUY() {
+        return 0;
+    },
+    get TOKEN_SELL() {
+        return 1;
+    },
+    get GAS_PRICE() {
+        if (gasPrice === null) {
+            throw new Error(
+                "gasPrice is not set. testHelpers.before() must be executed before you attempt to get gasPrice"
+            );
+        }
+        return gasPrice;
+    }
 };
 const _stringify = stringifier({ maxDepth: 3, indent: "   " });
+
+before(async function() {
+    gasPrice = await getGasPrice();
+});
 
 function stringify(values) {
     return _stringify(values);
@@ -35,10 +60,6 @@ function getEvents(contractInstance, eventName) {
 }
 
 async function getGasCost(gas) {
-    if (gasPrice === null) {
-        gasPrice = await getGasPrice();
-    }
-
     return gasPrice.mul(gas);
 }
 

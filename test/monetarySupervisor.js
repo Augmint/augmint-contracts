@@ -3,7 +3,6 @@ const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 
-const NULL_ACC = "0x0000000000000000000000000000000000000000";
 let augmintToken = null;
 let monetarySupervisor = null;
 
@@ -25,7 +24,7 @@ contract("MonetarySupervisor tests", accounts => {
         testHelpers.logGasUse(this, tx, "issue");
 
         await testHelpers.assertEvent(augmintToken, "Transfer", {
-            from: NULL_ACC,
+            from: testHelpers.NULL_ACC,
             to: AugmintReserves.address,
             amount: amount
         });
@@ -71,7 +70,7 @@ contract("MonetarySupervisor tests", accounts => {
 
         await testHelpers.assertEvent(augmintToken, "Transfer", {
             from: AugmintReserves.address,
-            to: NULL_ACC,
+            to: testHelpers.NULL_ACC,
             amount: amount
         });
 

@@ -2,8 +2,8 @@ const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
-const TOKEN_BUY = 0;
-const TOKEN_SELL = 1;
+const TOKEN_BUY = testHelpers.TOKEN_BUY;
+const TOKEN_SELL = testHelpers.TOKEN_SELL;
 const makers = [web3.eth.accounts[1], web3.eth.accounts[2]];
 
 let snapshotId;

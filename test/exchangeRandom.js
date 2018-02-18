@@ -4,12 +4,10 @@ const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
-const ONEWEI = 1000000000000000000;
+const TOKEN_BUY = testHelpers.TOKEN_BUY;
+const TOKEN_SELL = testHelpers.TOKEN_SELL;
+
 const ETH_ROUND = 1000000000000; // 6 decimals places max in ETH
-
-const TOKEN_BUY = 0;
-const TOKEN_SELL = 1;
-
 const ORDER_COUNT = 10;
 const MARKET_WEI_RATE = 5000000; // 1ETH = 500 EUR
 const MIN_ORDER_RATE = 9000;
@@ -84,7 +82,7 @@ contract("Exchange random tests", accounts => {
             const tokenAmount = Math.round(random.random() * 10000 * (MAX_TOKEN - MIN_TOKEN) / 10000) + MIN_TOKEN;
             const price = Math.floor(random.random() * (MAX_ORDER_RATE - MIN_ORDER_RATE)) + MIN_ORDER_RATE;
             const weiAmount =
-                Math.round(tokenAmount * price / 10000 / MARKET_WEI_RATE * ONEWEI / ETH_ROUND) * ETH_ROUND;
+                Math.round(tokenAmount * price / 10000 / MARKET_WEI_RATE * testHelpers.ONE_ETH / ETH_ROUND) * ETH_ROUND;
             const orderType = random.random() < 0.5 ? TOKEN_BUY : TOKEN_SELL;
 
             orders.push({
