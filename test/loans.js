@@ -1,9 +1,9 @@
 const LoanManager = artifacts.require("./LoanManager.sol");
-const Rates = artifacts.require("./Rates.sol");
 
 const testHelpers = require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const loanTestHelpers = require("./helpers/loanTestHelpers.js");
+const ratesTestHelpers = require("./helpers/ratesTestHelpers.js");
 
 let augmintToken = null;
 let loanManager = null;
@@ -13,7 +13,7 @@ let products = {};
 
 contract("Augmint Loans tests", accounts => {
     before(async function() {
-        rates = Rates.at(Rates.address);
+        rates = ratesTestHelpers.rates;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
         augmintToken = tokenTestHelpers.augmintToken;
         loanManager = loanTestHelpers.loanManager;
