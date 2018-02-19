@@ -2,8 +2,6 @@
 
 ## Install
 
-_We recently split the codebase into [`augmint-web`](https://github.com/Augmint/augmint-web) and [`augmint-contracts`](https://github.com/Augmint/augmint-contracts). Please raise an issue if these instructions shouldn't work for you._
-
 These instructions are about the dev environment for contract development. For UI development see [augmint-web repo](https://github.com/Augmint/augmint-web)
 
 ### OSX
@@ -118,7 +116,7 @@ truffle migrate --network rinkeby
 cp ./build/contracts/\* ./src/contractsBuild
 ```
 
-_NB: truffle migrate works with geth stable 1.7.2 only. Follow [this issue](https://github.com/trufflesuite/truffle/issues/721)._
+_NB: truffle migrate works with geth 1.8.0-stable. If you are using an unstable version then follow [this issue](https://github.com/trufflesuite/truffle/issues/721)._
 
 ### WIP (ignore it) alternative ganache launches
 
