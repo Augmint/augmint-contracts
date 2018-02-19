@@ -1,6 +1,6 @@
 const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
-const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
+const exchangeTestHelpers = require("./helpers/exchangeTestHelpers.js");
 
 const TOKEN_BUY = testHelpers.TOKEN_BUY;
 const TOKEN_SELL = testHelpers.TOKEN_SELL;
@@ -12,7 +12,7 @@ let exchange = null;
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
-        exchange = exchangeTestHelper.exchange;
+        exchange = exchangeTestHelpers.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
 
         await tokenTestHelpers.issueToReserve(1000000000);
@@ -31,8 +31,8 @@ contract("Exchange orders tests", accounts => {
     it("place buy token orders", async function() {
         const order = { amount: web3.toWei(1), maker: makers[0], price: 11000, orderType: TOKEN_BUY };
 
-        await exchangeTestHelper.newOrder(this, order);
-        await exchangeTestHelper.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
         //await exchangeTestHelper.printOrderBook();
     });
 
@@ -48,8 +48,8 @@ contract("Exchange orders tests", accounts => {
         const tx = await augmintToken.approve(exchange.address, order.amount * 2, { from: order.maker });
         testHelpers.logGasUse(this, tx, "approve");
 
-        await exchangeTestHelper.newOrder(this, order);
-        await exchangeTestHelper.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
     });
 
     it("shouldn't place a sell token order directly if approval < amount", async function() {
@@ -70,14 +70,14 @@ contract("Exchange orders tests", accounts => {
     it("place a sell token order via AugmintToken", async function() {
         const order = { amount: 1000000, maker: makers[0], price: 11000, orderType: TOKEN_SELL };
 
-        await exchangeTestHelper.newOrder(this, order);
-        await exchangeTestHelper.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
     });
 
     it("should place a BUY token order", async function() {
         const order = { amount: 1000000, maker: makers[0], price: 11000, orderType: TOKEN_BUY };
 
-        await exchangeTestHelper.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
     });
 
     it("shouldn't place a SELL token order with 0 price", async function() {
@@ -101,23 +101,23 @@ contract("Exchange orders tests", accounts => {
     it("should cancel a BUY token order", async function() {
         const order = { amount: web3.toWei(1), maker: makers[0], price: 11000, orderType: TOKEN_BUY };
 
-        await exchangeTestHelper.newOrder(this, order);
-        await exchangeTestHelper.cancelOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
+        await exchangeTestHelpers.cancelOrder(this, order);
     });
 
     it("should cancel a SELL token order", async function() {
         const order = { amount: 1000000, maker: makers[0], price: 11000, orderType: TOKEN_SELL };
 
-        await exchangeTestHelper.newOrder(this, order);
-        await exchangeTestHelper.cancelOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
+        await exchangeTestHelpers.cancelOrder(this, order);
     });
 
     it("only own orders should be possible to cancel", async function() {
         const buyOrder = { amount: web3.toWei(1), maker: makers[0], price: 12000, orderType: TOKEN_BUY };
         const sellOrder = { amount: 4545455, maker: makers[0], price: 11000, orderType: TOKEN_SELL };
 
-        await exchangeTestHelper.newOrder(this, buyOrder);
-        await exchangeTestHelper.newOrder(this, sellOrder);
+        await exchangeTestHelpers.newOrder(this, buyOrder);
+        await exchangeTestHelpers.newOrder(this, sellOrder);
         await testHelpers.expectThrow(exchange.cancelBuyTokenOrder(buyOrder.id, { from: accounts[0] }));
         await testHelpers.expectThrow(exchange.cancelSellTokenOrder(sellOrder.id, { from: accounts[0] }));
     });
@@ -132,16 +132,24 @@ contract("Exchange orders tests", accounts => {
         assert(txs.length, orderCount);
 
         const orderQueries = [
-            exchangeTestHelper.getActiveBuyOrders(0).then(res => {
-                assert.equal(res.length, Math.min(orderCount, exchange.CHUNK_SIZE), "buy orders count when 0 offset");
+            exchangeTestHelpers.getActiveBuyOrders(0).then(res => {
+                assert.equal(
+                    res.length,
+                    Math.min(orderCount, exchangeTestHelpers.CHUNK_SIZE),
+                    "buy orders count when 0 offset"
+                );
             }),
-            exchangeTestHelper.getActiveBuyOrders(1).then(res => {
-                assert.equal(res.length, Math.min(orderCount - 1, exchange.CHUNK_SIZE), "buy count when offset from 1");
+            exchangeTestHelpers.getActiveBuyOrders(1).then(res => {
+                assert.equal(
+                    res.length,
+                    Math.min(orderCount - 1, exchangeTestHelpers.CHUNK_SIZE),
+                    "buy count when offset from 1"
+                );
             }),
-            exchangeTestHelper.getActiveBuyOrders(orderCount - 1).then(res => {
+            exchangeTestHelpers.getActiveBuyOrders(orderCount - 1).then(res => {
                 assert.equal(res.length, 1, "returned buy orders count when offset from last");
             }),
-            exchangeTestHelper.getActiveBuyOrders(orderCount).then(res => {
+            exchangeTestHelpers.getActiveBuyOrders(orderCount).then(res => {
                 assert.equal(res.length, 0, "returned buy orders count when offset > last");
             })
         ];
@@ -163,20 +171,24 @@ contract("Exchange orders tests", accounts => {
         assert(txs.length, orderCount);
 
         const orderQueries = [
-            exchangeTestHelper.getActiveSellOrders(0).then(res => {
-                assert.equal(res.length, Math.min(orderCount, exchange.CHUNK_SIZE), "sell orders count when 0 offset");
-            }),
-            exchangeTestHelper.getActiveSellOrders(1).then(res => {
+            exchangeTestHelpers.getActiveSellOrders(0).then(res => {
                 assert.equal(
                     res.length,
-                    Math.min(orderCount - 1, exchange.CHUNK_SIZE),
+                    Math.min(orderCount, exchangeTestHelpers.CHUNK_SIZE),
+                    "sell orders count when 0 offset"
+                );
+            }),
+            exchangeTestHelpers.getActiveSellOrders(1).then(res => {
+                assert.equal(
+                    res.length,
+                    Math.min(orderCount - 1, exchangeTestHelpers.CHUNK_SIZE),
                     "sell count when offset from 1"
                 );
             }),
-            exchangeTestHelper.getActiveSellOrders(orderCount - 1).then(res => {
+            exchangeTestHelpers.getActiveSellOrders(orderCount - 1).then(res => {
                 assert.equal(res.length, 1, "returned sell orders count when offset from last");
             }),
-            exchangeTestHelper.getActiveSellOrders(orderCount).then(res => {
+            exchangeTestHelpers.getActiveSellOrders(orderCount).then(res => {
                 assert.equal(res.length, 0, "returned sell orders count when offset > last");
             })
         ];
