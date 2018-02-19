@@ -12,8 +12,7 @@ _NB: these steps are likely to work on linux too but it's not tested yet_
 
 1. [Git](https://git-scm.com/download)
 1. [Ethereum CLI](https://www.ethereum.org/cli)
-1. [nodejs](https://nodejs.org/en/download/) v8.5.0  
-   _use version 8.5.0, ganache regularly crashes with newer version (FE also works with 8.9.4)_
+1. [nodejs](https://nodejs.org/en/download/) - _tested with v8.9.4_
 1. Install yarn if you don't have it: `npm install -g yarn`
 1. ```
    git clone https://github.com/Augmint/augmint-contracts.git
@@ -28,11 +27,18 @@ _NB: windows install was not tested since a while, update on it is welcome_
 1. [Git Bash](https://git-for-windows.github.io/) (required for truffle & yarn start)
 1. [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
 1. [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
-1. [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases)
+1. Install latest stable Nodejs (tested with 8.9.4)
+
+    or
+    use [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases):
+
+    ```
+    nvm install 8.9.4
+    nvm use 8.9.4
+    ```
+
 1. in Git bash:
     ```
-    nvm install 8.5.0
-    nvm use 8.5.0
     git clone https://github.com/Augmint/augmint-contracts.git
     cd augmint-contracts
     yarn install
