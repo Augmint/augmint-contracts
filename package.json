@@ -6,14 +6,14 @@
     "private": true,
     "scripts": {
         "start":
-            "./runganache.sh & $(npm bin)/truffle migrate && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
-        "build": "$(npm bin)/truffle compile",
+            "./runganache.sh & $(yarn bin)/truffle migrate && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+        "build": "$(yarn bin)/truffle compile",
         "clean": "rm build/contracts/*",
-        "test": "$(npm bin)/truffle test",
-        "truffle:migrate": "$(npm bin)/truffle migrate",
-        "truffle:compile": "npm run build",
+        "test": "$(yarn bin)/truffle test",
+        "truffle:migrate": "$(yarn bin)/truffle migrate",
+        "truffle:compile": "yarn run build",
         "ganache:run": "./runganache.sh",
-        "ganache:runmigrate": "npm start"
+        "ganache:runmigrate": "yarn start"
     },
     "devDependencies": {
         "babel-register": "6.26.0",

@@ -14,12 +14,12 @@ _NB: these steps are likely to work on linux too but it's not tested yet_
 1. [Ethereum CLI](https://www.ethereum.org/cli)
 1. [nodejs](https://nodejs.org/en/download/) v8.5.0  
    _use version 8.5.0, ganache regularly crashes with newer version (FE also works with 8.9.4)_
-1. then:
-    ```
-    git clone https://github.com/Augmint/augmint-contracts.git
-    cd augmint-contracts
-    npm install
-    ```
+1. Install yarn if you don't have it: `npm install -g yarn`
+1. ```
+   git clone https://github.com/Augmint/augmint-contracts.git
+   cd augmint-contracts
+   yarn install
+   ```
 
 ### Windows
 
@@ -35,7 +35,7 @@ _NB: windows install was not tested since a while, update on it is welcome_
     nvm use 8.5.0
     git clone https://github.com/Augmint/augmint-contracts.git
     cd augmint-contracts
-    npm install
+    yarn install
     ```
 
 ## Launch
@@ -44,26 +44,26 @@ _NB: windows install was not tested since a while, update on it is welcome_
 
 ```
 git pull
-npm install # if there were any node package changes in packages.json
+yarn install # if there were any node package changes in packages.json
 ```
 
 ### 2. Deploy to network
 
 #### ganache-cli (formerly testrpc)
 
-`npm run ganache:runmigrate`  
+`yarn run ganache:runmigrate`  
 or
 
-* `npm run ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
+* `yarn run ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
 * in separate console:  
-  `npm run truffle:migrate`  
+  `yarn run truffle:migrate`  
   or to overwrite existing migration:  
-  `$(npm bin)/truffle migrate --reset`
+  `$(yarn bin)/truffle migrate --reset`
 
 ## Tests
 
 ```
-npm run ganache:runmigrate
+yarn run ganache:runmigrate
 truffle test
 ```
 
