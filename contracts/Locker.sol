@@ -7,10 +7,8 @@
 
  For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/lockFlow.png
 
- TODO:
-  - create  MonetarySupervisorInterface and use it instead of MonetarySupervisor
-  - monetarySupervisor setter?
-  - store locks in array so we can iterate over them
+ TODO / think about:
+    - monetarySupervisor setter?
 
  to do/think about:
   -> self-destruct function?
@@ -38,10 +36,10 @@ contract Locker is Restricted, TokenReceiver {
     event LockProductActiveChange(uint indexed lockProductId, bool newActiveState);
 
     // NB: amountLocked includes the original amount, plus interest
-    event NewLock(address indexed lockOwner, uint indexed lockIndex, uint amountLocked, uint interestEarned,
+    event NewLock(address indexed lockOwner, uint lockId, uint amountLocked, uint interestEarned,
                     uint lockedUntil, uint perTermInterest, uint durationInSecs, bool isActive);
 
-    event LockReleased(address indexed lockOwner, uint indexed lockIndex);
+    event LockReleased(address indexed lockOwner, uint lockId);
 
     struct LockProduct {
         // perTermInterest is in millionths (i.e. 1,000,000 = 100%):
@@ -52,6 +50,7 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     struct Lock {
+        address owner;
         uint amountLocked;
         uint interestEarned;
         uint lockedUntil;
@@ -64,8 +63,11 @@ contract Locker is Restricted, TokenReceiver {
     MonetarySupervisor public monetarySupervisor;
 
     LockProduct[] public lockProducts;
-    // per account locks (i.e. an id for a lock is a tuple (owner, index)):
-    mapping(address => Lock[]) public locks;
+
+    Lock[] public locks;
+
+    // lock ids for an account
+    mapping(address => uint64[]) public accountLocks;
 
     function Locker(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor) public {
 
@@ -91,18 +93,18 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
-    function releaseFunds(address lockOwner, uint lockIndex) external {
+    function releaseFunds(uint64 lockId) external {
 
-        Lock storage lock = locks[lockOwner][lockIndex];
+        Lock storage lock = locks[lockId];
 
         require(lock.isActive && now >= lock.lockedUntil);
 
         lock.isActive = false;
         monetarySupervisor.releaseFundsNotification(lock.amountLocked);   // to maintain totalLockAmount
-        augmintToken.transferWithNarrative(lockOwner, lock.amountLocked.add(lock.interestEarned),
+        augmintToken.transferWithNarrative(lock.owner, lock.amountLocked.add(lock.interestEarned),
                                                                                 "Funds released from lock");
 
-        LockReleased(lockOwner, lockIndex);
+        LockReleased(lock.owner, lockId);
     }
 
     function getLockProductCount() external view returns (uint) {
@@ -113,10 +115,7 @@ contract Locker is Restricted, TokenReceiver {
 
     // returns 20 lock products starting from some offset
     // lock products are encoded as [ perTermInterest, durationInSecs, minimumLockAmount, isActive ]
-    function getLockProducts(uint offset) external view returns (uint[4][CHUNK_SIZE]) {
-
-        uint[4][CHUNK_SIZE] memory response;
-
+    function getLockProducts(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE; i++) {
 
             if (offset + i >= lockProducts.length) { break; }
@@ -125,41 +124,34 @@ contract Locker is Restricted, TokenReceiver {
 
             response[i] = [ lockProduct.perTermInterest, lockProduct.durationInSecs,
                                         lockProduct.minimumLockAmount, lockProduct.isActive ? 1 : 0 ];
-
         }
+    }
 
-        return response;
-
+    function getLockCount() external view returns (uint) {
+        return locks.length;
     }
 
     function getLockCountForAddress(address lockOwner) external view returns (uint) {
-
-        return locks[lockOwner].length;
-
+        return accountLocks[lockOwner].length;
     }
 
     // returns 20 locks starting from some offset
     // lock products are encoded as
-    //              [amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
+    //             [lockId, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
     // NB: perTermInterest is in millionths (i.e. 1,000,000 = 100%):
-    function getLocksForAddress(address lockOwner, uint offset) external view returns (uint[6][CHUNK_SIZE]) {
+    function getLocksForAddress(address lockOwner, uint offset) external view returns (uint[7][CHUNK_SIZE] response) {
 
-        Lock[] storage locksForAddress = locks[lockOwner];
-        uint[6][CHUNK_SIZE] memory response;
+        uint64[] storage locksForAddress = accountLocks[lockOwner];
 
-        for (uint8 i = 0; i < CHUNK_SIZE; i++) {
+        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
 
             if (offset + i >= locksForAddress.length) { break; }
 
-            Lock storage lock = locksForAddress[offset + i];
+            Lock storage lock = locks[locksForAddress[offset + i]];
 
-            response[i] = [ lock.amountLocked, lock.interestEarned, lock.lockedUntil, lock.perTermInterest,
-                                        lock.durationInSecs, lock.isActive ? 1 : 0 ];
-
+            response[i] = [ locksForAddress[offset + i], lock.amountLocked, lock.interestEarned, lock.lockedUntil,
+                                lock.perTermInterest, lock.durationInSecs, lock.isActive ? 1 : 0 ];
         }
-
-        return response;
-
     }
 
     /* lock funds, called from AugmintToken's transferAndNotify
@@ -191,7 +183,7 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     // Internal function. assumes amountToLock is already transferred to this Lock contract
-    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns (uint) {
+    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns(uint64 lockId) {
 
         // NB: calculateInterestForLockProduct will validate the lock product and amountToLock:
         uint interestEarned = calculateInterestForLockProduct(lockProductId, amountToLock);
@@ -199,15 +191,15 @@ contract Locker is Restricted, TokenReceiver {
         LockProduct storage lockProduct = lockProducts[lockProductId];
 
         uint lockedUntil = now.add(lockProduct.durationInSecs);
-        uint lockIndex = locks[lockOwner].push(Lock(amountToLock, interestEarned, lockedUntil,
-                                                    lockProduct.perTermInterest, lockProduct.durationInSecs, true)) - 1;
+
+        lockId = uint64(locks.push(Lock(lockOwner, amountToLock, interestEarned, lockedUntil,
+                                    lockProduct.perTermInterest, lockProduct.durationInSecs, true)) - 1);
+        accountLocks[lockOwner].push(lockId);
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
 
-        NewLock(lockOwner, lockIndex, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
+        NewLock(lockOwner, lockId, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
                     lockProduct.durationInSecs, true);
-
-        return interestEarned;
     }
 
 }

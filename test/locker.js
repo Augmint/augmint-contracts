@@ -4,7 +4,7 @@ const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 
 const testHelpers = require("./helpers/testHelpers.js");
 
-const LOCK_MAX_GAS = 260000;
+const LOCK_MAX_GAS = 310000;
 const RELEASE_MAX_GAS = 100000;
 
 let tokenHolder = "";
@@ -206,7 +206,7 @@ contract("Lock", accounts => {
 
             testHelpers.assertEvent(lockerInstance, "NewLock", {
                 lockOwner: tokenHolder,
-                lockIndex: 0,
+                lockId: 0,
                 amountLocked: amountToLock,
                 interestEarned: interestEarned,
                 lockedUntil: expectedLockedUntil,
@@ -274,7 +274,7 @@ contract("Lock", accounts => {
 
         const amountToLock = 1000;
         const interestEarned = Math.floor(amountToLock / 10); // 10%
-        const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
+        const newLockProductId = (await lockerInstance.getLockProductCount()) - 1;
 
         const lockTx = await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
             from: tokenHolder
@@ -283,14 +283,12 @@ contract("Lock", accounts => {
 
         await testHelpers.waitFor(2500);
 
-        let [newestLockIndex, totalLockAmountBefore] = await Promise.all([
-            lockerInstance.getLockCountForAddress(tokenHolder),
-            monetarySupervisor.totalLockedAmount()
+        const [totalLockAmountBefore, newestLockId] = await Promise.all([
+            monetarySupervisor.totalLockedAmount(),
+            lockerInstance.getLockCount().then(res => res - 1)
         ]);
 
-        newestLockIndex = newestLockIndex.toNumber() - 1;
-
-        const releaseTx = await lockerInstance.releaseFunds(tokenHolder, newestLockIndex);
+        const releaseTx = await lockerInstance.releaseFunds(newestLockId);
         testHelpers.logGasUse(this, releaseTx, "releaseFunds");
 
         const [totalLockAmountAfter, , , ,] = await Promise.all([
@@ -307,7 +305,7 @@ contract("Lock", accounts => {
 
             testHelpers.assertEvent(lockerInstance, "LockReleased", {
                 lockOwner: tokenHolder,
-                lockIndex: newestLockIndex
+                lockId: newestLockId
             }),
 
             testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
@@ -352,15 +350,23 @@ contract("Lock", accounts => {
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
 
         const numLocks = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber();
-        const newestLock = await lockerInstance.locks(tokenHolder, numLocks - 1);
+        const newestLock = await lockerInstance.locks(numLocks - 1);
 
-        // each lock should be a 6 element array
+        // each lock should be a 7 element array
         assert.isArray(newestLock);
-        assert(newestLock.length === 6);
+        assert(newestLock.length === 7);
 
-        // the locks should be [ amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ] all
-        // represented as uints (i.e. BigNumber objects in JS land):
-        const [amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive] = newestLock;
+        // the locks should be [ owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
+        const [
+            owner,
+            amountLocked,
+            interestEarned,
+            lockedUntil,
+            perTermInterest,
+            durationInSecs,
+            isActive
+        ] = newestLock;
+        assert(owner === tokenHolder);
         assert(amountLocked.toNumber() === amountToLock);
         assert(interestEarned.toNumber() === expectedInterestEarned);
         assert(lockedUntil.toNumber() === expectedLockedUntil);
@@ -390,22 +396,31 @@ contract("Lock", accounts => {
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
 
-        const numLocks = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber();
-        const locks = await lockerInstance.getLocksForAddress(tokenHolder, 0);
+        const expectedLockId = (await lockerInstance.getLockCount()) - 1;
+        const expectedAccountLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)) - 1;
+        const locks = await lockerInstance.getLocksForAddress(tokenHolder, expectedAccountLockIndex);
 
         // getLocksForAddress should return a CHUNK_SIZE element array:
         assert.isArray(locks);
         assert(locks.length === CHUNK_SIZE);
 
-        const newestLock = locks[numLocks - 1];
+        const newestLock = locks[0];
 
-        // each lock should be a 6 element array
+        // each lock should be a 7 element array
         assert.isArray(newestLock);
-        assert(newestLock.length === 6);
+        assert(newestLock.length === 7);
 
-        // the locks should be [ amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ] all
-        // represented as uints (i.e. BigNumber objects in JS land):
-        const [amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive] = newestLock;
+        // the locks should be [ owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
+        const [
+            lockId,
+            amountLocked,
+            interestEarned,
+            lockedUntil,
+            perTermInterest,
+            durationInSecs,
+            isActive
+        ] = newestLock;
+        assert(lockId.toNumber() === expectedLockId);
         assert(amountLocked.toNumber() === amountToLock);
         assert(interestEarned.toNumber() === expectedInterestEarned);
         assert(lockedUntil.toNumber() === expectedLockedUntil);
@@ -415,9 +430,9 @@ contract("Lock", accounts => {
     });
 
     it("should allow an account to see all it's locks (non-zero offset)", async function() {
-        const offset = 1;
+        const expectedAccountLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)) - 1;
 
-        const locks = await lockerInstance.getLocksForAddress(tokenHolder, offset);
+        const locks = await lockerInstance.getLocksForAddress(tokenHolder, expectedAccountLockIndex);
 
         // getLocksForAddress should return a CHUNK_SIZE element array:
         assert.isArray(locks);
@@ -425,12 +440,15 @@ contract("Lock", accounts => {
 
         const lock = locks[0];
 
-        // each lock should be a 6 element array
+        // each lock should be a 7 element array
         assert.isArray(lock);
-        assert(lock.length === 6);
+        assert(lock.length === 7);
 
-        const expectedLock = await lockerInstance.locks(tokenHolder, offset);
+        const expectedLockId = (await lockerInstance.getLockCount()) - 1;
+
+        const expectedLock = await lockerInstance.locks(expectedLockId);
         const [
+            expectedOwner,
             expectedAmountLocked,
             expectedInterestEarned,
             expectedLockedUntil,
@@ -439,9 +457,10 @@ contract("Lock", accounts => {
             expectedIsActive
         ] = expectedLock;
 
-        // the locks should be [ amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ] all
-        // represented as uints (i.e. BigNumber objects in JS land):
-        const [amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive] = lock;
+        // the locks should be [ owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
+        const [lockId, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive] = lock;
+        assert(lockId.toNumber() === expectedLockId);
+        assert(expectedOwner === tokenHolder);
         assert(amountLocked.toNumber() === expectedAmountLocked.toNumber());
         assert(interestEarned.toNumber() === expectedInterestEarned.toNumber());
         assert(lockedUntil.toNumber() === expectedLockedUntil.toNumber());
@@ -575,9 +594,11 @@ contract("Lock", accounts => {
         });
         testHelpers.logGasUse(this, tx, "transferAndNotify - lockFunds");
 
+        const expectedLockId = (await lockerInstance.getLockCount()) - 1;
+
         const eventResults = await testHelpers.assertEvent(lockerInstance, "NewLock", {
             lockOwner: tokenHolder,
-            lockIndex: x => x,
+            lockId: expectedLockId,
             amountLocked: minimumLockAmount,
             interestEarned: x => x,
             lockedUntil: x => x,
@@ -624,20 +645,21 @@ contract("Lock", accounts => {
         ]);
 
         // lock funds, and get the product that was used:
-        const [product] = await Promise.all([
+        const [product, lockFundsTx] = await Promise.all([
             lockerInstance.lockProducts(0),
 
             augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, {
                 from: tokenHolder
             })
         ]);
+        testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
 
         const perTermInterest = product[0];
         const interestEarned = Math.floor(amountToLock * perTermInterest / 1000000);
 
-        const newestLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber() - 1;
+        const newestLockId = (await lockerInstance.getLockCount()) - 1;
 
-        await testHelpers.expectThrow(lockerInstance.releaseFunds(tokenHolder, newestLockIndex));
+        await testHelpers.expectThrow(lockerInstance.releaseFunds(newestLockId));
 
         const [totalLockAmountAfter, ,] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
@@ -677,19 +699,26 @@ contract("Lock", accounts => {
         await lockerInstance.addLockProduct(100000, 2, 0, true);
         const interestEarned = Math.floor(amountToLock / 10); // 10%
 
-        const newLockProductId = (await lockerInstance.getLockProductCount()).toNumber() - 1;
+        const newLockProductId = (await lockerInstance.getLockProductCount()) - 1;
 
-        await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
-            from: tokenHolder
-        });
+        const lockFundsTx = await augmintToken.transferAndNotify(
+            lockerInstance.address,
+            amountToLock,
+            newLockProductId,
+            {
+                from: tokenHolder
+            }
+        );
+        testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
 
         await testHelpers.waitFor(2500);
 
-        const newestLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber() - 1;
+        const newestLockId = (await lockerInstance.getLockCount()) - 1;
 
-        await lockerInstance.releaseFunds(tokenHolder, newestLockIndex);
+        const releaseTx = await lockerInstance.releaseFunds(newestLockId);
+        testHelpers.logGasUse(this, releaseTx, "releaseFunds");
 
-        await testHelpers.expectThrow(lockerInstance.releaseFunds(tokenHolder, newestLockIndex));
+        await testHelpers.expectThrow(lockerInstance.releaseFunds(newestLockId));
 
         const [totalLockAmountAfter, finishingNumLocks] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
@@ -745,9 +774,11 @@ contract("Lock", accounts => {
 
     it("only allowed contract should call releaseFundsNotification ", async function() {
         const amountToLock = 10000;
-        await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, {
+        const lockFundsTx = await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, {
             from: tokenHolder
         });
+        testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
+
         await testHelpers.expectThrow(monetarySupervisor.releaseFundsNotification(amountToLock, { from: accounts[0] }));
     });
 });
