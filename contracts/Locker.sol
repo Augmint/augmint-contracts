@@ -30,6 +30,8 @@ contract Locker is Restricted, TokenReceiver {
 
     using SafeMath for uint256;
 
+    uint public constant CHUNK_SIZE = 100;
+
     event NewLockProduct(uint indexed lockProductId, uint perTermInterest, uint durationInSecs,
                             uint minimumLockAmount, bool isActive);
 
@@ -111,11 +113,11 @@ contract Locker is Restricted, TokenReceiver {
 
     // returns 20 lock products starting from some offset
     // lock products are encoded as [ perTermInterest, durationInSecs, minimumLockAmount, isActive ]
-    function getLockProducts(uint offset) external view returns (uint[4][20]) {
+    function getLockProducts(uint offset) external view returns (uint[4][CHUNK_SIZE]) {
 
-        uint[4][20] memory response;
+        uint[4][CHUNK_SIZE] memory response;
 
-        for (uint8 i = 0; i < 20; i++) {
+        for (uint8 i = 0; i < CHUNK_SIZE; i++) {
 
             if (offset + i >= lockProducts.length) { break; }
 
@@ -140,12 +142,12 @@ contract Locker is Restricted, TokenReceiver {
     // lock products are encoded as
     //              [amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
     // NB: perTermInterest is in millionths (i.e. 1,000,000 = 100%):
-    function getLocksForAddress(address lockOwner, uint offset) external view returns (uint[6][20]) {
+    function getLocksForAddress(address lockOwner, uint offset) external view returns (uint[6][CHUNK_SIZE]) {
 
         Lock[] storage locksForAddress = locks[lockOwner];
-        uint[6][20] memory response;
+        uint[6][CHUNK_SIZE] memory response;
 
-        for (uint8 i = 0; i < 20; i++) {
+        for (uint8 i = 0; i < CHUNK_SIZE; i++) {
 
             if (offset + i >= locksForAddress.length) { break; }
 

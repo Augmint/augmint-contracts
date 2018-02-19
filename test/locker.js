@@ -12,6 +12,7 @@ let interestEarnedAddress = "";
 let lockerInstance = null;
 let augmintToken = null;
 let monetarySupervisor = null;
+let CHUNK_SIZE = null;
 
 contract("Lock", accounts => {
     before(async function() {
@@ -24,7 +25,9 @@ contract("Lock", accounts => {
 
         lockerInstance = Locker.at(Locker.address);
 
-        await monetarySupervisor.issueToReserve(50000);
+        [CHUNK_SIZE] = await Promise.all([lockerInstance.CHUNK_SIZE(), monetarySupervisor.issueToReserve(50000)]);
+
+        CHUNK_SIZE = CHUNK_SIZE.toNumber();
 
         await Promise.all([
             tokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),
@@ -90,7 +93,7 @@ contract("Lock", accounts => {
 
         // getLockProducts should return a 20 element array:
         assert.isArray(products);
-        assert(products.length === 20);
+        assert(products.length === CHUNK_SIZE);
 
         const newestProduct = products[numLocks - 1];
 
@@ -114,7 +117,7 @@ contract("Lock", accounts => {
 
         // getLockProducts should return a 20 element array:
         assert.isArray(products);
-        assert(products.length === 20);
+        assert(products.length === CHUNK_SIZE);
 
         const product = products[0];
 
@@ -139,7 +142,7 @@ contract("Lock", accounts => {
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 
-    it("should allow the listing of lock products when there are more than 20 products");
+    it("should allow the listing of lock products when there are more than CHUNK_SIZE products");
 
     it("should allow lock products to be enabled/disabled", async function() {
         const lockProductId = 0;
@@ -367,7 +370,7 @@ contract("Lock", accounts => {
     });
 
     it("should allow an account to see all it's locks (0 offset)", async function() {
-        // NB: this test assumes that tokenHolder has less than 20 locks (when checking newestLock)
+        // NB: this test assumes that tokenHolder has less than CHUNK_SIZE locks (when checking newestLock)
 
         const amountToLock = 1000;
 
@@ -390,9 +393,9 @@ contract("Lock", accounts => {
         const numLocks = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber();
         const locks = await lockerInstance.getLocksForAddress(tokenHolder, 0);
 
-        // getLocksForAddress should return a 20 element array:
+        // getLocksForAddress should return a CHUNK_SIZE element array:
         assert.isArray(locks);
-        assert(locks.length === 20);
+        assert(locks.length === CHUNK_SIZE);
 
         const newestLock = locks[numLocks - 1];
 
@@ -416,9 +419,9 @@ contract("Lock", accounts => {
 
         const locks = await lockerInstance.getLocksForAddress(tokenHolder, offset);
 
-        // getLocksForAddress should return a 20 element array:
+        // getLocksForAddress should return a CHUNK_SIZE element array:
         assert.isArray(locks);
-        assert(locks.length === 20);
+        assert(locks.length === CHUNK_SIZE);
 
         const lock = locks[0];
 
@@ -447,7 +450,7 @@ contract("Lock", accounts => {
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 
-    it("should allow an account to see all it's locks when it has more than 20 locks");
+    it("should allow an account to see all it's locks when it has more than CHUNK_SIZE locks");
 
     it("should prevent someone from locking more tokens than they have", async function() {
         const [startingBalances, totalLockAmountBefore, startingNumLocks] = await Promise.all([
