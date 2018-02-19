@@ -6,7 +6,6 @@ install:
     - yarn install --frozen-lockfile
 before_script:
     - yarn run ganache:run > ganache.out &
-    - yarn run truffle:migrate
 script:
     - yarn run test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
