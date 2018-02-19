@@ -3,6 +3,8 @@
 
 # Augmint - Stable Digital Tokens - Solidity Contracts
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-contracts.svg)](https://greenkeeper.io/)
+
 Decentralised stable cryptocurrency on Ethereum
 
 ## Concept
