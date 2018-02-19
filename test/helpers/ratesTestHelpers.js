@@ -2,17 +2,17 @@ const Rates = artifacts.require("./Rates.sol");
 const moment = require("moment");
 
 module.exports = {
-    getRates,
-    newRatesAsserts
+    newRatesAsserts,
+    get rates() {
+        return rates;
+    }
 };
 
 let rates = null;
 
-async function getRates() {
+before(function() {
     rates = Rates.at(Rates.address);
-
-    return rates;
-}
+});
 
 async function newRatesAsserts(tx, symbols, newRates) {
     const currentTime = moment()

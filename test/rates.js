@@ -5,7 +5,7 @@ let rates = null;
 
 contract("Rates tests", accounts => {
     before(async function() {
-        rates = await ratesTestHelpers.getRates();
+        rates = ratesTestHelpers.rates;
     });
 
     it("should be possible to set 1 rate", async function() {

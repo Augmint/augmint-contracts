@@ -2,24 +2,21 @@ const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
-const TOKEN_BUY = 0;
-const TOKEN_SELL = 1;
+const TOKEN_BUY = testHelpers.TOKEN_BUY;
+const TOKEN_SELL = testHelpers.TOKEN_SELL;
 
 let snapshotId;
-let augmintToken = null;
 let exchange = null;
 const maker = web3.eth.accounts[1];
 const taker = web3.eth.accounts[2];
 
 contract("Exchange matching tests", accounts => {
     before(async function() {
-        augmintToken = await tokenTestHelpers.initAugmintToken();
+        exchange = exchangeTestHelper.exchange;
 
         await tokenTestHelpers.issueToReserve(1000000000);
         await tokenTestHelpers.withdrawFromReserve(maker, 100000000);
         await tokenTestHelpers.withdrawFromReserve(taker, 100000000);
-
-        exchange = await exchangeTestHelper.getExchange();
     });
 
     beforeEach(async function() {
@@ -73,7 +70,7 @@ contract("Exchange matching tests", accounts => {
         assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
     });
 
-    it.only("should fully fill both orders when token amount is ", async function() {
+    it.skip("should fully fill both orders when token amount is ", async function() {
         /* from users perspective:
          Sell: 100A€ / 998 A€/ETH = 0.1002004008 ETH
          Buy: 0.1002004008 ETH * 998 A€/ETH = 99.9999999984 A€ wich is 100A€ b/c A€ is w/ 4 decimals

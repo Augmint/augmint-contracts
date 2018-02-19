@@ -1,10 +1,9 @@
 const LoanManager = artifacts.require("./LoanManager.sol");
-const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
-const Rates = artifacts.require("./Rates.sol");
 
 const testHelpers = require("./helpers/testHelpers.js");
-const augmintTokenTestHelper = require("./helpers/tokenTestHelpers.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const loanTestHelpers = require("./helpers/loanTestHelpers.js");
+const ratesTestHelpers = require("./helpers/ratesTestHelpers.js");
 
 let augmintToken = null;
 let loanManager = null;
@@ -14,14 +13,11 @@ let products = {};
 
 contract("Augmint Loans tests", accounts => {
     before(async function() {
-        rates = Rates.at(Rates.address);
-        monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-        augmintToken = await augmintTokenTestHelper.initAugmintToken();
-
-        [loanManager] = await Promise.all([
-            loanTestHelpers.initLoanManager(),
-            augmintTokenTestHelper.issueToReserve(1000000000)
-        ]);
+        rates = ratesTestHelpers.rates;
+        monetarySupervisor = tokenTestHelpers.monetarySupervisor;
+        augmintToken = tokenTestHelpers.augmintToken;
+        loanManager = loanTestHelpers.loanManager;
+        await tokenTestHelpers.issueToReserve(1000000000);
 
         // These neeed to be sequantial b/c ids hardcoded in tests.
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
@@ -32,7 +28,8 @@ contract("Augmint Loans tests", accounts => {
         // repaying: due in 60 sec for testing repayment
         await loanManager.addLoanProduct(60, 985000, 900000, 200000, 50000, true);
         // defaulting: due in 1 sec, repay in 1sec for testing defaults
-        await loanManager.addLoanProduct(1, 990000, 600000, 100000, 50000, true);
+        //await loanManager.addLoanProduct(1, 990000, 600000, 100000, 50000, true);
+        await loanManager.addLoanProduct(1, 970000, 850000, 100000, 50000, true);
         // defaulting no left over collateral: due in 1 sec, repay in 1sec for testing defaults without leftover
         await loanManager.addLoanProduct(1, 900000, 900000, 100000, 100000, true);
         // disabled product
@@ -51,7 +48,7 @@ contract("Augmint Loans tests", accounts => {
             loanTestHelpers.getProductInfo(prodCount + 2),
             loanTestHelpers.getProductInfo(prodCount + 1),
             loanTestHelpers.getProductInfo(prodCount),
-            augmintTokenTestHelper.withdrawFromReserve(accounts[0], 1000000000)
+            tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
     });
 

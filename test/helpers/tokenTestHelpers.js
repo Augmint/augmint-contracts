@@ -1,14 +1,15 @@
 const BigNumber = require("bignumber.js");
-const testHelper = new require("./testHelpers.js");
+const testHelpers = new require("./testHelpers.js");
 
 const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
+const FeeAccount = artifacts.require("./FeeAccount.sol");
 
-const TRANSFER_MAXFEE = web3.toWei(0.01); // TODO: set this to expected value (+set gasPrice)
+const TRANSFER_MAX_GAS = 100000;
 
 module.exports = {
-    initAugmintToken,
     issueToReserve,
     withdrawFromReserve,
     transferTest,
@@ -18,21 +19,38 @@ module.exports = {
     assertBalances,
     approveEventAsserts,
     transferFromTest,
-    approveTest
+    approveTest,
+    get augmintToken() {
+        return augmintToken;
+    },
+    get peggedSymbol() {
+        return peggedSymbol;
+    },
+    get augmintReserves() {
+        return augmintReserves;
+    },
+    get monetarySupervisor() {
+        return monetarySupervisor;
+    },
+    get interestEarnedAccount() {
+        return interestEarnedAccount;
+    }
 };
-
-const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 let augmintToken = null;
 let augmintReserves = null;
 let monetarySupervisor = null;
+let peggedSymbol = null;
+let interestEarnedAccount = null;
 
-async function initAugmintToken() {
+before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-    return augmintToken;
-}
+    interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
+
+    peggedSymbol = web3.toAscii(await augmintToken.peggedSymbol());
+});
 
 async function issueToReserve(amount) {
     await monetarySupervisor.issueToReserve(amount);
@@ -66,13 +84,13 @@ async function transferTest(testInstance, expTransfer) {
         });
     }
     await transferEventAsserts(expTransfer);
-    testHelper.logGasUse(testInstance, tx, txName);
+    testHelpers.logGasUse(testInstance, tx, txName);
 
     await assertBalances(balBefore, {
         from: {
             ace: balBefore.from.ace.minus(expTransfer.amount).minus(expTransfer.fee),
             eth: balBefore.from.eth,
-            gasFee: TRANSFER_MAXFEE
+            gasFee: testHelpers.GAS_PRICE * TRANSFER_MAX_GAS
         },
         to: {
             ace: balBefore.to.ace.add(expTransfer.amount),
@@ -90,7 +108,7 @@ async function approveTest(testInstance, expApprove) {
         from: expApprove.owner
     });
     await approveEventAsserts(expApprove);
-    testHelper.logGasUse(testInstance, tx, "approve");
+    testHelpers.logGasUse(testInstance, tx, "approve");
     const newAllowance = await augmintToken.allowance(expApprove.owner, expApprove.spender);
     assert.equal(newAllowance.toString(), expApprove.value.toString(), "allowance value should be set");
 }
@@ -129,7 +147,7 @@ async function transferFromTest(testInstance, expTransfer) {
             }
         );
     }
-    testHelper.logGasUse(testInstance, tx, txName);
+    testHelpers.logGasUse(testInstance, tx, txName);
 
     await transferEventAsserts(expTransfer);
 
@@ -148,12 +166,12 @@ async function transferFromTest(testInstance, expTransfer) {
         to: {
             ace: balBefore.to.ace.plus(expTransfer.amount),
             eth: balBefore.to.eth,
-            gasFee: expTransfer.to === expTransfer.spender ? TRANSFER_MAXFEE : 0
+            gasFee: expTransfer.to === expTransfer.spender ? testHelpers.GAS_PRICE * TRANSFER_MAX_GAS : 0
         },
         spender: {
             ace: balBefore.spender.ace.plus(expTransfer.to === expTransfer.spender ? expTransfer.amount : 0),
             eth: balBefore.spender.eth,
-            gasFee: TRANSFER_MAXFEE
+            gasFee: testHelpers.GAS_PRICE * TRANSFER_MAX_GAS
         },
         feeAccount: {
             ace: balBefore.feeAccount.ace.plus(expTransfer.fee),
@@ -241,7 +259,7 @@ async function assertBalances(before, exp) {
 }
 
 async function transferEventAsserts(expTransfer) {
-    await testHelper.assertEvent(augmintToken, "AugmintTransfer", {
+    await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString(),
@@ -249,7 +267,7 @@ async function transferEventAsserts(expTransfer) {
         narrative: expTransfer.narrative
     });
 
-    await testHelper.assertEvent(augmintToken, "Transfer", {
+    await testHelpers.assertEvent(augmintToken, "Transfer", {
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString()
@@ -257,7 +275,7 @@ async function transferEventAsserts(expTransfer) {
 }
 
 async function approveEventAsserts(expApprove) {
-    await testHelper.assertEvent(augmintToken, "Approval", {
+    await testHelpers.assertEvent(augmintToken, "Approval", {
         _owner: expApprove.owner,
         _spender: expApprove.spender,
         _value: expApprove.value.toString()
