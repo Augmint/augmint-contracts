@@ -3,12 +3,12 @@ cache:
   directories:
     - "node_modules"
 install:
-    - npm install
+    - yarn install --frozen-lockfile
 before_script:
-    - npm run ganache:run > ganache.out &
-    - npm run truffle:migrate
+    - yarn run ganache:run > ganache.out &
+    - yarn run truffle:migrate
 script:
-    - npm run test
+    - yarn run test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
 after_success:
   - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
