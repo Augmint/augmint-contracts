@@ -136,10 +136,26 @@ contract Locker is Restricted, TokenReceiver {
         return accountLocks[lockOwner].length;
     }
 
-    // returns 20 locks starting from some offset
+    // returns CHUNK_SIZE locks starting from some offset
+    // lock products are encoded as
+    //       [lockId, owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
+    // NB: perTermInterest is in millionths (i.e. 1,000,000 = 100%):
+    function getLocks(uint offset) external view returns (uint[8][CHUNK_SIZE] response) {
+
+        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
+
+            if (offset + i >= locks.length) { break; }
+
+            Lock storage lock = locks[offset + i];
+
+            response[i] = [uint(offset + i), uint(lock.owner), lock.amountLocked, lock.interestEarned, lock.lockedUntil,
+                                lock.perTermInterest, lock.durationInSecs, lock.isActive ? 1 : 0];
+        }
+    }
+
+    // returns CHUNK_SIZE locks of a given account, starting from some offset
     // lock products are encoded as
     //             [lockId, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
-    // NB: perTermInterest is in millionths (i.e. 1,000,000 = 100%):
     function getLocksForAddress(address lockOwner, uint offset) external view returns (uint[7][CHUNK_SIZE] response) {
 
         uint64[] storage locksForAddress = accountLocks[lockOwner];
