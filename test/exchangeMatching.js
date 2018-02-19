@@ -81,9 +81,9 @@ contract("Exchange matching tests", accounts => {
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
 
-        await exchangeTestHelper.printOrderBook(10);
+        // await exchangeTestHelper.printOrderBook(10);
         await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
-        await exchangeTestHelper.printOrderBook(10);
+        // await exchangeTestHelper.printOrderBook(10);
 
         const stateAfter = await exchangeTestHelper.getState();
         assert.equal(stateAfter.sellCount, 0, "Sell token order count should be 0");
