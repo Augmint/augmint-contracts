@@ -97,7 +97,8 @@ contract Locker is Restricted, TokenReceiver {
 
         Lock storage lock = locks[lockId];
 
-        require(lock.isActive && now >= lock.lockedUntil);
+        require(lock.isActive);
+        require(now >= lock.lockedUntil);
 
         lock.isActive = false;
         monetarySupervisor.releaseFundsNotification(lock.amountLocked);   // to maintain totalLockAmount
@@ -170,16 +171,14 @@ contract Locker is Restricted, TokenReceiver {
         _createLock(lockProductId, from, amountToLock);
     }
 
-    function calculateInterestForLockProduct(uint lockProductId, uint amountToLock) public view returns (uint) {
+    function calculateInterestForLockProduct(uint lockProductId, uint amountToLock)
+    public view returns (uint interestEarned) {
 
         LockProduct storage lockProduct = lockProducts[lockProductId];
         require(lockProduct.isActive);
         require(amountToLock >= lockProduct.minimumLockAmount);
 
-        uint interestEarned = amountToLock.mul(lockProduct.perTermInterest).div(1000000);
-
-        return interestEarned;
-
+        interestEarned = amountToLock.mul(lockProduct.perTermInterest).div(1000000);
     }
 
     // Internal function. assumes amountToLock is already transferred to this Lock contract
