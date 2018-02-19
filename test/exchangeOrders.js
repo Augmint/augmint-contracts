@@ -122,8 +122,7 @@ contract("Exchange orders tests", accounts => {
         await testHelpers.expectThrow(exchange.cancelSellTokenOrder(sellOrder.id, { from: accounts[0] }));
     });
 
-    it("should return x buy orders from offset", async function() {
-        const chunkSize = await exchange.CHUNK_SIZE();
+    it("should return CHUNK_SIZE buy orders from offset", async function() {
         const orderCount = 4;
         const orders = [];
         for (let i = 0; i < orderCount; i++) {
@@ -134,10 +133,10 @@ contract("Exchange orders tests", accounts => {
 
         const orderQueries = [
             exchangeTestHelper.getActiveBuyOrders(0).then(res => {
-                assert.equal(res.length, Math.min(orderCount, chunkSize), "buy orders count when 0 offset");
+                assert.equal(res.length, Math.min(orderCount, exchange.CHUNK_SIZE), "buy orders count when 0 offset");
             }),
             exchangeTestHelper.getActiveBuyOrders(1).then(res => {
-                assert.equal(res.length, Math.min(orderCount - 1, chunkSize), "buy count when offset from 1");
+                assert.equal(res.length, Math.min(orderCount - 1, exchange.CHUNK_SIZE), "buy count when offset from 1");
             }),
             exchangeTestHelper.getActiveBuyOrders(orderCount - 1).then(res => {
                 assert.equal(res.length, 1, "returned buy orders count when offset from last");
@@ -150,8 +149,7 @@ contract("Exchange orders tests", accounts => {
         await Promise.all(orderQueries);
     });
 
-    it("should return x sell orders from offset", async function() {
-        const chunkSize = await exchange.CHUNK_SIZE();
+    it("should return CHUNK_SIZE sell orders from offset", async function() {
         const orderCount = 4;
         const orders = [];
         for (let i = 0; i < orderCount; i++) {
@@ -166,10 +164,14 @@ contract("Exchange orders tests", accounts => {
 
         const orderQueries = [
             exchangeTestHelper.getActiveSellOrders(0).then(res => {
-                assert.equal(res.length, Math.min(orderCount, chunkSize), "sell orders count when 0 offset");
+                assert.equal(res.length, Math.min(orderCount, exchange.CHUNK_SIZE), "sell orders count when 0 offset");
             }),
             exchangeTestHelper.getActiveSellOrders(1).then(res => {
-                assert.equal(res.length, Math.min(orderCount - 1, chunkSize), "sell count when offset from 1");
+                assert.equal(
+                    res.length,
+                    Math.min(orderCount - 1, exchange.CHUNK_SIZE),
+                    "sell count when offset from 1"
+                );
             }),
             exchangeTestHelper.getActiveSellOrders(orderCount - 1).then(res => {
                 assert.equal(res.length, 1, "returned sell orders count when offset from last");
