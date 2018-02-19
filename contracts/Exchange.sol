@@ -159,7 +159,7 @@ contract Exchange {
         // meet in the middle
         uint price = uint(buy.price).add(sell.price).div(2);
 
-        uint sellWei = sell.amount.mul(1 ether).div(price);
+        uint sellWei = sell.amount.mul(1 ether).roundedDiv(price);
 
         uint tradedWei;
         uint tradedTokens;
@@ -168,7 +168,7 @@ contract Exchange {
             tradedTokens = sell.amount;
         } else {
             tradedWei = buy.amount;
-            tradedTokens = buy.amount.mul(price).div(1 ether);
+            tradedTokens = buy.amount.mul(price).roundedDiv(1 ether);
         }
 
         buy.amount = buy.amount.sub(tradedWei);

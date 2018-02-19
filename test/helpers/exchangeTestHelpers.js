@@ -218,8 +218,8 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
 
     const matchCaller = web3.eth.accounts[0];
     const expPrice = Math.floor((sellTokenOrder.price + buyTokenOrder.price) / 2);
-    const sellWeiValue = Math.floor(sellTokenOrder.amount * testHelpers.ONE_ETH / expPrice);
-    const buyTokenValue = Math.floor(buyTokenOrder.amount * expPrice / testHelpers.ONE_ETH);
+    const sellWeiValue = Math.round(sellTokenOrder.amount * testHelpers.ONE_ETH / expPrice);
+    const buyTokenValue = Math.round(buyTokenOrder.amount * expPrice / testHelpers.ONE_ETH);
     const tradedWeiAmount = Math.min(buyTokenOrder.amount, sellWeiValue);
     const tradedTokenAmount = Math.min(sellTokenOrder.amount, buyTokenValue);
     const buyFilled = buyTokenOrder.amount.eq(tradedWeiAmount);
