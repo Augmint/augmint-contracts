@@ -2,8 +2,8 @@ const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 
-const TOKEN_BUY = 0;
-const TOKEN_SELL = 1;
+const TOKEN_BUY = testHelpers.TOKEN_BUY;
+const TOKEN_SELL = testHelpers.TOKEN_SELL;
 const makers = [web3.eth.accounts[1], web3.eth.accounts[2]];
 
 let snapshotId;
@@ -12,13 +12,12 @@ let exchange = null;
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
-        augmintToken = await tokenTestHelpers.initAugmintToken();
+        exchange = exchangeTestHelper.exchange;
+        augmintToken = tokenTestHelpers.augmintToken;
 
         await tokenTestHelpers.issueToReserve(1000000000);
 
         await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 100000000)));
-
-        exchange = await exchangeTestHelper.getExchange();
     });
 
     beforeEach(async function() {

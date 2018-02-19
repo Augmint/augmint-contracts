@@ -5,7 +5,7 @@ let loanManager = null;
 
 contract("loanManager  tests", accounts => {
     before(async function() {
-        loanManager = await loanTestHelpers.initLoanManager();
+        loanManager = loanTestHelpers.loanManager;
     });
 
     it("Should add new product", async function() {

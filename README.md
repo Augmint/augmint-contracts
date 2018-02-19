@@ -5,6 +5,9 @@
 
 Decentralised stable cryptocurrency on Ethereum
 
+master: [![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=master)](https://travis-ci.org/Augmint/augmint-contracts)
+staging: [![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-contracts)
+
 ## Concept
 
 Augmint provides digital tokens, value of each token pegged to a fiat currency.

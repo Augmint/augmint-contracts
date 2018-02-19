@@ -1,12 +1,11 @@
 /* TODO: create lockHelpers to make this test more readable and manegable */
 const Locker = artifacts.require("Locker");
-const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 
 const testHelpers = require("./helpers/testHelpers.js");
 
-const MAX_LOCK_GAS = web3.toWei(0.028); // TODO: use gas cost and calculate wei fee
-const MAX_RELEASE_GAS = web3.toWei(0.001);
+const LOCK_MAX_GAS = 260000;
+const RELEASE_MAX_GAS = 100000;
 
 let tokenHolder = "";
 let interestEarnedAddress = "";
@@ -18,17 +17,14 @@ contract("Lock", accounts => {
     before(async function() {
         tokenHolder = accounts[1];
 
-        augmintToken = await tokenTestHelpers.initAugmintToken();
+        augmintToken = await tokenTestHelpers.augmintToken;
+        monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
-        monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+        interestEarnedAddress = tokenTestHelpers.interestEarnedAccount.address;
 
         lockerInstance = Locker.at(Locker.address);
 
-        [interestEarnedAddress, , , ,] = await Promise.all([
-            monetarySupervisor.interestEarnedAccount(),
-
-            monetarySupervisor.issueToReserve(50000)
-        ]);
+        await monetarySupervisor.issueToReserve(50000);
 
         await Promise.all([
             tokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),
@@ -232,7 +228,10 @@ contract("Lock", accounts => {
             // })
 
             tokenTestHelpers.assertBalances(startingBalances, {
-                tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(amountToLock), gasFee: MAX_LOCK_GAS },
+                tokenHolder: {
+                    ace: startingBalances.tokenHolder.ace.sub(amountToLock),
+                    gasFee: LOCK_MAX_GAS * testHelpers.GAS_PRICE
+                },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace.add(amountToLock + interestEarned) },
                 interestEarned: { ace: startingBalances.interestEarned.ace.sub(interestEarned) }
             })
@@ -297,7 +296,7 @@ contract("Lock", accounts => {
             tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: {
                     ace: startingBalances.tokenHolder.ace.add(interestEarned),
-                    gasFee: MAX_LOCK_GAS + MAX_RELEASE_GAS
+                    gasFee: LOCK_MAX_GAS * testHelpers.GAS_PRICE + RELEASE_MAX_GAS * testHelpers.GAS_PRICE
                 },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace },
                 interestEarned: { ace: startingBalances.interestEarned.ace.sub(interestEarned) }
@@ -472,7 +471,7 @@ contract("Lock", accounts => {
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCountForAddress(tokenHolder),
             tokenTestHelpers.assertBalances(startingBalances, {
-                tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: MAX_LOCK_GAS },
+                tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: LOCK_MAX_GAS * testHelpers.GAS_PRICE },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace },
                 interestEarned: { ace: startingBalances.interestEarned.ace }
             })
@@ -520,7 +519,7 @@ contract("Lock", accounts => {
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCountForAddress(tokenHolder),
             tokenTestHelpers.assertBalances(startingBalances, {
-                tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: MAX_LOCK_GAS },
+                tokenHolder: { ace: startingBalances.tokenHolder.ace, gasFee: LOCK_MAX_GAS * testHelpers.GAS_PRICE },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace },
                 interestEarned: { ace: startingBalances.interestEarned.ace }
             })
@@ -590,7 +589,10 @@ contract("Lock", accounts => {
             lockerInstance.getLockCountForAddress(tokenHolder),
 
             tokenTestHelpers.assertBalances(startingBalances, {
-                tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(minimumLockAmount), gasFee: MAX_LOCK_GAS },
+                tokenHolder: {
+                    ace: startingBalances.tokenHolder.ace.sub(minimumLockAmount),
+                    gasFee: LOCK_MAX_GAS * testHelpers.GAS_PRICE
+                },
                 lockerInstance: {
                     ace: startingBalances.lockerInstance.ace.add(minimumLockAmount).add(eventResults.interestEarned)
                 },
@@ -640,7 +642,10 @@ contract("Lock", accounts => {
             testHelpers.assertNoEvents(lockerInstance, "NewLock"),
 
             tokenTestHelpers.assertBalances(startingBalances, {
-                tokenHolder: { ace: startingBalances.tokenHolder.ace.sub(amountToLock), gasFee: MAX_LOCK_GAS },
+                tokenHolder: {
+                    ace: startingBalances.tokenHolder.ace.sub(amountToLock),
+                    gasFee: LOCK_MAX_GAS * testHelpers.GAS_PRICE
+                },
                 lockerInstance: { ace: startingBalances.lockerInstance.ace.add(amountToLock + interestEarned) },
                 interestEarned: { ace: startingBalances.interestEarned.ace.sub(interestEarned) }
             })
@@ -691,7 +696,7 @@ contract("Lock", accounts => {
             tokenTestHelpers.assertBalances(startingBalances, {
                 tokenHolder: {
                     ace: startingBalances.tokenHolder.ace.add(interestEarned),
-                    gasFee: MAX_LOCK_GAS + MAX_RELEASE_GAS
+                    gasFee: LOCK_MAX_GAS * testHelpers.GAS_PRICE + RELEASE_MAX_GAS * testHelpers.GAS_PRICE
                 },
                 lockerInstance: {
                     ace: startingBalances.lockerInstance.ace

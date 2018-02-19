@@ -5,7 +5,7 @@ let augmintToken;
 
 contract("AugmintToken tests", accounts => {
     before(async () => {
-        augmintToken = await tokenTestHelpers.initAugmintToken();
+        augmintToken = tokenTestHelpers.augmintToken;
     });
 
     it("should be possible to set transfer fees ", async function() {

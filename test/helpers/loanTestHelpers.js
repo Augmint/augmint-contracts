@@ -1,18 +1,15 @@
-const NEWLOAN_MAXFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-const REPAY_MAXFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-const COLLECT_BASEFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-
-const NULL_ACC = "0x0000000000000000000000000000000000000000";
-
 const BigNumber = require("bignumber.js");
 const moment = require("moment");
 
-const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const Rates = artifacts.require("./Rates.sol");
 
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 const testHelpers = require("./testHelpers.js");
+
+const NEWLOAN_MAX_GAS = 350000;
+const REPAY_MAX_GAS = 150000;
+const COLLECT_BASE_GAS = 100000;
 
 let augmintToken = null;
 let monetarySupervisor = null;
@@ -23,30 +20,28 @@ let reserveAcc = null;
 let interestEarnedAcc = null;
 
 module.exports = {
-    initLoanManager,
     createLoan,
     repayLoan,
     collectLoan,
     getProductInfo,
     calcLoanValues,
-    loanAsserts
+    loanAsserts,
+    get loanManager() {
+        return loanManager;
+    }
 };
 
-async function initLoanManager() {
+before(async function() {
     loanManager = LoanManager.at(LoanManager.address);
-    monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-    augmintToken = await tokenTestHelpers.initAugmintToken();
+    augmintToken = tokenTestHelpers.augmintToken;
+    monetarySupervisor = tokenTestHelpers.monetarySupervisor;
+
+    reserveAcc = tokenTestHelpers.augmintReserves.address;
+    interestEarnedAcc = tokenTestHelpers.interestEarnedAccount.address;
+    peggedSymbol = tokenTestHelpers.peggedSymbol;
+
     rates = Rates.at(Rates.address);
-
-    [peggedSymbol, reserveAcc, interestEarnedAcc] = await Promise.all([
-        augmintToken.peggedSymbol(),
-        monetarySupervisor.augmintReserves(),
-        monetarySupervisor.interestEarnedAccount()
-    ]);
-
-    peggedSymbol = web3.toAscii(peggedSymbol);
-    return loanManager;
-}
+});
 
 async function createLoan(testInstance, product, borrower, collateralWei) {
     const loan = await calcLoanValues(rates, product, collateralWei);
@@ -81,7 +76,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         }),
 
         testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
-            from: NULL_ACC,
+            from: testHelpers.NULL_ACC,
             to: loan.borrower,
             amount: loan.loanAmount.toString(),
             fee: 0,
@@ -109,7 +104,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             borrower: {
                 ace: balBefore.borrower.ace.add(loan.loanAmount),
                 eth: balBefore.borrower.eth.minus(loan.collateral),
-                gasFee: NEWLOAN_MAXFEE
+                gasFee: NEWLOAN_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
                 eth: balBefore.loanManager.eth.plus(loan.collateral)
@@ -179,7 +174,7 @@ async function repayLoan(testInstance, loan) {
             borrower: {
                 ace: balBefore.borrower.ace.sub(loan.repaymentAmount),
                 eth: balBefore.borrower.eth.add(loan.collateral),
-                gasFee: REPAY_MAXFEE
+                gasFee: REPAY_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
                 eth: balBefore.loanManager.eth.minus(loan.collateral)
@@ -249,15 +244,23 @@ async function collectLoan(testInstance, loan, collector) {
     //      --------------------
     //      targetFee: ${targetFeeInToken / 10000} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
     //      target collection : ${targetCollectionInToken / 10000} A-EUR = ${web3
-    //         .fromWei(targetCollectionInWei)
-    //         .toString()} ETH
+    // .fromWei(targetCollectionInWei)
+    // .toString()} ETH
     //      collected: ${web3.fromWei(collectedCollateral).toString()} ETH
     //      released: ${web3.fromWei(releasedCollateral).toString()} ETH
     //      defaultingFee: ${web3.fromWei(defaultingFee).toString()} ETH`
     // );
 
+    // console.log(
+    //     "DEBUG. Borrower balance before collection:",
+    //     ((await web3.eth.getBalance(loan.borrower)) / ONE_ETH).toString()
+    // );
     const tx = await loanManager.collect([loan.id], { from: loan.collector });
     testHelpers.logGasUse(testInstance, tx, "collect 1");
+    // console.log(
+    //     "DEBUG. Borrower balance after collection:",
+    //     ((await web3.eth.getBalance(loan.borrower)) / ONE_ETH).toString()
+    // );
 
     const [totalSupplyAfter, totalLoanAmountAfter, , ,] = await Promise.all([
         augmintToken.totalSupply(),
@@ -279,12 +282,11 @@ async function collectLoan(testInstance, loan, collector) {
             },
 
             collector: {
-                gasFee: COLLECT_BASEFEE
+                gasFee: COLLECT_BASE_GAS * testHelpers.GAS_PRICE
             },
 
             borrower: {
-                eth: balBefore.borrower.eth.add(releasedCollateral),
-                gasFee: REPAY_MAXFEE
+                eth: balBefore.borrower.eth.add(releasedCollateral)
             },
 
             loanManager: {
