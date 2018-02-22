@@ -11,6 +11,7 @@ pragma solidity 0.4.19;
 import "./generic/SafeMath.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 
+
 contract Exchange {
     using SafeMath for uint256;
     AugmintTokenInterface public augmintToken;
@@ -24,9 +25,9 @@ contract Exchange {
         // tokens per ether
         uint32 price;
 
-        // buy order: amount in wei 
+        // buy order: amount in wei
         // sell order: token amount
-        uint amount;    
+        uint amount;
     }
 
     uint64 public orderCount;
@@ -56,7 +57,7 @@ contract Exchange {
         require(price > 0);
         require(msg.value > 0);
 
-        orderId = ++orderCount;        
+        orderId = ++orderCount;
         buyTokenOrders[orderId] = Order(uint64(activeBuyOrders.length), msg.sender, price, msg.value);
         activeBuyOrders.push(orderId);
 
@@ -158,7 +159,7 @@ contract Exchange {
         // meet in the middle
         uint price = uint(buy.price).add(sell.price).div(2);
 
-        uint sellWei = sell.amount.mul(1 ether).div(price);
+        uint sellWei = sell.amount.mul(1 ether).roundedDiv(price);
 
         uint tradedWei;
         uint tradedTokens;
@@ -167,7 +168,7 @@ contract Exchange {
             tradedTokens = sell.amount;
         } else {
             tradedWei = buy.amount;
-            tradedTokens = buy.amount.mul(price).div(1 ether);
+            tradedTokens = buy.amount.mul(price).roundedDiv(1 ether);
         }
 
         buy.amount = buy.amount.sub(tradedWei);
@@ -186,7 +187,6 @@ contract Exchange {
         OrderFill(buy.maker, sell.maker, buyTokenId,
             sellTokenId, uint32(price), tradedWei, tradedTokens);
     }
-
 
     function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
     private returns (uint64 orderId) {

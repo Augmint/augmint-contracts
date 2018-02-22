@@ -70,7 +70,7 @@ contract("Exchange matching tests", accounts => {
         assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
     });
 
-    it.skip("should fully fill both orders when token amount is ", async function() {
+    it("should fully fill both orders when buy token amount expected to be same as sell token amount", async function() {
         /* from users perspective:
          Sell: 100A€ / 998 A€/ETH = 0.1002004008 ETH
          Buy: 0.1002004008 ETH * 998 A€/ETH = 99.9999999984 A€ wich is 100A€ b/c A€ is w/ 4 decimals
@@ -81,9 +81,9 @@ contract("Exchange matching tests", accounts => {
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
 
-        await exchangeTestHelper.printOrderBook(10);
+        // await exchangeTestHelper.printOrderBook(10);
         await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
-        await exchangeTestHelper.printOrderBook(10);
+        // await exchangeTestHelper.printOrderBook(10);
 
         const stateAfter = await exchangeTestHelper.getState();
         assert.equal(stateAfter.sellCount, 0, "Sell token order count should be 0");
