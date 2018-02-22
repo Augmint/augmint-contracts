@@ -8,6 +8,8 @@ const PLACE_ORDER_MAX_GAS = 200000;
 const CANCEL_SELL_MAX_GAS = 150000;
 const MATCH_ORDER_MAX_GAS = 80000;
 
+let CHUNK_SIZE = null;
+
 module.exports = {
     newOrder,
     cancelOrder,
@@ -20,6 +22,9 @@ module.exports = {
     printOrderBook,
     get exchange() {
         return exchange;
+    },
+    get CHUNK_SIZE() {
+        return CHUNK_SIZE;
     }
 };
 
@@ -29,6 +34,7 @@ let augmintToken = null;
 before(async function() {
     augmintToken = tokenTestHelpers.augmintToken;
     exchange = Exchange.at(Exchange.address);
+    CHUNK_SIZE = (await exchange.CHUNK_SIZE()).toNumber();
 });
 
 async function newOrder(testInstance, order) {
@@ -212,8 +218,8 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
 
     const matchCaller = web3.eth.accounts[0];
     const expPrice = Math.floor((sellTokenOrder.price + buyTokenOrder.price) / 2);
-    const sellWeiValue = Math.floor(sellTokenOrder.amount * testHelpers.ONE_ETH / expPrice);
-    const buyTokenValue = Math.floor(buyTokenOrder.amount * expPrice / testHelpers.ONE_ETH);
+    const sellWeiValue = Math.round(sellTokenOrder.amount * testHelpers.ONE_ETH / expPrice);
+    const buyTokenValue = Math.round(buyTokenOrder.amount * expPrice / testHelpers.ONE_ETH);
     const tradedWeiAmount = Math.min(buyTokenOrder.amount, sellWeiValue);
     const tradedTokenAmount = Math.min(sellTokenOrder.amount, buyTokenValue);
     const buyFilled = buyTokenOrder.amount.eq(tradedWeiAmount);
@@ -355,33 +361,26 @@ async function getActiveSellOrders(offset) {
 async function printOrderBook(_limit) {
     const state = await getState();
 
-    let limitText, limit;
-    if (typeof _limit === "undefined") {
-        limit = state.buyCount > state.sellCount ? state.buyCount : state.sellCount;
-        limitText = "(all orders)";
-    } else {
-        limit = _limit;
-        limitText = "(top " + _limit + " orders)";
-    }
+    const limit = typeof _limit === "undefined" || _limit > CHUNK_SIZE ? CHUNK_SIZE : _limit;
+
+    const limitText = "(first " + limit + " orders)";
 
     console.log(`========= Order Book  ${limitText} =========
               Sell token ct:  ${state.sellCount}    Buy token ct:  ${state.buyCount}`);
 
-    for (let i = 0; i < state.sellCount && i < limit; i++) {
-        const order = await getSellTokenOrder(i);
+    const [sellOrders, buyOrders] = await Promise.all([getActiveSellOrders(0), getActiveBuyOrders(0)]);
+    sellOrders.slice(0, limit).map((order, i) => {
         console.log(
-            `SELL token: ACE/ETH: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
-                ` orderIdx: ${i} orderId: ${order.id} acc: ${order.maker}`
+            `${i}. SELL token: ACE/ETH: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
+                `  orderId: ${order.id} acc: ${order.maker}`
         );
-    }
-
-    for (let i = 0; i < state.buyCount && i < limit; i++) {
-        const order = await getBuyTokenOrder(i);
+    });
+    buyOrders.slice(0, _limit).map((order, i) => {
         console.log(
-            `        BUY token: ACE/EUR: ${order.price / 10000} amount: ${web3.fromWei(order.amount)} ETH` +
-                ` orderIdx: ${i} orderId: ${order.id} acc: ${order.maker}`
+            `        ${i}. BUY token: ACE/EUR: ${order.price / 10000} amount: ${web3.fromWei(order.amount)} ETH` +
+                `  orderId: ${order.id} acc: ${order.maker}`
         );
-    }
+    });
 
     console.log("=========/Order Book =========");
 }
