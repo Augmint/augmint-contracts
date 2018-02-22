@@ -106,7 +106,6 @@ contract AugmintToken is AugmintTokenInterface {
 
     function approve(address _spender, uint256 amount) public returns (bool) {
         require(_spender != 0x0);
-        require(msg.sender != _spender); // no need to approve for myself. Makes client code simpler if we don't allow
         allowed[msg.sender][_spender] = amount;
         Approval(msg.sender, _spender, amount);
         return true;
@@ -122,7 +121,6 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        require(msg.sender != _spender); // no need to approve for myself. Makes client code simpler if we don't allow
         uint oldValue = allowed[msg.sender][_spender];
         if (_subtractedValue > oldValue) {
             allowed[msg.sender][_spender] = 0;
@@ -139,7 +137,6 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function _increaseApproval(address _approver, address _spender, uint _addedValue) internal returns (bool) {
-        require(_approver != _spender); // no need to approve for myself. Makes client code simpler if we don't allow
         allowed[_approver][_spender] = allowed[_approver][_spender].add(_addedValue);
         Approval(_approver, _spender, allowed[_approver][_spender]);
     }
@@ -170,7 +167,6 @@ contract AugmintToken is AugmintTokenInterface {
 
     function _transfer(address from, address to, uint256 amount, string narrative) private {
         require(to != 0x0);
-        require(from != to); // no need to send to myself. Makes client code simpler if we don't allow
         uint fee = calculateFee(from, to, amount);
         if (fee > 0) {
             balances[feeAccount] = balances[feeAccount].add(fee);

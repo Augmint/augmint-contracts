@@ -86,15 +86,21 @@ async function transferTest(testInstance, expTransfer) {
     await transferEventAsserts(expTransfer);
     testHelpers.logGasUse(testInstance, tx, txName);
 
+    const transferBetweenSameAccounts = balBefore.to.address === balBefore.from.address;
     await assertBalances(balBefore, {
         from: {
-            ace: balBefore.from.ace.minus(expTransfer.amount).minus(expTransfer.fee),
+            ace: transferBetweenSameAccounts
+                ? balBefore.from.ace.minus(expTransfer.fee)
+                : balBefore.from.ace.minus(expTransfer.amount).minus(expTransfer.fee),
             eth: balBefore.from.eth,
             gasFee: testHelpers.GAS_PRICE * TRANSFER_MAX_GAS
         },
         to: {
-            ace: balBefore.to.ace.add(expTransfer.amount),
-            eth: balBefore.to.eth
+            ace: transferBetweenSameAccounts
+                ? balBefore.to.ace.minus(expTransfer.fee)
+                : balBefore.to.ace.add(expTransfer.amount),
+            eth: balBefore.to.eth,
+            gasFee: transferBetweenSameAccounts ? testHelpers.GAS_PRICE * TRANSFER_MAX_GAS : 0
         },
         feeAccount: {
             ace: balBefore.feeAccount.ace.plus(expTransfer.fee),
