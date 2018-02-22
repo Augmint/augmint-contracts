@@ -30,22 +30,22 @@ contract Locker is Restricted, TokenReceiver {
 
     uint public constant CHUNK_SIZE = 100;
 
-    event NewLockProduct(uint indexed lockProductId, uint perTermInterest, uint durationInSecs,
-                            uint minimumLockAmount, bool isActive);
+    event NewLockProduct(uint indexed lockProductId, uint32 perTermInterest, uint32 durationInSecs,
+                            uint32 minimumLockAmount, bool isActive);
 
     event LockProductActiveChange(uint indexed lockProductId, bool newActiveState);
 
     // NB: amountLocked includes the original amount, plus interest
     event NewLock(address indexed lockOwner, uint lockId, uint amountLocked, uint interestEarned,
-                    uint lockedUntil, uint perTermInterest, uint durationInSecs, bool isActive);
+                    uint lockedUntil, uint32 perTermInterest, uint32 durationInSecs, bool isActive);
 
     event LockReleased(address indexed lockOwner, uint lockId);
 
     struct LockProduct {
         // perTermInterest is in millionths (i.e. 1,000,000 = 100%):
-        uint perTermInterest;
-        uint durationInSecs;
-        uint minimumLockAmount;
+        uint32 perTermInterest;
+        uint32 durationInSecs;
+        uint32 minimumLockAmount;
         bool isActive;
     }
 
@@ -76,7 +76,7 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
-    function addLockProduct(uint perTermInterest, uint durationInSecs, uint minimumLockAmount, bool isActive)
+    function addLockProduct(uint32 perTermInterest, uint32 durationInSecs, uint32 minimumLockAmount, bool isActive)
     external restrict("MonetaryBoard") {
 
         uint newLockProductId = lockProducts.push(
@@ -116,7 +116,7 @@ contract Locker is Restricted, TokenReceiver {
 
     // returns 20 lock products starting from some offset
     // lock products are encoded as [ perTermInterest, durationInSecs, minimumLockAmount, isActive ]
-    function getLockProducts(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
+    function getLockProducts(uint offset) external view returns (uint32[4][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE; i++) {
 
             if (offset + i >= lockProducts.length) { break; }
