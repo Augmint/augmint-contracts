@@ -210,7 +210,9 @@ contract Locker is Restricted, TokenReceiver {
         require(amountToLock >= lockProduct.minimumLockAmount);
 
         uint interestEarned = calculateInterest(lockProduct.perTermInterest, amountToLock);
-        uint40 lockedUntil = uint40(now.add(lockProduct.durationInSecs));
+        uint expiration = now.add(lockProduct.durationInSecs);
+        uint40 lockedUntil = uint40(expiration);
+        require(lockedUntil == expiration);
 
         lockId = locks.push(Lock(amountToLock, lockOwner, lockProductId, lockedUntil, true)) - 1;
         accountLocks[lockOwner].push(lockId);
