@@ -37,7 +37,7 @@ contract Locker is Restricted, TokenReceiver {
 
     // NB: amountLocked includes the original amount, plus interest
     event NewLock(address indexed lockOwner, uint lockId, uint amountLocked, uint interestEarned,
-                    uint64 lockedUntil, uint32 perTermInterest, uint32 durationInSecs, bool isActive);
+                    uint40 lockedUntil, uint32 perTermInterest, uint32 durationInSecs, bool isActive);
 
     event LockReleased(address indexed lockOwner, uint lockId);
 
@@ -51,10 +51,10 @@ contract Locker is Restricted, TokenReceiver {
 
     /* NB: we don't need to store lock parameters because lockProducts can't be altered (only disabled/enabled) */
     struct Lock {
-        address owner;
-        uint32 productId; // TODO: check if less than uint32 enough (uint24 would allow the lock to fit in 2 words)
         uint amountLocked;
-        uint64 lockedUntil;
+        address owner;
+        uint32 productId;
+        uint40 lockedUntil;
         bool isActive;
     }
 
@@ -210,9 +210,9 @@ contract Locker is Restricted, TokenReceiver {
         require(amountToLock >= lockProduct.minimumLockAmount);
 
         uint interestEarned = calculateInterest(lockProduct.perTermInterest, amountToLock);
-        uint64 lockedUntil = uint64(now.add(lockProduct.durationInSecs));
+        uint40 lockedUntil = uint40(now.add(lockProduct.durationInSecs));
 
-        lockId = locks.push(Lock(lockOwner, lockProductId, amountToLock, lockedUntil, true)) - 1;
+        lockId = locks.push(Lock(amountToLock, lockOwner, lockProductId, lockedUntil, true)) - 1;
         accountLocks[lockOwner].push(lockId);
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here

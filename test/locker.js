@@ -354,8 +354,8 @@ contract("Lock", accounts => {
         assert.isArray(newestLock);
         assert.equal(newestLock.length, 5);
 
-        // the locks should be [ owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
-        const [owner, productId, amountLocked, lockedUntil, isActive] = newestLock;
+        // the locks should be [ amountLocked, owner, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
+        const [amountLocked, owner, productId, lockedUntil, isActive] = newestLock;
         assert(owner === tokenHolder);
         assert(amountLocked.toNumber() === amountToLock);
         assert(productId.toNumber() === 0);
@@ -506,9 +506,9 @@ contract("Lock", accounts => {
 
         const expectedLock = await lockerInstance.locks(expectedLockId);
         const [
+            expectedAmountLocked,
             expectedOwner,
             expectedProductId,
-            expectedAmountLocked,
             expectedLockedUntil,
             expectedIsActive
         ] = expectedLock;
