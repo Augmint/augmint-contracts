@@ -67,7 +67,7 @@ contract Locker is Restricted, TokenReceiver {
     Lock[] public locks;
 
     // lock ids for an account
-    mapping(address => uint64[]) public accountLocks;
+    mapping(address => uint[]) public accountLocks;
 
     function Locker(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor) public {
 
@@ -93,7 +93,7 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
-    function releaseFunds(uint64 lockId) external {
+    function releaseFunds(uint lockId) external {
 
         Lock storage lock = locks[lockId];
 
@@ -158,7 +158,7 @@ contract Locker is Restricted, TokenReceiver {
     //             [lockId, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
     function getLocksForAddress(address lockOwner, uint offset) external view returns (uint[7][CHUNK_SIZE] response) {
 
-        uint64[] storage locksForAddress = accountLocks[lockOwner];
+        uint[] storage locksForAddress = accountLocks[lockOwner];
 
         for (uint16 i = 0; i < CHUNK_SIZE; i++) {
 
@@ -198,7 +198,7 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     // Internal function. assumes amountToLock is already transferred to this Lock contract
-    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns(uint64 lockId) {
+    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns(uint lockId) {
 
         // NB: calculateInterestForLockProduct will validate the lock product and amountToLock:
         uint interestEarned = calculateInterestForLockProduct(lockProductId, amountToLock);
@@ -207,8 +207,8 @@ contract Locker is Restricted, TokenReceiver {
 
         uint lockedUntil = now.add(lockProduct.durationInSecs);
 
-        lockId = uint64(locks.push(Lock(lockOwner, amountToLock, interestEarned, lockedUntil,
-                                    lockProduct.perTermInterest, lockProduct.durationInSecs, true)) - 1);
+        lockId = locks.push(Lock(lockOwner, amountToLock, interestEarned, lockedUntil,
+                                    lockProduct.perTermInterest, lockProduct.durationInSecs, true)) - 1;
         accountLocks[lockOwner].push(lockId);
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
