@@ -4,8 +4,8 @@ const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 
 const testHelpers = require("./helpers/testHelpers.js");
 
-const LOCK_MAX_GAS = 310000;
-const RELEASE_MAX_GAS = 100000;
+const LOCK_MAX_GAS = 230000;
+const RELEASE_MAX_GAS = 80000;
 
 let tokenHolder = "";
 let interestEarnedAddress = "";
@@ -339,9 +339,7 @@ contract("Lock", accounts => {
             augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
         ]);
 
-        const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
         const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
@@ -352,26 +350,16 @@ contract("Lock", accounts => {
         const numLocks = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber();
         const newestLock = await lockerInstance.locks(numLocks - 1);
 
-        // each lock should be a 7 element array
+        // each lock should be a 5 element array
         assert.isArray(newestLock);
-        assert(newestLock.length === 7);
+        assert.equal(newestLock.length, 5);
 
         // the locks should be [ owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
-        const [
-            owner,
-            amountLocked,
-            interestEarned,
-            lockedUntil,
-            perTermInterest,
-            durationInSecs,
-            isActive
-        ] = newestLock;
+        const [owner, productId, amountLocked, lockedUntil, isActive] = newestLock;
         assert(owner === tokenHolder);
         assert(amountLocked.toNumber() === amountToLock);
-        assert(interestEarned.toNumber() === expectedInterestEarned);
+        assert(productId.toNumber() === 0);
         assert(lockedUntil.toNumber() === expectedLockedUntil);
-        assert(perTermInterest.toNumber() === expectedPerTermInterest);
-        assert(durationInSecs.toNumber() === expectedDurationInSecs);
         assert(isActive === true);
     });
 
@@ -488,6 +476,18 @@ contract("Lock", accounts => {
     });
 
     it("should allow to list an account's locks (non-zero offset)", async function() {
+        const amountToLock = 1000;
+
+        // lock funds, and get the product that was used:
+        const [product] = await Promise.all([
+            lockerInstance.lockProducts(0),
+            augmintToken.transferAndNotify(lockerInstance.address, amountToLock, 0, { from: tokenHolder })
+        ]);
+
+        const expectedPerTermInterest = product[0].toNumber();
+        const expectedDurationInSecs = product[1].toNumber();
+        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
+
         const expectedAccountLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)) - 1;
 
         const accountLocks = await lockerInstance.getLocksForAddress(tokenHolder, expectedAccountLockIndex);
@@ -507,11 +507,9 @@ contract("Lock", accounts => {
         const expectedLock = await lockerInstance.locks(expectedLockId);
         const [
             expectedOwner,
+            expectedProductId,
             expectedAmountLocked,
-            expectedInterestEarned,
             expectedLockedUntil,
-            expectedPerTermInterest,
-            expectedDurationInSecs,
             expectedIsActive
         ] = expectedLock;
 
@@ -519,11 +517,12 @@ contract("Lock", accounts => {
         const [lockId, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive] = lock;
         assert(lockId.toNumber() === expectedLockId);
         assert(expectedOwner === tokenHolder);
+        assert(expectedProductId.toNumber() === 0);
         assert(amountLocked.toNumber() === expectedAmountLocked.toNumber());
-        assert(interestEarned.toNumber() === expectedInterestEarned.toNumber());
+        assert(interestEarned.toNumber() === expectedInterestEarned);
         assert(lockedUntil.toNumber() === expectedLockedUntil.toNumber());
-        assert(perTermInterest.toNumber() === expectedPerTermInterest.toNumber());
-        assert(durationInSecs.toNumber() === expectedDurationInSecs.toNumber());
+        assert(perTermInterest.toNumber() === expectedPerTermInterest);
+        assert(durationInSecs.toNumber() === expectedDurationInSecs);
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 

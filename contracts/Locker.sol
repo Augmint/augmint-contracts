@@ -30,14 +30,14 @@ contract Locker is Restricted, TokenReceiver {
 
     uint public constant CHUNK_SIZE = 100;
 
-    event NewLockProduct(uint indexed lockProductId, uint32 perTermInterest, uint32 durationInSecs,
+    event NewLockProduct(uint32 indexed lockProductId, uint32 perTermInterest, uint32 durationInSecs,
                             uint32 minimumLockAmount, bool isActive);
 
-    event LockProductActiveChange(uint indexed lockProductId, bool newActiveState);
+    event LockProductActiveChange(uint32 indexed lockProductId, bool newActiveState);
 
     // NB: amountLocked includes the original amount, plus interest
     event NewLock(address indexed lockOwner, uint lockId, uint amountLocked, uint interestEarned,
-                    uint lockedUntil, uint32 perTermInterest, uint32 durationInSecs, bool isActive);
+                    uint64 lockedUntil, uint32 perTermInterest, uint32 durationInSecs, bool isActive);
 
     event LockReleased(address indexed lockOwner, uint lockId);
 
@@ -49,13 +49,12 @@ contract Locker is Restricted, TokenReceiver {
         bool isActive;
     }
 
+    /* NB: we don't need to store lock parameters because lockProducts can't be altered (only disabled/enabled) */
     struct Lock {
         address owner;
+        uint32 productId; // TODO: check if less than uint32 enough (uint24 would allow the lock to fit in 2 words)
         uint amountLocked;
-        uint interestEarned;
-        uint lockedUntil;
-        uint perTermInterest;
-        uint durationInSecs;
+        uint64 lockedUntil;
         bool isActive;
     }
 
@@ -79,13 +78,15 @@ contract Locker is Restricted, TokenReceiver {
     function addLockProduct(uint32 perTermInterest, uint32 durationInSecs, uint32 minimumLockAmount, bool isActive)
     external restrict("MonetaryBoard") {
 
-        uint newLockProductId = lockProducts.push(
+        uint _newLockProductId = lockProducts.push(
                                     LockProduct(perTermInterest, durationInSecs, minimumLockAmount, isActive)) - 1;
+        uint32 newLockProductId = uint32(_newLockProductId);
+        require(newLockProductId == _newLockProductId);
         NewLockProduct(newLockProductId, perTermInterest, durationInSecs, minimumLockAmount, isActive);
 
     }
 
-    function setLockProductActiveState(uint lockProductId, bool isActive) external restrict("MonetaryBoard") {
+    function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("MonetaryBoard") {
 
         require(lockProductId < lockProducts.length);
         lockProducts[lockProductId].isActive = isActive;
@@ -94,15 +95,18 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     function releaseFunds(uint lockId) external {
-
         Lock storage lock = locks[lockId];
+        LockProduct storage lockProduct = lockProducts[lock.productId];
 
         require(lock.isActive);
         require(now >= lock.lockedUntil);
 
         lock.isActive = false;
-        monetarySupervisor.releaseFundsNotification(lock.amountLocked);   // to maintain totalLockAmount
-        augmintToken.transferWithNarrative(lock.owner, lock.amountLocked.add(lock.interestEarned),
+
+        uint interestEarned = calculateInterest(lockProduct.perTermInterest, lock.amountLocked);
+
+        monetarySupervisor.releaseFundsNotification(lock.amountLocked); // to maintain totalLockAmount
+        augmintToken.transferWithNarrative(lock.owner, lock.amountLocked.add(interestEarned),
                                                                                 "Funds released from lock");
 
         LockReleased(lock.owner, lockId);
@@ -147,9 +151,12 @@ contract Locker is Restricted, TokenReceiver {
             if (offset + i >= locks.length) { break; }
 
             Lock storage lock = locks[offset + i];
+            LockProduct storage lockProduct = lockProducts[lock.productId];
 
-            response[i] = [uint(offset + i), uint(lock.owner), lock.amountLocked, lock.interestEarned, lock.lockedUntil,
-                                lock.perTermInterest, lock.durationInSecs, lock.isActive ? 1 : 0];
+            uint interestEarned = calculateInterest(lockProduct.perTermInterest, lock.amountLocked);
+
+            response[i] = [uint(offset + i), uint(lock.owner), lock.amountLocked, interestEarned, lock.lockedUntil,
+                                lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0];
         }
     }
 
@@ -165,9 +172,12 @@ contract Locker is Restricted, TokenReceiver {
             if (offset + i >= locksForAddress.length) { break; }
 
             Lock storage lock = locks[locksForAddress[offset + i]];
+            LockProduct storage lockProduct = lockProducts[lock.productId];
 
-            response[i] = [ locksForAddress[offset + i], lock.amountLocked, lock.interestEarned, lock.lockedUntil,
-                                lock.perTermInterest, lock.durationInSecs, lock.isActive ? 1 : 0 ];
+            uint interestEarned = calculateInterest(lockProduct.perTermInterest, lock.amountLocked);
+
+            response[i] = [ locksForAddress[offset + i], lock.amountLocked, interestEarned, lock.lockedUntil,
+                                lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0 ];
         }
     }
 
@@ -177,8 +187,10 @@ contract Locker is Restricted, TokenReceiver {
         2) transferAndNotify transfers tokens to the Lock contract
         3) transferAndNotify calls Lock.transferNotification with lockProductId
     */
-    function transferNotification(address from, uint256 amountToLock, uint lockProductId) public {
+    function transferNotification(address from, uint256 amountToLock, uint _lockProductId) public {
         require(msg.sender == address(augmintToken));
+        uint32 lockProductId = uint32(_lockProductId);
+        require(lockProductId == _lockProductId);
         /* TODO: make data arg generic bytes
             uint productId;
             assembly { // solhint-disable-line no-inline-assembly
@@ -187,28 +199,20 @@ contract Locker is Restricted, TokenReceiver {
         _createLock(lockProductId, from, amountToLock);
     }
 
-    function calculateInterestForLockProduct(uint lockProductId, uint amountToLock)
-    public view returns (uint interestEarned) {
+    function calculateInterest(uint32 perTermInterest, uint amountToLock) public pure returns (uint interestEarned) {
+        interestEarned = amountToLock.mul(perTermInterest).div(1000000);
+    }
 
+    // Internal function. assumes amountToLock is already transferred to this Lock contract
+    function _createLock(uint32 lockProductId, address lockOwner, uint amountToLock) internal returns(uint lockId) {
         LockProduct storage lockProduct = lockProducts[lockProductId];
         require(lockProduct.isActive);
         require(amountToLock >= lockProduct.minimumLockAmount);
 
-        interestEarned = amountToLock.mul(lockProduct.perTermInterest).div(1000000);
-    }
+        uint interestEarned = calculateInterest(lockProduct.perTermInterest, amountToLock);
+        uint64 lockedUntil = uint64(now.add(lockProduct.durationInSecs));
 
-    // Internal function. assumes amountToLock is already transferred to this Lock contract
-    function _createLock(uint lockProductId, address lockOwner, uint amountToLock) internal returns(uint lockId) {
-
-        // NB: calculateInterestForLockProduct will validate the lock product and amountToLock:
-        uint interestEarned = calculateInterestForLockProduct(lockProductId, amountToLock);
-
-        LockProduct storage lockProduct = lockProducts[lockProductId];
-
-        uint lockedUntil = now.add(lockProduct.durationInSecs);
-
-        lockId = locks.push(Lock(lockOwner, amountToLock, interestEarned, lockedUntil,
-                                    lockProduct.perTermInterest, lockProduct.durationInSecs, true)) - 1;
+        lockId = locks.push(Lock(lockOwner, lockProductId, amountToLock, lockedUntil, true)) - 1;
         accountLocks[lockOwner].push(lockId);
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
