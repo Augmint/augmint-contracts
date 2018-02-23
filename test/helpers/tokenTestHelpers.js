@@ -210,10 +210,10 @@ async function getTransferFee(transfer) {
     } else if (fee.gt(feeMax)) {
         fee = feeMax;
     }
-    console.log(
-        `Fee calculations
-         amount: ${amount.toString()} feePt: ${feePt.toString()} minFee: ${feeMin.toString()} maxFee: ${feeMax.toString()} fee: ${fee.toString()}`
-    );
+    // console.log(
+    //     `Fee calculations
+    //      amount: ${amount.toString()} feePt: ${feePt.toString()} minFee: ${feeMin.toString()} maxFee: ${feeMax.toString()} fee: ${fee.toString()}`
+    // );
     return fee;
 }
 
