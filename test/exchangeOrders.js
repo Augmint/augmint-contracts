@@ -15,9 +15,9 @@ contract("Exchange orders tests", accounts => {
         exchange = exchangeTestHelpers.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
 
-        await tokenTestHelpers.issueToReserve(1000000000);
+        await tokenTestHelpers.issueToReserve(10000000);
 
-        await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 100000000)));
+        await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 1000000)));
     });
 
     beforeEach(async function() {
@@ -29,7 +29,7 @@ contract("Exchange orders tests", accounts => {
     });
 
     it("place buy token orders", async function() {
-        const order = { amount: web3.toWei(1), maker: makers[0], price: 11000, orderType: TOKEN_BUY };
+        const order = { amount: web3.toWei(1), maker: makers[0], price: 110000, orderType: TOKEN_BUY };
 
         await exchangeTestHelpers.newOrder(this, order);
         await exchangeTestHelpers.newOrder(this, order);
@@ -38,9 +38,9 @@ contract("Exchange orders tests", accounts => {
 
     it("place sell token orders directly on Exchange", async function() {
         const order = {
-            amount: 1000000,
+            amount: 10000,
             maker: makers[0],
-            price: 11000,
+            price: 110000,
             orderType: TOKEN_SELL,
             viaAugmintToken: false
         };
@@ -54,9 +54,9 @@ contract("Exchange orders tests", accounts => {
 
     it("shouldn't place a sell token order directly if approval < amount", async function() {
         const order = {
-            amount: 1000000,
+            amount: 10000,
             maker: makers[0],
-            price: 11000,
+            price: 110000,
             orderType: TOKEN_SELL,
             viaAugmintToken: false
         };
@@ -68,30 +68,30 @@ contract("Exchange orders tests", accounts => {
     });
 
     it("place a sell token order via AugmintToken", async function() {
-        const order = { amount: 1000000, maker: makers[0], price: 11000, orderType: TOKEN_SELL };
+        const order = { amount: 10000, maker: makers[0], price: 110000, orderType: TOKEN_SELL };
 
         await exchangeTestHelpers.newOrder(this, order);
         await exchangeTestHelpers.newOrder(this, order);
     });
 
     it("should place a BUY token order", async function() {
-        const order = { amount: 1000000, maker: makers[0], price: 11000, orderType: TOKEN_BUY };
+        const order = { amount: 10000, maker: makers[0], price: 110000, orderType: TOKEN_BUY };
 
         await exchangeTestHelpers.newOrder(this, order);
     });
 
-    it("shouldn't place a SELL token order with 0 price", async function() {
-        const price = 11000;
+    it("shouldn't place a SELL token order with 0 tokens", async function() {
+        const price = 110000;
         await testHelpers.expectThrow(augmintToken.transferAndNotify(exchange.address, 0, price, { from: makers[0] }));
     });
 
-    it("shouldn't place a BUY token order with 0 price", async function() {
-        const price = 11000;
+    it("shouldn't place a BUY token order with 0 ETH", async function() {
+        const price = 110000;
         await testHelpers.expectThrow(exchange.placeBuyTokenOrder(price, { value: 0 }));
     });
 
     it("no SELL token order when user doesn't have enough ACE", async function() {
-        const price = 11000;
+        const price = 110000;
         const userBal = await augmintToken.balanceOf(makers[0]);
         await testHelpers.expectThrow(
             augmintToken.transferAndNotify(exchange.address, userBal + 1, price, { from: makers[0] })
@@ -99,22 +99,22 @@ contract("Exchange orders tests", accounts => {
     });
 
     it("should cancel a BUY token order", async function() {
-        const order = { amount: web3.toWei(1), maker: makers[0], price: 11000, orderType: TOKEN_BUY };
+        const order = { amount: web3.toWei(1), maker: makers[0], price: 110000, orderType: TOKEN_BUY };
 
         await exchangeTestHelpers.newOrder(this, order);
         await exchangeTestHelpers.cancelOrder(this, order);
     });
 
     it("should cancel a SELL token order", async function() {
-        const order = { amount: 1000000, maker: makers[0], price: 11000, orderType: TOKEN_SELL };
+        const order = { amount: 10000, maker: makers[0], price: 110000, orderType: TOKEN_SELL };
 
         await exchangeTestHelpers.newOrder(this, order);
         await exchangeTestHelpers.cancelOrder(this, order);
     });
 
     it("only own orders should be possible to cancel", async function() {
-        const buyOrder = { amount: web3.toWei(1), maker: makers[0], price: 12000, orderType: TOKEN_BUY };
-        const sellOrder = { amount: 4545455, maker: makers[0], price: 11000, orderType: TOKEN_SELL };
+        const buyOrder = { amount: web3.toWei(1), maker: makers[0], price: 120000, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 45454, maker: makers[0], price: 110000, orderType: TOKEN_SELL };
 
         await exchangeTestHelpers.newOrder(this, buyOrder);
         await exchangeTestHelpers.newOrder(this, sellOrder);
@@ -126,7 +126,7 @@ contract("Exchange orders tests", accounts => {
         const orderCount = 4;
         const orders = [];
         for (let i = 0; i < orderCount; i++) {
-            orders.push(exchange.placeBuyTokenOrder(10000 + i, { value: web3.toWei(0.5), from: makers[1] }));
+            orders.push(exchange.placeBuyTokenOrder(1000 + i, { value: web3.toWei(0.5), from: makers[1] }));
         }
         const txs = await Promise.all(orders);
         assert(txs.length, orderCount);
@@ -162,7 +162,7 @@ contract("Exchange orders tests", accounts => {
         const orders = [];
         for (let i = 0; i < orderCount; i++) {
             orders.push(
-                augmintToken.transferAndNotify(exchange.address, i + 1, 10000 + i, {
+                augmintToken.transferAndNotify(exchange.address, i + 1, 1000 + i, {
                     from: makers[0]
                 })
             );

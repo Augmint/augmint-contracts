@@ -17,7 +17,7 @@ contract("Transfer Augmint tokens tests", accounts => {
         maxFeeAmount = maxFee.div(feePt).mul(1000000);
     });
 
-    it("Should be able to transfer ACE between accounts (without narrative, min fee)", async function() {
+    it("Should be able to transfer tokens between accounts (without narrative, min fee)", async function() {
         await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[2],
@@ -26,7 +26,7 @@ contract("Transfer Augmint tokens tests", accounts => {
         });
     });
 
-    it("Should be able to transfer ACE between accounts (with narrative, max fee)", async function() {
+    it("Should be able to transfer tokens between accounts (with narrative, max fee)", async function() {
         await tokenTestHelpers.transferTest(this, {
             from: accounts[1],
             to: accounts[2],
@@ -62,7 +62,7 @@ contract("Transfer Augmint tokens tests", accounts => {
         });
     });
 
-    it("Shouldn't be able to transfer ACE when ACE balance is insufficient", async function() {
+    it("Shouldn't be able to transfer tokens when token balance is insufficient", async function() {
         await testHelpers.expectThrow(
             augmintToken.transfer(accounts[2], (await augmintToken.balanceOf(accounts[1])).plus(1), {
                 from: accounts[1]
@@ -70,12 +70,12 @@ contract("Transfer Augmint tokens tests", accounts => {
         );
     });
 
-    it("Shouldn't be able to transfer ACE between the same accounts", async function() {
-        await testHelpers.expectThrow(
-            augmintToken.transfer(accounts[1], 20000, {
-                from: accounts[1]
-            })
-        );
+    it("Should be able to transfer tokens between the same accounts", async function() {
+        await tokenTestHelpers.transferTest(this, {
+            from: accounts[1],
+            to: accounts[1],
+            amount: 100
+        });
     });
 
     it("Shouldn't be able to transfer to 0x0", async function() {

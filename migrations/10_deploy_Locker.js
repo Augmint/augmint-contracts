@@ -13,7 +13,8 @@ module.exports = function(deployer) {
         await Promise.all([
             tokenAEur.grantPermission(Locker.address, "NoFeeTransferContracts"),
             monetarySupervisor.grantPermission(Locker.address, "LockerContracts"),
-            locker.addLockProduct(50000, 60, 100, true) // to be used in tests to make unit test independent
+            // (perTermInterest,  durationInSecs, minimumLockAmount, isActive)
+            locker.addLockProduct(50000, 60, 1000, true) // to be used in tests to make unit test independent
         ]);
     });
 };

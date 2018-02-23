@@ -6,5 +6,5 @@ module.exports = async function(deployer, network, accounts) {
     await deployer.deploy(Rates);
     const rates = Rates.at(Rates.address);
     await rates.grantPermission(accounts[0], "setRate");
-    await rates.setRate("EUR", 9980000);
+    await rates.setRate("EUR", 99800);
 };
