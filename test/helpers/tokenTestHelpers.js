@@ -189,7 +189,7 @@ async function getTransferFee(transfer) {
         return 0;
     }
 
-    const [feePt, feeMin, feeMax] = await augmintToken.getParams();
+    const [feePt, feeMin, feeMax] = await augmintToken.transferFee();
     const amount = new BigNumber(transfer.amount);
 
     let fee =

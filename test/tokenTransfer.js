@@ -12,7 +12,7 @@ contract("Transfer Augmint tokens tests", accounts => {
             tokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
             tokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
         ]);
-        [feePt, minFee, maxFee] = await augmintToken.getParams();
+        [feePt, minFee, maxFee] = await augmintToken.transferFee();
         minFeeAmount = minFee.div(feePt).mul(1000000);
         maxFeeAmount = maxFee.div(feePt).mul(1000000);
     });
