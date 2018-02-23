@@ -12,10 +12,10 @@ const ORDER_COUNT = 10;
 const MARKET_WEI_RATE = 5000000; // 1ETH = 500 EUR
 const MIN_ORDER_RATE = 9000;
 const MAX_ORDER_RATE = 11000;
-const MIN_TOKEN = 1000000; // 100 ACE
-const MAX_TOKEN = 10000000; // 1,000 ACE
+const MIN_TOKEN = 10000; // 100 ACE
+const MAX_TOKEN = 100000; // 1,000 ACE
 const TEST_ACCS_CT = web3.eth.accounts.length;
-const ACC_INIT_ACE = 100000000;
+const ACC_INIT_ACE = 1000000;
 const CHUNK_SIZE = 100;
 const random = new RandomSeed("Have the same test data");
 
@@ -79,10 +79,10 @@ contract("Exchange random tests", accounts => {
     it("place x buy / sell orders", async function() {
         const orders = [];
         for (let i = 0; i < ORDER_COUNT; i++) {
-            const tokenAmount = Math.round(random.random() * 10000 * (MAX_TOKEN - MIN_TOKEN) / 10000) + MIN_TOKEN;
+            const tokenAmount = Math.round(random.random() * 100 * (MAX_TOKEN - MIN_TOKEN) / 100) + MIN_TOKEN;
             const price = Math.floor(random.random() * (MAX_ORDER_RATE - MIN_ORDER_RATE)) + MIN_ORDER_RATE;
             const weiAmount =
-                Math.round(tokenAmount * price / 10000 / MARKET_WEI_RATE * testHelpers.ONE_ETH / ETH_ROUND) * ETH_ROUND;
+                Math.round(tokenAmount * price / 100 / MARKET_WEI_RATE * testHelpers.ONE_ETH / ETH_ROUND) * ETH_ROUND;
             const orderType = random.random() < 0.5 ? TOKEN_BUY : TOKEN_SELL;
 
             orders.push({

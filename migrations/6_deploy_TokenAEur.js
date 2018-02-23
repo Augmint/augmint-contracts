@@ -9,8 +9,8 @@ module.exports = async function(deployer) {
         TokenAEur,
         FeeAccount.address,
         2000, // transferFeePt in parts per million = 0.2%
-        200, // min: 0.02 A-EUR
-        50000 // max fee: 5 A-EUR
+        2, // min: 0.02 A-EUR
+        500 // max fee: 5 A-EUR
     );
 
     const tokenAEur = TokenAEur.at(TokenAEur.address);

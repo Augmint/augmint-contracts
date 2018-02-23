@@ -86,15 +86,21 @@ async function transferTest(testInstance, expTransfer) {
     await transferEventAsserts(expTransfer);
     testHelpers.logGasUse(testInstance, tx, txName);
 
+    const transferBetweenSameAccounts = balBefore.to.address === balBefore.from.address;
     await assertBalances(balBefore, {
         from: {
-            ace: balBefore.from.ace.minus(expTransfer.amount).minus(expTransfer.fee),
+            ace: transferBetweenSameAccounts
+                ? balBefore.from.ace.minus(expTransfer.fee)
+                : balBefore.from.ace.minus(expTransfer.amount).minus(expTransfer.fee),
             eth: balBefore.from.eth,
             gasFee: testHelpers.GAS_PRICE * TRANSFER_MAX_GAS
         },
         to: {
-            ace: balBefore.to.ace.add(expTransfer.amount),
-            eth: balBefore.to.eth
+            ace: transferBetweenSameAccounts
+                ? balBefore.to.ace.minus(expTransfer.fee)
+                : balBefore.to.ace.add(expTransfer.amount),
+            eth: balBefore.to.eth,
+            gasFee: transferBetweenSameAccounts ? testHelpers.GAS_PRICE * TRANSFER_MAX_GAS : 0
         },
         feeAccount: {
             ace: balBefore.feeAccount.ace.plus(expTransfer.fee),
@@ -194,17 +200,20 @@ async function getTransferFee(transfer) {
 
     let fee =
         amount === 0
-            ? 0
+            ? new BigNumber(0)
             : amount
                 .mul(feePt)
                 .div(1000000)
                 .round(0, BigNumber.ROUND_DOWN);
-    if (fee < feeMin) {
+    if (fee.lt(feeMin)) {
         fee = feeMin;
-    } else if (fee > feeMax) {
+    } else if (fee.gt(feeMax)) {
         fee = feeMax;
     }
-    // console.log("calc fee", _amount, feeMin.toString(), fee.toString());
+    // console.log(
+    //     `Fee calculations
+    //      amount: ${amount.toString()} feePt: ${feePt.toString()} minFee: ${feeMin.toString()} maxFee: ${feeMax.toString()} fee: ${fee.toString()}`
+    // );
     return fee;
 }
 
