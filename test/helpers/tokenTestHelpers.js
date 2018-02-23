@@ -200,17 +200,20 @@ async function getTransferFee(transfer) {
 
     let fee =
         amount === 0
-            ? 0
+            ? new BigNumber(0)
             : amount
                 .mul(feePt)
                 .div(1000000)
                 .round(0, BigNumber.ROUND_DOWN);
-    if (fee < feeMin) {
+    if (fee.lt(feeMin)) {
         fee = feeMin;
-    } else if (fee > feeMax) {
+    } else if (fee.gt(feeMax)) {
         fee = feeMax;
     }
-    // console.log("calc fee", _amount, feeMin.toString(), fee.toString());
+    console.log(
+        `Fee calculations
+         amount: ${amount.toString()} feePt: ${feePt.toString()} minFee: ${feeMin.toString()} maxFee: ${feeMax.toString()} fee: ${fee.toString()}`
+    );
     return fee;
 }
 
