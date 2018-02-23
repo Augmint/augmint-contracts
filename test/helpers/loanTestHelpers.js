@@ -321,39 +321,28 @@ async function getProductInfo(productId) {
 
 async function calcLoanValues(rates, product, collateralWei) {
     const ret = {};
+    const ppmDiv = 1000000;
 
     ret.collateral = new BigNumber(collateralWei);
-
-    // LoanManager contract code :
-    // calculate loan values based on ETH sent in with Tx
-    // uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
-    // uint repaymentAmount = tokenValue.mul(products[productId].collateralRatio).roundedDiv(100000000);
-    // repaymentAmount = repaymentAmount * 100;  // rounding 4 decimals value to 2 decimals.
     ret.tokenValue = await rates.convertFromWei(peggedSymbol, collateralWei);
+
     ret.repaymentAmount = ret.tokenValue
         .mul(product.collateralRatio)
-        .div(100000000)
-        .round(0, BigNumber.ROUND_HALF_UP)
-        .mul(100);
+        .div(ppmDiv)
+        .round(0, BigNumber.ROUND_HALF_UP);
 
-    // LoanManager contract code :
-    // uint mul = products[productId].collateralRatio.mul(products[productId].discountRate) / 1000000;
-    // uint loanAmount = tokenValue.mul(mul).roundedDiv(100000000);
-    // loanAmount = loanAmount * 100;
-    ret.loanAmount = product.collateralRatio
+    ret.loanAmount = ret.tokenValue
+        .mul(product.collateralRatio)
         .mul(product.discountRate)
-        .div(1000000)
-        .round(0, BigNumber.ROUND_DOWN)
-        .mul(ret.tokenValue)
-        .div(100000000)
-        .round(0, BigNumber.ROUND_HALF_UP)
-        .mul(100);
+        .div(ppmDiv * ppmDiv)
+        .round(0, BigNumber.ROUND_HALF_UP);
 
     ret.interestAmount = ret.repaymentAmount.minus(ret.loanAmount);
     ret.disbursementTime = moment()
         .utc()
         .unix();
     ret.product = product;
+
     return ret;
 }
 

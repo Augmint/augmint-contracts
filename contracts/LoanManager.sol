@@ -100,14 +100,11 @@ contract LoanManager is Restricted {
 
         // calculate loan values based on ETH sent in with Tx
         uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
-        uint repaymentAmount = tokenValue.mul(products[productId].collateralRatio).roundedDiv(100000000);
-        repaymentAmount = repaymentAmount * 100;    // rounding 4 decimals value to 2 decimals.
-                                                    // no safe mul needed b/c of prev divide
+        uint repaymentAmount = tokenValue.mul(products[productId].collateralRatio).roundedDiv(1000000);
 
-        uint mul = products[productId].collateralRatio.mul(products[productId].discountRate) / 1000000;
-        uint loanAmount = tokenValue.mul(mul).roundedDiv(100000000);
-        loanAmount = loanAmount * 100;  // rounding 4 decimals value to 2 decimals.
-                                        // no safe mul needed b/c of prev divide
+        uint loanAmount = tokenValue.mul(products[productId].collateralRatio)
+                                    .mul(products[productId].discountRate)
+                                    .roundedDiv(1000000 * 1000000);
 
         require(loanAmount >= products[productId].minDisbursedAmount);
         uint interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
