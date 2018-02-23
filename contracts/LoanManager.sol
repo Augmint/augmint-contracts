@@ -96,25 +96,24 @@ contract LoanManager is Restricted {
     }
 
     function newEthBackedLoan(uint8 productId) external payable {
-        require(products[productId].isActive); // valid productId?
+        LoanProduct storage product = products[productId];
+        require(product.isActive); // valid productId?
 
         // calculate loan values based on ETH sent in with Tx
         uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
-        uint repaymentAmount = tokenValue.mul(products[productId].collateralRatio).roundedDiv(1000000);
+        uint repaymentAmount = tokenValue.mul(product.collateralRatio).roundedDiv(1000000);
 
-        uint loanAmount = tokenValue.mul(products[productId].collateralRatio)
-                                    .mul(products[productId].discountRate)
+        uint loanAmount = tokenValue.mul(product.collateralRatio)
+                                    .mul(product.discountRate)
                                     .roundedDiv(1000000 * 1000000);
 
-        require(loanAmount >= products[productId].minDisbursedAmount);
+        require(loanAmount >= product.minDisbursedAmount);
         uint interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
 
         // Create new loan
         uint loanId = loans.push(
             LoanData(msg.sender, LoanState.Open, msg.value, repaymentAmount, loanAmount,
-                interestAmount, products[productId].term, now, now + products[productId].term,
-                products[productId].defaultingFeePt)
-            ) - 1;
+                interestAmount, product.term, now, now + product.term, product.defaultingFeePt)) - 1;
 
         // Store ref to new loan
         mLoans[msg.sender].push(loanId);
