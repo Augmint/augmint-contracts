@@ -49,7 +49,7 @@ contract LoanManager is Restricted {
     LoanProduct[] public products;
 
     LoanData[] public loans;
-    mapping(address => uint[]) public mLoans;  // owner account address =>  array of loan Ids
+    mapping(address => uint[]) public accountLoans;  // owner account address =>  array of loan Ids
 
     Rates public rates; // instance of ETH/pegged currency rate provider contract
     AugmintTokenInterface public augmintToken; // instance of token contract
@@ -119,7 +119,7 @@ contract LoanManager is Restricted {
                                             productId, LoanState.Open, maturity)) - 1;
 
         // Store ref to new loan
-        mLoans[msg.sender].push(loanId);
+        accountLoans[msg.sender].push(loanId);
 
         // Issue tokens and send to borrower
         monetarySupervisor.issueLoan(msg.sender, loanAmount);
@@ -200,7 +200,7 @@ contract LoanManager is Restricted {
     }
 
     function getLoanIds(address borrower) external view returns (uint[] _loans) {
-        return mLoans[borrower];
+        return accountLoans[borrower];
     }
 
     /* repay loan, called from AugmintToken's transferAndNotify
