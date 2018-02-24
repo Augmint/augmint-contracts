@@ -57,7 +57,7 @@ contract LoanManager is Restricted {
     InterestEarnedAccount public interestEarnedAccount;
 
     event NewLoan(uint32 productId, uint loanId, address indexed borrower, uint collateralAmount, uint loanAmount,
-        uint repaymentAmount);
+        uint repaymentAmount, uint40 maturity);
 
     event LoanProductActiveStateChanged(uint32 productId, bool newState);
 
@@ -124,7 +124,7 @@ contract LoanManager is Restricted {
         // Issue tokens and send to borrower
         monetarySupervisor.issueLoan(msg.sender, loanAmount);
 
-        NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount);
+        NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
     }
 
     function collect(uint[] loanIds) external {

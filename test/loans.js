@@ -78,7 +78,7 @@ contract("Augmint Loans tests", accounts => {
     it("Should collect a defaulted A-EUR loan and send back leftover collateral ", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.defaulting, accounts[1], web3.toWei(0.5));
 
-        await testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber());
+        await testHelpers.waitForTimeStamp(loan.maturity);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
@@ -87,10 +87,7 @@ contract("Augmint Loans tests", accounts => {
         await rates.setRate("EUR", 100000);
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
 
-        await Promise.all([
-            rates.setRate("EUR", 99000),
-            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
-        ]);
+        await Promise.all([rates.setRate("EUR", 99000), testHelpers.waitForTimeStamp(loan.maturity)]);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
@@ -99,10 +96,7 @@ contract("Augmint Loans tests", accounts => {
         await rates.setRate("EUR", 100000);
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
 
-        await Promise.all([
-            rates.setRate("EUR", 98900),
-            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
-        ]);
+        await Promise.all([rates.setRate("EUR", 98900), testHelpers.waitForTimeStamp(loan.maturity)]);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
@@ -110,10 +104,7 @@ contract("Augmint Loans tests", accounts => {
     it("Should collect a defaulted A-EUR loan when no leftover collateral (only fee covered)", async function() {
         await rates.setRate("EUR", 99800);
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
-        await Promise.all([
-            rates.setRate("EUR", 1),
-            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
-        ]);
+        await Promise.all([rates.setRate("EUR", 1), testHelpers.waitForTimeStamp(loan.maturity)]);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
@@ -121,10 +112,7 @@ contract("Augmint Loans tests", accounts => {
     it("Should not collect when rate = 0", async function() {
         await rates.setRate("EUR", 99800);
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
-        await Promise.all([
-            rates.setRate("EUR", 0),
-            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
-        ]);
+        await Promise.all([rates.setRate("EUR", 0), testHelpers.waitForTimeStamp(loan.maturity)]);
 
         testHelpers.expectThrow(loanTestHelpers.collectLoan(this, loan, accounts[2]));
     });

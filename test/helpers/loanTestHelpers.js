@@ -78,7 +78,8 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             borrower: loan.borrower,
             collateralAmount: loan.collateralAmount.toString(),
             loanAmount: loan.loanAmount.toString(),
-            repaymentAmount: loan.repaymentAmount.toString()
+            repaymentAmount: loan.repaymentAmount.toString(),
+            maturity: x => x
         }),
 
         testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
@@ -98,6 +99,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
     ]);
 
     loan.id = newLoanEvenResult.loanId.toNumber();
+    loan.maturity = newLoanEvenResult.maturity.toNumber();
 
     const [totalSupplyAfter, totalLoanAmountAfter, ,] = await Promise.all([
         augmintToken.totalSupply(),
