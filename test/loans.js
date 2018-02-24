@@ -115,9 +115,29 @@ contract("Augmint Loans tests", accounts => {
         await Promise.all([rates.setRate("EUR", 0), testHelpers.waitForTimeStamp(loan.maturity)]);
 
         testHelpers.expectThrow(loanTestHelpers.collectLoan(this, loan, accounts[2]));
+        await rates.setRate("EUR", 99800);
     });
 
-    it("Should get loans from offset"); // contract func to be implemented
+    it("Should list loans from offset", async function() {
+        const product = products.repaying;
+
+        const loan = await loanTestHelpers.createLoan(this, product, accounts[1], web3.toWei(2));
+
+        const loanInfo = await loanTestHelpers.getLoansInfo(loan.id);
+        const lastLoan = loanInfo[0];
+
+        assert.equal(lastLoan.id.toNumber(), loan.id);
+        assert.equal(lastLoan.collateralAmount.toNumber(), loan.collateralAmount);
+        assert.equal(lastLoan.repaymentAmount.toNumber(), loan.repaymentAmount);
+        assert.equal("0x" + lastLoan.borrower.toString(16), loan.borrower);
+        assert.equal(lastLoan.productId.toNumber(), product.id);
+        assert.equal(lastLoan.state.toNumber(), loan.state);
+        assert.equal(lastLoan.maturity.toNumber(), loan.maturity);
+        assert.equal(lastLoan.disbursementTime.toNumber(), loan.maturity - product.term);
+        assert.equal(lastLoan.loanAmount.toNumber(), loan.loanAmount);
+        assert.equal(lastLoan.interestAmount.toNumber(), loan.interestAmount);
+    });
+
     it("Should get loans for one account from offset"); // contract func to be implemented
 
     it("Should NOT repay a loan after paymentperiod is over");

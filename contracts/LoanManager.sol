@@ -199,8 +199,26 @@ contract LoanManager is Restricted {
         return loans.length;
     }
 
-    function getLoanIds(address borrower) external view returns (uint[] _loans) {
-        return accountLoans[borrower];
+    /* returns CHUNK_SIZE loans starting from some offset. Loans data encoded as:
+        [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
+                                                                                    loanAmount, interestAmount ]   */
+    function getLoans(uint offset) external view returns (uint[10][CHUNK_SIZE] response) {
+
+        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
+
+            if (offset + i >= loans.length) { break; }
+
+            LoanData storage loan = loans[offset + i];
+            LoanProduct storage product = products[loan.productId];
+
+            uint loanAmount;
+            uint interestAmount;
+            (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
+            uint disbursementTime = loan.maturity - product.term;
+
+            response[i] = [offset + i, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
+                        loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount];
+        }
     }
 
     /* repay loan, called from AugmintToken's transferAndNotify

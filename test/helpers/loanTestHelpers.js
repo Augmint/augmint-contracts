@@ -7,7 +7,7 @@ const Rates = artifacts.require("./Rates.sol");
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 const testHelpers = require("./testHelpers.js");
 
-const NEWLOAN_MAX_GAS = 210000;
+const NEWLOAN_MAX_GAS = 220000;
 const REPAY_MAX_GAS = 120000;
 const COLLECT_BASE_GAS = 100000;
 
@@ -26,6 +26,7 @@ module.exports = {
     repayLoan,
     collectLoan,
     getProductsInfo,
+    getLoansInfo,
     calcLoanValues,
     loanAsserts,
     get loanManager() {
@@ -326,6 +327,43 @@ async function getProductsInfo(offset) {
     return result;
 }
 
+async function getLoansInfo(offset) {
+    const loans = await loanManager.getLoans(offset);
+    assert.equal(loans.length, CHUNK_SIZE);
+    const result = [];
+    loans.map(loan => {
+        const [
+            id,
+            collateralAmount,
+            repaymentAmount,
+            borrower,
+            productId,
+            state,
+            maturity,
+            disbursementTime,
+            loanAmount,
+            interestAmount
+        ] = loan;
+
+        if (maturity.gt(0)) {
+            result.push({
+                id,
+                collateralAmount,
+                repaymentAmount,
+                borrower,
+                productId,
+                state,
+                maturity,
+                disbursementTime,
+                loanAmount,
+                interestAmount
+            });
+        }
+    });
+
+    return result;
+}
+
 async function calcLoanValues(rates, product, collateralWei) {
     const ret = {};
     const ppmDiv = 1000000;
@@ -360,6 +398,7 @@ async function loanAsserts(expLoan) {
     assert.equal(loan[2], expLoan.borrower, "borrower should be set");
     assert.equal(loan[3].toNumber(), expLoan.product.id, "product id should be set");
     assert.equal(loan[4].toNumber(), expLoan.state, "loan state should be set");
+    assert.equal(loan[5].toNumber(), expLoan.maturity, "maturity should be the same as in NewLoan event");
 
     const maturityActual = loan[5];
     const maturityExpected = expLoan.product.term.add(expLoan.disbursementTime).toNumber();
