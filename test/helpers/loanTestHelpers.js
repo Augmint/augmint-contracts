@@ -67,7 +67,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
 
     const tx = await loanManager.newEthBackedLoan(loan.product.id, {
         from: loan.borrower,
-        value: loan.collateral
+        value: loan.collateralAmount
     });
     testHelpers.logGasUse(testInstance, tx, "newEthBackedLoan");
 
@@ -76,7 +76,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             loanId: x => x,
             productId: loan.product.id.toNumber(),
             borrower: loan.borrower,
-            collateralAmount: loan.collateral.toString(),
+            collateralAmount: loan.collateralAmount.toString(),
             loanAmount: loan.loanAmount.toString(),
             repaymentAmount: loan.repaymentAmount.toString()
         }),
@@ -109,11 +109,11 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             reserve: {},
             borrower: {
                 ace: balBefore.borrower.ace.add(loan.loanAmount),
-                eth: balBefore.borrower.eth.minus(loan.collateral),
+                eth: balBefore.borrower.eth.minus(loan.collateralAmount),
                 gasFee: NEWLOAN_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
-                eth: balBefore.loanManager.eth.plus(loan.collateral)
+                eth: balBefore.loanManager.eth.plus(loan.collateralAmount)
             },
             interestEarned: {}
         })
@@ -179,11 +179,11 @@ async function repayLoan(testInstance, loan) {
             reserve: {},
             borrower: {
                 ace: balBefore.borrower.ace.sub(loan.repaymentAmount),
-                eth: balBefore.borrower.eth.add(loan.collateral),
+                eth: balBefore.borrower.eth.add(loan.collateralAmount),
                 gasFee: REPAY_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
-                eth: balBefore.loanManager.eth.minus(loan.collateral)
+                eth: balBefore.loanManager.eth.minus(loan.collateralAmount)
             },
             interestEarned: {
                 ace: balBefore.interestEarned.ace.add(loan.interestAmount)
@@ -230,14 +230,14 @@ async function collectLoan(testInstance, loan, collector) {
             loanManager: loanManager.address,
             interestEarned: interestEarnedAcc
         }),
-        rates.convertFromWei(peggedSymbol, loan.collateral),
+        rates.convertFromWei(peggedSymbol, loan.collateralAmount),
         rates.convertToWei(peggedSymbol, loan.repaymentAmount),
         rates.convertToWei(peggedSymbol, targetCollectionInToken),
         rates.convertToWei(peggedSymbol, targetFeeInToken)
     ]);
 
-    const releasedCollateral = BigNumber.max(loan.collateral.sub(targetCollectionInWei), 0);
-    const collectedCollateral = loan.collateral.sub(releasedCollateral);
+    const releasedCollateral = BigNumber.max(loan.collateralAmount.sub(targetCollectionInWei), 0);
+    const collectedCollateral = loan.collateralAmount.sub(releasedCollateral);
     const defaultingFee = BigNumber.min(targetFeeInWei, collectedCollateral);
 
     // const rate = await rates.rates("EUR");
@@ -246,7 +246,7 @@ async function collectLoan(testInstance, loan, collector) {
     //      A-EUR/EUR: ${rate[0] / 10000}
     //      defaulting fee pt: ${loan.product.defaultingFeePt / 10000} %
     //      repaymentAmount: ${loan.repaymentAmount / 10000} A-EUR = ${web3.fromWei(repaymentAmountInWei)} ETH
-    //      collateral: ${web3.fromWei(loan.collateral).toString()} ETH = ${collateralInToken / 10000} A-EUR
+    //      collateral: ${web3.fromWei(loan.collateralAmount).toString()} ETH = ${collateralInToken / 10000} A-EUR
     //      --------------------
     //      targetFee: ${targetFeeInToken / 10000} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
     //      target collection : ${targetCollectionInToken / 10000} A-EUR = ${web3
@@ -296,7 +296,7 @@ async function collectLoan(testInstance, loan, collector) {
             },
 
             loanManager: {
-                eth: balBefore.loanManager.eth.minus(loan.collateral)
+                eth: balBefore.loanManager.eth.minus(loan.collateralAmount)
             },
 
             interestEarned: {}
@@ -328,7 +328,7 @@ async function calcLoanValues(rates, product, collateralWei) {
     const ret = {};
     const ppmDiv = 1000000;
 
-    ret.collateral = new BigNumber(collateralWei);
+    ret.collateralAmount = new BigNumber(collateralWei);
     ret.tokenValue = await rates.convertFromWei(peggedSymbol, collateralWei);
 
     ret.repaymentAmount = ret.tokenValue
@@ -353,7 +353,7 @@ async function calcLoanValues(rates, product, collateralWei) {
 
 async function loanAsserts(expLoan) {
     const loan = await loanManager.loans(expLoan.id);
-    assert.equal(loan[0].toString(), expLoan.collateral.toString(), "collateralAmount should be set");
+    assert.equal(loan[0].toString(), expLoan.collateralAmount.toString(), "collateralAmount should be set");
     assert.equal(loan[1].toString(), expLoan.repaymentAmount.toString(), "repaymentAmount should be set");
     assert.equal(loan[2], expLoan.borrower, "borrower should be set");
     assert.equal(loan[3].toNumber(), expLoan.product.id, "product id should be set");
