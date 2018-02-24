@@ -7,8 +7,8 @@ const Rates = artifacts.require("./Rates.sol");
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 const testHelpers = require("./testHelpers.js");
 
-const NEWLOAN_MAX_GAS = 350000;
-const REPAY_MAX_GAS = 150000;
+const NEWLOAN_MAX_GAS = 210000;
+const REPAY_MAX_GAS = 120000;
 const COLLECT_BASE_GAS = 100000;
 
 let augmintToken = null;
