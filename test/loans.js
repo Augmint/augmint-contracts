@@ -52,7 +52,7 @@ contract("Augmint Loans tests", accounts => {
         ]);
     });
 
-    it("Should get an ACE loan", async function() {
+    it("Should get an A-EUR loan", async function() {
         await loanTestHelpers.createLoan(this, products.repaying, accounts[0], web3.toWei(0.5));
     });
 
@@ -65,21 +65,21 @@ contract("Augmint Loans tests", accounts => {
     });
 
     it("Should NOT collect a loan before it's due");
-    it("Should NOT repay an ACE loan on maturity if ACE balance is insufficient");
+    it("Should NOT repay an A-EUR loan on maturity if A-EUR balance is insufficient");
     it("should not repay a loan with smaller amount than repaymentAmount");
     it("Non owner should be able to repay a loan too");
     it("Should not repay with invalid loanId");
 
-    it("Should repay an ACE loan before maturity", async function() {
+    it("Should repay an A-EUR loan before maturity", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
-        // send interest to borrower to have enough ACE to repay in test
+        // send interest to borrower to have enough A-EUR to repay in test
         await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
         });
         await loanTestHelpers.repayLoan(this, loan, true); // repaymant via AugmintToken.repayLoan convenience func
     });
 
-    it("Should collect a defaulted ACE loan and send back leftover collateral ", async function() {
+    it("Should collect a defaulted A-EUR loan and send back leftover collateral ", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.defaulting, accounts[1], web3.toWei(0.5));
 
         await testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber());
@@ -87,7 +87,7 @@ contract("Augmint Loans tests", accounts => {
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
-    it("Should collect a defaulted ACE loan when no leftover collateral (collection exactly covered)", async function() {
+    it("Should collect a defaulted A-EUR loan when no leftover collateral (collection exactly covered)", async function() {
         await rates.setRate("EUR", 100000);
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
 
@@ -99,7 +99,7 @@ contract("Augmint Loans tests", accounts => {
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
-    it("Should collect a defaulted ACE loan when no leftover collateral (collection partially covered)", async function() {
+    it("Should collect a defaulted A-EUR loan when no leftover collateral (collection partially covered)", async function() {
         await rates.setRate("EUR", 100000);
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
 
@@ -111,7 +111,7 @@ contract("Augmint Loans tests", accounts => {
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
-    it("Should collect a defaulted ACE loan when no leftover collateral (only fee covered)", async function() {
+    it("Should collect a defaulted A-EUR loan when no leftover collateral (only fee covered)", async function() {
         await rates.setRate("EUR", 99800);
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
         await Promise.all([
@@ -138,9 +138,9 @@ contract("Augmint Loans tests", accounts => {
 
     it("Should NOT repay a loan after paymentperiod is over");
 
-    it("Should NOT collect an already collected ACE loan");
+    it("Should NOT collect an already collected A-EUR loan");
 
-    it("Should collect multiple defaulted ACE loans ");
+    it("Should collect multiple defaulted A-EUR loans ");
 
     it("Should get and repay a loan with colletaralRatio = 1");
     it("Should get and repay a loan with colletaralRatio > 1");
