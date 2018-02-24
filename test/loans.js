@@ -82,7 +82,7 @@ contract("Augmint Loans tests", accounts => {
     it("Should collect a defaulted ACE loan and send back leftover collateral ", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.defaulting, accounts[1], web3.toWei(0.5));
 
-        await testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber());
+        await testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber());
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
@@ -93,7 +93,7 @@ contract("Augmint Loans tests", accounts => {
 
         await Promise.all([
             rates.setRate("EUR", 99000),
-            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
         ]);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
@@ -105,7 +105,7 @@ contract("Augmint Loans tests", accounts => {
 
         await Promise.all([
             rates.setRate("EUR", 98900),
-            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
         ]);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
@@ -116,7 +116,7 @@ contract("Augmint Loans tests", accounts => {
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
         await Promise.all([
             rates.setRate("EUR", 1),
-            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
         ]);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
@@ -127,7 +127,7 @@ contract("Augmint Loans tests", accounts => {
         const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
         await Promise.all([
             rates.setRate("EUR", 0),
-            testHelpers.waitForTimeStamp((await loanManager.loans(loan.id))[8].toNumber())
+            testHelpers.waitForTimeStamp(loan.product.term.add(loan.disbursementTime).toNumber())
         ]);
 
         testHelpers.expectThrow(loanTestHelpers.collectLoan(this, loan, accounts[2]));

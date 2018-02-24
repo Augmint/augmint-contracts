@@ -348,30 +348,19 @@ async function calcLoanValues(rates, product, collateralWei) {
 
 async function loanAsserts(expLoan) {
     const loan = await loanManager.loans(expLoan.id);
-    assert.equal(loan[0], expLoan.borrower, "borrower should be set");
-    assert.equal(loan[1].toNumber(), expLoan.state, "loan state should be set");
-    assert.equal(loan[2].toString(), expLoan.collateral.toString(), "collateralAmount should be set");
-    assert.equal(loan[3].toString(), expLoan.repaymentAmount.toString(), "repaymentAmount should be set");
-    assert.equal(loan[4].toString(), expLoan.loanAmount.toString(), "loanAmount should be set");
-    assert.equal(loan[5].toString(), expLoan.interestAmount.toString(), "interestAmount should be set");
-    assert.equal(loan[6].toString(), expLoan.product.term.toString(), "term should be set");
+    assert.equal(loan[0].toString(), expLoan.collateral.toString(), "collateralAmount should be set");
+    assert.equal(loan[1].toString(), expLoan.repaymentAmount.toString(), "repaymentAmount should be set");
+    assert.equal(loan[2], expLoan.borrower, "borrower should be set");
+    assert.equal(loan[3].toNumber(), expLoan.product.id, "product id should be set");
+    assert.equal(loan[4].toNumber(), expLoan.state, "loan state should be set");
 
-    const disbursementTimeActual = loan[7];
+    const maturityActual = loan[5];
+    const maturityExpected = expLoan.product.term.add(expLoan.disbursementTime).toNumber();
+
+    assert(maturityActual >= maturityExpected, "maturity should be at least term + the time at disbursement");
     assert(
-        disbursementTimeActual >= expLoan.disbursementTime,
-        "disbursementDate should be at least the time at disbursement"
+        maturityActual <= maturityExpected + 5,
+        "maturity should be at most the term + time at disbursement + 5. Difference is: " +
+            (maturityActual - maturityExpected)
     );
-    assert(
-        disbursementTimeActual <= expLoan.disbursementTime + 5,
-        "disbursementDate should be at most the time at disbursement + 5. Difference is: " +
-            (disbursementTimeActual - expLoan.disbursementTime)
-    );
-
-    assert.equal(
-        loan[8].toString(),
-        disbursementTimeActual.add(expLoan.product.term),
-        "maturity should be at disbursementDate + term"
-    );
-
-    assert.equal(loan[9].toString(), expLoan.product.defaultingFeePt.toString(), "defaultingFeePt should be set");
 }

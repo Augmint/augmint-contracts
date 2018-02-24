@@ -34,17 +34,14 @@ contract LoanManager is Restricted {
         bool isActive; // 5
     }
 
+    /* NB: we don't need to store loan parameters because loan products can't be altered (only disabled/enabled) */
     struct LoanData {
-        address borrower; // 0
-        LoanState state; // 1
-        uint collateralAmount; // 2
-        uint repaymentAmount; // 3
-        uint loanAmount; // 4
-        uint interestAmount; // 5
-        uint term; // 6
-        uint disbursementDate; // 7
-        uint maturity; // 8
-        uint defaultingFeePt; // 9
+        uint collateralAmount; // 0
+        uint repaymentAmount; // 1
+        address borrower; // 2
+        uint32 productId; // 3
+        LoanState state; // 4
+        uint40 maturity; // 5
     }
 
     LoanProduct[] public products;
@@ -57,16 +54,16 @@ contract LoanManager is Restricted {
     MonetarySupervisor public monetarySupervisor;
     InterestEarnedAccount public interestEarnedAccount;
 
-    event NewLoan(uint productId, uint loanId, address borrower, uint collateralAmount, uint loanAmount,
+    event NewLoan(uint32 productId, uint loanId, address indexed borrower, uint collateralAmount, uint loanAmount,
         uint repaymentAmount);
 
-    event LoanProductActiveStateChanged(uint productId, bool newState);
+    event LoanProductActiveStateChanged(uint32 productId, bool newState);
 
-    event LoanProductAdded(uint productId);
+    event LoanProductAdded(uint32 productId);
 
     event LoanRepayed(uint loanId, address borrower);
 
-    event LoanCollected(uint indexed loanId, address indexed borrower, uint collectedCollateral,
+    event LoanCollected(uint loanId, address indexed borrower, uint collectedCollateral,
         uint releasedCollateral, uint defaultingFee);
 
     function LoanManager(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor, Rates _rates,
@@ -79,23 +76,26 @@ contract LoanManager is Restricted {
     }
 
     function addLoanProduct(uint _term, uint _discountRate, uint _collateralRatio, uint _minDisbursedAmount,
-        uint _defaultingFee, bool _isActive)
-    external restrict("MonetaryBoard") returns (uint newProductId) {
-        newProductId = products.push(
+                                uint _defaultingFee, bool _isActive)
+    external restrict("MonetaryBoard") {
+
+        uint _newProductId = products.push(
             LoanProduct(_term, _discountRate, _collateralRatio, _minDisbursedAmount, _defaultingFee, _isActive)
         ) - 1;
 
+        uint32 newProductId = uint32(_newProductId);
+        require(newProductId == _newProductId);
+
         LoanProductAdded(newProductId);
-        return newProductId;
     }
 
-    function setLoanProductActiveState(uint8 productId, bool newState)
+    function setLoanProductActiveState(uint32 productId, bool newState)
     external restrict ("MonetaryBoard") {
         products[productId].isActive = false;
         LoanProductActiveStateChanged(productId, newState);
     }
 
-    function newEthBackedLoan(uint8 productId) external payable {
+    function newEthBackedLoan(uint32 productId) external payable {
         LoanProduct storage product = products[productId];
         require(product.isActive); // valid productId?
 
@@ -103,17 +103,18 @@ contract LoanManager is Restricted {
         uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
         uint repaymentAmount = tokenValue.mul(product.collateralRatio).roundedDiv(1000000);
 
-        uint loanAmount = tokenValue.mul(product.collateralRatio)
-                                    .mul(product.discountRate)
-                                    .roundedDiv(1000000 * 1000000);
+        uint loanAmount;
+        (loanAmount, ) = calculateLoanValues(product, repaymentAmount);
 
         require(loanAmount >= product.minDisbursedAmount);
-        uint interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
+
+        uint expiration = now.add(product.term);
+        uint40 maturity = uint40(expiration);
+        require(maturity == expiration);
 
         // Create new loan
-        uint loanId = loans.push(
-            LoanData(msg.sender, LoanState.Open, msg.value, repaymentAmount, loanAmount,
-                interestAmount, product.term, now, now + product.term, product.defaultingFeePt)) - 1;
+        uint loanId = loans.push(LoanData(msg.value, repaymentAmount, msg.sender,
+                                            productId, LoanState.Open, maturity)) - 1;
 
         // Store ref to new loan
         mLoans[msg.sender].push(loanId);
@@ -133,32 +134,37 @@ contract LoanManager is Restricted {
         uint totalLoanAmountCollected;
         uint totalCollateralToCollect;
         for (uint i = 0; i < loanIds.length; i++) {
-            uint loanId = loanIds[i];
-            require(loans[loanId].state == LoanState.Open);
-            require(now >= loans[loanId].maturity);
+            LoanData storage loan = loans[loanIds[i]];
+            require(loan.state == LoanState.Open);
+            require(now >= loan.maturity);
+            LoanProduct storage product = products[loan.productId];
 
-            totalLoanAmountCollected = totalLoanAmountCollected.add(loans[loanId].loanAmount);
+            uint loanAmount;
+            (loanAmount, ) = calculateLoanValues(product, loan.repaymentAmount);
 
-            loans[loanId].state = LoanState.Defaulted;
+            totalLoanAmountCollected = totalLoanAmountCollected.add(loanAmount);
+
+            loan.state = LoanState.Defaulted;
 
             // send ETH collateral to augmintToken reserve
-            uint defaultingFeeInToken = loans[loanId].repaymentAmount.mul(loans[loanId].defaultingFeePt).div(1000000);
+            uint defaultingFeeInToken = loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000);
             uint defaultingFee = rates.convertToWei(augmintToken.peggedSymbol(), defaultingFeeInToken);
-            uint targetCollection = rates.convertToWei(augmintToken.peggedSymbol(), loans[loanId].repaymentAmount)
-                .add(defaultingFee);
+            uint targetCollection = rates.convertToWei(augmintToken.peggedSymbol(),
+                                                            loan.repaymentAmount).add(defaultingFee);
+
             uint releasedCollateral;
-            if (targetCollection < loans[loanId].collateralAmount) {
-                releasedCollateral = loans[loanId].collateralAmount.sub(targetCollection);
-                loans[loanId].borrower.transfer(releasedCollateral);
+            if (targetCollection < loan.collateralAmount) {
+                releasedCollateral = loan.collateralAmount.sub(targetCollection);
+                loan.borrower.transfer(releasedCollateral);
             }
-            uint collateralToCollect = loans[loanId].collateralAmount.sub(releasedCollateral);
+            uint collateralToCollect = loan.collateralAmount.sub(releasedCollateral);
             if (defaultingFee > collateralToCollect) {
                 defaultingFee = collateralToCollect;
             }
 
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
 
-            LoanCollected(loanId, loans[loanId].borrower, collateralToCollect, releasedCollateral, defaultingFee);
+            LoanCollected(loanIds[i], loan.borrower, collateralToCollect, releasedCollateral, defaultingFee);
         }
 
         if (totalCollateralToCollect > 0) {
@@ -193,21 +199,35 @@ contract LoanManager is Restricted {
         _repayLoan(loanId, repaymentAmount);
     }
 
+    function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
+    internal view returns (uint loanAmount, uint interestAmount) {
+        // calculate loan values based on repayment amount
+        loanAmount = repaymentAmount.mul(product.discountRate).roundedDiv(1000000);
+        interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
+    }
+
     /* internal function, assuming repayment amount already transfered  */
     function _repayLoan(uint loanId, uint repaymentAmount) internal {
-        require(loans[loanId].state == LoanState.Open);
-        require(now <= loans[loanId].maturity);
-        require(loans[loanId].repaymentAmount == repaymentAmount);
+        LoanData storage loan = loans[loanId];
+        require(loan.state == LoanState.Open);
+        require(repaymentAmount == loan.repaymentAmount);
+        require(now <= loan.maturity);
+
+        LoanProduct storage product = products[loan.productId];
+        uint loanAmount;
+        uint interestAmount;
+        (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
+
         loans[loanId].state = LoanState.Repaid;
 
-        augmintToken.transfer(interestEarnedAccount, loans[loanId].interestAmount);
+        augmintToken.transfer(interestEarnedAccount, interestAmount);
 
-        augmintToken.burn(loans[loanId].loanAmount);
-        monetarySupervisor.loanRepaymentNotification(loans[loanId].loanAmount); // update KPIs
+        augmintToken.burn(loanAmount);
+        monetarySupervisor.loanRepaymentNotification(loanAmount); // update KPIs
 
-        loans[loanId].borrower.transfer(loans[loanId].collateralAmount); // send back ETH collateral
+        loan.borrower.transfer(loan.collateralAmount); // send back ETH collateral
 
-        LoanRepayed(loanId, loans[loanId].borrower);
+        LoanRepayed(loanId, loan.borrower);
     }
 
 }
