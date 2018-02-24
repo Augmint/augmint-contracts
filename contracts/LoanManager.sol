@@ -22,6 +22,8 @@ import "./MonetarySupervisor.sol";
 contract LoanManager is Restricted {
     using SafeMath for uint256;
 
+    uint16 public constant CHUNK_SIZE = 100;
+
     enum LoanState { Open, Repaid, Defaulted }
 
     struct LoanProduct {
@@ -175,12 +177,26 @@ contract LoanManager is Restricted {
 
     }
 
-    function getLoanCount() external view returns (uint ct) {
-        return loans.length;
-    }
-
     function getProductCount() external view returns (uint ct) {
         return products.length;
+    }
+
+    // returns CHUNK_SIZE loan products starting from some offset:
+    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive ]
+    function getProducts(uint offset) external view returns (uint[7][CHUNK_SIZE] response) {
+        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
+
+            if (offset + i >= products.length) { break; }
+
+            LoanProduct storage product = products[offset + i];
+
+            response[i] = [offset + i, product.minDisbursedAmount, product.term, product.discountRate,
+                                product.collateralRatio, product.defaultingFeePt, product.isActive ? 1 : 0 ];
+        }
+    }
+
+    function getLoanCount() external view returns (uint ct) {
+        return loans.length;
     }
 
     function getLoanIds(address borrower) external view returns (uint[] _loans) {

@@ -11,6 +11,8 @@ const NEWLOAN_MAX_GAS = 210000;
 const REPAY_MAX_GAS = 120000;
 const COLLECT_BASE_GAS = 100000;
 
+let CHUNK_SIZE = null;
+
 let augmintToken = null;
 let monetarySupervisor = null;
 let loanManager = null;
@@ -23,16 +25,20 @@ module.exports = {
     createLoan,
     repayLoan,
     collectLoan,
-    getProductInfo,
+    getProductsInfo,
     calcLoanValues,
     loanAsserts,
     get loanManager() {
         return loanManager;
+    },
+    get CHUNK_SIZE() {
+        return CHUNK_SIZE;
     }
 };
 
 before(async function() {
     loanManager = LoanManager.at(LoanManager.address);
+    CHUNK_SIZE = (await loanManager.CHUNK_SIZE()).toNumber();
     augmintToken = tokenTestHelpers.augmintToken;
     monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
@@ -68,7 +74,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
     const [newLoanEvenResult, ,] = await Promise.all([
         testHelpers.assertEvent(loanManager, "NewLoan", {
             loanId: x => x,
-            productId: loan.product.id,
+            productId: loan.product.id.toNumber(),
             borrower: loan.borrower,
             collateralAmount: loan.collateral.toString(),
             loanAmount: loan.loanAmount.toString(),
@@ -305,18 +311,17 @@ async function collectLoan(testInstance, loan, collector) {
     );
 }
 
-async function getProductInfo(productId) {
-    const prod = await loanManager.products(productId);
-    const info = {
-        id: productId,
-        minDisbursedAmount: prod[0],
-        term: prod[1],
-        discountRate: prod[2],
-        collateralRatio: prod[3],
-        defaultingFeePt: prod[4],
-        isActive: prod[5]
-    };
-    return info;
+async function getProductsInfo(offset) {
+    const products = await loanManager.getProducts(offset);
+    assert.equal(products.length, CHUNK_SIZE);
+    const result = [];
+    products.map(prod => {
+        const [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive] = prod;
+        if (term.gt(0)) {
+            result.push({ id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive });
+        }
+    });
+    return result;
 }
 
 async function calcLoanValues(rates, product, collateralWei) {

@@ -35,21 +35,17 @@ contract("Augmint Loans tests", accounts => {
         // disabled product
         await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false);
 
-        [
-            products.disabledProduct,
-            products.defaultingNoLeftOver,
-            products.defaulting,
-            products.repaying,
-            products.notDue,
-            ,
-        ] = await Promise.all([
-            loanTestHelpers.getProductInfo(prodCount + 4),
-            loanTestHelpers.getProductInfo(prodCount + 3),
-            loanTestHelpers.getProductInfo(prodCount + 2),
-            loanTestHelpers.getProductInfo(prodCount + 1),
-            loanTestHelpers.getProductInfo(prodCount),
+        const [newProducts] = await Promise.all([
+            loanTestHelpers.getProductsInfo(prodCount),
             tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
+        [
+            products.notDue,
+            products.repaying,
+            products.defaulting,
+            products.defaultingNoLeftOver,
+            products.disabledProduct
+        ] = newProducts;
     });
 
     it("Should get an A-EUR loan", async function() {
