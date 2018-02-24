@@ -25,13 +25,13 @@ contract LoanManager is Restricted {
     enum LoanState { Open, Repaid, Defaulted }
 
     struct LoanProduct {
-        uint term; // 0
-        uint discountRate; // 1: discountRate in parts per million , ie. 10,000 = 1%
-        uint collateralRatio;   // 2: loan token amount / colleteral pegged ccy value
-                                // in parts per million , ie. 10,000 = 1%
-        uint minDisbursedAmount; // 3: with 4 decimals, e.g. 31000 = 3.1ACE
-        uint defaultingFeePt; // 4: % of collateral in parts per million , ie. 50,000 = 5%
-        bool isActive; // 5
+        uint minDisbursedAmount; // 0: with decimals set in AugmintToken.decimals
+        uint32 term;            // 1
+        uint32 discountRate;    // 2: discountRate in parts per million , ie. 10,000 = 1%
+        uint32 collateralRatio; // 3: loan token amount / colleteral pegged ccy value
+                                //      in parts per million , ie. 10,000 = 1%
+        uint32 defaultingFeePt; // 4: % of collateral in parts per million , ie. 50,000 = 5%
+        bool isActive;          // 5
     }
 
     /* NB: we don't need to store loan parameters because loan products can't be altered (only disabled/enabled) */
@@ -75,12 +75,12 @@ contract LoanManager is Restricted {
         interestEarnedAccount = _interestEarnedAccount;
     }
 
-    function addLoanProduct(uint _term, uint _discountRate, uint _collateralRatio, uint _minDisbursedAmount,
-                                uint _defaultingFee, bool _isActive)
+    function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
+                                uint32 defaultingFeePt, bool isActive)
     external restrict("MonetaryBoard") {
 
         uint _newProductId = products.push(
-            LoanProduct(_term, _discountRate, _collateralRatio, _minDisbursedAmount, _defaultingFee, _isActive)
+            LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive)
         ) - 1;
 
         uint32 newProductId = uint32(_newProductId);

@@ -309,10 +309,10 @@ async function getProductInfo(productId) {
     const prod = await loanManager.products(productId);
     const info = {
         id: productId,
-        term: prod[0],
-        discountRate: prod[1],
-        collateralRatio: prod[2],
-        minDisbursedAmount: prod[3],
+        minDisbursedAmount: prod[0],
+        term: prod[1],
+        discountRate: prod[2],
+        collateralRatio: prod[3],
         defaultingFeePt: prod[4],
         isActive: prod[5]
     };
