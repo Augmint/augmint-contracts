@@ -23,6 +23,8 @@ contract("Loans tests", accounts => {
         await loanManager.addLoanProduct(1, 900000, 900000, 1000, 100000, true); // defaultingNoLeftOver
         await loanManager.addLoanProduct(1, 1000000, 900000, 2000, 50000, true); // zeroInterest
         await loanManager.addLoanProduct(1, 1100000, 900000, 2000, 50000, true); // negativeInterest
+        await loanManager.addLoanProduct(1, 990000, 1000000, 2000, 50000, true); // fullCoverage
+        await loanManager.addLoanProduct(1, 990000, 1200000, 2000, 50000, true); // moreCoverage
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount),
@@ -33,7 +35,9 @@ contract("Loans tests", accounts => {
             products.defaulting,
             products.defaultingNoLeftOver,
             products.zeroInterest,
-            products.negativeInterest
+            products.negativeInterest,
+            products.fullCoverage,
+            products.moreCoverage
         ] = newProducts;
     });
 
@@ -56,7 +60,7 @@ contract("Loans tests", accounts => {
 
     it("Should collect a defaulted A-EUR loan when no leftover collateral (collection partially covered)", async function() {
         await rates.setRate("EUR", 100000);
-        const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(1));
+        const loan = await loanTestHelpers.createLoan(this, products.defaultingNoLeftOver, accounts[1], web3.toWei(2));
 
         await Promise.all([rates.setRate("EUR", 98900), testHelpers.waitForTimeStamp(loan.maturity)]);
 
@@ -72,17 +76,51 @@ contract("Loans tests", accounts => {
         await rates.setRate("EUR", 99800); // restore rates
     });
 
-    it("Should get and collect a loan with colletaralRatio = 1", async function() {
+    it("Should get and collect a loan with discountRate = 1 (zero interest)", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.zeroInterest, accounts[0], web3.toWei(0.5));
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
-    it("Should get and collect a loan with colletaralRatio > 1", async function() {
+    it("Should get and collect a loan with discountRate > 1 (negative interest)", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.negativeInterest, accounts[0], web3.toWei(0.5));
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
-    it("Should collect multiple defaulted A-EUR loans ");
+    it("Should get and collect a loan with collateralRatio = 1", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.fullCoverage, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
+    });
+
+    it("Should get and collect a loan with collateralRatio > 1", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.moreCoverage, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
+    });
+
+    it("Should collect multiple defaulted loans", async function() {
+        const loanCount = (await loanManager.getLoanCount()).toNumber();
+        await Promise.all([
+            loanManager.newEthBackedLoan(products.zeroInterest.id, { from: accounts[0], value: web3.toWei(0.2) }),
+            loanManager.newEthBackedLoan(products.fullCoverage.id, { from: accounts[1], value: web3.toWei(0.2) }),
+            loanManager.newEthBackedLoan(products.negativeInterest.id, { from: accounts[1], value: web3.toWei(0.2) })
+        ]);
+
+        await testHelpers.waitFor(1000);
+
+        const tx = await loanManager.collect([loanCount, loanCount + 1, loanCount + 2]);
+        testHelpers.logGasUse(this, tx, "collect 3");
+    });
+
+    it("Should NOT collect multiple loans if one is not due", async function() {
+        const loanCount = (await loanManager.getLoanCount()).toNumber();
+        await Promise.all([
+            loanManager.newEthBackedLoan(products.notDue.id, { from: accounts[0], value: web3.toWei(0.2) }),
+            loanManager.newEthBackedLoan(products.defaulting.id, { from: accounts[1], value: web3.toWei(0.2) })
+        ]);
+
+        await testHelpers.waitFor(1000);
+
+        await testHelpers.expectThrow(loanManager.collect([loanCount, loanCount + 1]));
+    });
 
     it("Should NOT collect a loan before it's due", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));

@@ -29,6 +29,8 @@ contract("Loans tests", accounts => {
         await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false); // disabledProduct
         await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true); // zeroInterest
         await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true); // negativeInterest
+        await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true); // fullCoverage
+        await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true); // moreCoverage
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount),
@@ -40,7 +42,9 @@ contract("Loans tests", accounts => {
             products.defaulting,
             products.disabledProduct,
             products.zeroInterest,
-            products.negativeInterest
+            products.negativeInterest,
+            products.fullCoverage,
+            products.moreCoverage
         ] = newProducts;
     });
 
@@ -75,17 +79,27 @@ contract("Loans tests", accounts => {
         await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
         });
-        await loanTestHelpers.repayLoan(this, loan, true);
+        await loanTestHelpers.repayLoan(this, loan);
     });
 
     it("Should get and repay a loan whith discountRate = 1 (zero interest)", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.zeroInterest, accounts[0], web3.toWei(0.5));
-        await loanTestHelpers.repayLoan(this, loan, true);
+        await loanTestHelpers.repayLoan(this, loan);
     });
 
     it("Should get and repay a loan whith discountRate > 1 (negative interest)", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.negativeInterest, accounts[0], web3.toWei(0.5));
-        await loanTestHelpers.repayLoan(this, loan, true);
+        await loanTestHelpers.repayLoan(this, loan);
+    });
+
+    it("Should get and repay a loan with colletaralRatio = 1", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.fullCoverage, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.repayLoan(this, loan);
+    });
+
+    it("Should get and repay a loan with colletaralRatio > 1", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.moreCoverage, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.repayLoan(this, loan);
     });
 
     it("Non owner should be able to repay a loan too", async function() {
@@ -214,9 +228,6 @@ contract("Loans tests", accounts => {
         assert.equal(lastLoan.loanAmount.toNumber(), loan.loanAmount);
         assert.equal(lastLoan.interestAmount.toNumber(), loan.interestAmount);
     });
-
-    it("Should get and repay a loan with colletaralRatio = 1");
-    it("Should get and repay a loan with colletaralRatio > 1");
 
     it("should only allow whitelisted loan contract to be used", async function() {
         const interestEarnedAcc = await monetarySupervisor.interestEarnedAccount();
