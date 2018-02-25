@@ -1,3 +1,4 @@
+const BigNumber = require("bignumber.js");
 const LoanManager = artifacts.require("./LoanManager.sol");
 
 const testHelpers = require("./helpers/testHelpers.js");
@@ -11,7 +12,7 @@ let monetarySupervisor = null;
 let rates = null;
 let products = {};
 
-contract("Augmint Loans tests", accounts => {
+contract("Loans tests", accounts => {
     before(async function() {
         rates = ratesTestHelpers.rates;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
@@ -52,7 +53,20 @@ contract("Augmint Loans tests", accounts => {
         await loanTestHelpers.createLoan(this, products.repaying, accounts[0], web3.toWei(0.5));
     });
 
-    it("Should NOT get a loan less than minLoanAmount");
+    it("Should NOT get a loan less than minDisbursedAmount", async function() {
+        const prod = products.repaying;
+        const loanAmount = prod.minDisbursedAmount
+            .sub(1)
+            .div(prod.discountRate)
+            .mul(1000000)
+            .round(0, BigNumber.ROUND_UP);
+        const weiAmount = (await rates.convertToWei(tokenTestHelpers.peggedSymbol, loanAmount))
+            .div(prod.collateralRatio)
+            .mul(1000000)
+            .round(0, BigNumber.ROUND_UP);
+
+        await testHelpers.expectThrow(loanManager.newEthBackedLoan(prod.id, { from: accounts[0], value: weiAmount }));
+    });
 
     it("Shouldn't get a loan for a disabled product", async function() {
         await testHelpers.expectThrow(
@@ -60,20 +74,94 @@ contract("Augmint Loans tests", accounts => {
         );
     });
 
-    it("Should NOT collect a loan before it's due");
-    it("Should NOT repay an A-EUR loan on maturity if A-EUR balance is insufficient");
-    it("should not repay a loan with smaller amount than repaymentAmount");
-    it("Non owner should be able to repay a loan too");
-    it("Should not repay with invalid loanId");
-
     it("Should repay an A-EUR loan before maturity", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
         // send interest to borrower to have enough A-EUR to repay in test
         await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
         });
-        await loanTestHelpers.repayLoan(this, loan, true); // repaymant via AugmintToken.repayLoan convenience func
+        await loanTestHelpers.repayLoan(this, loan, true);
     });
+
+    it("Non owner should be able to repay a loan too", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
+
+        await augmintToken.transferAndNotify(loanManager.address, loan.repaymentAmount, loan.id, {
+            from: accounts[0]
+        });
+
+        await testHelpers.assertEvent(loanManager, "LoanRepayed", {
+            loanId: loan.id,
+            borrower: loan.borrower
+        });
+    });
+
+    it("Should NOT repay an A-EUR loan on maturity if A-EUR balance is insufficient", async function() {
+        const borrower = accounts[2];
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, borrower, web3.toWei(0.5));
+        const accBal = await augmintToken.balanceOf(borrower);
+
+        // send just 0.01 A€ less than required for repayment
+        const topUp = loan.repaymentAmount.sub(accBal).sub(1);
+        assert(accBal.add(topUp).lt(loan.repaymentAmount)); // sanitiy against previous tests accidently leaving A€ borrower account
+        await augmintToken.transfer(borrower, topUp, {
+            from: accounts[0]
+        });
+
+        await testHelpers.expectThrow(
+            augmintToken.transferAndNotify(loanManager.address, loan.repaymentAmount, loan.id, { from: borrower })
+        );
+    });
+
+    it("should not repay a loan with smaller amount than repaymentAmount", async function() {
+        const borrower = accounts[1];
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, borrower, web3.toWei(0.2));
+
+        await augmintToken.transfer(loan.borrower, loan.interestAmount, {
+            from: accounts[0]
+        });
+
+        await testHelpers.expectThrow(
+            augmintToken.transferAndNotify(loanManager.address, loan.repaymentAmount.sub(1), loan.id, {
+                from: borrower
+            })
+        );
+    });
+
+    it("Should not repay with invalid loanId", async function() {
+        const loanCount = await loanManager.getLoanCount();
+        await testHelpers.expectThrow(augmintToken.transferAndNotify(loanManager.address, 10000, loanCount));
+    });
+
+    it("Should NOT repay a loan after maturity", async function() {
+        const borrower = accounts[0];
+        const loan = await loanTestHelpers.createLoan(this, products.defaulting, borrower, web3.toWei(0.5));
+
+        const [accBal] = await Promise.all([
+            augmintToken.balanceOf(borrower),
+            testHelpers.waitForTimeStamp(loan.maturity + 1)
+        ]);
+        assert(accBal.gt(loan.repaymentAmount)); // sanitiy to make sure repayment is not failing on insufficient A€
+
+        await testHelpers.expectThrow(
+            augmintToken.transferAndNotify(loanManager.address, loan.repaymentAmount, loan.id, {
+                from: borrower
+            })
+        );
+    });
+
+    it("Should not get a loan when rates = 0", async function() {
+        await rates.setRate("EUR", 0);
+        await testHelpers.expectThrow(
+            loanManager.newEthBackedLoan(products.repaying.id, {
+                from: accounts[1],
+                value: web3.toWei(0.1)
+            })
+        );
+        await rates.setRate("EUR", 99800); // restore rates
+    });
+
+    it("Should get a loan if interest rate is negative "); // to be implemented
 
     it("Should collect a defaulted A-EUR loan and send back leftover collateral ", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.defaulting, accounts[1], web3.toWei(0.5));
@@ -107,6 +195,12 @@ contract("Augmint Loans tests", accounts => {
         await Promise.all([rates.setRate("EUR", 1), testHelpers.waitForTimeStamp(loan.maturity)]);
 
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
+        await rates.setRate("EUR", 99800); // restore rates
+    });
+
+    it("Should NOT collect a loan before it's due", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.repaying, accounts[1], web3.toWei(0.5));
+        await testHelpers.expectThrow(loanManager.collect([loan.id]));
     });
 
     it("Should not collect when rate = 0", async function() {
@@ -167,9 +261,14 @@ contract("Augmint Loans tests", accounts => {
         assert.equal(lastLoan.interestAmount.toNumber(), loan.interestAmount);
     });
 
-    it("Should NOT repay a loan after paymentperiod is over");
+    it("Should NOT collect an already collected loan", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.defaulting, accounts[1], web3.toWei(0.5));
 
-    it("Should NOT collect an already collected A-EUR loan");
+        await testHelpers.waitForTimeStamp(loan.maturity);
+
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
+        await testHelpers.expectThrow(loanManager.collect([loan.id]));
+    });
 
     it("Should collect multiple defaulted A-EUR loans ");
 
@@ -177,9 +276,6 @@ contract("Augmint Loans tests", accounts => {
     it("Should get and repay a loan with colletaralRatio > 1");
     it("Should get and collect a loan with colletaralRatio = 1");
     it("Should get and collect a loan with colletaralRatio > 1");
-    it("Should not get a loan when rates = 0");
-
-    it("Should get a loan if interest rate is negative "); // to be implemented
 
     it("should only allow whitelisted loan contract to be used", async function() {
         const interestEarnedAcc = await monetarySupervisor.interestEarnedAccount();
