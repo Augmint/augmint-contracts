@@ -182,51 +182,69 @@ contract("Loans tests", accounts => {
 
     it("Should list loans from offset", async function() {
         const product = products.repaying;
+        const product2 = products.defaulting;
 
-        const loan = await loanTestHelpers.createLoan(this, product, accounts[1], web3.toWei(2));
+        const loan1 = await loanTestHelpers.createLoan(this, product, accounts[1], web3.toWei(2));
+        const loan2 = await loanTestHelpers.createLoan(this, product2, accounts[2], web3.toWei(0.3));
 
-        const loansArray = await loanManager.getLoans(loan.id);
+        await testHelpers.waitForTimeStamp(loan2.maturity);
+
+        const loansArray = await loanManager.getLoans(loan1.id);
         const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
 
-        assert.equal(loanInfo.length, 1); // offset was from last loan added
+        assert.equal(loanInfo.length, 2); // offset was from first loan added
 
-        const lastLoan = loanInfo[0];
+        const loan1Actual = loanInfo[0];
 
-        assert.equal(lastLoan.id.toNumber(), loan.id);
-        assert.equal(lastLoan.collateralAmount.toNumber(), loan.collateralAmount);
-        assert.equal(lastLoan.repaymentAmount.toNumber(), loan.repaymentAmount);
-        assert.equal("0x" + lastLoan.borrower.toString(16), loan.borrower);
-        assert.equal(lastLoan.productId.toNumber(), product.id);
-        assert.equal(lastLoan.state.toNumber(), loan.state);
-        assert.equal(lastLoan.maturity.toNumber(), loan.maturity);
-        assert.equal(lastLoan.disbursementTime.toNumber(), loan.maturity - product.term);
-        assert.equal(lastLoan.loanAmount.toNumber(), loan.loanAmount);
-        assert.equal(lastLoan.interestAmount.toNumber(), loan.interestAmount);
+        assert.equal(loan1Actual.id.toNumber(), loan1.id);
+        assert.equal(loan1Actual.collateralAmount.toNumber(), loan1.collateralAmount);
+        assert.equal(loan1Actual.repaymentAmount.toNumber(), loan1.repaymentAmount);
+        assert.equal("0x" + loan1Actual.borrower.toString(16), loan1.borrower);
+        assert.equal(loan1Actual.productId.toNumber(), product.id);
+        assert.equal(loan1Actual.state.toNumber(), loan1.state);
+        assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);
+        assert.equal(loan1Actual.disbursementTime.toNumber(), loan1.maturity - product.term);
+        assert.equal(loan1Actual.loanAmount.toNumber(), loan1.loanAmount);
+        assert.equal(loan1Actual.interestAmount.toNumber(), loan1.interestAmount);
+
+        const loan2Actual = loanInfo[1];
+
+        assert.equal(loan2Actual.id.toNumber(), loan2.id);
+        assert.equal("0x" + loan2Actual.borrower.toString(16), loan2.borrower);
+        assert.equal(loan2Actual.state.toNumber(), 2); // Defaulted (not collected)
     });
 
     it("Should list loans for one account from offset", async function() {
-        const product = products.repaying;
+        const product1 = products.repaying;
+        const product2 = products.defaulting;
         const borrower = accounts[1];
 
-        const loan = await loanTestHelpers.createLoan(this, product, borrower, web3.toWei(2));
+        const loan1 = await loanTestHelpers.createLoan(this, product1, borrower, web3.toWei(0.2));
+        const loan2 = await loanTestHelpers.createLoan(this, product2, borrower, web3.toWei(0.3));
         const accountLoanCount = await loanManager.getLoanCountForAddress(borrower);
 
-        const loansArray = await loanManager.getLoansForAddress(borrower, accountLoanCount - 1);
+        await testHelpers.waitForTimeStamp(loan2.maturity);
+
+        const loansArray = await loanManager.getLoansForAddress(borrower, accountLoanCount - 2);
         const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
-        assert.equal(loanInfo.length, 1); // offset was from last loan added for account
+        assert.equal(loanInfo.length, 2); // offset was from first loan added for account
 
-        const lastLoan = loanInfo[0];
+        const loan1Actual = loanInfo[0];
 
-        assert.equal(lastLoan.id.toNumber(), loan.id);
-        assert.equal(lastLoan.collateralAmount.toNumber(), loan.collateralAmount);
-        assert.equal(lastLoan.repaymentAmount.toNumber(), loan.repaymentAmount);
-        assert.equal("0x" + lastLoan.borrower.toString(16), loan.borrower);
-        assert.equal(lastLoan.productId.toNumber(), product.id);
-        assert.equal(lastLoan.state.toNumber(), loan.state);
-        assert.equal(lastLoan.maturity.toNumber(), loan.maturity);
-        assert.equal(lastLoan.disbursementTime.toNumber(), loan.maturity - product.term);
-        assert.equal(lastLoan.loanAmount.toNumber(), loan.loanAmount);
-        assert.equal(lastLoan.interestAmount.toNumber(), loan.interestAmount);
+        assert.equal(loan1Actual.id.toNumber(), loan1.id);
+        assert.equal(loan1Actual.collateralAmount.toNumber(), loan1.collateralAmount);
+        assert.equal(loan1Actual.repaymentAmount.toNumber(), loan1.repaymentAmount);
+        assert.equal("0x" + loan1Actual.borrower.toString(16), loan1.borrower);
+        assert.equal(loan1Actual.productId.toNumber(), product1.id);
+        assert.equal(loan1Actual.state.toNumber(), loan1.state);
+        assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);
+        assert.equal(loan1Actual.disbursementTime.toNumber(), loan1.maturity - product1.term);
+        assert.equal(loan1Actual.loanAmount.toNumber(), loan1.loanAmount);
+        assert.equal(loan1Actual.interestAmount.toNumber(), loan1.interestAmount);
+
+        const loan2Actual = loanInfo[1];
+        assert.equal(loan2Actual.id.toNumber(), loan2.id);
+        assert.equal(loan2Actual.state.toNumber(), 2); // Defaulted (not collected)
     });
 
     it("should only allow whitelisted loan contract to be used", async function() {

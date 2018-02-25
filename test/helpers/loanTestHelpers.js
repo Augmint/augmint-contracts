@@ -211,7 +211,7 @@ async function repayLoan(testInstance, loan) {
 
 async function collectLoan(testInstance, loan, collector) {
     loan.collector = collector;
-    loan.state = 2; // defaulted
+    loan.state = 3; // Collected
 
     const targetCollectionInToken = loan.repaymentAmount.mul(loan.product.defaultingFeePt.add(1000000)).div(1000000);
     const targetFeeInToken = loan.repaymentAmount.mul(loan.product.defaultingFeePt).div(1000000);
@@ -263,16 +263,8 @@ async function collectLoan(testInstance, loan, collector) {
     //      defaultingFee: ${web3.fromWei(defaultingFee).toString()} ETH`
     // );
 
-    // console.log(
-    //     "DEBUG. Borrower balance before collection:",
-    //     ((await web3.eth.getBalance(loan.borrower)) / ONE_ETH).toString()
-    // );
     const tx = await loanManager.collect([loan.id], { from: loan.collector });
     testHelpers.logGasUse(testInstance, tx, "collect 1");
-    // console.log(
-    //     "DEBUG. Borrower balance after collection:",
-    //     ((await web3.eth.getBalance(loan.borrower)) / ONE_ETH).toString()
-    // );
 
     const [totalSupplyAfter, totalLoanAmountAfter, , ,] = await Promise.all([
         augmintToken.totalSupply(),

@@ -24,7 +24,7 @@ contract LoanManager is Restricted {
 
     uint16 public constant CHUNK_SIZE = 100;
 
-    enum LoanState { Open, Repaid, Defaulted }
+    enum LoanState { Open, Repaid, Defaulted, Collected } // NB: Defaulted state is not stored, only getters calculate
 
     struct LoanProduct {
         uint minDisbursedAmount; // 0: with decimals set in AugmintToken.decimals
@@ -146,7 +146,7 @@ contract LoanManager is Restricted {
 
             totalLoanAmountCollected = totalLoanAmountCollected.add(loanAmount);
 
-            loan.state = LoanState.Defaulted;
+            loan.state = LoanState.Collected;
 
             // send ETH collateral to augmintToken reserve
             uint defaultingFeeInToken = loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000);
@@ -216,8 +216,11 @@ contract LoanManager is Restricted {
             (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
             uint disbursementTime = loan.maturity - product.term;
 
+            LoanState loanState =
+                            loan.state == LoanState.Open && now >= loan.maturity ? LoanState.Defaulted : loan.state;
+
             response[i] = [offset + i, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-                        loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount];
+                        loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
         }
     }
 
@@ -246,8 +249,11 @@ contract LoanManager is Restricted {
             (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
             uint disbursementTime = loan.maturity - product.term;
 
+            LoanState loanState =
+                            loan.state == LoanState.Open && now >= loan.maturity? LoanState.Defaulted : loan.state;
+
             response[i] = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-                        loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount];
+                        loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
         }
     }
 
