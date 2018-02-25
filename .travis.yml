@@ -5,9 +5,9 @@ cache:
 install:
     - yarn install --frozen-lockfile
 before_script:
-    - yarn run ganache:run > ganache.out &
+    - yarn ganache:run > ganache.out &
 script:
-    - yarn run test
+    - yarn test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
 after_success:
   - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh

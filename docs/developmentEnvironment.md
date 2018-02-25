@@ -55,20 +55,29 @@ yarn install # if there were any node package changes in packages.json
 
 #### ganache-cli (formerly testrpc)
 
-`yarn run ganache:runmigrate`  
+`yarn runmigrate` (runs with `--reset` flag)
+
 or
 
-* `yarn run ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
+* `yarn ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
 * in separate console:  
-  `yarn run truffle:migrate`  
+  `yarn migrate`  
   or to overwrite existing migration:  
-  `$(yarn bin)/truffle migrate --reset`
+  `yarn migrate --reset`
+
+NB: if you get this error from migration:
+
+```
+Error: Attempting to run transaction which calls a contract function, but recipient address 0xd217ac4354211cda27dd4027b5e223280f885ad3 is not a contract address
+```
+
+then you either need to do a `yarn clean` before `yarn migrate` or run migration as `yarn migrate --reset`
 
 ## Tests
 
 ```
-yarn run ganache:runmigrate
-truffle test
+yarn runmigrate
+yarn test
 ```
 
 ## Sequence diagrams
