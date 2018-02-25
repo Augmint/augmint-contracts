@@ -196,8 +196,11 @@ async function repayLoan(testInstance, loan) {
 
     assert.equal(
         totalSupplyAfter.toString(),
-        totalSupplyBefore.sub(loan.loanAmount).toString(),
-        "total ACE supply should be reduced by the loan amount (what was disbursed)"
+        totalSupplyBefore
+            .sub(loan.repaymentAmount)
+            .add(loan.interestAmount)
+            .toString(),
+        "total supply should be reduced by the repayment amount less interestAmount"
     );
     assert.equal(
         totalLoanAmountAfter.toString(),
@@ -382,7 +385,10 @@ async function calcLoanValues(rates, product, collateralWei) {
         .div(ppmDiv * ppmDiv)
         .round(0, BigNumber.ROUND_DOWN);
 
-    ret.interestAmount = ret.repaymentAmount.minus(ret.loanAmount);
+    ret.interestAmount = ret.repaymentAmount.gt(ret.loanAmount)
+        ? ret.repaymentAmount.minus(ret.loanAmount)
+        : new BigNumber(0);
+
     ret.disbursementTime = moment()
         .utc()
         .unix();

@@ -27,12 +27,21 @@ contract("Loans tests", accounts => {
         await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true); // repaying
         await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true); // defaulting
         await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false); // disabledProduct
+        await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true); // zeroInterest
+        await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true); // negativeInterest
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount),
             tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
-        [products.notDue, products.repaying, products.defaulting, products.disabledProduct] = newProducts;
+        [
+            products.notDue,
+            products.repaying,
+            products.defaulting,
+            products.disabledProduct,
+            products.zeroInterest,
+            products.negativeInterest
+        ] = newProducts;
     });
 
     it("Should get an A-EUR loan", async function() {
@@ -66,6 +75,16 @@ contract("Loans tests", accounts => {
         await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
         });
+        await loanTestHelpers.repayLoan(this, loan, true);
+    });
+
+    it("Should get and repay a loan whith discountRate = 1 (zero interest)", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.zeroInterest, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.repayLoan(this, loan, true);
+    });
+
+    it("Should get and repay a loan whith discountRate > 1 (negative interest)", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.negativeInterest, accounts[0], web3.toWei(0.5));
         await loanTestHelpers.repayLoan(this, loan, true);
     });
 
@@ -146,8 +165,6 @@ contract("Loans tests", accounts => {
         );
         await rates.setRate("EUR", 99800); // restore rates
     });
-
-    it("Should get a loan if interest rate is negative "); // to be implemented
 
     it("Should list loans from offset", async function() {
         const product = products.repaying;

@@ -21,12 +21,20 @@ contract("Loans tests", accounts => {
         await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // notDue
         await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true); // defaulting
         await loanManager.addLoanProduct(1, 900000, 900000, 1000, 100000, true); // defaultingNoLeftOver
+        await loanManager.addLoanProduct(1, 1000000, 900000, 2000, 50000, true); // zeroInterest
+        await loanManager.addLoanProduct(1, 1100000, 900000, 2000, 50000, true); // negativeInterest
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount),
             tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
-        [products.notDue, products.defaulting, products.defaultingNoLeftOver] = newProducts;
+        [
+            products.notDue,
+            products.defaulting,
+            products.defaultingNoLeftOver,
+            products.zeroInterest,
+            products.negativeInterest
+        ] = newProducts;
     });
 
     it("Should collect a defaulted A-EUR loan and send back leftover collateral ", async function() {
@@ -64,8 +72,15 @@ contract("Loans tests", accounts => {
         await rates.setRate("EUR", 99800); // restore rates
     });
 
-    it("Should get and collect a loan with colletaralRatio = 1");
-    it("Should get and collect a loan with colletaralRatio > 1");
+    it("Should get and collect a loan with colletaralRatio = 1", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.zeroInterest, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
+    });
+
+    it("Should get and collect a loan with colletaralRatio > 1", async function() {
+        const loan = await loanTestHelpers.createLoan(this, products.negativeInterest, accounts[0], web3.toWei(0.5));
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
+    });
 
     it("Should collect multiple defaulted A-EUR loans ");
 
