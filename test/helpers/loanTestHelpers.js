@@ -26,7 +26,7 @@ module.exports = {
     repayLoan,
     collectLoan,
     getProductsInfo,
-    getLoansInfo,
+    parseLoansInfo,
     calcLoanValues,
     loanAsserts,
     get loanManager() {
@@ -327,8 +327,8 @@ async function getProductsInfo(offset) {
     return result;
 }
 
-async function getLoansInfo(offset) {
-    const loans = await loanManager.getLoans(offset);
+/* parse array returned by getLoans & getLoansForAddress */
+function parseLoansInfo(loans) {
     assert.equal(loans.length, CHUNK_SIZE);
     const result = [];
     loans.map(loan => {

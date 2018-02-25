@@ -221,6 +221,36 @@ contract LoanManager is Restricted {
         }
     }
 
+    function getLoanCountForAddress(address borrower) external view returns (uint) {
+        return accountLoans[borrower].length;
+    }
+
+    /* returns CHUNK_SIZE loans of a given account, starting from some offset. Loans data encoded as:
+        [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
+                                                                                    loanAmount, interestAmount ] */
+    function getLoansForAddress(address borrower, uint offset) external view returns (uint[10][CHUNK_SIZE] response) {
+
+        uint[] storage loansForAddress = accountLoans[borrower];
+
+        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
+
+            if (offset + i >= loansForAddress.length) { break; }
+
+            uint loanId = loansForAddress[offset + i];
+
+            LoanData storage loan = loans[loanId];
+            LoanProduct storage product = products[loan.productId];
+
+            uint loanAmount;
+            uint interestAmount;
+            (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
+            uint disbursementTime = loan.maturity - product.term;
+
+            response[i] = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
+                        loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount];
+        }
+    }
+
     /* repay loan, called from AugmintToken's transferAndNotify
      Flow for repaying loan:
         1) user calls token contract's transferAndNotify loanId passed in data arg

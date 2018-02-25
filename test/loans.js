@@ -123,7 +123,11 @@ contract("Augmint Loans tests", accounts => {
 
         const loan = await loanTestHelpers.createLoan(this, product, accounts[1], web3.toWei(2));
 
-        const loanInfo = await loanTestHelpers.getLoansInfo(loan.id);
+        const loansArray = await loanManager.getLoans(loan.id);
+        const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
+
+        assert.equal(loanInfo.length, 1); // offset was from last loan added
+
         const lastLoan = loanInfo[0];
 
         assert.equal(lastLoan.id.toNumber(), loan.id);
@@ -138,7 +142,30 @@ contract("Augmint Loans tests", accounts => {
         assert.equal(lastLoan.interestAmount.toNumber(), loan.interestAmount);
     });
 
-    it("Should get loans for one account from offset"); // contract func to be implemented
+    it("Should list loans for one account from offset", async function() {
+        const product = products.repaying;
+        const borrower = accounts[1];
+
+        const loan = await loanTestHelpers.createLoan(this, product, borrower, web3.toWei(2));
+        const accountLoanCount = await loanManager.getLoanCountForAddress(borrower);
+
+        const loansArray = await loanManager.getLoansForAddress(borrower, accountLoanCount - 1);
+        const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
+        assert.equal(loanInfo.length, 1); // offset was from last loan added for account
+
+        const lastLoan = loanInfo[0];
+
+        assert.equal(lastLoan.id.toNumber(), loan.id);
+        assert.equal(lastLoan.collateralAmount.toNumber(), loan.collateralAmount);
+        assert.equal(lastLoan.repaymentAmount.toNumber(), loan.repaymentAmount);
+        assert.equal("0x" + lastLoan.borrower.toString(16), loan.borrower);
+        assert.equal(lastLoan.productId.toNumber(), product.id);
+        assert.equal(lastLoan.state.toNumber(), loan.state);
+        assert.equal(lastLoan.maturity.toNumber(), loan.maturity);
+        assert.equal(lastLoan.disbursementTime.toNumber(), loan.maturity - product.term);
+        assert.equal(lastLoan.loanAmount.toNumber(), loan.loanAmount);
+        assert.equal(lastLoan.interestAmount.toNumber(), loan.interestAmount);
+    });
 
     it("Should NOT repay a loan after paymentperiod is over");
 
