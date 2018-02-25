@@ -6,6 +6,7 @@
         "separate-by-one-line-in-contract": "warn",
         "expression-indent": "warn",
         "indent": "warn",
-        "func-order": "warn"
+        "func-order": "warn",
+        "statement-indent": "warn"
     }
 }
