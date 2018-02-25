@@ -41,7 +41,7 @@ contract("Lock", accounts => {
         testHelpers.logGasUse(this, tx, "addLockProduct");
 
         await testHelpers.assertEvent(lockerInstance, "NewLockProduct", {
-            lockProductId: 1, // before created on for to be used with rest of the tests
+            lockProductId: x => x,
             perTermInterest: 50000,
             durationInSecs: 60,
             minimumLockAmount: 100,
