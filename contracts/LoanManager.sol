@@ -103,7 +103,7 @@ contract LoanManager is Restricted {
 
         // calculate loan values based on ETH sent in with Tx
         uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
-        uint repaymentAmount = tokenValue.mul(product.collateralRatio).roundedDiv(1000000);
+        uint repaymentAmount = tokenValue.mul(product.collateralRatio).div(1000000);
 
         uint loanAmount;
         (loanAmount, ) = calculateLoanValues(product, repaymentAmount);
@@ -266,7 +266,7 @@ contract LoanManager is Restricted {
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
     internal view returns (uint loanAmount, uint interestAmount) {
         // calculate loan values based on repayment amount
-        loanAmount = repaymentAmount.mul(product.discountRate).roundedDiv(1000000);
+        loanAmount = repaymentAmount.mul(product.discountRate).div(1000000);
         interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
     }
 

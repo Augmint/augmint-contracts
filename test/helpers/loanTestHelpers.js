@@ -374,13 +374,13 @@ async function calcLoanValues(rates, product, collateralWei) {
     ret.repaymentAmount = ret.tokenValue
         .mul(product.collateralRatio)
         .div(ppmDiv)
-        .round(0, BigNumber.ROUND_HALF_UP);
+        .round(0, BigNumber.ROUND_DOWN);
 
     ret.loanAmount = ret.tokenValue
         .mul(product.collateralRatio)
         .mul(product.discountRate)
         .div(ppmDiv * ppmDiv)
-        .round(0, BigNumber.ROUND_HALF_UP);
+        .round(0, BigNumber.ROUND_DOWN);
 
     ret.interestAmount = ret.repaymentAmount.minus(ret.loanAmount);
     ret.disbursementTime = moment()
