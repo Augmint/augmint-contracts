@@ -8,16 +8,17 @@ contract("loanManager  tests", accounts => {
         loanManager = loanTestHelpers.loanManager;
     });
 
-    it("Should add new product", async function() {
+    it("Should add new product allow listing from offset 0", async function() {
         const prod = {
+            // assuming prod attributes are same order as array returned
+            minDisbursedAmount: 300000,
             term: 86400,
             discountRate: 970000,
             collateralRatio: 850000,
-            minDisbursedAmount: 300000,
             defaultingFeePt: 50000,
             isActive: true
         };
-        await loanManager.addLoanProduct(
+        const tx = await loanManager.addLoanProduct(
             prod.term,
             prod.discountRate,
             prod.collateralRatio,
@@ -26,17 +27,70 @@ contract("loanManager  tests", accounts => {
             prod.isActive,
             { from: accounts[0] }
         );
+        testHelpers.logGasUse(this, tx, "addLoanProduct");
+
         const res = await testHelpers.assertEvent(loanManager, "LoanProductAdded", {
             productId: x => x
         });
-        const prodActual = await loanTestHelpers.getProductInfo(res.productId);
-        Object.keys(prod).forEach(argName =>
+        const prodActual = await loanManager.products(res.productId);
+
+        Object.keys(prod).forEach((argName, index) =>
             assert.equal(
-                prodActual[argName].toString(),
+                prodActual[index].toString(),
                 prod[argName].toString(),
-                `Prod arg ${argName} expected ${prod[argName]} but has value ${prodActual[argName]}`
+                `Prod arg ${argName} expected ${prod[argName]} but has value ${prodActual[index]}`
             )
         );
+
+        prod.id = res.productId;
+        const productsInfo = await loanTestHelpers.getProductsInfo(0);
+        const productCount = (await loanManager.getProductCount()).toNumber();
+        assert.equal(productsInfo.length, productCount);
+        const lastProduct = productsInfo[productCount - 1];
+        assert.equal(lastProduct.id.toNumber(), prod.id);
+        assert.equal(lastProduct.term.toNumber(), prod.term);
+        assert.equal(lastProduct.discountRate.toNumber(), prod.discountRate);
+        assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
+        assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
+        assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
+        assert.equal(lastProduct.isActive.toNumber(), prod.isActive ? 1 : 0);
+    });
+
+    it("Should allow listing products (offset > 0)", async function() {
+        const prod = {
+            // assuming prod attributes are same order as array returned
+            minDisbursedAmount: 300000,
+            term: 86400,
+            discountRate: 970000,
+            collateralRatio: 850000,
+            defaultingFeePt: 50000,
+            isActive: true
+        };
+        const tx = await loanManager.addLoanProduct(
+            prod.term,
+            prod.discountRate,
+            prod.collateralRatio,
+            prod.minDisbursedAmount,
+            prod.defaultingFeePt,
+            prod.isActive,
+            { from: accounts[0] }
+        );
+        testHelpers.logGasUse(this, tx, "addLoanProduct");
+
+        const productCount = (await loanManager.getProductCount()).toNumber();
+        prod.id = productCount - 1;
+
+        const productsInfo = await loanTestHelpers.getProductsInfo(productCount - 1);
+        assert.equal(productsInfo.length, 1);
+
+        const lastProduct = productsInfo[0];
+        assert.equal(lastProduct.id.toNumber(), prod.id);
+        assert.equal(lastProduct.term.toNumber(), prod.term);
+        assert.equal(lastProduct.discountRate.toNumber(), prod.discountRate);
+        assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
+        assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
+        assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
+        assert.equal(lastProduct.isActive.toNumber(), prod.isActive ? 1 : 0);
     });
 
     it("Only allowed should add new product", async function() {
