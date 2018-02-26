@@ -2,13 +2,16 @@ language: node_js
 cache:
   directories:
     - "node_modules"
+before_install: yarn global add greenkeeper-lockfile@1
 install:
     - yarn install --frozen-lockfile
 before_script:
+    - greenkeeper-lockfile-update
     - yarn ganache:run > ganache.out &
 script:
     - yarn test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
+after_script: greenkeeper-lockfile-upload
 after_success:
   - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
   - chmod +x send.sh
@@ -17,3 +20,6 @@ after_failure:
   - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
   - chmod +x send.sh
   - ./send.sh failure https://discordapp.com/api/webhooks/409415984034742293/fOVOM12gwcQyiIhepS7Qi3taffEnG7vPb39T_0e5cK54ZVUl2h9D1bt90ocVYoHknvSh
+env:
+  global:
+    secure: ifOO8zrXayJi5oJmCvlRXtRFx+2bi5BQuBbEo1ouFCidJD1O5u5J2CaV5klpefvm0VRte5HtNEvoYRLAVVK1RFY60TXWMp0TlqjLPdnS9knagHxR7/VqBXNeXTovUL1dXwC9OzH2UbQmLDc8oyB9vz/nx7mmUmk+RqyUKP3uP/ZVjmpKy/t+VMsp8Qzu/sk2dLZnEhUh270tpGtn+cELGzGMzWhvCoSPwVQvjl1ZbfCfZIoFUuc06bk0CObqStu6AjguvQ+Xvzju6qGNe5lqTr3cMtfmOapMSIGbHsJXIpTW6eAqlu//VQS3q4Ny73Nq15bFE+n76XGLB+1DeQBLD0auIH3vY0s/h3cM+VVteS9erMxN7kp2HUXtLGATnqbQeO+JYEdm0apGLQT3InG3yydS816hDXn4DRw1zTQcllHPdsLFjTu82Pvu83vl3rl96ZNEeHiGCVKnX/Jk4mRCizlgvDyYh5cFgPD6CVnjFhO0scvTvJ+hDgkI7bxojtV8UVHOF1PTsm3ujrB9bfpSj3cYWbeP6XyVcZYaqWtnaM7WgaYJSYN1fRQD7Cunepn9iLXFVzFm36HKpdh/TDh1jZca4GRZmURFz+RwUvwZt7YG0Gxzgqu8RAQQxOtDQ+O/kQC4CxL/zwr/Kh0xlIo1IV1xRn0Ds4ZSDDPQRqOhP6I=
