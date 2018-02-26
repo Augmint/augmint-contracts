@@ -208,19 +208,7 @@ contract LoanManager is Restricted {
 
             if (offset + i >= loans.length) { break; }
 
-            LoanData storage loan = loans[offset + i];
-            LoanProduct storage product = products[loan.productId];
-
-            uint loanAmount;
-            uint interestAmount;
-            (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
-            uint disbursementTime = loan.maturity - product.term;
-
-            LoanState loanState =
-                            loan.state == LoanState.Open && now >= loan.maturity ? LoanState.Defaulted : loan.state;
-
-            response[i] = [offset + i, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-                        loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
+            response[i] = getLoanTuple(offset + i);
         }
     }
 
@@ -239,22 +227,24 @@ contract LoanManager is Restricted {
 
             if (offset + i >= loansForAddress.length) { break; }
 
-            uint loanId = loansForAddress[offset + i];
-
-            LoanData storage loan = loans[loanId];
-            LoanProduct storage product = products[loan.productId];
-
-            uint loanAmount;
-            uint interestAmount;
-            (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
-            uint disbursementTime = loan.maturity - product.term;
-
-            LoanState loanState =
-                            loan.state == LoanState.Open && now >= loan.maturity? LoanState.Defaulted : loan.state;
-
-            response[i] = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-                        loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
+            response[i] = getLoanTuple(loansForAddress[offset + i]);
         }
+    }
+
+    function getLoanTuple(uint loanId) public view returns (uint[10] result) {
+        LoanData storage loan = loans[loanId];
+        LoanProduct storage product = products[loan.productId];
+
+        uint loanAmount;
+        uint interestAmount;
+        (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
+        uint disbursementTime = loan.maturity - product.term;
+
+        LoanState loanState =
+                        loan.state == LoanState.Open && now >= loan.maturity ? LoanState.Defaulted : loan.state;
+
+        result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
+                    loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
     }
 
     /* repay loan, called from AugmintToken's transferAndNotify
