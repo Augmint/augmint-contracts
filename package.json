@@ -10,6 +10,7 @@
         "build": "$(yarn bin)/truffle compile",
         "clean": "rm build/contracts/*",
         "test": "$(yarn bin)/truffle test",
+        "coverage": "$(yarn bin)/solidity-coverage",
         "migrate": "$(yarn bin)/truffle migrate",
         "compile": "yarn build",
         "ganache:run": "./runganache.sh",
