@@ -8,7 +8,7 @@ before_install:
 install:
     - |
       if [[ $BRANCH == "greenkeeper/"* ]]; then
-        echo Greenkeeper build using .yarnrc.greenkeeper; rm .yarnrc; mv .yarnc.greenkeeper .yarnrc; yarn install;
+        echo Greenkeeper build using .yarnrc.greenkeeper; cp .yarnrc.greenkeeper .yarnrc; yarn install;
       else
         echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
       fi
