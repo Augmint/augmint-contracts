@@ -2,11 +2,12 @@ language: node_js
 cache:
   directories:
     - "node_modules"
-before_install: yarn global add greenkeeper-lockfile@1
+before_install:
+    - yarn global add greenkeeper-lockfile@1
+    - greenkeeper-lockfile-update
 install:
     - yarn install
 before_script:
-    - greenkeeper-lockfile-update
     - yarn ganache:run > ganache.out &
 script:
     - yarn test
