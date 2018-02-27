@@ -2,10 +2,35 @@ const testHelpers = require("./helpers/testHelpers.js");
 const loanTestHelpers = require("./helpers/loanTestHelpers.js");
 
 let loanManager = null;
+let loanProduct = null;
 
 contract("loanManager  tests", accounts => {
     before(async function() {
         loanManager = loanTestHelpers.loanManager;
+
+        loanProduct = {
+            // assuming prod attributes are same order as array returned
+            minDisbursedAmount: 300000,
+            term: 86400,
+            discountRate: 970000,
+            collateralRatio: 850000,
+            defaultingFeePt: 50000,
+            isActive: true
+        };
+        await loanManager.addLoanProduct(
+            loanProduct.term,
+            loanProduct.discountRate,
+            loanProduct.collateralRatio,
+            loanProduct.minDisbursedAmount,
+            loanProduct.defaultingFeePt,
+            loanProduct.isActive,
+            { from: accounts[0] }
+        );
+
+        const res = await testHelpers.assertEvent(loanManager, "LoanProductAdded", {
+            productId: x => x
+        });
+        loanProduct.id = res.productId;
     });
 
     it("Should add new product allow listing from offset 0", async function() {
@@ -100,7 +125,7 @@ contract("loanManager  tests", accounts => {
     });
 
     it("Should disable loan product", async function() {
-        const tx = await loanManager.setLoanProductActiveState(0, false);
+        const tx = await loanManager.setLoanProductActiveState(loanProduct.id, false);
         testHelpers.logGasUse(this, tx, "setLoanProductActiveState");
         assert.equal(
             tx.logs[0].event,
@@ -111,7 +136,7 @@ contract("loanManager  tests", accounts => {
     });
 
     it("Should enable loan product", async function() {
-        const tx = await loanManager.setLoanProductActiveState(4, true);
+        const tx = await loanManager.setLoanProductActiveState(loanProduct.id, true);
         testHelpers.logGasUse(this, tx, "setLoanProductActiveState");
         assert.equal(
             tx.logs[0].event,
@@ -122,6 +147,8 @@ contract("loanManager  tests", accounts => {
     });
 
     it("Only allowed should set loan product state", async function() {
-        await testHelpers.expectThrow(loanManager.setLoanProductActiveState(0, true, { from: accounts[1] }));
+        await testHelpers.expectThrow(
+            loanManager.setLoanProductActiveState(loanProduct.id, true, { from: accounts[1] })
+        );
     });
 });
