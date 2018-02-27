@@ -3,6 +3,7 @@ cache:
   directories:
     - "node_modules"
 before_install:
+    - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
     - yarn global add greenkeeper-lockfile@1
 install:
     - |
