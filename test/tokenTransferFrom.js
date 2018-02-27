@@ -6,10 +6,10 @@ let maxFee = null;
 
 contract("TransferFrom AugmintToken tests", accounts => {
     before(async function() {
-        augmintToken = await tokenTestHelpers.initAugmintToken();
+        augmintToken = tokenTestHelpers.augmintToken;
         await tokenTestHelpers.issueToReserve(1000000000);
-        [maxFee, ,] = await Promise.all([
-            augmintToken.transferFeeMax(),
+        [[, , maxFee], ,] = await Promise.all([
+            augmintToken.transferFee(),
             tokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
             tokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
         ]);

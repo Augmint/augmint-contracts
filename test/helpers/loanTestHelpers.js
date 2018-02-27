@@ -1,18 +1,17 @@
-const NEWLOAN_MAXFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-const REPAY_MAXFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-const COLLECT_BASEFEE = web3.toWei(0.11); // TODO: set this to expected value (+set gasPrice)
-
-const NULL_ACC = "0x0000000000000000000000000000000000000000";
-
 const BigNumber = require("bignumber.js");
 const moment = require("moment");
 
-const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const Rates = artifacts.require("./Rates.sol");
 
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 const testHelpers = require("./testHelpers.js");
+
+const NEWLOAN_MAX_GAS = 220000;
+const REPAY_MAX_GAS = 120000;
+const COLLECT_BASE_GAS = 100000;
+
+let CHUNK_SIZE = null;
 
 let augmintToken = null;
 let monetarySupervisor = null;
@@ -23,30 +22,33 @@ let reserveAcc = null;
 let interestEarnedAcc = null;
 
 module.exports = {
-    initLoanManager,
     createLoan,
     repayLoan,
     collectLoan,
-    getProductInfo,
+    getProductsInfo,
+    parseLoansInfo,
     calcLoanValues,
-    loanAsserts
+    loanAsserts,
+    get loanManager() {
+        return loanManager;
+    },
+    get CHUNK_SIZE() {
+        return CHUNK_SIZE;
+    }
 };
 
-async function initLoanManager() {
+before(async function() {
     loanManager = LoanManager.at(LoanManager.address);
-    monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-    augmintToken = await tokenTestHelpers.initAugmintToken();
+    CHUNK_SIZE = (await loanManager.CHUNK_SIZE()).toNumber();
+    augmintToken = tokenTestHelpers.augmintToken;
+    monetarySupervisor = tokenTestHelpers.monetarySupervisor;
+
+    reserveAcc = tokenTestHelpers.augmintReserves.address;
+    interestEarnedAcc = tokenTestHelpers.interestEarnedAccount.address;
+    peggedSymbol = tokenTestHelpers.peggedSymbol;
+
     rates = Rates.at(Rates.address);
-
-    [peggedSymbol, reserveAcc, interestEarnedAcc] = await Promise.all([
-        augmintToken.peggedSymbol(),
-        monetarySupervisor.augmintReserves(),
-        monetarySupervisor.interestEarnedAccount()
-    ]);
-
-    peggedSymbol = web3.toAscii(peggedSymbol);
-    return loanManager;
-}
+});
 
 async function createLoan(testInstance, product, borrower, collateralWei) {
     const loan = await calcLoanValues(rates, product, collateralWei);
@@ -66,22 +68,23 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
 
     const tx = await loanManager.newEthBackedLoan(loan.product.id, {
         from: loan.borrower,
-        value: loan.collateral
+        value: loan.collateralAmount
     });
     testHelpers.logGasUse(testInstance, tx, "newEthBackedLoan");
 
     const [newLoanEvenResult, ,] = await Promise.all([
         testHelpers.assertEvent(loanManager, "NewLoan", {
             loanId: x => x,
-            productId: loan.product.id,
+            productId: loan.product.id.toNumber(),
             borrower: loan.borrower,
-            collateralAmount: loan.collateral.toString(),
+            collateralAmount: loan.collateralAmount.toString(),
             loanAmount: loan.loanAmount.toString(),
-            repaymentAmount: loan.repaymentAmount.toString()
+            repaymentAmount: loan.repaymentAmount.toString(),
+            maturity: x => x
         }),
 
         testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
-            from: NULL_ACC,
+            from: testHelpers.NULL_ACC,
             to: loan.borrower,
             amount: loan.loanAmount.toString(),
             fee: 0,
@@ -97,6 +100,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
     ]);
 
     loan.id = newLoanEvenResult.loanId.toNumber();
+    loan.maturity = newLoanEvenResult.maturity.toNumber();
 
     const [totalSupplyAfter, totalLoanAmountAfter, ,] = await Promise.all([
         augmintToken.totalSupply(),
@@ -108,11 +112,11 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             reserve: {},
             borrower: {
                 ace: balBefore.borrower.ace.add(loan.loanAmount),
-                eth: balBefore.borrower.eth.minus(loan.collateral),
-                gasFee: NEWLOAN_MAXFEE
+                eth: balBefore.borrower.eth.minus(loan.collateralAmount),
+                gasFee: NEWLOAN_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
-                eth: balBefore.loanManager.eth.plus(loan.collateral)
+                eth: balBefore.loanManager.eth.plus(loan.collateralAmount)
             },
             interestEarned: {}
         })
@@ -178,11 +182,11 @@ async function repayLoan(testInstance, loan) {
             reserve: {},
             borrower: {
                 ace: balBefore.borrower.ace.sub(loan.repaymentAmount),
-                eth: balBefore.borrower.eth.add(loan.collateral),
-                gasFee: REPAY_MAXFEE
+                eth: balBefore.borrower.eth.add(loan.collateralAmount),
+                gasFee: REPAY_MAX_GAS * testHelpers.GAS_PRICE
             },
             loanManager: {
-                eth: balBefore.loanManager.eth.minus(loan.collateral)
+                eth: balBefore.loanManager.eth.minus(loan.collateralAmount)
             },
             interestEarned: {
                 ace: balBefore.interestEarned.ace.add(loan.interestAmount)
@@ -192,8 +196,11 @@ async function repayLoan(testInstance, loan) {
 
     assert.equal(
         totalSupplyAfter.toString(),
-        totalSupplyBefore.sub(loan.loanAmount).toString(),
-        "total ACE supply should be reduced by the loan amount (what was disbursed)"
+        totalSupplyBefore
+            .sub(loan.repaymentAmount)
+            .add(loan.interestAmount)
+            .toString(),
+        "total supply should be reduced by the repayment amount less interestAmount"
     );
     assert.equal(
         totalLoanAmountAfter.toString(),
@@ -204,7 +211,7 @@ async function repayLoan(testInstance, loan) {
 
 async function collectLoan(testInstance, loan, collector) {
     loan.collector = collector;
-    loan.state = 2; // defaulted
+    loan.state = 3; // Collected
 
     const targetCollectionInToken = loan.repaymentAmount.mul(loan.product.defaultingFeePt.add(1000000)).div(1000000);
     const targetFeeInToken = loan.repaymentAmount.mul(loan.product.defaultingFeePt).div(1000000);
@@ -229,14 +236,14 @@ async function collectLoan(testInstance, loan, collector) {
             loanManager: loanManager.address,
             interestEarned: interestEarnedAcc
         }),
-        rates.convertFromWei(peggedSymbol, loan.collateral),
+        rates.convertFromWei(peggedSymbol, loan.collateralAmount),
         rates.convertToWei(peggedSymbol, loan.repaymentAmount),
         rates.convertToWei(peggedSymbol, targetCollectionInToken),
         rates.convertToWei(peggedSymbol, targetFeeInToken)
     ]);
 
-    const releasedCollateral = BigNumber.max(loan.collateral.sub(targetCollectionInWei), 0);
-    const collectedCollateral = loan.collateral.sub(releasedCollateral);
+    const releasedCollateral = BigNumber.max(loan.collateralAmount.sub(targetCollectionInWei), 0);
+    const collectedCollateral = loan.collateralAmount.sub(releasedCollateral);
     const defaultingFee = BigNumber.min(targetFeeInWei, collectedCollateral);
 
     // const rate = await rates.rates("EUR");
@@ -245,12 +252,12 @@ async function collectLoan(testInstance, loan, collector) {
     //      A-EUR/EUR: ${rate[0] / 10000}
     //      defaulting fee pt: ${loan.product.defaultingFeePt / 10000} %
     //      repaymentAmount: ${loan.repaymentAmount / 10000} A-EUR = ${web3.fromWei(repaymentAmountInWei)} ETH
-    //      collateral: ${web3.fromWei(loan.collateral).toString()} ETH = ${collateralInToken / 10000} A-EUR
+    //      collateral: ${web3.fromWei(loan.collateralAmount).toString()} ETH = ${collateralInToken / 10000} A-EUR
     //      --------------------
     //      targetFee: ${targetFeeInToken / 10000} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
     //      target collection : ${targetCollectionInToken / 10000} A-EUR = ${web3
-    //         .fromWei(targetCollectionInWei)
-    //         .toString()} ETH
+    // .fromWei(targetCollectionInWei)
+    // .toString()} ETH
     //      collected: ${web3.fromWei(collectedCollateral).toString()} ETH
     //      released: ${web3.fromWei(releasedCollateral).toString()} ETH
     //      defaultingFee: ${web3.fromWei(defaultingFee).toString()} ETH`
@@ -279,16 +286,15 @@ async function collectLoan(testInstance, loan, collector) {
             },
 
             collector: {
-                gasFee: COLLECT_BASEFEE
+                gasFee: COLLECT_BASE_GAS * testHelpers.GAS_PRICE
             },
 
             borrower: {
-                eth: balBefore.borrower.eth.add(releasedCollateral),
-                gasFee: REPAY_MAXFEE
+                eth: balBefore.borrower.eth.add(releasedCollateral)
             },
 
             loanManager: {
-                eth: balBefore.loanManager.eth.minus(loan.collateral)
+                eth: balBefore.loanManager.eth.minus(loan.collateralAmount)
             },
 
             interestEarned: {}
@@ -303,84 +309,102 @@ async function collectLoan(testInstance, loan, collector) {
     );
 }
 
-async function getProductInfo(productId) {
-    const prod = await loanManager.products(productId);
-    const info = {
-        id: productId,
-        term: prod[0],
-        discountRate: prod[1],
-        collateralRatio: prod[2],
-        minDisbursedAmount: prod[3],
-        defaultingFeePt: prod[4],
-        isActive: prod[5]
-    };
-    return info;
+async function getProductsInfo(offset) {
+    const products = await loanManager.getProducts(offset);
+    assert.equal(products.length, CHUNK_SIZE);
+    const result = [];
+    products.map(prod => {
+        const [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive] = prod;
+        if (term.gt(0)) {
+            result.push({ id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive });
+        }
+    });
+    return result;
+}
+
+/* parse array returned by getLoans & getLoansForAddress */
+function parseLoansInfo(loans) {
+    assert.equal(loans.length, CHUNK_SIZE);
+    const result = [];
+    loans.map(loan => {
+        const [
+            id,
+            collateralAmount,
+            repaymentAmount,
+            borrower,
+            productId,
+            state,
+            maturity,
+            disbursementTime,
+            loanAmount,
+            interestAmount
+        ] = loan;
+
+        if (maturity.gt(0)) {
+            result.push({
+                id,
+                collateralAmount,
+                repaymentAmount,
+                borrower,
+                productId,
+                state,
+                maturity,
+                disbursementTime,
+                loanAmount,
+                interestAmount
+            });
+        }
+    });
+
+    return result;
 }
 
 async function calcLoanValues(rates, product, collateralWei) {
     const ret = {};
+    const ppmDiv = 1000000;
 
-    ret.collateral = new BigNumber(collateralWei);
-
-    // LoanManager contract code :
-    // calculate loan values based on ETH sent in with Tx
-    // uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
-    // uint repaymentAmount = tokenValue.mul(products[productId].collateralRatio).roundedDiv(100000000);
-    // repaymentAmount = repaymentAmount * 100;  // rounding 4 decimals value to 2 decimals.
+    ret.collateralAmount = new BigNumber(collateralWei);
     ret.tokenValue = await rates.convertFromWei(peggedSymbol, collateralWei);
+
     ret.repaymentAmount = ret.tokenValue
         .mul(product.collateralRatio)
-        .div(100000000)
-        .round(0, BigNumber.ROUND_HALF_UP)
-        .mul(100);
+        .div(ppmDiv)
+        .round(0, BigNumber.ROUND_DOWN);
 
-    // LoanManager contract code :
-    // uint mul = products[productId].collateralRatio.mul(products[productId].discountRate) / 1000000;
-    // uint loanAmount = tokenValue.mul(mul).roundedDiv(100000000);
-    // loanAmount = loanAmount * 100;
-    ret.loanAmount = product.collateralRatio
+    ret.loanAmount = ret.tokenValue
+        .mul(product.collateralRatio)
         .mul(product.discountRate)
-        .div(1000000)
-        .round(0, BigNumber.ROUND_DOWN)
-        .mul(ret.tokenValue)
-        .div(100000000)
-        .round(0, BigNumber.ROUND_HALF_UP)
-        .mul(100);
+        .div(ppmDiv * ppmDiv)
+        .round(0, BigNumber.ROUND_DOWN);
 
-    ret.interestAmount = ret.repaymentAmount.minus(ret.loanAmount);
+    ret.interestAmount = ret.repaymentAmount.gt(ret.loanAmount)
+        ? ret.repaymentAmount.minus(ret.loanAmount)
+        : new BigNumber(0);
+
     ret.disbursementTime = moment()
         .utc()
         .unix();
     ret.product = product;
+
     return ret;
 }
 
 async function loanAsserts(expLoan) {
     const loan = await loanManager.loans(expLoan.id);
-    assert.equal(loan[0], expLoan.borrower, "borrower should be set");
-    assert.equal(loan[1].toNumber(), expLoan.state, "loan state should be set");
-    assert.equal(loan[2].toString(), expLoan.collateral.toString(), "collateralAmount should be set");
-    assert.equal(loan[3].toString(), expLoan.repaymentAmount.toString(), "repaymentAmount should be set");
-    assert.equal(loan[4].toString(), expLoan.loanAmount.toString(), "loanAmount should be set");
-    assert.equal(loan[5].toString(), expLoan.interestAmount.toString(), "interestAmount should be set");
-    assert.equal(loan[6].toString(), expLoan.product.term.toString(), "term should be set");
+    assert.equal(loan[0].toString(), expLoan.collateralAmount.toString(), "collateralAmount should be set");
+    assert.equal(loan[1].toString(), expLoan.repaymentAmount.toString(), "repaymentAmount should be set");
+    assert.equal(loan[2], expLoan.borrower, "borrower should be set");
+    assert.equal(loan[3].toNumber(), expLoan.product.id, "product id should be set");
+    assert.equal(loan[4].toNumber(), expLoan.state, "loan state should be set");
+    assert.equal(loan[5].toNumber(), expLoan.maturity, "maturity should be the same as in NewLoan event");
 
-    const disbursementTimeActual = loan[7];
+    const maturityActual = loan[5];
+    const maturityExpected = expLoan.product.term.add(expLoan.disbursementTime).toNumber();
+
+    assert(maturityActual >= maturityExpected, "maturity should be at least term + the time at disbursement");
     assert(
-        disbursementTimeActual >= expLoan.disbursementTime,
-        "disbursementDate should be at least the time at disbursement"
+        maturityActual <= maturityExpected + 5,
+        "maturity should be at most the term + time at disbursement + 5. Difference is: " +
+            (maturityActual - maturityExpected)
     );
-    assert(
-        disbursementTimeActual <= expLoan.disbursementTime + 5,
-        "disbursementDate should be at most the time at disbursement + 5. Difference is: " +
-            (disbursementTimeActual - expLoan.disbursementTime)
-    );
-
-    assert.equal(
-        loan[8].toString(),
-        disbursementTimeActual.add(expLoan.product.term),
-        "maturity should be at disbursementDate + term"
-    );
-
-    assert.equal(loan[9].toString(), expLoan.product.defaultingFeePt.toString(), "defaultingFeePt should be set");
 }
