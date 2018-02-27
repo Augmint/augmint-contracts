@@ -3,7 +3,9 @@
 
 # Augmint - Stable Digital Tokens - Solidity Contracts
 
-[![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-contracts) [![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-contracts.svg)](https://greenkeeper.io/)
+[![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-contracts)
+[![Coverage Status](https://coveralls.io/repos/github/Augmint/augmint-contracts/badge.svg?branch=staging)](https://coveralls.io/github/Augmint/augmint-contracts?branch=staging)
+[![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-contracts.svg)](https://greenkeeper.io/)
 
 Decentralised stable cryptocurrency on Ethereum
 
