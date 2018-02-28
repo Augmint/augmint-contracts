@@ -38,7 +38,9 @@ module.exports = {
     }
 };
 const _stringify = stringifier({ maxDepth: 3, indent: "   " });
-
+const gasUseLogDisabled =
+    process.env.TEST_DISABLE_LOG_GAS_USE && process.env.TEST_DISABLE_LOG_GAS_USE.trim().toLowerCase() === "true";
+console.log(process.env.TEST_DISABLE_LOG_GAS_USE, gasUseLogDisabled);
 before(async function() {
     gasPrice = await getGasPrice();
 });
@@ -185,7 +187,9 @@ function revertSnapshot(snapshotId) {
 }
 
 function logGasUse(testObj, tx, txName) {
-    gasUseLog.push([testObj.test.parent.title, testObj.test.fullTitle(), txName || "", tx.receipt.gasUsed]);
+    if (!gasUseLogDisabled) {
+        gasUseLog.push([testObj.test.parent.title, testObj.test.fullTitle(), txName || "", tx.receipt.gasUsed]);
+    }
 }
 
 function waitFor(durationInMs = 1000) {
@@ -251,7 +255,9 @@ function expectThrow(promise) {
 
 after(function() {
     // runs after all tests
-    if (gasUseLog.length > 0) {
+    if (gasUseLogDisabled) {
+        console.log("TEST_DISABLE_LOG_GAS_USE env variable is set to true. Gas use log not recorded.");
+    } else {
         // console.log("full title:", this.parent.fullTitle()); // CHECK: why doesn't it work?
         console.log("===================  GAS USAGE STATS  ===================");
         console.log("Test contract,", "Test,", "Tx,", "Gas used");
@@ -265,5 +271,6 @@ after(function() {
         }
 
         console.log("=========== Total gas usage : " + sum);
+        console.log("Set TEST_DISABLE_LOG_GAS_USE env variable to true to disable gas use log recording.");
     }
 });
