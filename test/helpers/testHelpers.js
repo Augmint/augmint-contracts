@@ -37,10 +37,12 @@ module.exports = {
         return gasPrice;
     }
 };
+
 const _stringify = stringifier({ maxDepth: 3, indent: "   " });
+
 const gasUseLogDisabled =
     process.env.TEST_DISABLE_LOG_GAS_USE && process.env.TEST_DISABLE_LOG_GAS_USE.trim().toLowerCase() === "true";
-console.log(process.env.TEST_DISABLE_LOG_GAS_USE, gasUseLogDisabled);
+
 before(async function() {
     gasPrice = await getGasPrice();
 });
