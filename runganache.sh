@@ -1,5 +1,5 @@
-echo "launching ganache-cli (aka testrpc) with deterministic addresses" $(npm bin)
-$(npm bin)/ganache-cli \
+echo "launching ganache-cli (aka testrpc) with deterministic addresses" $(yarn bin)
+yarn ganache-cli \
 --gasLimit 0x47D5DE \
 --gasPrice 1000000000 \
 --network-id 999 \
