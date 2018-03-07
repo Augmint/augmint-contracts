@@ -3,10 +3,13 @@
 
 # Augmint - Stable Digital Tokens - Solidity Contracts
 
-Decentralised stable cryptocurrency on Ethereum
+[![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-contracts)
+[![Coveralls github branch](https://img.shields.io/coveralls/github/Augmint/augmint-contracts/staging.svg)](https://coveralls.io/github/Augmint/augmint-contracts)
+[![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-contracts.svg)](https://greenkeeper.io/)
+[![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
+[![license](https://img.shields.io/github/license/Augmint/augmint-contracts.svg)](https://github.com/Augmint/augmint-contracts/blob/master/LICENSE)
 
-master: [![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=master)](https://travis-ci.org/Augmint/augmint-contracts)
-staging: [![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-contracts)
+Decentralised stable cryptocurrency on Ethereum
 
 ## Concept
 
@@ -86,10 +89,13 @@ Augmint is an open and transparent project.
 
 We are seeking for great minds to extend our core team. Contribution in any area is much appreciated: development, testing, UX&UI design, legal, marketing spreading the word etc.
 
-Drop us an email: hello@augmint.cc
-or say hi on our [Discord server](https://discord.gg/PwDmsnu)
-
 **[Development environment setup](docs/developmentEnvironment.md)**
+
+## Get in touch
+
+Drop us an email: hello@augmint.cc  
+ or  
+say hi on our [Discord server](https://discord.gg/PwDmsnu): [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
 
 ## Authors
 
