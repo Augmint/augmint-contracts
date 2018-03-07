@@ -14,7 +14,14 @@ module.exports = {
             port: 8545,
             network_id: "999",
             gas: 4707806,
-            gasPrice: 1
+            gasPrice: 1000000000 // 1 GWEI
+        },
+        coverage: {
+            host: "localhost",
+            network_id: "*",
+            port: 8555, // <-- If you change this, also set the port option in .solcover.js.
+            gas: 0xfffffffffff, // <-- Use this high gas value
+            gasPrice: 0x01 // <-- Use this low gas price
         },
         truffleLocal: {
             host: "localhost",
@@ -34,7 +41,7 @@ module.exports = {
             from: "0xae653250B4220835050B75D3bC91433246903A95", // default address to use for any transaction Truffle makes during migrations
             network_id: 4,
             gas: 4700000, // Gas limit used for deploys
-            gasPrice: 20000000000 // 20 Gwei
+            gasPrice: 1000000000 // 1 Gwei
         },
         ropsten: {
             host: "localhost", // Connect to geth on the specified
