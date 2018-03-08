@@ -26,6 +26,7 @@
         "solidity-coverage": "0.4.11",
         "stringifier": "1.3.0",
         "truffle": "4.1.3"
+        "truffle": "4.1.1"
     },
     "greenkeeper": {
         "ignore": ["bignumber.js"]
