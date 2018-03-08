@@ -7,11 +7,11 @@
     "scripts": {
         "start":
             "./runganache.sh & $(yarn bin)/truffle migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
-        "build": "$(yarn bin)/truffle compile",
+        "build": "truffle compile",
         "clean": "rm build/contracts/*",
-        "test": "$(yarn bin)/truffle test",
-        "coverage": "$(yarn bin)/solidity-coverage",
-        "migrate": "$(yarn bin)/truffle migrate",
+        "test": "truffle test",
+        "coverage": "solidity-coverage",
+        "migrate": "truffle migrate",
         "compile": "yarn build",
         "ganache:run": "./runganache.sh",
         "runmigrate": "yarn start"
