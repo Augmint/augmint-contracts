@@ -20,7 +20,7 @@
         "babel-register": "6.26.0",
         "bignumber.js": "5.0.0",
         "coveralls": "3.0.0",
-        "ganache-cli": "6.1.0",
+        "ganache-cli": "6.1.1",
         "moment": "2.21.0",
         "random-seed": "0.3.0",
         "solidity-coverage": "0.4.12",
