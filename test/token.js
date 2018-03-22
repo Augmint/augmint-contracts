@@ -60,4 +60,19 @@ contract("AugmintToken tests", accounts => {
             )
         );
     });
+
+    it("shouldn't create a token contract without token symbol", async function() {
+        await testHelpers.expectThrow(
+            AugmintToken.new(
+                "Augmint Crypto Euro", // name
+                "", // symbol
+                "EUR", // peggedSymbol
+                2, // decimals
+                tokenTestHelpers.feeAccount,
+                2000 /* transferFeePt in parts per million = 0.2% */,
+                200 /* min: 0.02 ACE */,
+                50000 /* max fee: 5 ACE */
+            )
+        );
+    });
 });

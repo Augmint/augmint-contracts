@@ -30,6 +30,8 @@ contract AugmintToken is AugmintTokenInterface {
 
         require(_feeAccount != address(0));
         require(bytes(_name).length > 0);
+        require(bytes(_symbol).length > 0);
+        
         name = _name;
         symbol = _symbol;
         peggedSymbol = _peggedSymbol;
