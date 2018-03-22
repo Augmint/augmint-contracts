@@ -238,4 +238,27 @@ contract("TransferFrom AugmintToken tests", accounts => {
             "allowance value should be decreased"
         );
     });
+
+    it("decreaseApproval to 0", async function() {
+        const startingAllowance = 2000;
+        const decreaseValue = 3000;
+        const expApprove = {
+            owner: accounts[0],
+            spender: accounts[1],
+            value: 0
+        };
+
+        await augmintToken.approve(expApprove.spender, startingAllowance, { from: expApprove.owner });
+
+        const tx = await augmintToken.decreaseApproval(expApprove.spender, decreaseValue, {
+            from: expApprove.owner
+        });
+        testHelpers.logGasUse(this, tx, "decreaseApproval");
+
+        await tokenTestHelpers.approveEventAsserts(expApprove);
+
+        const newAllowance = await augmintToken.allowance(expApprove.owner, expApprove.spender);
+
+        assert.equal(newAllowance.toString(), "0", "allowance value should be 0");
+    });
 });
