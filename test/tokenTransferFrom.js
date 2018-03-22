@@ -188,6 +188,54 @@ contract("TransferFrom AugmintToken tests", accounts => {
         });
     });
 
-    it("increaseApproval");
-    it("decreaseApproval");
+    it("increaseApproval", async function() {
+        const expApprove = {
+            owner: accounts[0],
+            spender: accounts[1],
+            value: 100000
+        };
+        const startingAllowance = await augmintToken.allowance(expApprove.owner, expApprove.spender);
+
+        const tx = await augmintToken.increaseApproval(expApprove.spender, expApprove.value, {
+            from: expApprove.owner
+        });
+        testHelpers.logGasUse(this, tx, "increaseApproval");
+
+        await tokenTestHelpers.approveEventAsserts(expApprove);
+
+        const newAllowance = await augmintToken.allowance(expApprove.owner, expApprove.spender);
+
+        assert.equal(
+            newAllowance.toString(),
+            startingAllowance.add(expApprove.value).toString(),
+            "allowance value should be increased"
+        );
+    });
+
+    it("decreaseApproval", async function() {
+        const startingAllowance = 300000;
+        const decreaseValue = 50000;
+        const expApprove = {
+            owner: accounts[0],
+            spender: accounts[1],
+            value: startingAllowance - decreaseValue
+        };
+
+        await augmintToken.approve(expApprove.spender, startingAllowance, { from: expApprove.owner });
+
+        const tx = await augmintToken.decreaseApproval(expApprove.spender, decreaseValue, {
+            from: expApprove.owner
+        });
+        testHelpers.logGasUse(this, tx, "decreaseApproval");
+
+        await tokenTestHelpers.approveEventAsserts(expApprove);
+
+        const newAllowance = await augmintToken.allowance(expApprove.owner, expApprove.spender);
+
+        assert.equal(
+            newAllowance.toString(),
+            (startingAllowance - decreaseValue).toString(),
+            "allowance value should be decreased"
+        );
+    });
 });
