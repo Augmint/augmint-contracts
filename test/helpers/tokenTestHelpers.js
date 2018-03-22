@@ -34,6 +34,9 @@ module.exports = {
     },
     get interestEarnedAccount() {
         return interestEarnedAccount;
+    },
+    get feeAccount() {
+        return FeeAccount.address;
     }
 };
 
