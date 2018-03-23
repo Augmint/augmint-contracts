@@ -88,7 +88,6 @@ contract Locker is Restricted, TokenReceiver {
 
     function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("MonetaryBoard") {
 
-        require(lockProductId < lockProducts.length);
         lockProducts[lockProductId].isActive = isActive;
         LockProductActiveChange(lockProductId, isActive);
 

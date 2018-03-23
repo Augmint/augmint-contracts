@@ -113,6 +113,18 @@ contract("Exchange matching tests", accounts => {
         await testHelpers.expectThrow(exchange.matchOrders(buyOrder.id, sellOrder.id));
     });
 
+    it("shouldn't matchmultiple if different count of buy&sell orders passed ", async function() {
+        const buyOrder1 = { amount: web3.toWei(0.535367), maker: maker, price: 110000, orderType: TOKEN_BUY };
+        const sellOrder1 = { amount: 95582, maker: taker, price: 90000, orderType: TOKEN_SELL };
+        const sellOrder2 = { amount: 95582, maker: taker, price: 90000, orderType: TOKEN_SELL };
+
+        await exchangeTestHelper.newOrder(this, buyOrder1);
+        await exchangeTestHelper.newOrder(this, sellOrder1);
+        await exchangeTestHelper.newOrder(this, sellOrder2);
+
+        await testHelpers.expectThrow(exchange.matchMultipleOrders([buyOrder1.id], [sellOrder1.id, sellOrder2.id]));
+    });
+
     it("should match multiple orders"); // ensure edge cases of passing the same order twice
     it("matchMultipleOrders should match as many orders as fits into gas provided");
     it("matchMultipleOrders should stop if one is non-matching");
