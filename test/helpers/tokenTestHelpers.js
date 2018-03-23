@@ -1,7 +1,7 @@
 const BigNumber = require("bignumber.js");
 const testHelpers = new require("./testHelpers.js");
 
-const AugmintToken = artifacts.require("./mocks/TokenAEur.sol");
+const AugmintToken = artifacts.require("./TokenAEur.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
@@ -34,6 +34,9 @@ module.exports = {
     },
     get interestEarnedAccount() {
         return interestEarnedAccount;
+    },
+    get feeAccount() {
+        return FeeAccount.address;
     }
 };
 

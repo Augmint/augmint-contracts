@@ -48,11 +48,12 @@ contract Restricted {
     }
 
     function revokePermission(address agent, bytes32 requiredPermission) public {
+        require(permissions[msg.sender]["MonetaryBoard"]);
         permissions[agent][requiredPermission] = false;
         PermissionRevoked(agent, requiredPermission);
     }
 
-    function revokeMulitplePermissions(address agent, bytes32[] requiredPermissions) public {
+    function revokeMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
         uint256 length = requiredPermissions.length;
         for (uint256 i = 0; i < length; i++) {
             revokePermission(agent, requiredPermissions[i]);

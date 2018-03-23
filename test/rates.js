@@ -38,6 +38,13 @@ contract("Rates tests", accounts => {
         await ratesTestHelpers.newRatesAsserts(tx, symbols, newRates);
     });
 
+    it("should throw if set multiple rates invalid", async function() {
+        const symbols = ["GBP", "USD", "XXX"];
+        let newRates = [12350000, 11110000];
+
+        await testHelpers.expectThrow(rates.setMultipleRates(symbols, newRates));
+    });
+
     it("should be possible to convert WEI to/from EUR", async function() {
         const rate = 41592653;
         const testEur = 31415926536;
