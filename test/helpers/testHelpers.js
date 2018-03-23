@@ -5,7 +5,6 @@ let gasPrice = null;
 module.exports = {
     stringify,
     getGasCost,
-    getGasPrice,
     getEvents,
     assertEvent,
     assertNoEvents,
@@ -14,9 +13,39 @@ module.exports = {
     logGasUse,
     expectThrow,
     waitForTimeStamp,
-    waitFor
+    waitFor,
+
+    /* CONSTANT getters */
+    get ONE_ETH() {
+        return 1000000000000000000;
+    },
+    get NULL_ACC() {
+        return "0x0000000000000000000000000000000000000000";
+    },
+    get TOKEN_BUY() {
+        return 0;
+    },
+    get TOKEN_SELL() {
+        return 1;
+    },
+    get GAS_PRICE() {
+        if (gasPrice === null) {
+            throw new Error(
+                "gasPrice is not set. testHelpers.before() must be executed before you attempt to get gasPrice"
+            );
+        }
+        return gasPrice;
+    }
 };
+
 const _stringify = stringifier({ maxDepth: 3, indent: "   " });
+
+const gasUseLogDisabled =
+    process.env.TEST_DISABLE_LOG_GAS_USE && process.env.TEST_DISABLE_LOG_GAS_USE.trim().toLowerCase() === "true";
+
+before(async function() {
+    gasPrice = await getGasPrice();
+});
 
 function stringify(values) {
     return _stringify(values);
@@ -35,10 +64,6 @@ function getEvents(contractInstance, eventName) {
 }
 
 async function getGasCost(gas) {
-    if (gasPrice === null) {
-        gasPrice = await getGasPrice();
-    }
-
     return gasPrice.mul(gas);
 }
 
@@ -164,7 +189,9 @@ function revertSnapshot(snapshotId) {
 }
 
 function logGasUse(testObj, tx, txName) {
-    gasUseLog.push([testObj.test.parent.title, testObj.test.fullTitle(), txName || "", tx.receipt.gasUsed]);
+    if (!gasUseLogDisabled) {
+        gasUseLog.push([testObj.test.parent.title, testObj.test.fullTitle(), txName || "", tx.receipt.gasUsed]);
+    }
 }
 
 function waitFor(durationInMs = 1000) {
@@ -230,7 +257,9 @@ function expectThrow(promise) {
 
 after(function() {
     // runs after all tests
-    if (gasUseLog.length > 0) {
+    if (gasUseLogDisabled) {
+        console.log("TEST_DISABLE_LOG_GAS_USE env variable is set to true. Gas use log not recorded.");
+    } else {
         // console.log("full title:", this.parent.fullTitle()); // CHECK: why doesn't it work?
         console.log("===================  GAS USAGE STATS  ===================");
         console.log("Test contract,", "Test,", "Tx,", "Gas used");
@@ -244,5 +273,6 @@ after(function() {
         }
 
         console.log("=========== Total gas usage : " + sum);
+        console.log("Set TEST_DISABLE_LOG_GAS_USE env variable to true to disable gas use log recording.");
     }
 });

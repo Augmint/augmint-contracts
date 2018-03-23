@@ -5,7 +5,7 @@ const Rates = artifacts.require("./Rates.sol");
 const SafeMath = artifacts.require("./SafeMath.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 
-module.exports = function(deployer, network, accounts) {
+module.exports = function(deployer) {
     deployer.link(SafeMath, LoanManager);
     deployer.deploy(
         LoanManager,
@@ -20,7 +20,6 @@ module.exports = function(deployer, network, accounts) {
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
 
         await Promise.all([
-            lm.grantPermission(accounts[0], "MonetaryBoard"),
             tokenAEur.grantPermission(LoanManager.address, "NoFeeTransferContracts"),
             monetarySupervisor.grantPermission(LoanManager.address, "LoanManagerContracts")
         ]);
@@ -42,12 +41,12 @@ module.exports = function(deployer, network, accounts) {
         }
         console.log("   On a test network. Adding test loanProducts. Network id: ", web3.version.network);
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
-        await lm.addLoanProduct(31536000, 800000, 800000, 300000, 50000, true); // due in 365d
-        await lm.addLoanProduct(15552000, 850000, 800000, 300000, 50000, true); // due in 180d
-        await lm.addLoanProduct(7776000, 910000, 800000, 300000, 50000, true); // due in 90d
-        await lm.addLoanProduct(2592000, 950000, 800000, 300000, 50000, true); // due in 30d
-        await lm.addLoanProduct(86400, 970000, 850000, 300000, 50000, true); // due in 1 day
-        await lm.addLoanProduct(3600, 985000, 900000, 200000, 50000, true); // due in 1hr for testing repayments
-        await lm.addLoanProduct(1, 990000, 950000, 100000, 50000, true); // defaults in 1 secs for testing
+        await lm.addLoanProduct(31536000, 800000, 800000, 3000, 50000, true); // due in 365d
+        await lm.addLoanProduct(15552000, 850000, 800000, 3000, 50000, true); // due in 180d
+        await lm.addLoanProduct(7776000, 910000, 800000, 3000, 50000, true); // due in 90d
+        await lm.addLoanProduct(2592000, 950000, 800000, 3000, 50000, true); // due in 30d
+        await lm.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // due in 1 day
+        await lm.addLoanProduct(3600, 985000, 900000, 2000, 50000, true); // due in 1hr for testing repayments
+        await lm.addLoanProduct(1, 990000, 950000, 1000, 50000, true); // defaults in 1 secs for testing
     });
 };

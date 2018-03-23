@@ -15,9 +15,13 @@ contract AugmintToken is AugmintTokenInterface {
 
     address public feeAccount;
 
-    uint public transferFeePt; // in parts per million (ppm) , ie. 2,000 = 0.2%
-    uint public transferFeeMin; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
-    uint public transferFeeMax; // with base unit of augmint token, eg. 4 decimals for token, eg. 31000 = 3.1 ACE
+    struct Fee {
+        uint pt;  // in parts per million (ppm) , ie. 2,000 = 0.2%
+        uint min; // with base unit of augmint token, eg. 2 decimals for token, eg. 310 = 3.1 ACE
+        uint max; // with base unit of augmint token, eg. 2 decimals for token, eg. 310 = 3.1 ACE
+    }
+
+    Fee public transferFee;
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
@@ -33,9 +37,7 @@ contract AugmintToken is AugmintTokenInterface {
 
         feeAccount = _feeAccount;
 
-        transferFeePt = _transferFeePt;
-        transferFeeMin = _transferFeeMin;
-        transferFeeMax = _transferFeeMax;
+        transferFee = Fee(_transferFeePt, _transferFeeMin, _transferFeeMax);
     }
 
     // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is
@@ -80,15 +82,8 @@ contract AugmintToken is AugmintTokenInterface {
 
     function setTransferFees(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax)
     external restrict("MonetaryBoard") {
-        transferFeePt = _transferFeePt;
-        transferFeeMin = _transferFeeMin;
-        transferFeeMax = _transferFeeMax;
-        TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
-    }
-
-    /* helper function for FrontEnd to reduce calls */
-    function getParams() external view returns(uint[3]) {
-        return [transferFeePt, transferFeeMin, transferFeeMax];
+        transferFee = Fee(_transferFeePt, _transferFeeMin, _transferFeeMax);
+        TransferFeesChanged(_transferFeePt, _transferFeeMin, _transferFeeMax);
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
@@ -106,7 +101,6 @@ contract AugmintToken is AugmintTokenInterface {
 
     function approve(address _spender, uint256 amount) public returns (bool) {
         require(_spender != 0x0);
-        require(msg.sender != _spender); // no need to approve for myself. Makes client code simpler if we don't allow
         allowed[msg.sender][_spender] = amount;
         Approval(msg.sender, _spender, amount);
         return true;
@@ -122,7 +116,6 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        require(msg.sender != _spender); // no need to approve for myself. Makes client code simpler if we don't allow
         uint oldValue = allowed[msg.sender][_spender];
         if (_subtractedValue > oldValue) {
             allowed[msg.sender][_spender] = 0;
@@ -139,18 +132,17 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function _increaseApproval(address _approver, address _spender, uint _addedValue) internal returns (bool) {
-        require(_approver != _spender); // no need to approve for myself. Makes client code simpler if we don't allow
         allowed[_approver][_spender] = allowed[_approver][_spender].add(_addedValue);
         Approval(_approver, _spender, allowed[_approver][_spender]);
     }
 
     function calculateFee(address from, address to, uint amount) internal view returns (uint256 fee) {
         if (!permissions[from]["NoFeeTransferContracts"] && !permissions[to]["NoFeeTransferContracts"]) {
-            fee = amount.mul(transferFeePt).div(1000000);
-            if (fee > transferFeeMax) {
-                fee = transferFeeMax;
-            } else if (fee < transferFeeMin) {
-                fee = transferFeeMin;
+            fee = amount.mul(transferFee.pt).div(1000000);
+            if (fee > transferFee.max) {
+                fee = transferFee.max;
+            } else if (fee < transferFee.min) {
+                fee = transferFee.min;
             }
         }
         return fee;
@@ -170,7 +162,6 @@ contract AugmintToken is AugmintTokenInterface {
 
     function _transfer(address from, address to, uint256 amount, string narrative) private {
         require(to != 0x0);
-        require(from != to); // no need to send to myself. Makes client code simpler if we don't allow
         uint fee = calculateFee(from, to, amount);
         if (fee > 0) {
             balances[feeAccount] = balances[feeAccount].add(fee);
