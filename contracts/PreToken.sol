@@ -69,6 +69,9 @@ contract PreToken is Restricted {
 
         agreements[msg.sender].balance = agreements[msg.sender].balance.sub(amount);
         agreements[to].balance = agreements[to].balance.add(amount);
+        agreements[to].agreementHash = agreements[msg.sender].agreementHash;
+        agreements[to].valuationCap = agreements[msg.sender].valuationCap;
+        agreements[to].discount = agreements[msg.sender].discount;
 
         Transfer(msg.sender, to, amount);
     }
