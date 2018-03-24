@@ -31,7 +31,7 @@ contract AugmintToken is AugmintTokenInterface {
         require(_feeAccount != address(0));
         require(bytes(_name).length > 0);
         require(bytes(_symbol).length > 0);
-        
+
         name = _name;
         symbol = _symbol;
         peggedSymbol = _peggedSymbol;
@@ -42,8 +42,10 @@ contract AugmintToken is AugmintTokenInterface {
         transferFee = Fee(_transferFeePt, _transferFeeMin, _transferFeeMax);
     }
 
-    // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is
-    //               only allowed on new loan (by trusted Lender contracts) or strictly to reserve by MonetaryBoard
+    // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is only allowed:
+    //      - on new loan (by trusted Lender contracts)
+    //      - when converting old tokens using MonetarySupervisor
+    //      - strictly to reserve by MonetaryBoard (via MonetarySupervisor)
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
         balances[to] = balances[to].add(amount);
         totalSupply = totalSupply.add(amount);

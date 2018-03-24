@@ -4,8 +4,10 @@
     - enforces system wide limits
     - burns and issues to AugmintReserves
     - Send funds from reserve to exchange when intervening (not implemented yet)
+    - Converts older versions of AugmintTokens in 1:1 to new
 
     TODO:
+        - enforce LTD limits
         - MonetarySupervisorInterface (and use it everywhere)
         - interestEarnedAccount setter?
         - create and use InterestEarnedAccount interface instead?
@@ -16,11 +18,12 @@ pragma solidity 0.4.19;
 import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
+import "./interfaces/TokenReceiver.sol";
 import "./InterestEarnedAccount.sol";
 import "./AugmintReserves.sol";
 
 
-contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blocks
+contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-line no-empty-blocks
     using SafeMath for uint256;
 
     AugmintTokenInterface public augmintToken;
@@ -39,7 +42,13 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
     uint public allowedLtdDifferenceAmount; /* in token - if totalLoan and totalLock difference is less than that
                                              then allow loan or lock even if ltdDifference limit would go off with it */
 
+    /* Previously deployed AugmintTokens which are accepted for conversion (see transferNotification() )
+        NB: it's not iterable so old version addresses needs to be added for UI manually after each deploy */
+    mapping(address => bool) public acceptedLegacyAugmintTokens;
+
     event ParamsChanged(uint ltdDifferenceLimit, uint allowedLtdDifferenceAmount);
+
+    event AcceptedLegacyAugmintTokenChanged(address augmintTokenAddress, bool newAcceptedState);
 
     function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
@@ -94,6 +103,12 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
         totalLoanAmount = totalLoanAmount.sub(totalLoanAmountCollected);
     }
 
+    function setAcceptedLegacyAugmintToken(address legacyAugmintTokenAddress, bool newAcceptedState)
+    external restrict("MonetaryBoard") {
+        acceptedLegacyAugmintTokens[legacyAugmintTokenAddress] = newAcceptedState;
+        AcceptedLegacyAugmintTokenChanged(legacyAugmintTokenAddress, newAcceptedState);
+    }
+
     function setParams(uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount)
     external restrict("MonetaryBoard") {
         ltdDifferenceLimit = _ltdDifferenceLimit;
@@ -105,6 +120,25 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
     // helper function for FrontEnd to reduce calls
     function getParams() external view returns(uint[2]) {
         return [ltdDifferenceLimit, allowedLtdDifferenceAmount];
+    }
+
+    /* User can request to convert their tokens from older AugmintToken versions in 1:1
+      transferNotification is called from AugmintToken's transferAndNotify
+     Flow for converting old tokens:
+        1) user calls old token contract's transferAndNotify with the amount to convert,
+                addressing the new MonetarySupervisor Contract
+        2) transferAndNotify transfers user's old tokens to the current MonetarySupervisor contract's address
+        3) transferAndNotify calls MonetarySupervisor.transferNotification
+        4) MonetarySupervisor checks if old AugmintToken is permitted
+        5) MonetarySupervisor issues new tokens to user's account in current AugmintToken
+        6) MonetarySupervisor burns old tokens from own balance
+    */
+    function transferNotification(address from, uint amounToConvert, uint) public {
+        AugmintTokenInterface legacyToken = AugmintTokenInterface(msg.sender);
+        require(acceptedLegacyAugmintTokens[legacyToken]);
+
+        legacyToken.burn(amounToConvert);
+        augmintToken.issueTo(from, amounToConvert);
     }
 
 }
