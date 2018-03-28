@@ -1,27 +1,30 @@
 const PreToken = artifacts.require("./PreToken.sol");
 const testHelpers = require("./helpers/testHelpers.js");
+const preTokenTestHelpers = require("./helpers/preTokenTestHelpers");
 
 let preToken;
+let quorumSigners;
 
 contract("PreToken", accounts => {
     before(() => {
         preToken = PreToken.at(PreToken.address);
+        quorumSigners = [accounts[0]];
     });
 
     it("should add an agreement", async function() {
         const agreement = {
-            to: accounts[1],
+            owner: accounts[1],
             hash: "0x26517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 800000,
             cap: 20000000
         };
-        const tx = await preToken.addAgreement(agreement.to, agreement.hash, agreement.discount, agreement.cap);
-        testHelpers.logGasUse(this, tx, "addAgreement");
+
+        await preTokenTestHelpers.addAgreement(this, quorumSigners, agreement);
 
         const [actualAgreement] = await Promise.all([
-            preToken.agreements(agreement.to),
+            preToken.agreements(agreement.owner),
             testHelpers.assertEvent(preToken, "NewAgreement", {
-                to: agreement.to,
+                to: agreement.owner,
                 agreementHash: agreement.hash,
                 discount: agreement.discount,
                 valuationCap: agreement.cap
@@ -34,89 +37,93 @@ contract("PreToken", accounts => {
         assert.equal(actualAgreement[3].toNumber(), agreement.cap);
     });
 
-    it("should NOT add an agreement without agreementHash", async function() {
+    it("should NOT add an agreement to 0x0 account", async function() {
         const agreement = {
-            to: accounts[2],
-            hash: "0x0",
-            discount: 800000,
-            cap: 20000000
-        };
-        await testHelpers.expectThrow(
-            preToken.addAgreement(agreement.to, agreement.hash, agreement.discount, agreement.cap)
-        );
-    });
-
-    it("should NOT add an agreement if to: already has one", async function() {
-        const agreement = {
-            to: accounts[3],
+            owner: "0x0000000000000000000000000000000000000000",
             hash: "0x46517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 800000,
             cap: 20000000
         };
-        const tx = await preToken.addAgreement(agreement.to, agreement.hash, agreement.discount, agreement.cap);
-        testHelpers.logGasUse(this, tx, "addAgreement");
-        await testHelpers.expectThrow(
-            preToken.addAgreement(agreement.to, agreement.hash, agreement.discount, agreement.cap)
-        );
+
+        await testHelpers.expectThrow(preTokenTestHelpers.addAgreement(this, quorumSigners, agreement));
     });
 
-    it("only permitted should add an agreement", async function() {
+    it("should NOT add an agreement without agreementHash", async function() {
         const agreement = {
-            to: accounts[4],
+            owner: accounts[2],
+            hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+            discount: 800000,
+            cap: 20000000
+        };
+
+        await testHelpers.expectThrow(preTokenTestHelpers.addAgreement(this, quorumSigners, agreement));
+    });
+
+    it("should NOT add an agreement if owner already has one", async function() {
+        const agreement = {
+            owner: accounts[3],
+            hash: "0x46517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
+            discount: 800000,
+            cap: 20000000
+        };
+        await preTokenTestHelpers.addAgreement(this, quorumSigners, agreement);
+
+        await testHelpers.expectThrow(preTokenTestHelpers.addAgreement(this, quorumSigners, agreement));
+    });
+
+    it("add agreement should be only via multiSig", async function() {
+        const agreement = {
+            owner: accounts[4],
             hash: "0x56517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 800000,
             cap: 20000000
         };
         await testHelpers.expectThrow(
-            preToken.addAgreement(agreement.to, agreement.hash, agreement.discount, agreement.cap, {
-                from: accounts[1]
-            })
+            preToken.addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap)
         );
     });
 
     it("should issueTo an account with agreement", async function() {
         const agreement = {
-            to: accounts[5],
+            owner: accounts[5],
             hash: "0x46517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 800000,
             cap: 20000000
         };
         const amount = 1000;
-        const [tx1, supplyBefore] = await Promise.all([
-            preToken.addAgreement(agreement.to, agreement.hash, agreement.discount, agreement.cap),
-            preToken.totalSupply()
+        const [supplyBefore] = await Promise.all([
+            preToken.totalSupply(),
+            preTokenTestHelpers.addAgreement(this, quorumSigners, agreement)
         ]);
-        testHelpers.logGasUse(this, tx1, "addAgreement");
 
-        const tx2 = await preToken.issueTo(agreement.to, amount);
+        await preTokenTestHelpers.issueTo(this, quorumSigners, agreement.owner, amount);
+
         const [supplyAfter, balanceAfter] = await Promise.all([
             preToken.totalSupply(),
-            preToken.balanceOf(agreement.to),
+            preToken.balanceOf(agreement.owner),
             testHelpers.assertEvent(preToken, "Transfer", {
                 from: "0x0000000000000000000000000000000000000000",
-                to: agreement.to,
+                to: agreement.owner,
                 amount
             })
         ]);
-        testHelpers.logGasUse(this, tx2, "issueTo");
 
         assert.equal(supplyAfter.toString(), supplyBefore.add(amount).toString());
         assert.equal(balanceAfter.toString(), amount.toString());
     });
 
     it("should NOT issueTo an account without an agreement", async function() {
-        await testHelpers.expectThrow(preToken.issueTo(accounts[6], 1000));
+        await testHelpers.expectThrow(preTokenTestHelpers.issueTo(this, quorumSigners, accounts[6], 1000));
     });
 
-    it("only permitted should issueTo", async function() {
+    it("only multiSig should call issueTo", async function() {
         const agreement = {
-            to: accounts[7],
+            owner: accounts[7],
             hash: "0x76517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 800000,
             cap: 20000000
         };
-
-        await preToken.addAgreement(agreement.to, agreement.hash, agreement.discount, agreement.cap),
-        await testHelpers.expectThrow(preToken.issueTo(agreement.to, 1000, { from: accounts[1] }));
+        await preTokenTestHelpers.addAgreement(this, quorumSigners, agreement);
+        await testHelpers.expectThrow(preToken.issueTo(agreement.owner, 1000, { from: accounts[0] }));
     });
 });

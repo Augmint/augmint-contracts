@@ -1,8 +1,10 @@
 const PreToken = artifacts.require("./PreToken.sol");
 const testHelpers = require("./helpers/testHelpers.js");
+const preTokenTestHelpers = require("./helpers/preTokenTestHelpers");
 
 let preToken;
 let agreement;
+let quorumSigners;
 
 contract("PreToken transfer", accounts => {
     before(async () => {
@@ -14,8 +16,15 @@ contract("PreToken transfer", accounts => {
             discount: 700000,
             cap: 15000000
         };
-        await preToken.addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap);
-        await preToken.issueTo(accounts[1], 100000);
+        quorumSigners = [accounts[0]];
+
+        let txData = preTokenTestHelpers.preTokenWeb3Contract.methods
+            .addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap)
+            .encodeABI();
+        await preTokenTestHelpers.signAndExecute(quorumSigners, txData);
+
+        txData = preTokenTestHelpers.preTokenWeb3Contract.methods.issueTo(agreement.owner, 1000000).encodeABI();
+        await preTokenTestHelpers.signAndExecute(quorumSigners, txData);
     });
 
     it("should transfer to an account which has no agreement yet", async function() {
@@ -90,11 +99,12 @@ contract("PreToken transfer", accounts => {
             cap: 15000000
         };
 
-        const tx1 = await preToken.addAgreement(agreement2.owner, agreement2.hash, agreement2.discount, agreement2.cap);
-        testHelpers.logGasUse(this, tx1, "addAgreement");
+        await preTokenTestHelpers.addAgreement(this, quorumSigners, agreement2);
 
         const tx2 = await preToken.transfer(agreement2.owner, amount, { from: agreement.owner });
         testHelpers.logGasUse(this, tx2, "transfer");
+
+        await testHelpers.assertEvent(preToken, "Transfer", { from: agreement.owner, to: agreement2.owner, amount });
     });
 
     it("should NOT transfer to an account which has a different agreement", async function() {
@@ -106,9 +116,7 @@ contract("PreToken transfer", accounts => {
             cap: 15000000
         };
 
-        const tx1 = await preToken.addAgreement(agreement2.owner, agreement2.hash, agreement2.discount, agreement2.cap);
-        testHelpers.logGasUse(this, tx1, "addAgreement");
-
+        await preTokenTestHelpers.addAgreement(this, quorumSigners, agreement2);
         await testHelpers.expectThrow(preToken.transfer(agreement2.owner, amount, { from: agreement.owner }));
     });
 

@@ -2,18 +2,18 @@
 Intentionally not fully ERC20 compliant:
   - transfer is only allowed to accounts without an agreement yet or same agreements
   - no approval and transferFrom
+
  TODO:
-  - multisig for issueTo and addAgreement
   - is keccak256 hash the best choice for agreementHash? I.e. Do we ever need to check it on chain? If not then we
             could choose any other which is the most convenient to produce off chain
 */
 
 pragma solidity 0.4.19;
 import "./generic/SafeMath.sol";
-import "./generic/Restricted.sol";
+import "./StakeHolder50Signer.sol";
 
 
-contract PreToken is Restricted {
+contract PreToken {
     using SafeMath for uint256;
 
     string constant public name = "Augmint pretokens"; // solhint-disable-line const-name-snakecase
@@ -21,6 +21,8 @@ contract PreToken is Restricted {
     uint8 constant public decimals = 0; // solhint-disable-line const-name-snakecase
 
     uint public totalSupply;
+
+    address public stakeHolder50Signer;
 
     struct Agreement {
         uint balance;
@@ -36,8 +38,14 @@ contract PreToken is Restricted {
 
     event NewAgreement(address to, bytes32 agreementHash, uint32 discount, uint32 valuationCap);
 
-    function addAgreement(address to, bytes32 agreementHash, uint32 discount, uint32 valuationCap)
-    external restrict("OwnerBoard") {
+    function PreToken(address _stakeHolder50Signer) public {
+        require(_stakeHolder50Signer != 0x0);
+        stakeHolder50Signer = _stakeHolder50Signer;
+    }
+
+    function addAgreement(address to, bytes32 agreementHash, uint32 discount, uint32 valuationCap) external {
+        require(msg.sender == stakeHolder50Signer);
+        require(to != address(0));
         require(agreements[to].agreementHash == 0x0);
         require(agreementHash != 0x0);
 
@@ -46,7 +54,8 @@ contract PreToken is Restricted {
         NewAgreement(to, agreementHash, discount, valuationCap);
     }
 
-    function issueTo(address _to, uint amount) external restrict("OwnerBoard") {
+    function issueTo(address _to, uint amount) external {
+        require(msg.sender == stakeHolder50Signer);
         Agreement storage to = agreements[_to];
         require(to.agreementHash != 0x0);
 

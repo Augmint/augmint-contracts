@@ -215,16 +215,12 @@ async function waitForTimeStamp(UnixTimestamp) {
 }
 
 function expectThrow(promise) {
-    const onPrivateChain = web3.version.network === 1976 ? true : false; // set by .runprivatechain.sh (geth ...  --networkid 1976 ..)
     return promise
         .then(res => {
-            if (!onPrivateChain) {
-                //console.log("Received solidity tx instead of throw: \r\n", JSON.stringify(res, null, 4));
-                throw new Error("Received solidity transaction when expected tx to revert");
-            } // on privatechain we check gasUsed after tx sent
-            return;
+            throw new Error("Received solidity transaction when expected tx to revert");
         })
         .catch(error => {
+            // TODO: revise what is actually need from this complex check with latest ganache
             // TODO: Check jump destination to destinguish between a throw
             //       and an actual invalid jump.
             const invalidJump = error.message.search("invalid JUMP") >= 0;
@@ -248,8 +244,9 @@ function expectThrow(promise) {
                     invalidOpcode3 ||
                     invalidJump ||
                     outOfGas ||
-                    (onPrivateChain && (outOfGasPrivateChain || allGasUsed)),
-                "Expected solidity revert, got '" + error + "' instead. onPrivateChain: " + onPrivateChain
+                    outOfGasPrivateChain ||
+                    allGasUsed,
+                `Expected solidity revert buy received: ${error}`
             );
             return;
         });
