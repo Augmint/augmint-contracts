@@ -6,7 +6,7 @@ let preToken;
 let quorumSigners;
 
 contract("PreToken", accounts => {
-    before(() => {
+    before(async () => {
         preToken = PreToken.at(PreToken.address);
         quorumSigners = [accounts[0]];
     });

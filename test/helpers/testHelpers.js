@@ -1,4 +1,19 @@
 const stringifier = require("stringifier");
+
+// Ugly workaround to use two different web3 versions for tests. (web3 v1 is required for signatures)
+// TODO: upgrade all tests to use web3v1 solely
+const Web3v0 = require("web3v0");
+const Web3v1 = require("web3v1"); // we use web3 1.0 for tx signature
+
+global.web3v0 = new Web3v0(new Web3v0.providers.HttpProvider("http://localhost:8545"));
+global.web3v1 = new Web3v1(new Web3v1.providers.HttpProvider("http://localhost:8545"));
+//dirty hack for web3@1.0.0 support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
+if (typeof global.web3v1.currentProvider.sendAsync !== "function") {
+    global.web3v1.currentProvider.sendAsync = function() {
+        return global.web3v1.currentProvider.send.apply(global.web3v1.currentProvider, arguments);
+    };
+}
+
 var gasUseLog = [];
 let gasPrice = null;
 
@@ -71,7 +86,7 @@ async function getGasPrice() {
     // TODO: could we read gasPrice (and other global params) in a global beforeAll somehow ?
     // web3 0.x doesn't seem to have promisified fx for this
     return new Promise(function(resolve, reject) {
-        web3.eth.getGasPrice((error, gasPrice) => {
+        global.web3v0.eth.getGasPrice((error, gasPrice) => {
             if (error) {
                 reject(new Error("Can't get gasprice from web3 (getGasPrice).\n " + error));
             } else {
@@ -149,7 +164,7 @@ async function assertNoEvents(contractInstance, eventName) {
 //let snapshotCount = 0;
 function takeSnapshot() {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v0.currentProvider.sendAsync(
             {
                 method: "evm_snapshot",
                 params: [],
@@ -169,7 +184,7 @@ function takeSnapshot() {
 
 function revertSnapshot(snapshotId) {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v0.currentProvider.sendAsync(
             {
                 method: "evm_revert",
                 params: [snapshotId],
@@ -199,7 +214,7 @@ function waitFor(durationInMs = 1000) {
         setTimeout(() => {
             // make a transaction to force the local dev node to create a new block with
             // new timestamp:
-            web3.eth.sendTransaction({ from: web3.eth.accounts[0] }, err => {
+            global.web3v0.eth.sendTransaction({ from: global.web3v0.eth.accounts[0] }, err => {
                 if (err) {
                     return reject(err);
                 }
