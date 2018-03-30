@@ -122,7 +122,7 @@ contract Exchange {
     function matchMultipleOrders(uint64[] buyTokenIds, uint64[] sellTokenIds) external returns(uint matchCount) {
         uint len = buyTokenIds.length;
         require(len == sellTokenIds.length);
-        for (uint i = 0; i < len && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
+        for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {
             _fillOrder(buyTokenIds[i], sellTokenIds[i]);
             matchCount++;
         }
