@@ -47,8 +47,8 @@ contract AugmintToken is AugmintTokenInterface {
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
         balances[to] = balances[to].add(amount);
         totalSupply = totalSupply.add(amount);
-        Transfer(0x0, to, amount);
-        AugmintTransfer(0x0, to, amount, "", 0);
+        emit Transfer(0x0, to, amount);
+        emit AugmintTransfer(0x0, to, amount, "", 0);
     }
 
     // Burn tokens. Anyone can burn from its own account. YOLO.
@@ -56,8 +56,8 @@ contract AugmintToken is AugmintTokenInterface {
     function burn(uint amount) external {
         balances[msg.sender] = balances[msg.sender].sub(amount);
         totalSupply = totalSupply.sub(amount);
-        Transfer(msg.sender, 0x0, amount);
-        AugmintTransfer(msg.sender, 0x0, amount, "", 0);
+        emit Transfer(msg.sender, 0x0, amount);
+        emit AugmintTransfer(msg.sender, 0x0, amount, "", 0);
     }
 
     /*  transferAndNotify can be used by contracts which require tokens to have only 1 tx (instead of approve + call)
@@ -85,7 +85,7 @@ contract AugmintToken is AugmintTokenInterface {
     function setTransferFees(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax)
     external restrict("MonetaryBoard") {
         transferFee = Fee(_transferFeePt, _transferFeeMin, _transferFeeMax);
-        TransferFeesChanged(_transferFeePt, _transferFeeMin, _transferFeeMax);
+        emit TransferFeesChanged(_transferFeePt, _transferFeeMin, _transferFeeMax);
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
@@ -104,7 +104,7 @@ contract AugmintToken is AugmintTokenInterface {
     function approve(address _spender, uint256 amount) public returns (bool) {
         require(_spender != 0x0);
         allowed[msg.sender][_spender] = amount;
-        Approval(msg.sender, _spender, amount);
+        emit Approval(msg.sender, _spender, amount);
         return true;
     }
 
@@ -124,7 +124,7 @@ contract AugmintToken is AugmintTokenInterface {
         } else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -135,7 +135,7 @@ contract AugmintToken is AugmintTokenInterface {
 
     function _increaseApproval(address _approver, address _spender, uint _addedValue) internal returns (bool) {
         allowed[_approver][_spender] = allowed[_approver][_spender].add(_addedValue);
-        Approval(_approver, _spender, allowed[_approver][_spender]);
+        emit Approval(_approver, _spender, allowed[_approver][_spender]);
     }
 
     function calculateFee(address from, address to, uint amount) internal view returns (uint256 fee) {
@@ -172,8 +172,8 @@ contract AugmintToken is AugmintTokenInterface {
             balances[from] = balances[from].sub(amount);
         }
         balances[to] = balances[to].add(amount);
-        Transfer(from, to, amount);
-        AugmintTransfer(from, to, amount, narrative, fee);
+        emit Transfer(from, to, amount);
+        emit AugmintTransfer(from, to, amount, narrative, fee);
     }
 
 }

@@ -82,14 +82,14 @@ contract Locker is Restricted, TokenReceiver {
                                     LockProduct(perTermInterest, durationInSecs, minimumLockAmount, isActive)) - 1;
         uint32 newLockProductId = uint32(_newLockProductId);
         require(newLockProductId == _newLockProductId);
-        NewLockProduct(newLockProductId, perTermInterest, durationInSecs, minimumLockAmount, isActive);
+        emit NewLockProduct(newLockProductId, perTermInterest, durationInSecs, minimumLockAmount, isActive);
 
     }
 
     function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("MonetaryBoard") {
 
         lockProducts[lockProductId].isActive = isActive;
-        LockProductActiveChange(lockProductId, isActive);
+        emit LockProductActiveChange(lockProductId, isActive);
 
     }
 
@@ -108,7 +108,7 @@ contract Locker is Restricted, TokenReceiver {
         augmintToken.transferWithNarrative(lock.owner, lock.amountLocked.add(interestEarned),
                                                                                 "Funds released from lock");
 
-        LockReleased(lock.owner, lockId);
+        emit LockReleased(lock.owner, lockId);
     }
 
     function getLockProductCount() external view returns (uint) {
@@ -218,7 +218,7 @@ contract Locker is Restricted, TokenReceiver {
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
 
-        NewLock(lockOwner, lockId, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
+        emit NewLock(lockOwner, lockId, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
                     lockProduct.durationInSecs, true);
     }
 

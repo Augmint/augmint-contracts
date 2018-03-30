@@ -61,7 +61,7 @@ contract Exchange {
         buyTokenOrders[orderId] = Order(uint64(activeBuyOrders.length), msg.sender, price, msg.value);
         activeBuyOrders.push(orderId);
 
-        NewOrder(orderId, msg.sender, price, 0, msg.value);
+        emit NewOrder(orderId, msg.sender, price, 0, msg.value);
     }
 
     /* this function requires previous approval to transfer tokens */
@@ -80,7 +80,7 @@ contract Exchange {
 
         msg.sender.transfer(amount);
 
-        CancelledOrder(buyTokenId, msg.sender, 0, amount);
+        emit CancelledOrder(buyTokenId, msg.sender, 0, amount);
     }
 
     function cancelSellTokenOrder(uint64 sellTokenId) external {
@@ -93,7 +93,7 @@ contract Exchange {
 
         augmintToken.transferWithNarrative(msg.sender, amount, "Sell token order cancelled");
 
-        CancelledOrder(sellTokenId, msg.sender, amount, 0);
+        emit CancelledOrder(sellTokenId, msg.sender, amount, 0);
     }
 
     /* matches any two orders if the sell price >= buy price
@@ -184,7 +184,7 @@ contract Exchange {
         augmintToken.transferWithNarrative(buy.maker, tradedTokens, "Buy token order fill");
         sell.maker.transfer(tradedWei);
 
-        OrderFill(buy.maker, sell.maker, buyTokenId,
+        emit OrderFill(buy.maker, sell.maker, buyTokenId,
             sellTokenId, uint32(price), tradedWei, tradedTokens);
     }
 
@@ -197,7 +197,7 @@ contract Exchange {
         sellTokenOrders[orderId] = Order(uint64(activeSellOrders.length), maker, price, tokenAmount);
         activeSellOrders.push(orderId);
 
-        NewOrder(orderId, maker, price, tokenAmount, 0);
+        emit NewOrder(orderId, maker, price, tokenAmount, 0);
     }
 
     function _removeBuyOrder(Order storage order) private {

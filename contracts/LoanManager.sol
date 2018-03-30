@@ -88,13 +88,13 @@ contract LoanManager is Restricted {
         uint32 newProductId = uint32(_newProductId);
         require(newProductId == _newProductId);
 
-        LoanProductAdded(newProductId);
+        emit LoanProductAdded(newProductId);
     }
 
     function setLoanProductActiveState(uint32 productId, bool newState)
     external restrict ("MonetaryBoard") {
         products[productId].isActive = false;
-        LoanProductActiveStateChanged(productId, newState);
+        emit LoanProductActiveStateChanged(productId, newState);
     }
 
     function newEthBackedLoan(uint32 productId) external payable {
@@ -124,7 +124,7 @@ contract LoanManager is Restricted {
         // Issue tokens and send to borrower
         monetarySupervisor.issueLoan(msg.sender, loanAmount);
 
-        NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
+        emit NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
     }
 
     function collect(uint[] loanIds) external {
@@ -166,7 +166,7 @@ contract LoanManager is Restricted {
 
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
 
-            LoanCollected(loanIds[i], loan.borrower, collateralToCollect, releasedCollateral, defaultingFee);
+            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect, releasedCollateral, defaultingFee);
         }
 
         if (totalCollateralToCollect > 0) {
@@ -292,7 +292,7 @@ contract LoanManager is Restricted {
 
         loan.borrower.transfer(loan.collateralAmount); // send back ETH collateral
 
-        LoanRepayed(loanId, loan.borrower);
+        emit LoanRepayed(loanId, loan.borrower);
     }
 
 }

@@ -29,14 +29,14 @@ contract Rates is Restricted {
 
     function setRate(bytes32 symbol, uint newRate) external restrict("setRate") {
         rates[symbol] = RateInfo(newRate, now);
-        RateChanged(symbol, newRate);
+        emit RateChanged(symbol, newRate);
     }
 
     function setMultipleRates(bytes32[] symbols, uint[] newRates) external restrict("setRate") {
         require(symbols.length == newRates.length);
         for (uint256 i = 0; i < symbols.length; i++) {
             rates[symbols[i]] = RateInfo(newRates[i], now);
-            RateChanged(symbols[i], newRates[i]);
+            emit RateChanged(symbols[i], newRates[i]);
         }
     }
 
