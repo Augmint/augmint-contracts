@@ -1,5 +1,5 @@
 /* Augmint Crypto Euro token (ACE) implementation */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 import "./generic/AugmintToken.sol";
 
 

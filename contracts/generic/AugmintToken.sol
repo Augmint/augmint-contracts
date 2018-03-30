@@ -7,7 +7,7 @@
         - consider generic bytes arg instead of uint for transferAndNotify
         - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 import "../interfaces/AugmintTokenInterface.sol";
 
 
@@ -31,7 +31,7 @@ contract AugmintToken is AugmintTokenInterface {
         require(_feeAccount != address(0));
         require(bytes(_name).length > 0);
         require(bytes(_symbol).length > 0);
-        
+
         name = _name;
         symbol = _symbol;
         peggedSymbol = _peggedSymbol;

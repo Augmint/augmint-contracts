@@ -12,7 +12,7 @@
             but that would require each contract using Restricted to modified)
 */
 
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 
 contract Restricted {
