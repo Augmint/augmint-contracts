@@ -182,7 +182,7 @@ contract LoanManager is Restricted {
         }
 
         if (totalCollateralToCollect > 0) {
-            monetarySupervisor.augmintReserves().transfer(totalCollateralToCollect);
+            address(monetarySupervisor.augmintReserves()).transfer(totalCollateralToCollect);
         }
 
         monetarySupervisor.loanCollectionNotification(totalLoanAmountCollected);// update KPIs
