@@ -42,6 +42,43 @@ contract AugmintToken is AugmintTokenInterface {
         transferFee = Fee(_transferFeePt, _transferFeeMin, _transferFeeMax);
     }
 
+    function transfer(address to, uint256 amount) external returns (bool) {
+        _transfer(msg.sender, to, amount, "");
+        return true;
+    }
+
+    function approve(address _spender, uint256 amount) external returns (bool) {
+        require(_spender != 0x0);
+        allowed[msg.sender][_spender] = amount;
+        emit Approval(msg.sender, _spender, amount);
+        return true;
+    }
+
+    /**
+     ERC20 transferFrom attack protection: https://github.com/DecentLabs/dcm-poc/issues/57
+     approve should be called when allowed[_spender] == 0. To increment allowed value is better
+     to use this function to avoid 2 calls (and wait until the first transaction is mined)
+     Based on MonolithDAO Token.sol */
+    function increaseApproval(address _spender, uint _addedValue) external returns (bool) {
+        return _increaseApproval(msg.sender, _spender, _addedValue);
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) external returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        _transferFrom(from, to, amount, "");
+        return true;
+    }
+
     // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is
     //               only allowed on new loan (by trusted Lender contracts) or strictly to reserve by MonetaryBoard
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
@@ -88,49 +125,12 @@ contract AugmintToken is AugmintTokenInterface {
         emit TransferFeesChanged(_transferFeePt, _transferFeeMin, _transferFeeMax);
     }
 
-    function balanceOf(address _owner) public view returns (uint256 balance) {
+    function balanceOf(address _owner) external view returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) external view returns (uint256 remaining) {
         return allowed[_owner][_spender];
-    }
-
-    function transfer(address to, uint256 amount) public returns (bool) {
-        _transfer(msg.sender, to, amount, "");
-        return true;
-    }
-
-    function approve(address _spender, uint256 amount) public returns (bool) {
-        require(_spender != 0x0);
-        allowed[msg.sender][_spender] = amount;
-        emit Approval(msg.sender, _spender, amount);
-        return true;
-    }
-
-    /**
-     ERC20 transferFrom attack protection: https://github.com/DecentLabs/dcm-poc/issues/57
-     approve should be called when allowed[_spender] == 0. To increment allowed value is better
-     to use this function to avoid 2 calls (and wait until the first transaction is mined)
-     Based on MonolithDAO Token.sol */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        return _increaseApproval(msg.sender, _spender, _addedValue);
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 amount) public returns (bool) {
-        _transferFrom(from, to, amount, "");
-        return true;
     }
 
     function _increaseApproval(address _approver, address _spender, uint _addedValue) internal returns (bool) {

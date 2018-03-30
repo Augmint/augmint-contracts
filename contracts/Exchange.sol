@@ -70,6 +70,17 @@ contract Exchange {
         return _placeSellTokenOrder(msg.sender, price, tokenAmount);
     }
 
+    /* place sell token order called from AugmintToken's transferAndNotify
+     Flow:
+        1) user calls token contract's transferAndNotify price passed in data arg
+        2) transferAndNotify transfers tokens to the Exchange contract
+        3) transferAndNotify calls Exchange.transferNotification with lockProductId
+    */
+    function transferNotification(address maker, uint tokenAmount, uint price) external {
+        require(msg.sender == address(augmintToken));
+        _placeSellTokenOrder(maker, uint32(price), tokenAmount);
+    }
+
     function cancelBuyTokenOrder(uint64 buyTokenId) external {
         Order storage order = buyTokenOrders[buyTokenId];
         require(order.maker == msg.sender);
@@ -137,17 +148,6 @@ contract Exchange {
             Order storage order = sellTokenOrders[orderId];
             response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
-    }
-
-    /* place sell token order called from AugmintToken's transferAndNotify
-     Flow:
-        1) user calls token contract's transferAndNotify price passed in data arg
-        2) transferAndNotify transfers tokens to the Exchange contract
-        3) transferAndNotify calls Exchange.transferNotification with lockProductId
-    */
-    function transferNotification(address maker, uint tokenAmount, uint price) public {
-        require(msg.sender == address(augmintToken));
-        _placeSellTokenOrder(maker, uint32(price), tokenAmount);
     }
 
     function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private {

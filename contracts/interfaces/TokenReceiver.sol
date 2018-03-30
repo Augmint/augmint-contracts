@@ -6,5 +6,5 @@ pragma solidity 0.4.21;
 
 
 interface TokenReceiver {
-    function transferNotification(address from, uint256 amount, uint data) public;
+    function transferNotification(address from, uint256 amount, uint data) external;
 }

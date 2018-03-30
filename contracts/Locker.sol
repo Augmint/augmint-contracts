@@ -93,6 +93,24 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
+    /* lock funds, called from AugmintToken's transferAndNotify
+     Flow for locking tokens:
+        1) user calls token contract's transferAndNotify lockProductId passed in data arg
+        2) transferAndNotify transfers tokens to the Lock contract
+        3) transferAndNotify calls Lock.transferNotification with lockProductId
+    */
+    function transferNotification(address from, uint256 amountToLock, uint _lockProductId) external {
+        require(msg.sender == address(augmintToken));
+        uint32 lockProductId = uint32(_lockProductId);
+        require(lockProductId == _lockProductId);
+        /* TODO: make data arg generic bytes
+            uint productId;
+            assembly { // solhint-disable-line no-inline-assembly
+                productId := mload(data)
+        } */
+        _createLock(lockProductId, from, amountToLock);
+    }
+
     function releaseFunds(uint lockId) external {
         Lock storage lock = locks[lockId];
         LockProduct storage lockProduct = lockProducts[lock.productId];
@@ -178,24 +196,6 @@ contract Locker is Restricted, TokenReceiver {
             response[i] = [ locksForAddress[offset + i], lock.amountLocked, interestEarned, lock.lockedUntil,
                                 lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0 ];
         }
-    }
-
-    /* lock funds, called from AugmintToken's transferAndNotify
-     Flow for locking tokens:
-        1) user calls token contract's transferAndNotify lockProductId passed in data arg
-        2) transferAndNotify transfers tokens to the Lock contract
-        3) transferAndNotify calls Lock.transferNotification with lockProductId
-    */
-    function transferNotification(address from, uint256 amountToLock, uint _lockProductId) public {
-        require(msg.sender == address(augmintToken));
-        uint32 lockProductId = uint32(_lockProductId);
-        require(lockProductId == _lockProductId);
-        /* TODO: make data arg generic bytes
-            uint productId;
-            assembly { // solhint-disable-line no-inline-assembly
-                productId := mload(data)
-        } */
-        _createLock(lockProductId, from, amountToLock);
     }
 
     function calculateInterest(uint32 perTermInterest, uint amountToLock) public pure returns (uint interestEarned) {

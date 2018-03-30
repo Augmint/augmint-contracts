@@ -30,6 +30,12 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     event TokenBurned(uint amount);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    function transfer(address to, uint value) external returns (bool); // solhint-disable-line no-simple-event-func-name
+    function transferFrom(address from, address to, uint value) external returns (bool);
+    function approve(address spender, uint value) external returns (bool);
+    function increaseApproval(address spender, uint addedValue) external returns (bool);
+    function decreaseApproval(address spender, uint subtractedValue) external returns (bool);
+
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract");
     function burn(uint amount) external;
 
@@ -38,14 +44,9 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function transferWithNarrative(address to, uint256 amount, string narrative) external;
     function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) external;
 
-    function allowance(address owner, address spender) public view returns (uint256 remaining);
-    function transferFrom(address from, address to, uint value) public returns (bool);
-    function approve(address spender, uint value) public returns (bool);
-    function increaseApproval(address spender, uint addedValue) public returns (bool);
-    function decreaseApproval(address spender, uint subtractedValue) public returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256 remaining);
 
-    function balanceOf(address who) public view returns (uint);
-    function transfer(address to, uint value) public returns (bool); // solhint-disable-line no-simple-event-func-name
+    function balanceOf(address who) external view returns (uint);
 
 
 }

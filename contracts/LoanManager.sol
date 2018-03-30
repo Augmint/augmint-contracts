@@ -127,6 +127,18 @@ contract LoanManager is Restricted {
         emit NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
     }
 
+    /* repay loan, called from AugmintToken's transferAndNotify
+     Flow for repaying loan:
+        1) user calls token contract's transferAndNotify loanId passed in data arg
+        2) transferAndNotify transfers tokens to the Lender contract
+        3) transferAndNotify calls Lender.transferNotification with lockProductId
+    */
+    // from arg is not used as we allow anyone to repay a loan:
+    function transferNotification(address, uint repaymentAmount, uint loanId) external {
+        require(msg.sender == address(augmintToken));
+        _repayLoan(loanId, repaymentAmount);
+    }
+
     function collect(uint[] loanIds) external {
         /* when there are a lots of loans to be collected then
              the client need to call it in batches to make sure tx won't exceed block gas limit.
@@ -245,18 +257,6 @@ contract LoanManager is Restricted {
 
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
                     loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
-    }
-
-    /* repay loan, called from AugmintToken's transferAndNotify
-     Flow for repaying loan:
-        1) user calls token contract's transferAndNotify loanId passed in data arg
-        2) transferAndNotify transfers tokens to the Lender contract
-        3) transferAndNotify calls Lender.transferNotification with lockProductId
-    */
-    // from arg is not used as we allow anyone to repay a loan:
-    function transferNotification(address, uint repaymentAmount, uint loanId) public {
-        require(msg.sender == address(augmintToken));
-        _repayLoan(loanId, repaymentAmount);
     }
 
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
