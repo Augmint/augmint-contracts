@@ -12,7 +12,7 @@
 
 */
 
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
@@ -99,7 +99,7 @@ contract MonetarySupervisor is Restricted { // solhint-disable-line no-empty-blo
         ltdDifferenceLimit = _ltdDifferenceLimit;
         allowedLtdDifferenceAmount = _allowedLtdDifferenceAmount;
 
-        ParamsChanged(ltdDifferenceLimit, allowedLtdDifferenceAmount);
+        emit ParamsChanged(ltdDifferenceLimit, allowedLtdDifferenceAmount);
     }
 
     // helper function for FrontEnd to reduce calls

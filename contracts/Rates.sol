@@ -7,7 +7,7 @@
     TODO: consider if we need storing rates with variable decimals instead of fixed 4
     TODO: could we emit 1 RateChanged event from setMultipleRates (symbols and newrates arrays)?
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";
@@ -29,14 +29,14 @@ contract Rates is Restricted {
 
     function setRate(bytes32 symbol, uint newRate) external restrict("setRate") {
         rates[symbol] = RateInfo(newRate, now);
-        RateChanged(symbol, newRate);
+        emit RateChanged(symbol, newRate);
     }
 
     function setMultipleRates(bytes32[] symbols, uint[] newRates) external restrict("setRate") {
         require(symbols.length == newRates.length);
         for (uint256 i = 0; i < symbols.length; i++) {
             rates[symbols[i]] = RateInfo(newRates[i], now);
-            RateChanged(symbols[i], newRates[i]);
+            emit RateChanged(symbols[i], newRates[i]);
         }
     }
 

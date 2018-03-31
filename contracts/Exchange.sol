@@ -6,7 +6,7 @@
         - deduct fee
         - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 import "./generic/SafeMath.sol";
 import "./interfaces/AugmintTokenInterface.sol";
@@ -61,13 +61,24 @@ contract Exchange {
         buyTokenOrders[orderId] = Order(uint64(activeBuyOrders.length), msg.sender, price, msg.value);
         activeBuyOrders.push(orderId);
 
-        NewOrder(orderId, msg.sender, price, 0, msg.value);
+        emit NewOrder(orderId, msg.sender, price, 0, msg.value);
     }
 
     /* this function requires previous approval to transfer tokens */
     function placeSellTokenOrder(uint32 price, uint tokenAmount) external returns (uint orderId) {
         augmintToken.transferFrom(msg.sender, this, tokenAmount);
         return _placeSellTokenOrder(msg.sender, price, tokenAmount);
+    }
+
+    /* place sell token order called from AugmintToken's transferAndNotify
+     Flow:
+        1) user calls token contract's transferAndNotify price passed in data arg
+        2) transferAndNotify transfers tokens to the Exchange contract
+        3) transferAndNotify calls Exchange.transferNotification with lockProductId
+    */
+    function transferNotification(address maker, uint tokenAmount, uint price) external {
+        require(msg.sender == address(augmintToken));
+        _placeSellTokenOrder(maker, uint32(price), tokenAmount);
     }
 
     function cancelBuyTokenOrder(uint64 buyTokenId) external {
@@ -80,7 +91,7 @@ contract Exchange {
 
         msg.sender.transfer(amount);
 
-        CancelledOrder(buyTokenId, msg.sender, 0, amount);
+        emit CancelledOrder(buyTokenId, msg.sender, 0, amount);
     }
 
     function cancelSellTokenOrder(uint64 sellTokenId) external {
@@ -93,7 +104,7 @@ contract Exchange {
 
         augmintToken.transferWithNarrative(msg.sender, amount, "Sell token order cancelled");
 
-        CancelledOrder(sellTokenId, msg.sender, amount, 0);
+        emit CancelledOrder(sellTokenId, msg.sender, amount, 0);
     }
 
     /* matches any two orders if the sell price >= buy price
@@ -111,7 +122,7 @@ contract Exchange {
     function matchMultipleOrders(uint64[] buyTokenIds, uint64[] sellTokenIds) external returns(uint matchCount) {
         uint len = buyTokenIds.length;
         require(len == sellTokenIds.length);
-        for (uint i = 0; i < len && msg.gas > ORDER_MATCH_WORST_GAS; i++) {
+        for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {
             _fillOrder(buyTokenIds[i], sellTokenIds[i]);
             matchCount++;
         }
@@ -137,17 +148,6 @@ contract Exchange {
             Order storage order = sellTokenOrders[orderId];
             response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
-    }
-
-    /* place sell token order called from AugmintToken's transferAndNotify
-     Flow:
-        1) user calls token contract's transferAndNotify price passed in data arg
-        2) transferAndNotify transfers tokens to the Exchange contract
-        3) transferAndNotify calls Exchange.transferNotification with lockProductId
-    */
-    function transferNotification(address maker, uint tokenAmount, uint price) public {
-        require(msg.sender == address(augmintToken));
-        _placeSellTokenOrder(maker, uint32(price), tokenAmount);
     }
 
     function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private {
@@ -184,7 +184,7 @@ contract Exchange {
         augmintToken.transferWithNarrative(buy.maker, tradedTokens, "Buy token order fill");
         sell.maker.transfer(tradedWei);
 
-        OrderFill(buy.maker, sell.maker, buyTokenId,
+        emit OrderFill(buy.maker, sell.maker, buyTokenId,
             sellTokenId, uint32(price), tradedWei, tradedTokens);
     }
 
@@ -197,7 +197,7 @@ contract Exchange {
         sellTokenOrders[orderId] = Order(uint64(activeSellOrders.length), maker, price, tokenAmount);
         activeSellOrders.push(orderId);
 
-        NewOrder(orderId, maker, price, tokenAmount, 0);
+        emit NewOrder(orderId, maker, price, tokenAmount, 0);
     }
 
     function _removeBuyOrder(Order storage order) private {
