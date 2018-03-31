@@ -21,10 +21,10 @@ contract("PreToken transfer", accounts => {
         let txData = preTokenTestHelpers.preTokenWeb3Contract.methods
             .addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap)
             .encodeABI();
-        await preTokenTestHelpers.signAndExecute(quorumSigners, txData);
+        await testHelpers.signAndExecute(preTokenTestHelpers.multiSig, preToken.address, quorumSigners, txData);
 
         txData = preTokenTestHelpers.preTokenWeb3Contract.methods.issueTo(agreement.owner, 1000000).encodeABI();
-        await preTokenTestHelpers.signAndExecute(quorumSigners, txData);
+        await testHelpers.signAndExecute(preTokenTestHelpers.multiSig, preToken.address, quorumSigners, txData);
     });
 
     it("should transfer to an account which has no agreement yet", async function() {
