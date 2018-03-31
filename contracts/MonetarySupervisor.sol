@@ -133,12 +133,12 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         5) MonetarySupervisor issues new tokens to user's account in current AugmintToken
         6) MonetarySupervisor burns old tokens from own balance
     */
-    function transferNotification(address from, uint amounToConvert, uint) public {
+    function transferNotification(address from, uint amount, uint /* data, not used */ ) public {
         AugmintTokenInterface legacyToken = AugmintTokenInterface(msg.sender);
         require(acceptedLegacyAugmintTokens[legacyToken]);
 
-        legacyToken.burn(amounToConvert);
-        augmintToken.issueTo(from, amounToConvert);
+        legacyToken.burn(amount);
+        augmintToken.issueTo(from, amount);
     }
 
 }
