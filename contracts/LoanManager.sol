@@ -9,7 +9,7 @@
         - create and use InterestEarnedAccount interface instead?
         - make collect() run as long as gas provided allows
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 import "./Rates.sol";
 import "./generic/Restricted.sol";
@@ -88,13 +88,13 @@ contract LoanManager is Restricted {
         uint32 newProductId = uint32(_newProductId);
         require(newProductId == _newProductId);
 
-        LoanProductAdded(newProductId);
+        emit LoanProductAdded(newProductId);
     }
 
     function setLoanProductActiveState(uint32 productId, bool newState)
     external restrict ("MonetaryBoard") {
         products[productId].isActive = false;
-        LoanProductActiveStateChanged(productId, newState);
+        emit LoanProductActiveStateChanged(productId, newState);
     }
 
     function newEthBackedLoan(uint32 productId) external payable {
@@ -124,7 +124,19 @@ contract LoanManager is Restricted {
         // Issue tokens and send to borrower
         monetarySupervisor.issueLoan(msg.sender, loanAmount);
 
-        NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
+        emit NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
+    }
+
+    /* repay loan, called from AugmintToken's transferAndNotify
+     Flow for repaying loan:
+        1) user calls token contract's transferAndNotify loanId passed in data arg
+        2) transferAndNotify transfers tokens to the Lender contract
+        3) transferAndNotify calls Lender.transferNotification with lockProductId
+    */
+    // from arg is not used as we allow anyone to repay a loan:
+    function transferNotification(address, uint repaymentAmount, uint loanId) external {
+        require(msg.sender == address(augmintToken));
+        _repayLoan(loanId, repaymentAmount);
     }
 
     function collect(uint[] loanIds) external {
@@ -166,11 +178,11 @@ contract LoanManager is Restricted {
 
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
 
-            LoanCollected(loanIds[i], loan.borrower, collateralToCollect, releasedCollateral, defaultingFee);
+            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect, releasedCollateral, defaultingFee);
         }
 
         if (totalCollateralToCollect > 0) {
-            monetarySupervisor.augmintReserves().transfer(totalCollateralToCollect);
+            address(monetarySupervisor.augmintReserves()).transfer(totalCollateralToCollect);
         }
 
         monetarySupervisor.loanCollectionNotification(totalLoanAmountCollected);// update KPIs
@@ -247,18 +259,6 @@ contract LoanManager is Restricted {
                     loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
     }
 
-    /* repay loan, called from AugmintToken's transferAndNotify
-     Flow for repaying loan:
-        1) user calls token contract's transferAndNotify loanId passed in data arg
-        2) transferAndNotify transfers tokens to the Lender contract
-        3) transferAndNotify calls Lender.transferNotification with lockProductId
-    */
-    // from arg is not used as we allow anyone to repay a loan:
-    function transferNotification(address, uint repaymentAmount, uint loanId) public {
-        require(msg.sender == address(augmintToken));
-        _repayLoan(loanId, repaymentAmount);
-    }
-
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
     internal view returns (uint loanAmount, uint interestAmount) {
         // calculate loan values based on repayment amount
@@ -292,7 +292,7 @@ contract LoanManager is Restricted {
 
         loan.borrower.transfer(loan.collateralAmount); // send back ETH collateral
 
-        LoanRepayed(loanId, loan.borrower);
+        emit LoanRepayed(loanId, loan.borrower);
     }
 
 }
