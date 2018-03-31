@@ -1,5 +1,5 @@
 /* MultiSig for 50% stakeholder transactions */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 import "./generic/MultiSig.sol";
 
 

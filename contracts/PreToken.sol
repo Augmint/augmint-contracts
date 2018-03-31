@@ -8,7 +8,7 @@ Intentionally not fully ERC20 compliant:
             could choose any other which is the most convenient to produce off chain
 */
 
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 import "./generic/SafeMath.sol";
 import "./StakeHolder50Signer.sol";
 
@@ -51,7 +51,7 @@ contract PreToken {
 
         agreements[to] = Agreement(0, agreementHash, discount, valuationCap);
 
-        NewAgreement(to, agreementHash, discount, valuationCap);
+        emit NewAgreement(to, agreementHash, discount, valuationCap);
     }
 
     function issueTo(address _to, uint amount) external {
@@ -62,7 +62,7 @@ contract PreToken {
         to.balance = to.balance.add(amount);
         totalSupply = totalSupply.add(amount);
 
-        Transfer(0x0, _to, amount);
+        emit Transfer(0x0, _to, amount);
     }
 
     function balanceOf(address who) public view returns (uint) {
@@ -85,7 +85,7 @@ contract PreToken {
             agreements[to].discount = agreements[msg.sender].discount;
         }
 
-        Transfer(msg.sender, to, amount);
+        emit Transfer(msg.sender, to, amount);
     }
 
 }

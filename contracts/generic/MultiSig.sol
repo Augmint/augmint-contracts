@@ -15,7 +15,7 @@
   - use only singatures[] param in execute and deconstruct w/ assembly:
         https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ECRecovery.sol
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 import "./SafeMath.sol";
 
