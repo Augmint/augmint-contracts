@@ -106,7 +106,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     function setAcceptedLegacyAugmintToken(address legacyAugmintTokenAddress, bool newAcceptedState)
     external restrict("MonetaryBoard") {
         acceptedLegacyAugmintTokens[legacyAugmintTokenAddress] = newAcceptedState;
-        AcceptedLegacyAugmintTokenChanged(legacyAugmintTokenAddress, newAcceptedState);
+        emit AcceptedLegacyAugmintTokenChanged(legacyAugmintTokenAddress, newAcceptedState);
     }
 
     function setParams(uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount)
@@ -133,7 +133,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         5) MonetarySupervisor issues new tokens to user's account in current AugmintToken
         6) MonetarySupervisor burns old tokens from own balance
     */
-    function transferNotification(address from, uint amount, uint /* data, not used */ ) public {
+    function transferNotification(address from, uint amount, uint /* data, not used */ ) external {
         AugmintTokenInterface legacyToken = AugmintTokenInterface(msg.sender);
         require(acceptedLegacyAugmintTokens[legacyToken]);
 
