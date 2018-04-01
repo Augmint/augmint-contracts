@@ -51,9 +51,13 @@ contract("Rates tests", accounts => {
 
         await rates.setRate("EUR", rate);
         const ethValue = await rates.convertToWei("EUR", testEur);
-        assert.equal(web3.fromWei(ethValue), testEur / rate, "ethValue converted should be correct");
+        assert.equal(global.web3v0.fromWei(ethValue), testEur / rate, "ethValue converted should be correct");
         const eurValue = await rates.convertFromWei("EUR", ethValue);
-        assert.equal(eurValue.toString(), web3.fromWei(ethValue) * rate, "eurValue converted should be correct");
+        assert.equal(
+            eurValue.toString(),
+            global.web3v0.fromWei(ethValue) * rate,
+            "eurValue converted should be correct"
+        );
         //console.log(web3.fromWei(ethValue).toString(), eurValue.toString());
     });
 

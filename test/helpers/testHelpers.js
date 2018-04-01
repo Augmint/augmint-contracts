@@ -1,4 +1,19 @@
 const stringifier = require("stringifier");
+
+// Ugly workaround to use two different web3 versions for tests. (web3 v1 is required for signatures)
+// TODO: upgrade all tests to use web3v1 solely
+const Web3v0 = require("web3v0");
+const Web3v1 = require("web3v1"); // we use web3 1.0 for tx signature
+
+global.web3v0 = new Web3v0(new Web3v0.providers.HttpProvider("http://localhost:8545"));
+global.web3v1 = new Web3v1(new Web3v1.providers.HttpProvider("http://localhost:8545"));
+//dirty hack for web3@1.0.0 support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
+if (typeof global.web3v1.currentProvider.sendAsync !== "function") {
+    global.web3v1.currentProvider.sendAsync = function() {
+        return global.web3v1.currentProvider.send.apply(global.web3v1.currentProvider, arguments);
+    };
+}
+
 var gasUseLog = [];
 let gasPrice = null;
 
@@ -14,6 +29,7 @@ module.exports = {
     expectThrow,
     waitForTimeStamp,
     waitFor,
+    signAndExecute,
 
     /* CONSTANT getters */
     get ONE_ETH() {
@@ -71,7 +87,7 @@ async function getGasPrice() {
     // TODO: could we read gasPrice (and other global params) in a global beforeAll somehow ?
     // web3 0.x doesn't seem to have promisified fx for this
     return new Promise(function(resolve, reject) {
-        web3.eth.getGasPrice((error, gasPrice) => {
+        global.web3v0.eth.getGasPrice((error, gasPrice) => {
             if (error) {
                 reject(new Error("Can't get gasprice from web3 (getGasPrice).\n " + error));
             } else {
@@ -149,7 +165,7 @@ async function assertNoEvents(contractInstance, eventName) {
 //let snapshotCount = 0;
 function takeSnapshot() {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v0.currentProvider.sendAsync(
             {
                 method: "evm_snapshot",
                 params: [],
@@ -169,7 +185,7 @@ function takeSnapshot() {
 
 function revertSnapshot(snapshotId) {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v0.currentProvider.sendAsync(
             {
                 method: "evm_revert",
                 params: [snapshotId],
@@ -199,7 +215,7 @@ function waitFor(durationInMs = 1000) {
         setTimeout(() => {
             // make a transaction to force the local dev node to create a new block with
             // new timestamp:
-            web3.eth.sendTransaction({ from: web3.eth.accounts[0] }, err => {
+            global.web3v0.eth.sendTransaction({ from: global.web3v0.eth.accounts[0] }, err => {
                 if (err) {
                     return reject(err);
                 }
@@ -215,16 +231,12 @@ async function waitForTimeStamp(UnixTimestamp) {
 }
 
 function expectThrow(promise) {
-    const onPrivateChain = web3.version.network === 1976 ? true : false; // set by .runprivatechain.sh (geth ...  --networkid 1976 ..)
     return promise
         .then(res => {
-            if (!onPrivateChain) {
-                //console.log("Received solidity tx instead of throw: \r\n", JSON.stringify(res, null, 4));
-                throw new Error("Received solidity transaction when expected tx to revert");
-            } // on privatechain we check gasUsed after tx sent
-            return;
+            throw new Error("Received solidity transaction when expected tx to revert");
         })
         .catch(error => {
+            // TODO: revise what is actually need from this complex check with latest ganache
             // TODO: Check jump destination to destinguish between a throw
             //       and an actual invalid jump.
             const invalidJump = error.message.search("invalid JUMP") >= 0;
@@ -248,11 +260,30 @@ function expectThrow(promise) {
                     invalidOpcode3 ||
                     invalidJump ||
                     outOfGas ||
-                    (onPrivateChain && (outOfGasPrivateChain || allGasUsed)),
-                "Expected solidity revert, got '" + error + "' instead. onPrivateChain: " + onPrivateChain
+                    outOfGasPrivateChain ||
+                    allGasUsed,
+                `Expected solidity revert buy received: ${error}`
             );
             return;
         });
+}
+
+async function signAndExecute(multiSigContract, destinationAddress, signers, txData) {
+    const nonce = (await multiSigContract.nonce()).toNumber();
+
+    const txHash = global.web3v1.utils.soliditySha3(multiSigContract.address, destinationAddress, 0, txData, nonce);
+
+    const sigs = { v: [], r: [], s: [] };
+
+    for (let i = 0; i < signers.length; i++) {
+        const signature = await global.web3v1.eth.sign(txHash, signers[i]);
+        const sig = signature.substr(2, signature.length);
+        sigs.r.push("0x" + sig.substr(0, 64));
+        sigs.s.push("0x" + sig.substr(64, 64));
+        sigs.v.push(global.web3v0.toDecimal(sig.substr(128, 2)) + 27);
+    }
+    const tx = await multiSigContract.execute(sigs.v, sigs.r, sigs.s, destinationAddress, 0, txData);
+    return tx;
 }
 
 after(function() {
