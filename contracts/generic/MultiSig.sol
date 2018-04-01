@@ -2,7 +2,6 @@
  WIP
 
  TODO:
-  - add/remove signer
   - how to ensure  lost private key(s) of signers not causing complete block of any execution?
   - shall we restrict  execute to be called by a signer?
   - do we need to add network id to signed data?
@@ -26,7 +25,10 @@ contract MultiSig {
     uint32 public thresholdPt; // in parts per million , ie. 10,000 = 1%
     uint32 constant public PERCENT100 = 1000000;
     mapping(address => bool) public isSigner;
-    address[] public signers;
+    address[] public signers; // all signers, even the disabled ones
+    uint public activeSignersCount;
+
+    event SignerStateChanged(address signer, bool newState);
 
     function MultiSig(uint32 _thresholdPt, address[] _signers) public {
         require(_signers.length > 0);
@@ -37,6 +39,7 @@ contract MultiSig {
             isSigner[_signers[i]] = true;
         }
         signers = _signers;
+        activeSignersCount = signers.length;
         thresholdPt = _thresholdPt;
     }
 
@@ -63,8 +66,20 @@ contract MultiSig {
         require(destination.call.value(value)(data)); // solhint-disable-line avoid-call-value
     }
 
+    /* requires quorum so it's callable only via execute */
+    function setSignerState(address signer, bool newState) public {
+        require(msg.sender == address(this));
+        if (newState && !isSigner[signer]) {
+            activeSignersCount++;
+        } else if (isSigner[signer]) {
+            activeSignersCount--;
+        }
+        isSigner[signer] = newState;
+        emit SignerStateChanged(signer, newState);
+    }
+
     function checkQuorum(uint signersCount) internal view returns(bool isQuorum) {
-        isQuorum = signersCount.mul(PERCENT100).div(signers.length) >= thresholdPt;
+        isQuorum = signersCount.mul(PERCENT100).div(activeSignersCount) >= thresholdPt;
     }
 
     /*
