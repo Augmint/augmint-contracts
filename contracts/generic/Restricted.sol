@@ -12,7 +12,7 @@
             but that would require each contract using Restricted to modified)
 */
 
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 
 contract Restricted {
@@ -30,13 +30,13 @@ contract Restricted {
 
     function Restricted() public {
         permissions[msg.sender]["MonetaryBoard"] = true;
-        PermissionGranted(msg.sender, "MonetaryBoard");
+        emit PermissionGranted(msg.sender, "MonetaryBoard");
     }
 
     function grantPermission(address agent, bytes32 requiredPermission) public {
         require(permissions[msg.sender]["MonetaryBoard"]);
         permissions[agent][requiredPermission] = true;
-        PermissionGranted(agent, requiredPermission);
+        emit PermissionGranted(agent, requiredPermission);
     }
 
     function grantMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
@@ -50,7 +50,7 @@ contract Restricted {
     function revokePermission(address agent, bytes32 requiredPermission) public {
         require(permissions[msg.sender]["MonetaryBoard"]);
         permissions[agent][requiredPermission] = false;
-        PermissionRevoked(agent, requiredPermission);
+        emit PermissionRevoked(agent, requiredPermission);
     }
 
     function revokeMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
