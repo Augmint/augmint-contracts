@@ -1,5 +1,22 @@
 # Augmint Contracts - development environment
 
+<!-- MDTOC maxdepth:2 firsth1:2 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
+
+*   [Install](#Install)
+    *   [OSX](#OSX)
+    *   [Windows](#Windows)
+*   [Launch](#Launch)
+    *   [1. Update to latest augmint-contracts](#1-Update-to-latest-augmint-contracts)
+    *   [2. Deploy to network](#2-Deploy-to-network)
+*   [Tests](#Tests)
+*   [Sequence diagrams](#Sequence-diagrams)
+*   [Non ganache launches/deploys](#Non-ganache-launchesdeploys)
+    *   [Private chain](#Private-chain)
+    *   [Rinkeby & main networks](#Rinkeby-main-networks)
+    *   [WIP (ignore it) alternative ganache launches](#WIP-ignore-it-alternative-ganache-launches)
+
+<!-- /MDTOC -->
+
 ## Install
 
 These instructions are about the dev environment for contract development. For UI development see [augmint-web repo](https://github.com/Augmint/augmint-web)
@@ -8,24 +25,24 @@ These instructions are about the dev environment for contract development. For U
 
 _NB: these steps are likely to work on linux too but it's not tested yet_
 
-1. [Git](https://git-scm.com/download)
-1. [Ethereum CLI](https://www.ethereum.org/cli)
-1. [nodejs](https://nodejs.org/en/download/) - _tested with v8.9.4_
-1. Install yarn if you don't have it: `npm install -g yarn`
-1. ```
-   git clone https://github.com/Augmint/augmint-contracts.git
-   cd augmint-contracts
-   yarn install
-   ```
+1.  [Git](https://git-scm.com/download)
+1.  [Ethereum CLI](https://www.ethereum.org/cli)
+1.  [nodejs](https://nodejs.org/en/download/) - _tested with v8.9.4_
+1.  Install yarn if you don't have it: `npm install -g yarn`
+1.  ```
+    git clone https://github.com/Augmint/augmint-contracts.git
+    cd augmint-contracts
+    yarn install
+    ```
 
 ### Windows
 
 _NB: windows install was not tested since a while, update on it is welcome_
 
-1. [Git Bash](https://git-for-windows.github.io/) (required for truffle & yarn start)
-1. [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
-1. [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
-1. Install latest stable Nodejs (tested with 8.9.4)
+1.  [Git Bash](https://git-for-windows.github.io/) (required for truffle & yarn start)
+1.  [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
+1.  [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
+1.  Install latest stable Nodejs (tested with 8.9.4)
 
     or
     use [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases):
@@ -35,7 +52,7 @@ _NB: windows install was not tested since a while, update on it is welcome_
     nvm use 8.9.4
     ```
 
-1. in Git bash:
+1.  in Git bash:
     ```
     git clone https://github.com/Augmint/augmint-contracts.git
     cd augmint-contracts
@@ -55,15 +72,15 @@ yarn install # if there were any node package changes in packages.json
 
 #### ganache-cli (formerly testrpc)
 
-`yarn runmigrate` (runs with `--reset` flag)
+`yarn start` (runs `truffle migrate` with `--reset` flag)
 
 or
 
-* `yarn ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
-* in separate console:  
-  `yarn migrate`  
-  or to overwrite existing migration:  
-  `yarn migrate --reset`
+*   `yarn ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
+*   in separate console:  
+    `yarn migrate`  
+    or to overwrite existing migration:  
+    `yarn migrate --reset`
 
 NB: if you get this error from migration:
 
@@ -76,7 +93,7 @@ then you either need to do a `yarn clean` before `yarn migrate` or run migration
 ## Tests
 
 ```
-yarn runmigrate
+yarn start
 yarn test
 ```
 
@@ -117,15 +134,9 @@ truffle migrate --network privatechain
 cp ./build/contracts/\* ./src/contractsBuild
 ```
 
-### Rinkeby
+### Rinkeby & main networks
 
-```
-./runrinkeby.sh
-truffle migrate --network rinkeby
-cp ./build/contracts/\* ./src/contractsBuild
-```
-
-_NB: truffle migrate works with geth 1.8.0-stable. If you are using an unstable version then follow [this issue](https://github.com/trufflesuite/truffle/issues/721)._
+For new deploys on rinkeby and main net see [migration instructions](migrations.md)
 
 ### WIP (ignore it) alternative ganache launches
 
@@ -133,18 +144,18 @@ _NB: truffle migrate works with geth 1.8.0-stable. If you are using an unstable 
 
 If you use [ganache UI](http://truffleframework.com/ganache/) then
 
-* set the port to 8545
-* For running UI tests set mnemonic:  
-  `hello build tongue rack parade express shine salute glare rate spice stock`
+*   set the port to 8545
+*   For running UI tests set mnemonic:  
+    `hello build tongue rack parade express shine salute glare rate spice stock`
 
 #### Alternatively: truffle develop
 
 _NB: truffle runs local chain on localhost:9545_
 
-1. `truffle develop`
-1. in truffle console:  
-   `migrate` or  
-   `migrate --reset` to overwrite existing migration
-1. `cp ./build/contracts/* ./src/contractsBuild` (TODO: this step is needed b/c of a [truffle-migrate issue #10](https://github.com/trufflesuite/truffle-migrate/issues/10) )
+1.  `truffle develop`
+1.  in truffle console:  
+    `migrate` or  
+    `migrate --reset` to overwrite existing migration
+1.  `cp ./build/contracts/* ./src/contractsBuild`
 
     _TODO: use same mnemonic & port as `runganache.sh`_
