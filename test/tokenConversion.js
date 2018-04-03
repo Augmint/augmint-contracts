@@ -28,6 +28,7 @@ contract("token conversion tests", accounts => {
             tokenTestHelpers.augmintReserves.address,
             tokenTestHelpers.interestEarnedAccount.address,
             200000,
+            200000,
             500000
         );
 

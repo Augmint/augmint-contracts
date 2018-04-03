@@ -37,8 +37,9 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     /* Parameters Used to ensure totalLoanAmount or totalLockedAmount difference is withing limit and system also works
         when any of those 0 or low. */
-    uint public ltdDifferenceLimit;     /* allow lock or loan if Loan To Deposut ratio stay within 1 +- this param
-                                            stored as parts per million */
+    uint public ltdLockDifferenceLimit;     /* allow lock or loan if Loan To Deposut ratio stay within 1 +- this param.
+                                            Stored as parts per million */
+    uint public ltdLoanDifferenceLimit;
     uint public allowedLtdDifferenceAmount; /* in token - if totalLoan and totalLock difference is less than that
                                              then allow loan or lock even if ltdDifference limit would go off with it */
 
@@ -46,7 +47,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         NB: it's not iterable so old version addresses needs to be added for UI manually after each deploy */
     mapping(address => bool) public acceptedLegacyAugmintTokens;
 
-    event ParamsChanged(uint ltdDifferenceLimit, uint allowedLtdDifferenceAmount);
+    event ParamsChanged(uint ltdLockDifferenceLimit, uint ltdLoanDifferenceLimit, uint allowedLtdDifferenceAmount);
 
     event AcceptedLegacyAugmintTokenChanged(address augmintTokenAddress, bool newAcceptedState);
 
@@ -54,12 +55,13 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
-        uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount) public {
+        uint _ltdLockDifferenceLimit, uint _ltdLoanDifferenceLimit, uint _allowedLtdDifferenceAmount) public {
         augmintToken = _augmintToken;
         augmintReserves = _augmintReserves;
         interestEarnedAccount = _interestEarnedAccount;
 
-        ltdDifferenceLimit = _ltdDifferenceLimit;
+        ltdLockDifferenceLimit = _ltdLockDifferenceLimit;
+        ltdLoanDifferenceLimit = _ltdLoanDifferenceLimit;
         allowedLtdDifferenceAmount = _allowedLtdDifferenceAmount;
     }
 
@@ -111,12 +113,13 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         emit AcceptedLegacyAugmintTokenChanged(legacyAugmintTokenAddress, newAcceptedState);
     }
 
-    function setParams(uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount)
+    function setParams(uint _ltdLockDifferenceLimit, uint _ltdLoanDifferenceLimit, uint _allowedLtdDifferenceAmount)
     external restrict("MonetaryBoard") {
-        ltdDifferenceLimit = _ltdDifferenceLimit;
+        ltdLockDifferenceLimit = _ltdLockDifferenceLimit;
+        ltdLoanDifferenceLimit = _ltdLoanDifferenceLimit;
         allowedLtdDifferenceAmount = _allowedLtdDifferenceAmount;
 
-        emit ParamsChanged(ltdDifferenceLimit, allowedLtdDifferenceAmount);
+        emit ParamsChanged(ltdLockDifferenceLimit, ltdLoanDifferenceLimit, allowedLtdDifferenceAmount);
     }
 
     /* User can request to convert their tokens from older AugmintToken versions in 1:1
@@ -140,8 +143,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     }
 
     // helper function for FrontEnd to reduce calls
-    function getParams() external view returns(uint[2]) {
-        return [ltdDifferenceLimit, allowedLtdDifferenceAmount];
+    function getParams() external view returns(uint[3]) {
+        return [ltdLockDifferenceLimit, ltdLoanDifferenceLimit, allowedLtdDifferenceAmount];
     }
 
 }

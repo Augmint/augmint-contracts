@@ -102,33 +102,46 @@ contract("MonetarySupervisor tests", accounts => {
     });
 
     it("should be possible to set parameters", async function() {
-        const params = { ltdDifferenceLimit: 12345, allowedLtdDifferenceAmount: 1234 };
-        const tx = await monetarySupervisor.setParams(params.ltdDifferenceLimit, params.allowedLtdDifferenceAmount, {
-            from: accounts[0]
-        });
+        const params = {
+            ltdLockDifferenceLimit: 12345,
+            ltdLoanDifferenceLimit: 54321,
+            allowedLtdDifferenceAmount: 1234
+        };
+        const tx = await monetarySupervisor.setParams(
+            params.ltdLockDifferenceLimit,
+            params.ltdLoanDifferenceLimit,
+            params.allowedLtdDifferenceAmount,
+            {
+                from: accounts[0]
+            }
+        );
         testHelpers.logGasUse(this, tx, "setParams");
 
         await testHelpers.assertEvent(monetarySupervisor, "ParamsChanged", {
-            ltdDifferenceLimit: params.ltdDifferenceLimit,
+            ltdLockDifferenceLimit: params.ltdLockDifferenceLimit,
+            ltdLoanDifferenceLimit: params.ltdLoanDifferenceLimit,
             allowedLtdDifferenceAmount: params.allowedLtdDifferenceAmount
         });
 
-        const [ltdDifferenceLimit, allowedLtdDifferenceAmount] = await Promise.all([
-            monetarySupervisor.ltdDifferenceLimit(),
+        const [ltdLockDifferenceLimit, ltdLoanDifferenceLimit, allowedLtdDifferenceAmount] = await Promise.all([
+            monetarySupervisor.ltdLockDifferenceLimit(),
+            monetarySupervisor.ltdLoanDifferenceLimit(),
             monetarySupervisor.allowedLtdDifferenceAmount()
         ]);
 
-        assert.equal(ltdDifferenceLimit, params.ltdDifferenceLimit);
+        assert.equal(ltdLockDifferenceLimit, params.ltdLockDifferenceLimit);
+        assert.equal(ltdLoanDifferenceLimit, params.ltdLoanDifferenceLimit);
         assert.equal(allowedLtdDifferenceAmount, params.allowedLtdDifferenceAmount);
     });
 
     it("only allowed should set params ", async function() {
-        await testHelpers.expectThrow(monetarySupervisor.setParams(10000, 10000, { from: accounts[1] }));
+        await testHelpers.expectThrow(monetarySupervisor.setParams(10000, 10000, 10000, { from: accounts[1] }));
     });
 
     it("all params should be accessible via getParams", async function() {
         const paramsOneByOne = await Promise.all([
-            monetarySupervisor.ltdDifferenceLimit(),
+            monetarySupervisor.ltdLockDifferenceLimit(),
+            monetarySupervisor.ltdLoanDifferenceLimit(),
             monetarySupervisor.allowedLtdDifferenceAmount()
         ]);
 
