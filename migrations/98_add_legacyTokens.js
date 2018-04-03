@@ -23,10 +23,8 @@ module.exports = async function(deployer, network, accounts) {
         console.log(
             "On local ganache - deployed a mock legacy token contract for manual testing at " + oldToken.address
         );
-    } else if (web3.version.network === 4) {
-        // on rinkeby
+    } else if (web3.version.network == 4) {
         const oldToken = TokenAEur.at("0xa35d9de06895a3a2e7ecae26654b88fe71c179ea");
-        await monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken.address, true);
         await Promise.all([
             oldToken.grantPermission(monetarySupervisor.address, "NoFeeTransferContracts"),
             monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken.address, true)
