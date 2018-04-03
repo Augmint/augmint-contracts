@@ -99,6 +99,11 @@ contract("token conversion tests", accounts => {
                 from: "0x0000000000000000000000000000000000000000",
                 to: account,
                 amount: amount
+            }),
+            testHelpers.assertEvent(newMS, "LegacyTokenConverted", {
+                oldTokenAddress: augmintToken.address,
+                account,
+                amount
             })
         ]);
 

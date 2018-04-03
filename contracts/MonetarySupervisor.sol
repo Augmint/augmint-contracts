@@ -50,6 +50,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     event AcceptedLegacyAugmintTokenChanged(address augmintTokenAddress, bool newAcceptedState);
 
+    event LegacyTokenConverted(address oldTokenAddress, address account, uint amount);
+
     function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
         uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount) public {
@@ -139,6 +141,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
         legacyToken.burn(amount);
         augmintToken.issueTo(from, amount);
+        emit LegacyTokenConverted(msg.sender, from, amount);
     }
 
 }
