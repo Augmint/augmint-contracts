@@ -247,6 +247,16 @@ contract("Lock", accounts => {
         );
     });
 
+    it("should not allow to lock with an inactive lockproduct", async function() {
+        await lockerInstance.addLockProduct(50000, 60, 100, false);
+        const newLockProductId = (await lockerInstance.getLockProductCount()) - 1;
+        await testHelpers.expectThrow(
+            augmintToken.transferAndNotify(lockerInstance.address, 10000, newLockProductId, {
+                from: tokenHolder
+            })
+        );
+    });
+
     it("should allow an account to see how many locks it has", async function() {
         const startingNumLocks = (await lockerInstance.getLockCountForAddress(tokenHolder)).toNumber();
         const amountToLock = 1000;

@@ -1,5 +1,5 @@
 /* Contract to collect fees from system */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 import "./Restricted.sol";
 import "./AugmintToken.sol";
 

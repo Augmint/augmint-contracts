@@ -85,9 +85,21 @@ contract("Exchange orders tests", accounts => {
         await testHelpers.expectThrow(augmintToken.transferAndNotify(exchange.address, 0, price, { from: makers[0] }));
     });
 
+    it("shouldn't place a SELL token order with 0 price", async function() {
+        const price = 0;
+        await testHelpers.expectThrow(
+            augmintToken.transferAndNotify(exchange.address, 1000, price, { from: makers[0] })
+        );
+    });
+
     it("shouldn't place a BUY token order with 0 ETH", async function() {
         const price = 110000;
         await testHelpers.expectThrow(exchange.placeBuyTokenOrder(price, { value: 0 }));
+    });
+
+    it("shouldn't place a BUY token order with 0 price", async function() {
+        const price = 0;
+        await testHelpers.expectThrow(exchange.placeBuyTokenOrder(price, { value: web3.toWei(0.1) }));
     });
 
     it("no SELL token order when user doesn't have enough ACE", async function() {

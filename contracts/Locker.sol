@@ -15,7 +15,7 @@
   -> return only active loan products from getLoanProducts?
 */
 
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 import "./generic/Restricted.sol";
 import "./generic/SafeMath.sol";
@@ -82,16 +82,33 @@ contract Locker is Restricted, TokenReceiver {
                                     LockProduct(perTermInterest, durationInSecs, minimumLockAmount, isActive)) - 1;
         uint32 newLockProductId = uint32(_newLockProductId);
         require(newLockProductId == _newLockProductId);
-        NewLockProduct(newLockProductId, perTermInterest, durationInSecs, minimumLockAmount, isActive);
+        emit NewLockProduct(newLockProductId, perTermInterest, durationInSecs, minimumLockAmount, isActive);
 
     }
 
     function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("MonetaryBoard") {
 
-        require(lockProductId < lockProducts.length);
         lockProducts[lockProductId].isActive = isActive;
-        LockProductActiveChange(lockProductId, isActive);
+        emit LockProductActiveChange(lockProductId, isActive);
 
+    }
+
+    /* lock funds, called from AugmintToken's transferAndNotify
+     Flow for locking tokens:
+        1) user calls token contract's transferAndNotify lockProductId passed in data arg
+        2) transferAndNotify transfers tokens to the Lock contract
+        3) transferAndNotify calls Lock.transferNotification with lockProductId
+    */
+    function transferNotification(address from, uint256 amountToLock, uint _lockProductId) external {
+        require(msg.sender == address(augmintToken));
+        uint32 lockProductId = uint32(_lockProductId);
+        require(lockProductId == _lockProductId);
+        /* TODO: make data arg generic bytes
+            uint productId;
+            assembly { // solhint-disable-line no-inline-assembly
+                productId := mload(data)
+        } */
+        _createLock(lockProductId, from, amountToLock);
     }
 
     function releaseFunds(uint lockId) external {
@@ -109,7 +126,7 @@ contract Locker is Restricted, TokenReceiver {
         augmintToken.transferWithNarrative(lock.owner, lock.amountLocked.add(interestEarned),
                                                                                 "Funds released from lock");
 
-        LockReleased(lock.owner, lockId);
+        emit LockReleased(lock.owner, lockId);
     }
 
     function getLockProductCount() external view returns (uint) {
@@ -181,24 +198,6 @@ contract Locker is Restricted, TokenReceiver {
         }
     }
 
-    /* lock funds, called from AugmintToken's transferAndNotify
-     Flow for locking tokens:
-        1) user calls token contract's transferAndNotify lockProductId passed in data arg
-        2) transferAndNotify transfers tokens to the Lock contract
-        3) transferAndNotify calls Lock.transferNotification with lockProductId
-    */
-    function transferNotification(address from, uint256 amountToLock, uint _lockProductId) public {
-        require(msg.sender == address(augmintToken));
-        uint32 lockProductId = uint32(_lockProductId);
-        require(lockProductId == _lockProductId);
-        /* TODO: make data arg generic bytes
-            uint productId;
-            assembly { // solhint-disable-line no-inline-assembly
-                productId := mload(data)
-        } */
-        _createLock(lockProductId, from, amountToLock);
-    }
-
     function calculateInterest(uint32 perTermInterest, uint amountToLock) public pure returns (uint interestEarned) {
         interestEarned = amountToLock.mul(perTermInterest).div(1000000);
     }
@@ -219,7 +218,7 @@ contract Locker is Restricted, TokenReceiver {
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
 
-        NewLock(lockOwner, lockId, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
+        emit NewLock(lockOwner, lockId, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
                     lockProduct.durationInSecs, true);
     }
 
