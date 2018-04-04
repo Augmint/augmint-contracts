@@ -26,6 +26,8 @@ import "./AugmintReserves.sol";
 contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-line no-empty-blocks
     using SafeMath for uint256;
 
+    uint public constant PERCENT_100 = 10000002;
+
     AugmintTokenInterface public augmintToken;
     InterestEarnedAccount public interestEarnedAccount;
     AugmintReserves public augmintReserves;
@@ -75,10 +77,11 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         augmintReserves.burn(augmintToken, amount);
     }
 
-    // Locker requesting interest when locking funds
+    /* Locker requesting interest when locking funds. Enforcing LTD to stay within range allowed by LTD params
+        NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it  */
     function requestInterest(uint amountToLock, uint interestAmount) external {
         require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
-        /* TODO: enforce LTD limits (ltdDifferenceLimit & allowedLtdDifferenceAmount) */
+        require(amountToLock >= getMaxLockAmountAllowedByLtd());
 
         totalLockedAmount = totalLockedAmount.add(amountToLock);
         interestEarnedAccount.transferInterest(augmintToken, msg.sender, interestAmount); // transfer interest to Locker
@@ -90,8 +93,11 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         totalLockedAmount = totalLockedAmount.sub(lockedAmount);
     }
 
+    /* Issue loan if LTD stays within range allowed by LTD params
+        NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it */
     function issueLoan(address borrower, uint loanAmount) external {
         require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted LoanManager contracts
+        require(loanAmount >= getMaxLoanAmountAllowedByLtd());
         totalLoanAmount = totalLoanAmount.add(loanAmount);
         augmintToken.issueTo(borrower, loanAmount);
     }
@@ -145,6 +151,50 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     // helper function for FrontEnd to reduce calls
     function getParams() external view returns(uint[3]) {
         return [ltdLockDifferenceLimit, ltdLoanDifferenceLimit, allowedLtdDifferenceAmount];
+    }
+
+    function getLoanToDepositRatio() external view returns (uint loanToDepositRatio) {
+        loanToDepositRatio = totalLockedAmount == 0 ? 0 : totalLockedAmount.mul(PERCENT_100).div(totalLoanAmount);
+    }
+
+    /* Helper function for UI.
+        Returns max lock amount based on minLockAmount, interestPt, using LTD params & interestEarnedAccount balance */
+    function getMaxLockAmount(uint minLockAmount, uint interestPt) external view returns (uint maxLock) {
+        uint allowedByEarning = augmintToken.balanceOf(address(interestEarnedAccount)).mul(PERCENT_100).div(interestPt);
+        uint allowedByLtd = getMaxLockAmountAllowedByLtd();
+        maxLock = allowedByEarning < allowedByLtd ? allowedByEarning : allowedByLtd;
+        maxLock = maxLock < minLockAmount ? 0 : maxLock;
+    }
+
+    /* Helper function for UI.
+        Returns max loan amount based on minLoanAmont using LTD params */
+    function getMaxLoanAmount(uint minLoanAmount) external view returns (uint maxLoan) {
+        uint allowedByLtd = getMaxLoanAmountAllowedByLtd();
+        maxLoan = allowedByLtd < minLoanAmount ? 0 : allowedByLtd;
+    }
+
+    /* returns maximum lockable token amount allowed by LTD params. */
+    function getMaxLockAmountAllowedByLtd() public view returns(uint maxLockByLtd) {
+        uint allowedByLtdDifferencePt = totalLoanAmount.mul(PERCENT_100)
+                                            .div(PERCENT_100.sub(ltdLockDifferenceLimit)).sub(totalLockedAmount);
+
+        uint allowedByLtdDifferenceAmount = totalLoanAmount > totalLockedAmount.add(allowedLtdDifferenceAmount) ?
+                                            0 : totalLoanAmount.add(allowedLtdDifferenceAmount).sub(totalLockedAmount);
+
+        maxLockByLtd = allowedByLtdDifferencePt > allowedByLtdDifferenceAmount ?
+                                            allowedByLtdDifferencePt : allowedLtdDifferenceAmount;
+    }
+
+    /* returns maximum borrowable token amount allowed by LTD params */
+    function getMaxLoanAmountAllowedByLtd() public view returns(uint maxLoanByLtd) {
+        uint allowedByLtdDifferencePt =
+                    totalLockedAmount.mul(ltdLoanDifferenceLimit.add(PERCENT_100)).sub(totalLoanAmount);
+
+        uint allowedByLtdDifferenceAmount = totalLoanAmount > totalLockedAmount.add(allowedLtdDifferenceAmount) ?
+                            0 : totalLockedAmount.add(allowedLtdDifferenceAmount).sub(totalLoanAmount);
+
+        maxLoanByLtd = allowedByLtdDifferenceAmount > allowedByLtdDifferencePt ?
+                            allowedLtdDifferenceAmount : allowedByLtdDifferencePt;
     }
 
 }
