@@ -371,10 +371,9 @@ async function calcLoanValues(rates, product, collateralWei) {
         .div(ppmDiv)
         .round(0, BigNumber.ROUND_DOWN);
 
-    ret.loanAmount = ret.tokenValue
-        .mul(product.collateralRatio)
+    ret.loanAmount = ret.repaymentAmount
         .mul(product.discountRate)
-        .div(ppmDiv * ppmDiv)
+        .div(ppmDiv)
         .round(0, BigNumber.ROUND_DOWN);
 
     ret.interestAmount = ret.repaymentAmount.gt(ret.loanAmount)
