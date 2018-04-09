@@ -26,7 +26,7 @@ import "./AugmintReserves.sol";
 contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-line no-empty-blocks
     using SafeMath for uint256;
 
-    uint public constant PERCENT_100 = 10000002;
+    uint public constant PERCENT_100 = 1000000;
 
     AugmintTokenInterface public augmintToken;
     InterestEarnedAccount public interestEarnedAccount;
