@@ -249,13 +249,13 @@ async function collectLoan(testInstance, loan, collector) {
     // const rate = await rates.rates("EUR");
     // console.log(
     //     `    *** Collection params:
-    //      A-EUR/EUR: ${rate[0] / 10000}
+    //      A-EUR/EUR: ${rate[0] / 100}
     //      defaulting fee pt: ${loan.product.defaultingFeePt / 10000} %
     //      repaymentAmount: ${loan.repaymentAmount / 10000} A-EUR = ${web3.fromWei(repaymentAmountInWei)} ETH
-    //      collateral: ${web3.fromWei(loan.collateralAmount).toString()} ETH = ${collateralInToken / 10000} A-EUR
+    //      collateral: ${web3.fromWei(loan.collateralAmount).toString()} ETH = ${collateralInToken / 100} A-EUR
     //      --------------------
-    //      targetFee: ${targetFeeInToken / 10000} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
-    //      target collection : ${targetCollectionInToken / 10000} A-EUR = ${web3
+    //      targetFee: ${targetFeeInToken / 100} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
+    //      target collection : ${targetCollectionInToken / 100} A-EUR = ${web3
     // .fromWei(targetCollectionInWei)
     // .toString()} ETH
     //      collected: ${web3.fromWei(collectedCollateral).toString()} ETH
