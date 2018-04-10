@@ -279,8 +279,8 @@ contract("Lock", accounts => {
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
             }),
-            // create lock product with 10% per term, and 2 sec lock time:
-            lockerInstance.addLockProduct(100000, 2, 0, true)
+            // create lock product with 10% per term, and 1 sec lock time:
+            lockerInstance.addLockProduct(100000, 1, 0, true)
         ]);
         testHelpers.logGasUse(this, addProdTx, "addLockProduct");
 
@@ -293,12 +293,13 @@ contract("Lock", accounts => {
         });
         testHelpers.logGasUse(this, lockTx, "transferAndNotify - lockFunds");
 
-        await testHelpers.waitFor(2500);
-
         const [totalLockAmountBefore, newestLockId] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCount().then(res => res - 1)
         ]);
+
+        const lockedUntil = (await lockerInstance.locks(newestLockId))[3].toNumber();
+        await testHelpers.waitForTimeStamp(lockedUntil);
 
         const releaseTx = await lockerInstance.releaseFunds(newestLockId);
         testHelpers.logGasUse(this, releaseTx, "releaseFunds");
@@ -764,8 +765,8 @@ contract("Lock", accounts => {
         ]);
         const amountToLock = 1000;
 
-        // create lock product with 10% per term, and 2 sec lock time:
-        await lockerInstance.addLockProduct(100000, 2, 0, true);
+        // create lock product with 10% per term, and 1 sec lock time:
+        await lockerInstance.addLockProduct(100000, 1, 0, true);
         const interestEarned = Math.floor(amountToLock / 10); // 10%
 
         const newLockProductId = (await lockerInstance.getLockProductCount()) - 1;
@@ -780,9 +781,10 @@ contract("Lock", accounts => {
         );
         testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
 
-        await testHelpers.waitFor(2500);
-
         const newestLockId = (await lockerInstance.getLockCount()) - 1;
+
+        const lockedUntil = (await lockerInstance.locks(newestLockId))[3].toNumber();
+        await testHelpers.waitForTimeStamp(lockedUntil);
 
         const releaseTx = await lockerInstance.releaseFunds(newestLockId);
         testHelpers.logGasUse(this, releaseTx, "releaseFunds");
