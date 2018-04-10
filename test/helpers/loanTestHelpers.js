@@ -314,11 +314,30 @@ async function getProductsInfo(offset) {
     assert.equal(products.length, CHUNK_SIZE);
     const result = [];
     products.map(prod => {
-        const [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive] = prod;
+        const [
+            id,
+            minDisbursedAmount,
+            term,
+            discountRate,
+            collateralRatio,
+            defaultingFeePt,
+            maxLoanAmount,
+            isActive
+        ] = prod;
         if (term.gt(0)) {
-            result.push({ id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive });
+            result.push({
+                id,
+                minDisbursedAmount,
+                term,
+                discountRate,
+                collateralRatio,
+                defaultingFeePt,
+                maxLoanAmount,
+                isActive
+            });
         }
     });
+
     return result;
 }
 

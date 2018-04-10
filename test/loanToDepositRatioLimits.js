@@ -37,23 +37,17 @@ contract("Loan to Deposit ratio tests", accounts => {
         loanManager = loanTestHelpers.loanManager;
         locker = Locker.at(Locker.address);
 
+        ltdParams = tokenTestHelpers.ltdParams;
+
         const rates = Rates.at(Rates.address);
 
-        const [ltdParamsArray] = await Promise.all([
-            monetarySupervisor.getParams(),
+        await Promise.all([
             tokenTestHelpers.issueToReserve(10000000),
             // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount, defaultingFeePt, isActive
             loanManager.addLoanProduct(60, 1000000, 1000000, 500, 5000, true),
             // (perTermInterest,  durationInSecs, minimumLockAmount, isActive)
             locker.addLockProduct(lockPerTermInterest, 60, 100, true)
         ]);
-
-        ltdParams = {};
-        [
-            ltdParams.ltdLockDifferenceLimit,
-            ltdParams.ltdLoanDifferenceLimit,
-            ltdParams.allowedLtdDifferenceAmount
-        ] = ltdParamsArray;
 
         [loanProductId, lockProductId, rate] = await Promise.all([
             loanManager.getProductCount().then(res => res.toNumber() - 1),

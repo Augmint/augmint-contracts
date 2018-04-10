@@ -32,6 +32,12 @@ module.exports = {
     get monetarySupervisor() {
         return monetarySupervisor;
     },
+    get allowedLtdDifferenceAmount() {
+        return ltdParams.allowedLtdDifferenceAmount;
+    },
+    get ltdParams() {
+        return ltdParams;
+    },
     get interestEarnedAccount() {
         return interestEarnedAccount;
     },
@@ -45,12 +51,20 @@ let augmintReserves = null;
 let monetarySupervisor = null;
 let peggedSymbol = null;
 let interestEarnedAccount = null;
+let ltdParams = {};
 
 before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
+
+    const ltdParamsArray = await monetarySupervisor.getParams();
+    [
+        ltdParams.ltdLockDifferenceLimit,
+        ltdParams.ltdLoanDifferenceLimit,
+        ltdParams.allowedLtdDifferenceAmount
+    ] = ltdParamsArray;
 
     peggedSymbol = web3.toAscii(await augmintToken.peggedSymbol());
 });

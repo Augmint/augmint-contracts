@@ -1,4 +1,5 @@
 const testHelpers = require("./helpers/testHelpers.js");
+const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const loanTestHelpers = require("./helpers/loanTestHelpers.js");
 
 let loanManager = null;
@@ -10,7 +11,7 @@ contract("loanManager  tests", accounts => {
 
         loanProduct = {
             // assuming prod attributes are same order as array returned
-            minDisbursedAmount: 300000,
+            minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
             collateralRatio: 850000,
@@ -36,7 +37,7 @@ contract("loanManager  tests", accounts => {
     it("Should add new product allow listing from offset 0", async function() {
         const prod = {
             // assuming prod attributes are same order as array returned
-            minDisbursedAmount: 300000,
+            minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
             collateralRatio: 850000,
@@ -78,13 +79,14 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
+        assert.equal(lastProduct.maxLoanAmount.toNumber(), tokenTestHelpers.allowedLtdDifferenceAmount.toNumber());
         assert.equal(lastProduct.isActive.toNumber(), prod.isActive ? 1 : 0);
     });
 
     it("Should allow listing products (offset > 0)", async function() {
         const prod = {
             // assuming prod attributes are same order as array returned
-            minDisbursedAmount: 300000,
+            minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
             collateralRatio: 850000,
@@ -115,12 +117,13 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
+        assert.equal(lastProduct.maxLoanAmount.toNumber(), tokenTestHelpers.allowedLtdDifferenceAmount.toNumber());
         assert.equal(lastProduct.isActive.toNumber(), prod.isActive ? 1 : 0);
     });
 
     it("Only allowed should add new product", async function() {
         await testHelpers.expectThrow(
-            loanManager.addLoanProduct(86400, 970000, 850000, 300000, 50000, true, { from: accounts[1] })
+            loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, { from: accounts[1] })
         );
     });
 
