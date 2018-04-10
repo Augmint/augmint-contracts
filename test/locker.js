@@ -97,16 +97,17 @@ contract("Lock", accounts => {
 
         const newestProduct = products[numLocks - 1];
 
-        // each product should be a 4 element array
+        // each product should be a 5 element array
         assert.isArray(newestProduct);
-        assert(newestProduct.length === 4);
+        assert(newestProduct.length === 5);
 
-        // the products should be [ perTermInterest, durationInSecs, isActive ] all
+        // the products should be [ perTermInterest, durationInSecs, maxLockAmount, isActive ] all
         // represented as uints (i.e. BigNumber objects in JS land):
-        const [perTermInterest, durationInSecs, minimumLockAmount, isActive] = newestProduct;
+        const [perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive] = newestProduct;
         assert(perTermInterest.toNumber() === 100000);
         assert(durationInSecs.toNumber() === 120);
         assert(minimumLockAmount.toNumber() === 75);
+        assert(maxLockAmount.eq(tokenTestHelpers.allowedLtdDifferenceAmount));
         assert(isActive.toNumber() === 1);
     });
 
@@ -123,7 +124,7 @@ contract("Lock", accounts => {
 
         // each product should be a 4 element array
         assert.isArray(product);
-        assert(product.length === 4);
+        assert(product.length === 5);
 
         const expectedProduct = await lockerInstance.lockProducts(offset);
         const [
@@ -133,12 +134,13 @@ contract("Lock", accounts => {
             expectedIsActive
         ] = expectedProduct;
 
-        // the products should be [ perTermInterest, durationInSecs, isActive ] all
+        // the products should be [ perTermInterest, durationInSecs, maxLockAmount, isActive ] all
         // represented as uints (i.e. BigNumber objects in JS land):
-        const [perTermInterest, durationInSecs, minimumLockAmount, isActive] = product;
+        const [perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive] = product;
         assert(perTermInterest.toNumber() === expectedPerTermInterest.toNumber());
         assert(durationInSecs.toNumber() === expectedDurationInSecs.toNumber());
         assert(minimumLockAmount.toNumber() === expectedMinimumLockAmount.toNumber());
+        assert(maxLockAmount.eq(tokenTestHelpers.allowedLtdDifferenceAmount));
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 
