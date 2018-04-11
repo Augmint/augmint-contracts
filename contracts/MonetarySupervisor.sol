@@ -7,7 +7,6 @@
     - Converts older versions of AugmintTokens in 1:1 to new
 
     TODO:
-        - enforce LTD limits
         - MonetarySupervisorInterface (and use it everywhere)
         - interestEarnedAccount setter?
         - create and use InterestEarnedAccount interface instead?
@@ -37,13 +36,20 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     uint public totalLoanAmount; // total amount of all loans without interest, in token
     uint public totalLockedAmount; // total amount of all locks without premium, in token
 
-    /* Parameters Used to ensure totalLoanAmount or totalLockedAmount difference is withing limit and system also works
-        when any of those 0 or low. */
-    uint public ltdLockDifferenceLimit;     /* allow lock or loan if Loan To Deposut ratio stay within 1 +- this param.
-                                            Stored as parts per million */
-    uint public ltdLoanDifferenceLimit;
-    uint public allowedLtdDifferenceAmount; /* in token - if totalLoan and totalLock difference is less than that
-                                             then allow loan or lock even if ltdDifference limit would go off with it */
+    /**********
+        Parameters to ensure totalLoanAmount or totalLockedAmount difference is within limits and system also works
+        when total loan or lock amounts are low.
+            for test calculations: https://docs.google.com/spreadsheets/d/1MeWYPYZRIm1n9lzpvbq8kLfQg1hhvk5oJY6NrR401S0
+    **********/
+    uint public ltdLockDifferenceLimit; /* only allow a new lock if Loan To Deposit ratio would stay above
+                                            (1 - ltdLockDifferenceLimit) with new lock. Stored as parts per million */
+    uint public ltdLoanDifferenceLimit; /* only allow a new loan if Loan To Deposit ratio would stay above
+                                            (1 + ltdLoanDifferenceLimit) with new loan. Stored as parts per million */
+    /* allowedLtdDifferenceAmount param is to ensure the system is not "freezing" when totalLoanAmount or
+            totalLockAmount is low.
+        It allows a new loan or lock (up to an amount to reach this difference) even if LTD will go below / above 
+            ltdLockDifferenceLimit / ltdLoanDifferenceLimit with the new lock/loan */
+    uint public allowedLtdDifferenceAmount;
 
     /* Previously deployed AugmintTokens which are accepted for conversion (see transferNotification() )
         NB: it's not iterable so old version addresses needs to be added for UI manually after each deploy */
