@@ -213,8 +213,7 @@ contract("Lock", accounts => {
                 interestEarned: interestEarned,
                 lockedUntil: expectedLockedUntil,
                 perTermInterest: perTermInterest,
-                durationInSecs: durationInSecs,
-                isActive: true
+                durationInSecs: durationInSecs
             }),
 
             // TODO: events are emitted but can't retrieve them
@@ -673,8 +672,7 @@ contract("Lock", accounts => {
             interestEarned: x => x,
             lockedUntil: x => x,
             perTermInterest: x => x,
-            durationInSecs: x => x,
-            isActive: true
+            durationInSecs: x => x
         });
 
         const [totalLockAmountAfter, finishingNumLocks] = await Promise.all([

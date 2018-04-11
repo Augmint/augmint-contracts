@@ -37,7 +37,7 @@ contract Locker is Restricted, TokenReceiver {
 
     // NB: amountLocked includes the original amount, plus interest
     event NewLock(address indexed lockOwner, uint lockId, uint amountLocked, uint interestEarned,
-                    uint40 lockedUntil, uint32 perTermInterest, uint32 durationInSecs, bool isActive);
+                    uint40 lockedUntil, uint32 perTermInterest, uint32 durationInSecs);
 
     event LockReleased(address indexed lockOwner, uint lockId);
 
@@ -220,7 +220,7 @@ contract Locker is Restricted, TokenReceiver {
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
 
         emit NewLock(lockOwner, lockId, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
-                    lockProduct.durationInSecs, true);
+                    lockProduct.durationInSecs);
     }
 
 }
