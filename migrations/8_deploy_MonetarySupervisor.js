@@ -4,10 +4,10 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 
-module.exports = async function(deployer) {
+module.exports = function(deployer) {
     deployer.link(SafeMath, MonetarySupervisor);
 
-    await deployer.deploy(
+    deployer.deploy(
         MonetarySupervisor,
         TokenAEur.address,
         AugmintReserves.address,
@@ -23,13 +23,15 @@ module.exports = async function(deployer) {
                                         then allow loan or lock even if ltdDifference limit would go off with it */
     );
 
-    const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
-    const tokenAEur = TokenAEur.at(TokenAEur.address);
-    const augmintReserves = AugmintReserves.at(AugmintReserves.address);
-    await Promise.all([
-        interestEarnedAccount.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
-        tokenAEur.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
-        tokenAEur.grantPermission(MonetarySupervisor.address, "NoFeeTransferContracts"),
-        augmintReserves.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract")
-    ]);
+    deployer.then(async () => {
+        const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
+        const tokenAEur = TokenAEur.at(TokenAEur.address);
+        const augmintReserves = AugmintReserves.at(AugmintReserves.address);
+        await Promise.all([
+            interestEarnedAccount.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
+            tokenAEur.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
+            tokenAEur.grantPermission(MonetarySupervisor.address, "NoFeeTransferContracts"),
+            augmintReserves.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract")
+        ]);
+    });
 };
