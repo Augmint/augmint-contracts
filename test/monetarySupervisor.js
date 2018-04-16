@@ -162,4 +162,31 @@ contract("MonetarySupervisor tests", accounts => {
     it("only allowed should adjust KPIs", async function() {
         await testHelpers.expectThrow(monetarySupervisor.adjustKPIs(10, 10, { from: accounts[1] }));
     });
+
+    it("should change interestEarnedAccount and augmintReserves", async function() {
+        const newInterestEarnedAccount = accounts[2];
+        const newAugmintReserves = accounts[3];
+        const tx = await monetarySupervisor.setSystemContracts(newInterestEarnedAccount, newAugmintReserves);
+        testHelpers.logGasUse(this, tx, "setSystemContracts");
+
+        const [actualInterestEarnedContract, actualAugmintReserves] = await Promise.all([
+            monetarySupervisor.interestEarnedAccount(),
+            monetarySupervisor.augmintReserves(),
+            testHelpers.assertEvent(monetarySupervisor, "SystemContractsChanged", {
+                newInterestEarnedAccount,
+                newAugmintReserves
+            })
+        ]);
+
+        assert.equal(actualInterestEarnedContract, newInterestEarnedAccount);
+        assert.equal(actualAugmintReserves, newAugmintReserves);
+    });
+
+    it("only allowed should change interestEarnedAccount and augmintReserves", async function() {
+        const newInterestEarnedAccount = tokenTestHelpers.interestEarnedAccount.address;
+        const newAugmintReserves = augmintReserves.address;
+        await testHelpers.expectThrow(
+            monetarySupervisor.setSystemContracts(newInterestEarnedAccount, newAugmintReserves, { from: accounts[1] })
+        );
+    });
 });

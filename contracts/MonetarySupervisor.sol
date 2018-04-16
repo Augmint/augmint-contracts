@@ -7,9 +7,8 @@
     - Converts older versions of AugmintTokens in 1:1 to new
 
     TODO:
-        - MonetarySupervisorInterface (and use it everywhere)
-        - interestEarnedAccount setter?
-        - create and use InterestEarnedAccount interface instead?
+        - Mcreate and use MonetarySupervisorInterface?
+        - create and use InterestEarnedAccount interface ?
 
 */
 
@@ -66,6 +65,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     event LegacyTokenConverted(address oldTokenAddress, address account, uint amount);
 
     event KPIsAdjusted(uint totalLoanAmountAdjustment, uint totalLockedAmountAdjustment);
+
+    event SystemContractsChanged(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves);
 
     function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
@@ -147,6 +148,13 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         emit KPIsAdjusted(totalLoanAmountAdjustment, totalLockedAmountAdjustment);
     }
 
+    /* to allow upgrades of InterestEarnedAccount and AugmintReserves contracts. */
+    function setSystemContracts(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves)
+    external restrict("MonetaryBoard") {
+        interestEarnedAccount = newInterestEarnedAccount;
+        augmintReserves = newAugmintReserves;
+        emit SystemContractsChanged(newInterestEarnedAccount, newAugmintReserves);
+    }
 
     /* User can request to convert their tokens from older AugmintToken versions in 1:1
       transferNotification is called from AugmintToken's transferAndNotify
