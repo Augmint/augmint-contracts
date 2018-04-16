@@ -79,7 +79,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "0");
         assert.equal(limits.maxLoan.toString(), "100000");
 
-        // Earned interest > 0 and maxlock by interest < allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock by interest < allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "100000");
@@ -87,7 +87,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "60024");
         assert.equal(limits.maxLoan.toString(), "100000");
 
-        // Earned interest > 0 and maxlock  by interest > allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock  by interest > allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "100000");
@@ -110,7 +110,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "0");
         assert.equal(limits.maxLoan.toString(), "101000");
 
-        // Earned interest > 0 and maxlock by interest < allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock by interest < allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "99000");
@@ -118,7 +118,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "60024");
         assert.equal(limits.maxLoan.toString(), "101000");
 
-        // Earned interest > 0 and maxlock  by interest > allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock  by interest > allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "99000");
@@ -139,7 +139,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "0");
         assert.equal(limits.maxLoan.toString(), "97000");
 
-        // Earned interest > 0 and maxlock by interest < allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock by interest < allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "103000");
@@ -147,7 +147,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "60024");
         assert.equal(limits.maxLoan.toString(), "97000");
 
-        // Earned interest > 0 and maxlock  by interest > allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock  by interest > allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "103000");
@@ -174,7 +174,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "0");
         assert.equal(limits.maxLoan.toString(), "100000");
 
-        // Earned interest > 0 and maxlock by interest < allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock by interest < allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "100000");
@@ -182,7 +182,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "60024");
         assert.equal(limits.maxLoan.toString(), "100000");
 
-        // Earned interest > 0 and maxlock  by interest > allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock  by interest > allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 500);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "100000");
@@ -192,8 +192,8 @@ contract("Loan to Deposit ratio tests", accounts => {
     });
 
     it("LTD when totalLock < totalLoan", async function() {
-        // set allowedLtdDifferenceAmount temporaly to allow setup test base
-        await monetarySupervisor.setParams(ltdParams.ltdLockDifferenceLimit, ltdParams.ltdLoanDifferenceLimit, 1000000);
+        // set allowedDifferenceAmount temporaly to allow setup test base
+        await monetarySupervisor.setLtdParams(ltdParams.lockDifferenceLimit, ltdParams.loanDifferenceLimit, 1000000);
 
         // get a loan
         const collateralAmount = web3.toWei(640000 / rate);
@@ -205,11 +205,11 @@ contract("Loan to Deposit ratio tests", accounts => {
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 
-        // reset allowedLtdDifferenceAmount
-        await monetarySupervisor.setParams(
-            ltdParams.ltdLockDifferenceLimit,
-            ltdParams.ltdLoanDifferenceLimit,
-            ltdParams.allowedLtdDifferenceAmount
+        // reset allowedDifferenceAmount
+        await monetarySupervisor.setLtdParams(
+            ltdParams.lockDifferenceLimit,
+            ltdParams.loanDifferenceLimit,
+            ltdParams.allowedDifferenceAmount
         );
 
         // Earned interest 0
@@ -219,7 +219,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "0");
         assert.equal(limits.maxLoan.toString(), "80000");
 
-        // Earned interest > 0 and maxlock by interest < allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock by interest < allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 1000);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "314285");
@@ -227,7 +227,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "120048");
         assert.equal(limits.maxLoan.toString(), "80000");
 
-        // Earned interest > 0 and maxlock  by interest > allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock  by interest > allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 9000);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "314285");
@@ -237,8 +237,8 @@ contract("Loan to Deposit ratio tests", accounts => {
     });
 
     it("LTD when totalLock > totalLoan", async function() {
-        // set allowedLtdDifferenceAmount temporaly to allow setup test base
-        await monetarySupervisor.setParams(ltdParams.ltdLockDifferenceLimit, ltdParams.ltdLoanDifferenceLimit, 1000000);
+        // set allowedDifferenceAmount temporaly to allow setup test base
+        await monetarySupervisor.setLtdParams(ltdParams.lockDifferenceLimit, ltdParams.loanDifferenceLimit, 1000000);
 
         // get a loan
         const collateralAmount = web3.toWei(600000 / rate);
@@ -250,11 +250,11 @@ contract("Loan to Deposit ratio tests", accounts => {
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 
-        // reset allowedLtdDifferenceAmount
-        await monetarySupervisor.setParams(
-            ltdParams.ltdLockDifferenceLimit,
-            ltdParams.ltdLoanDifferenceLimit,
-            ltdParams.allowedLtdDifferenceAmount
+        // reset allowedDifferenceAmount
+        await monetarySupervisor.setLtdParams(
+            ltdParams.lockDifferenceLimit,
+            ltdParams.loanDifferenceLimit,
+            ltdParams.allowedDifferenceAmount
         );
 
         // Earned interest 0
@@ -264,7 +264,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "0");
         assert.equal(limits.maxLoan.toString(), "168000");
 
-        // Earned interest > 0 and maxlock by interest < allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock by interest < allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 1000);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "217142");
@@ -272,7 +272,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLock.toString(), "120048");
         assert.equal(limits.maxLoan.toString(), "168000");
 
-        // Earned interest > 0 and maxlock  by interest > allowedLtdDifferenceAmount
+        // Earned interest > 0 and maxlock  by interest > allowedDifferenceAmount
         await augmintToken.transfer(InterestEarnedAccount.address, 9000);
         limits = await getLtdLimits();
         assert.equal(limits.maxLockByLtd.toString(), "217142");
@@ -283,8 +283,8 @@ contract("Loan to Deposit ratio tests", accounts => {
 
     it("maxLock & maxLoan should be 0 if lock/loan allowed by LTD is < minLock/LoanAmount", async function() {
         const [maxLock, maxLoan] = await Promise.all([
-            monetarySupervisor.getMaxLockAmount(ltdParams.allowedLtdDifferenceAmount.add(1), lockPerTermInterest),
-            monetarySupervisor.getMaxLoanAmount(ltdParams.allowedLtdDifferenceAmount.add(1))
+            monetarySupervisor.getMaxLockAmount(ltdParams.allowedDifferenceAmount.add(1), lockPerTermInterest),
+            monetarySupervisor.getMaxLoanAmount(ltdParams.allowedDifferenceAmount.add(1))
         ]);
         assert.equal(maxLock.toString(), "0");
         assert.equal(maxLoan.toString(), "0");
@@ -293,12 +293,12 @@ contract("Loan to Deposit ratio tests", accounts => {
     it("should NOT allow to lock more than maxLockAmountAllowedByLtd ", async function() {
         // transfer enough to interestEarnedAccount so lock is not be bound by it
         await augmintToken.transfer(InterestEarnedAccount.address, 10000);
-        const amountToLock = ltdParams.allowedLtdDifferenceAmount.add(1);
+        const amountToLock = ltdParams.allowedDifferenceAmount.add(1);
         await testHelpers.expectThrow(augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId));
     });
 
     it("should NOT allow to borrow more than maxLoanAmountAllowedByLtd ", async function() {
-        const collateralAmount = web3.toWei(ltdParams.allowedLtdDifferenceAmount.add(1) / rate);
+        const collateralAmount = web3.toWei(ltdParams.allowedDifferenceAmount.add(1) / rate);
         await testHelpers.expectThrow(loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount }));
     });
 });

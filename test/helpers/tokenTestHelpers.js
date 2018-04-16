@@ -59,12 +59,8 @@ before(async function() {
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
 
-    const ltdParamsArray = await monetarySupervisor.getParams();
-    [
-        ltdParams.ltdLockDifferenceLimit,
-        ltdParams.ltdLoanDifferenceLimit,
-        ltdParams.allowedLtdDifferenceAmount
-    ] = ltdParamsArray;
+    const ltdParamsArray = await monetarySupervisor.ltdParams();
+    [ltdParams.lockDifferenceLimit, ltdParams.loanDifferenceLimit, ltdParams.allowedDifferenceAmount] = ltdParamsArray;
 
     peggedSymbol = web3.toAscii(await augmintToken.peggedSymbol());
 });
