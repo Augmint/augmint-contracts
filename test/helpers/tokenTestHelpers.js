@@ -72,7 +72,7 @@ async function issueToReserve(amount) {
 }
 
 async function withdrawFromReserve(to, amount) {
-    await augmintReserves.withdrawTokens(augmintToken.address, to, amount, "withdrawal for tests");
+    await augmintReserves.withdraw(augmintToken.address, to, amount, 0, "withdrawal for tests");
 }
 
 async function transferTest(testInstance, expTransfer) {

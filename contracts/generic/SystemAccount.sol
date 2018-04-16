@@ -1,14 +1,23 @@
-/* Contract to collect fees from system */
+/* Generic contract for system accounts: FeeAccount, AugmintReserves and InterestEarnedAccount */
 pragma solidity 0.4.21;
 import "./Restricted.sol";
 import "./AugmintToken.sol";
 
 
 contract SystemAccount is Restricted {
+    event WithdrawFromSystemAccount(address tokenAddress, address to, uint tokenAmount, uint weiAmount,
+                                    string narrative);
+
     /* FIXME: this is only for first pilots to avoid funds stuck in contract due to bugs.
       remove this function for higher volume pilots */
-    function withdrawTokens(AugmintToken tokenAddress, address to, uint amount, string narrative)
+    function withdraw(AugmintToken tokenAddress, address to, uint tokenAmount, uint weiAmount, string narrative)
     external restrict("MonetaryBoard") {
-        tokenAddress.transferWithNarrative(to, amount, narrative);
+        tokenAddress.transferWithNarrative(to, tokenAmount, narrative);
+        if (weiAmount > 0) {
+            to.transfer(weiAmount);
+        }
+
+        emit WithdrawFromSystemAccount(tokenAddress, to, tokenAmount, weiAmount, narrative);
     }
+
 }
