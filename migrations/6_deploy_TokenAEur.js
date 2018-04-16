@@ -3,9 +3,10 @@ const TokenAEur = artifacts.require("./TokenAEur.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 
-module.exports = async function(deployer) {
+module.exports = function(deployer) {
     deployer.link(SafeMath, TokenAEur);
-    await deployer.deploy(
+
+    deployer.deploy(
         TokenAEur,
         FeeAccount.address,
         2000, // transferFeePt in parts per million = 0.2%
@@ -13,9 +14,11 @@ module.exports = async function(deployer) {
         500 // max fee: 5 A-EUR
     );
 
-    const tokenAEur = TokenAEur.at(TokenAEur.address);
-    await Promise.all([
-        tokenAEur.grantPermission(FeeAccount.address, "NoFeeTransferContracts"),
-        tokenAEur.grantPermission(AugmintReserves.address, "NoFeeTransferContracts")
-    ]);
+    deployer.then(async () => {
+        const tokenAEur = TokenAEur.at(TokenAEur.address);
+        await Promise.all([
+            tokenAEur.grantPermission(FeeAccount.address, "NoFeeTransferContracts"),
+            tokenAEur.grantPermission(AugmintReserves.address, "NoFeeTransferContracts")
+        ]);
+    });
 };

@@ -97,16 +97,17 @@ contract("Lock", accounts => {
 
         const newestProduct = products[numLocks - 1];
 
-        // each product should be a 4 element array
+        // each product should be a 5 element array
         assert.isArray(newestProduct);
-        assert(newestProduct.length === 4);
+        assert(newestProduct.length === 5);
 
-        // the products should be [ perTermInterest, durationInSecs, isActive ] all
+        // the products should be [ perTermInterest, durationInSecs, maxLockAmount, isActive ] all
         // represented as uints (i.e. BigNumber objects in JS land):
-        const [perTermInterest, durationInSecs, minimumLockAmount, isActive] = newestProduct;
+        const [perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive] = newestProduct;
         assert(perTermInterest.toNumber() === 100000);
         assert(durationInSecs.toNumber() === 120);
         assert(minimumLockAmount.toNumber() === 75);
+        assert.equal(maxLockAmount.toString(), tokenTestHelpers.ltdParams.allowedDifferenceAmount.toString());
         assert(isActive.toNumber() === 1);
     });
 
@@ -123,7 +124,7 @@ contract("Lock", accounts => {
 
         // each product should be a 4 element array
         assert.isArray(product);
-        assert(product.length === 4);
+        assert(product.length === 5);
 
         const expectedProduct = await lockerInstance.lockProducts(offset);
         const [
@@ -133,12 +134,13 @@ contract("Lock", accounts => {
             expectedIsActive
         ] = expectedProduct;
 
-        // the products should be [ perTermInterest, durationInSecs, isActive ] all
+        // the products should be [ perTermInterest, durationInSecs, maxLockAmount, isActive ] all
         // represented as uints (i.e. BigNumber objects in JS land):
-        const [perTermInterest, durationInSecs, minimumLockAmount, isActive] = product;
+        const [perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive] = product;
         assert(perTermInterest.toNumber() === expectedPerTermInterest.toNumber());
         assert(durationInSecs.toNumber() === expectedDurationInSecs.toNumber());
         assert(minimumLockAmount.toNumber() === expectedMinimumLockAmount.toNumber());
+        assert.equal(maxLockAmount.toString(), tokenTestHelpers.ltdParams.allowedDifferenceAmount.toString());
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 
@@ -211,8 +213,7 @@ contract("Lock", accounts => {
                 interestEarned: interestEarned,
                 lockedUntil: expectedLockedUntil,
                 perTermInterest: perTermInterest,
-                durationInSecs: durationInSecs,
-                isActive: true
+                durationInSecs: durationInSecs
             }),
 
             // TODO: events are emitted but can't retrieve them
@@ -277,8 +278,8 @@ contract("Lock", accounts => {
                 lockerInstance: lockerInstance.address,
                 interestEarned: interestEarnedAddress
             }),
-            // create lock product with 10% per term, and 2 sec lock time:
-            lockerInstance.addLockProduct(100000, 2, 0, true)
+            // create lock product with 10% per term, and 1 sec lock time:
+            lockerInstance.addLockProduct(100000, 1, 0, true)
         ]);
         testHelpers.logGasUse(this, addProdTx, "addLockProduct");
 
@@ -291,12 +292,13 @@ contract("Lock", accounts => {
         });
         testHelpers.logGasUse(this, lockTx, "transferAndNotify - lockFunds");
 
-        await testHelpers.waitFor(2500);
-
         const [totalLockAmountBefore, newestLockId] = await Promise.all([
             monetarySupervisor.totalLockedAmount(),
             lockerInstance.getLockCount().then(res => res - 1)
         ]);
+
+        const lockedUntil = (await lockerInstance.locks(newestLockId))[3].toNumber();
+        await testHelpers.waitForTimeStamp(lockedUntil);
 
         const releaseTx = await lockerInstance.releaseFunds(newestLockId);
         testHelpers.logGasUse(this, releaseTx, "releaseFunds");
@@ -670,8 +672,7 @@ contract("Lock", accounts => {
             interestEarned: x => x,
             lockedUntil: x => x,
             perTermInterest: x => x,
-            durationInSecs: x => x,
-            isActive: true
+            durationInSecs: x => x
         });
 
         const [totalLockAmountAfter, finishingNumLocks] = await Promise.all([
@@ -762,8 +763,8 @@ contract("Lock", accounts => {
         ]);
         const amountToLock = 1000;
 
-        // create lock product with 10% per term, and 2 sec lock time:
-        await lockerInstance.addLockProduct(100000, 2, 0, true);
+        // create lock product with 10% per term, and 1 sec lock time:
+        await lockerInstance.addLockProduct(100000, 1, 0, true);
         const interestEarned = Math.floor(amountToLock / 10); // 10%
 
         const newLockProductId = (await lockerInstance.getLockProductCount()) - 1;
@@ -778,9 +779,10 @@ contract("Lock", accounts => {
         );
         testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
 
-        await testHelpers.waitFor(2500);
-
         const newestLockId = (await lockerInstance.getLockCount()) - 1;
+
+        const lockedUntil = (await lockerInstance.locks(newestLockId))[3].toNumber();
+        await testHelpers.waitForTimeStamp(lockedUntil);
 
         const releaseTx = await lockerInstance.releaseFunds(newestLockId);
         testHelpers.logGasUse(this, releaseTx, "releaseFunds");

@@ -194,8 +194,9 @@ contract LoanManager is Restricted {
     }
 
     // returns CHUNK_SIZE loan products starting from some offset:
-    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive ]
-    function getProducts(uint offset) external view returns (uint[7][CHUNK_SIZE] response) {
+    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
+    function getProducts(uint offset) external view returns (uint[8][CHUNK_SIZE] response) {
+
         for (uint16 i = 0; i < CHUNK_SIZE; i++) {
 
             if (offset + i >= products.length) { break; }
@@ -203,7 +204,8 @@ contract LoanManager is Restricted {
             LoanProduct storage product = products[offset + i];
 
             response[i] = [offset + i, product.minDisbursedAmount, product.term, product.discountRate,
-                                product.collateralRatio, product.defaultingFeePt, product.isActive ? 1 : 0 ];
+                            product.collateralRatio, product.defaultingFeePt,
+                            monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0 ];
         }
     }
 
