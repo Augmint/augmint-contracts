@@ -7,7 +7,6 @@
     - Converts older versions of AugmintTokens in 1:1 to new
 
     TODO:
-        - enforce LTD limits
         - MonetarySupervisorInterface (and use it everywhere)
         - interestEarnedAccount setter?
         - create and use InterestEarnedAccount interface instead?
@@ -26,6 +25,8 @@ import "./AugmintReserves.sol";
 contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-line no-empty-blocks
     using SafeMath for uint256;
 
+    uint public constant PERCENT_100 = 1000000;
+
     AugmintTokenInterface public augmintToken;
     InterestEarnedAccount public interestEarnedAccount;
     AugmintReserves public augmintReserves;
@@ -35,18 +36,30 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     uint public totalLoanAmount; // total amount of all loans without interest, in token
     uint public totalLockedAmount; // total amount of all locks without premium, in token
 
-    /* Parameters Used to ensure totalLoanAmount or totalLockedAmount difference is withing limit and system also works
-        when any of those 0 or low. */
-    uint public ltdDifferenceLimit;     /* allow lock or loan if Loan To Deposut ratio stay within 1 +- this param
-                                            stored as parts per million */
-    uint public allowedLtdDifferenceAmount; /* in token - if totalLoan and totalLock difference is less than that
-                                             then allow loan or lock even if ltdDifference limit would go off with it */
+    /**********
+        Parameters to ensure totalLoanAmount or totalLockedAmount difference is within limits and system also works
+        when total loan or lock amounts are low.
+            for test calculations: https://docs.google.com/spreadsheets/d/1MeWYPYZRIm1n9lzpvbq8kLfQg1hhvk5oJY6NrR401S0
+    **********/
+    struct LtdParams {
+        uint  lockDifferenceLimit; /* only allow a new lock if Loan To Deposit ratio would stay above
+                                            (1 - lockDifferenceLimit) with new lock. Stored as parts per million */
+        uint  loanDifferenceLimit; /* only allow a new loan if Loan To Deposit ratio would stay above
+                                            (1 + loanDifferenceLimit) with new loan. Stored as parts per million */
+        /* allowedDifferenceAmount param is to ensure the system is not "freezing" when totalLoanAmount or
+            totalLockAmount is low.
+        It allows a new loan or lock (up to an amount to reach this difference) even if LTD will go below / above
+            lockDifferenceLimit / loanDifferenceLimit with the new lock/loan */
+        uint  allowedDifferenceAmount;
+    }
+
+    LtdParams public ltdParams;
 
     /* Previously deployed AugmintTokens which are accepted for conversion (see transferNotification() )
         NB: it's not iterable so old version addresses needs to be added for UI manually after each deploy */
     mapping(address => bool) public acceptedLegacyAugmintTokens;
 
-    event ParamsChanged(uint ltdDifferenceLimit, uint allowedLtdDifferenceAmount);
+    event LtdParamsChanged(uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount);
 
     event AcceptedLegacyAugmintTokenChanged(address augmintTokenAddress, bool newAcceptedState);
 
@@ -54,13 +67,12 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
-        uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount) public {
+        uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount) public {
         augmintToken = _augmintToken;
         augmintReserves = _augmintReserves;
         interestEarnedAccount = _interestEarnedAccount;
 
-        ltdDifferenceLimit = _ltdDifferenceLimit;
-        allowedLtdDifferenceAmount = _allowedLtdDifferenceAmount;
+        ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
     }
 
     function issueToReserve(uint amount) external restrict("MonetaryBoard") {
@@ -73,10 +85,11 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         augmintReserves.burn(augmintToken, amount);
     }
 
-    // Locker requesting interest when locking funds
+    /* Locker requesting interest when locking funds. Enforcing LTD to stay within range allowed by LTD params
+        NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it  */
     function requestInterest(uint amountToLock, uint interestAmount) external {
         require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
-        /* TODO: enforce LTD limits (ltdDifferenceLimit & allowedLtdDifferenceAmount) */
+        require(amountToLock <= getMaxLockAmountAllowedByLtd());
 
         totalLockedAmount = totalLockedAmount.add(amountToLock);
         interestEarnedAccount.transferInterest(augmintToken, msg.sender, interestAmount); // transfer interest to Locker
@@ -88,8 +101,11 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         totalLockedAmount = totalLockedAmount.sub(lockedAmount);
     }
 
+    /* Issue loan if LTD stays within range allowed by LTD params
+        NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it */
     function issueLoan(address borrower, uint loanAmount) external {
         require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted LoanManager contracts
+        require(loanAmount <= getMaxLoanAmountAllowedByLtd());
         totalLoanAmount = totalLoanAmount.add(loanAmount);
         augmintToken.issueTo(borrower, loanAmount);
     }
@@ -111,12 +127,11 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         emit AcceptedLegacyAugmintTokenChanged(legacyAugmintTokenAddress, newAcceptedState);
     }
 
-    function setParams(uint _ltdDifferenceLimit, uint _allowedLtdDifferenceAmount)
+    function setLtdParams(uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount)
     external restrict("MonetaryBoard") {
-        ltdDifferenceLimit = _ltdDifferenceLimit;
-        allowedLtdDifferenceAmount = _allowedLtdDifferenceAmount;
+        ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
 
-        emit ParamsChanged(ltdDifferenceLimit, allowedLtdDifferenceAmount);
+        emit LtdParamsChanged(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
     }
 
     /* User can request to convert their tokens from older AugmintToken versions in 1:1
@@ -139,9 +154,54 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         emit LegacyTokenConverted(msg.sender, from, amount);
     }
 
-    // helper function for FrontEnd to reduce calls
-    function getParams() external view returns(uint[2]) {
-        return [ltdDifferenceLimit, allowedLtdDifferenceAmount];
+    function getLoanToDepositRatio() external view returns (uint loanToDepositRatio) {
+        loanToDepositRatio = totalLockedAmount == 0 ? 0 : totalLockedAmount.mul(PERCENT_100).div(totalLoanAmount);
+    }
+
+    /* Helper function for UI.
+        Returns max lock amount based on minLockAmount, interestPt, using LTD params & interestEarnedAccount balance */
+    function getMaxLockAmount(uint minLockAmount, uint interestPt) external view returns (uint maxLock) {
+        uint allowedByEarning = augmintToken.balanceOf(address(interestEarnedAccount)).mul(PERCENT_100).div(interestPt);
+        uint allowedByLtd = getMaxLockAmountAllowedByLtd();
+        maxLock = allowedByEarning < allowedByLtd ? allowedByEarning : allowedByLtd;
+        maxLock = maxLock < minLockAmount ? 0 : maxLock;
+    }
+
+    /* Helper function for UI.
+        Returns max loan amount based on minLoanAmont using LTD params */
+    function getMaxLoanAmount(uint minLoanAmount) external view returns (uint maxLoan) {
+        uint allowedByLtd = getMaxLoanAmountAllowedByLtd();
+        maxLoan = allowedByLtd < minLoanAmount ? 0 : allowedByLtd;
+    }
+
+    /* returns maximum lockable token amount allowed by LTD params. */
+    function getMaxLockAmountAllowedByLtd() public view returns(uint maxLockByLtd) {
+        uint allowedByLtdDifferencePt = totalLoanAmount.mul(PERCENT_100).div(PERCENT_100
+                                            .sub(ltdParams.lockDifferenceLimit));
+        allowedByLtdDifferencePt = totalLockedAmount >= allowedByLtdDifferencePt ?
+                                        0 : allowedByLtdDifferencePt.sub(totalLockedAmount);
+
+        uint allowedByLtdDifferenceAmount =
+            totalLoanAmount > totalLockedAmount.add(ltdParams.allowedDifferenceAmount) ?
+                0 : totalLoanAmount.add(ltdParams.allowedDifferenceAmount).sub(totalLockedAmount);
+
+        maxLockByLtd = allowedByLtdDifferencePt > allowedByLtdDifferenceAmount ?
+                                        allowedByLtdDifferencePt : allowedByLtdDifferenceAmount;
+    }
+
+    /* returns maximum borrowable token amount allowed by LTD params */
+    function getMaxLoanAmountAllowedByLtd() public view returns(uint maxLoanByLtd) {
+        uint allowedByLtdDifferencePt = totalLockedAmount.mul(ltdParams.loanDifferenceLimit.add(PERCENT_100))
+                                            .div(PERCENT_100);
+        allowedByLtdDifferencePt = totalLoanAmount >= allowedByLtdDifferencePt ?
+                                        0 : allowedByLtdDifferencePt.sub(totalLoanAmount);
+
+        uint allowedByLtdDifferenceAmount =
+            totalLoanAmount > totalLockedAmount.add(ltdParams.allowedDifferenceAmount) ?
+                0 : totalLockedAmount.add(ltdParams.allowedDifferenceAmount).sub(totalLoanAmount);
+
+        maxLoanByLtd = allowedByLtdDifferencePt > allowedByLtdDifferenceAmount ?
+                                        allowedByLtdDifferencePt : allowedByLtdDifferenceAmount;
     }
 
 }
