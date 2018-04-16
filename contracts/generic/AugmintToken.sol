@@ -13,8 +13,6 @@ import "../interfaces/AugmintTokenInterface.sol";
 
 contract AugmintToken is AugmintTokenInterface {
 
-    address public feeAccount;
-
     struct Fee {
         uint pt;  // in parts per million (ppm) , ie. 2,000 = 0.2%
         uint min; // with base unit of augmint token, eg. 2 decimals for token, eg. 310 = 3.1 ACE

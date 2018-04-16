@@ -143,6 +143,7 @@ contract LoanManager is Restricted {
         */
         uint totalLoanAmountCollected;
         uint totalCollateralToCollect;
+        uint totalDefaultingFee;
         for (uint i = 0; i < loanIds.length; i++) {
             LoanData storage loan = loans[loanIds[i]];
             require(loan.state == LoanState.Open);
@@ -168,17 +169,25 @@ contract LoanManager is Restricted {
                 loan.borrower.transfer(releasedCollateral);
             }
             uint collateralToCollect = loan.collateralAmount.sub(releasedCollateral);
-            if (defaultingFee > collateralToCollect) {
+            if (defaultingFee >= collateralToCollect) {
                 defaultingFee = collateralToCollect;
+                collateralToCollect = 0;
+            } else {
+                collateralToCollect = collateralToCollect.sub(defaultingFee);
             }
+            totalDefaultingFee = totalDefaultingFee.add(defaultingFee);
 
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
 
-            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect, releasedCollateral, defaultingFee);
+            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect.add(defaultingFee), releasedCollateral, defaultingFee);
         }
 
         if (totalCollateralToCollect > 0) {
             address(monetarySupervisor.augmintReserves()).transfer(totalCollateralToCollect);
+        }
+
+        if (totalDefaultingFee > 0){
+            augmintToken.feeAccount().transfer(totalDefaultingFee);
         }
 
         monetarySupervisor.loanCollectionNotification(totalLoanAmountCollected);// update KPIs
