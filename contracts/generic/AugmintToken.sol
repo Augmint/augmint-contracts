@@ -14,6 +14,8 @@ import "../interfaces/FeeAccountInterface.sol";
 
 contract AugmintToken is AugmintTokenInterface {
 
+    event FeeAccountChanged(FeeAccountInterface newFeeAccount);
+
     function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals,
                             FeeAccountInterface _feeAccount) public {
 
@@ -85,6 +87,12 @@ contract AugmintToken is AugmintTokenInterface {
         totalSupply = totalSupply.sub(amount);
         emit Transfer(msg.sender, 0x0, amount);
         emit AugmintTransfer(msg.sender, 0x0, amount, "", 0);
+    }
+
+    /* to upgrade feeAccount (eg. for fee calculation changes) */
+    function setFeeAccount(FeeAccountInterface newFeeAccount) external restrict("MonetaryBoard") {
+        feeAccount = newFeeAccount;
+        emit FeeAccountChanged(newFeeAccount);
     }
 
     /*  transferAndNotify can be used by contracts which require tokens to have only 1 tx (instead of approve + call)

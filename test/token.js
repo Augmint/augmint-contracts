@@ -2,7 +2,13 @@ const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 const AugmintToken = artifacts.require("./generic/AugmintToken.sol");
 
-contract("AugmintToken tests", () => {
+let augmintToken;
+
+contract("AugmintToken tests", accounts => {
+    before(async () => {
+        augmintToken = tokenTestHelpers.augmintToken;
+    });
+
     it("shouldn't create a token contract without feeAccount", async function() {
         await testHelpers.expectThrow(
             AugmintToken.new(
@@ -37,5 +43,25 @@ contract("AugmintToken tests", () => {
                 tokenTestHelpers.feeAccount.address
             )
         );
+    });
+
+    it("should change feeAccount", async function() {
+        const newFeeAccount = accounts[2];
+        const tx = await augmintToken.setFeeAccount(newFeeAccount);
+        testHelpers.logGasUse(this, tx, "setFeeAccount");
+
+        const [actualFeeAccount] = await Promise.all([
+            augmintToken.feeAccount(),
+            testHelpers.assertEvent(augmintToken, "FeeAccountChanged", {
+                newFeeAccount
+            })
+        ]);
+
+        assert.equal(actualFeeAccount, newFeeAccount);
+    });
+
+    it("only allowed should change feeAccount", async function() {
+        const newFeeAccount = accounts[2];
+        await testHelpers.expectThrow(augmintToken.setFeeAccount(newFeeAccount, { from: accounts[1] }));
     });
 });
