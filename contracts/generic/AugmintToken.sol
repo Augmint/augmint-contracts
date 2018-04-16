@@ -9,22 +9,13 @@
 */
 pragma solidity 0.4.21;
 import "../interfaces/AugmintTokenInterface.sol";
+import "../interfaces/FeeAccountInterface.sol";
 
 
 contract AugmintToken is AugmintTokenInterface {
 
-    struct Fee {
-        uint pt;  // in parts per million (ppm) , ie. 2,000 = 0.2%
-        uint min; // with base unit of augmint token, eg. 2 decimals for token, eg. 310 = 3.1 ACE
-        uint max; // with base unit of augmint token, eg. 2 decimals for token, eg. 310 = 3.1 ACE
-    }
-
-    Fee public transferFee;
-
-    event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
-
-    function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
-        uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax) public {
+    function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals,
+                            FeeAccountInterface _feeAccount) public {
 
         require(_feeAccount != address(0));
         require(bytes(_name).length > 0);
@@ -37,7 +28,6 @@ contract AugmintToken is AugmintTokenInterface {
 
         feeAccount = _feeAccount;
 
-        transferFee = Fee(_transferFeePt, _transferFeeMin, _transferFeeMax);
     }
 
     function transfer(address to, uint256 amount) external returns (bool) {
@@ -119,12 +109,6 @@ contract AugmintToken is AugmintTokenInterface {
         _transferFrom(from, to, amount, narrative);
     }
 
-    function setTransferFees(uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax)
-    external restrict("MonetaryBoard") {
-        transferFee = Fee(_transferFeePt, _transferFeeMin, _transferFeeMax);
-        emit TransferFeesChanged(_transferFeePt, _transferFeeMin, _transferFeeMax);
-    }
-
     function balanceOf(address _owner) external view returns (uint256 balance) {
         return balances[_owner];
     }
@@ -136,18 +120,6 @@ contract AugmintToken is AugmintTokenInterface {
     function _increaseApproval(address _approver, address _spender, uint _addedValue) internal returns (bool) {
         allowed[_approver][_spender] = allowed[_approver][_spender].add(_addedValue);
         emit Approval(_approver, _spender, allowed[_approver][_spender]);
-    }
-
-    function calculateFee(address from, address to, uint amount) internal view returns (uint256 fee) {
-        if (!permissions[from]["NoFeeTransferContracts"] && !permissions[to]["NoFeeTransferContracts"]) {
-            fee = amount.mul(transferFee.pt).div(1000000);
-            if (fee > transferFee.max) {
-                fee = transferFee.max;
-            } else if (fee < transferFee.min) {
-                fee = transferFee.min;
-            }
-        }
-        return fee;
     }
 
     function _transferFrom(address from, address to, uint256 amount, string narrative) private {
@@ -164,7 +136,7 @@ contract AugmintToken is AugmintTokenInterface {
 
     function _transfer(address from, address to, uint256 amount, string narrative) private {
         require(to != 0x0);
-        uint fee = calculateFee(from, to, amount);
+        uint fee = feeAccount.calculateTransferFee(from, to, amount);
         if (fee > 0) {
             balances[feeAccount] = balances[feeAccount].add(fee);
             balances[from] = balances[from].sub(amount).sub(fee);

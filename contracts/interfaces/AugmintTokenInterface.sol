@@ -9,6 +9,7 @@ import "../generic/SafeMath.sol";
 import "../generic/Restricted.sol";
 import "./ERC20Interface.sol";
 import "./TokenReceiver.sol";
+import "../interfaces/FeeAccountInterface.sol";
 
 
 contract AugmintTokenInterface is Restricted, ERC20Interface {
@@ -23,7 +24,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     mapping(address => uint256) public balances; // Balances for each account
     mapping(address => mapping (address => uint256)) public allowed; // allowances added with approve()
 
-    address public feeAccount;
+    FeeAccountInterface public feeAccount;
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
     event Transfer(address indexed from, address indexed to, uint amount);

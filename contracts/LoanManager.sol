@@ -187,7 +187,7 @@ contract LoanManager is Restricted {
         }
 
         if (totalDefaultingFee > 0){
-            augmintToken.feeAccount().transfer(totalDefaultingFee);
+            address(augmintToken.feeAccount()).transfer(totalDefaultingFee);
         }
 
         monetarySupervisor.loanCollectionNotification(totalLoanAmountCollected);// update KPIs

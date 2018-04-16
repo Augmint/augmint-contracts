@@ -3,17 +3,18 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Rates = artifacts.require("./Rates.sol");
 const SafeMath = artifacts.require("./SafeMath.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
+const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer) {
     deployer.link(SafeMath, LoanManager);
     deployer.deploy(LoanManager, TokenAEur.address, MonetarySupervisor.address, Rates.address);
     deployer.then(async () => {
         const lm = LoanManager.at(LoanManager.address);
-        const tokenAEur = TokenAEur.at(TokenAEur.address);
+        const feeAccount = FeeAccount.at(FeeAccount.address);
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
 
         await Promise.all([
-            tokenAEur.grantPermission(LoanManager.address, "NoFeeTransferContracts"),
+            feeAccount.grantPermission(LoanManager.address, "NoFeeTransferContracts"),
             monetarySupervisor.grantPermission(LoanManager.address, "LoanManagerContracts")
         ]);
 
