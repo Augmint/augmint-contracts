@@ -137,4 +137,29 @@ contract("MonetarySupervisor tests", accounts => {
     it("only allowed should set ltd params ", async function() {
         await testHelpers.expectThrow(monetarySupervisor.setLtdParams(10000, 10000, 10000, { from: accounts[1] }));
     });
+
+    it("should adjust KPIs", async function() {
+        const [totalLoanAmountBefore, totalLockedAmountBefore] = await Promise.all([
+            monetarySupervisor.totalLoanAmount(),
+            monetarySupervisor.totalLockedAmount()
+        ]);
+        const tx = await monetarySupervisor.adjustKPIs(10, 20, { from: accounts[0] });
+        testHelpers.logGasUse(this, tx, "adjustKPIs");
+
+        const [totalLoanAmountAfter, totalLockedAmountAfter] = await Promise.all([
+            monetarySupervisor.totalLoanAmount(),
+            monetarySupervisor.totalLockedAmount(),
+            testHelpers.assertEvent(monetarySupervisor, "KPIsAdjusted", {
+                totalLoanAmountAdjustment: 10,
+                totalLockedAmountAdjustment: 20
+            })
+        ]);
+
+        assert.equal(totalLoanAmountAfter.toNumber(), totalLockedAmountBefore.add(10));
+        assert.equal(totalLockedAmountAfter.toNumber(), totalLoanAmountBefore.add(20));
+    });
+
+    it("only allowed should adjust KPIs", async function() {
+        await testHelpers.expectThrow(monetarySupervisor.adjustKPIs(10, 10, { from: accounts[1] }));
+    });
 });
