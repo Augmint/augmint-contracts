@@ -64,6 +64,8 @@ contract LoanManager is Restricted {
     event LoanCollected(uint loanId, address indexed borrower, uint collectedCollateral,
         uint releasedCollateral, uint defaultingFee);
 
+    event SystemContractsChanged(Rates newRatesContract, MonetarySupervisor newMonetarySupervisor);
+
     function LoanManager(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor, Rates _rates)
     public {
         augmintToken = _augmintToken;
@@ -181,6 +183,14 @@ contract LoanManager is Restricted {
 
         monetarySupervisor.loanCollectionNotification(totalLoanAmountCollected);// update KPIs
 
+    }
+
+    /* to allow upgrade of Rates and MonetarySupervisor contracts */
+    function setSystemContracts(Rates newRatesContract, MonetarySupervisor newMonetarySupervisor)
+    external restrict("MonetaryBoard") {
+        rates = newRatesContract;
+        monetarySupervisor = newMonetarySupervisor;
+        emit SystemContractsChanged(newRatesContract, newMonetarySupervisor);
     }
 
     function getProductCount() external view returns (uint ct) {
