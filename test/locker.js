@@ -107,7 +107,7 @@ contract("Lock", accounts => {
         assert(perTermInterest.toNumber() === 100000);
         assert(durationInSecs.toNumber() === 120);
         assert(minimumLockAmount.toNumber() === 75);
-        assert.equal(maxLockAmount.toString(), tokenTestHelpers.allowedLtdDifferenceAmount.toString());
+        assert.equal(maxLockAmount.toString(), tokenTestHelpers.ltdParams.allowedDifferenceAmount.toString());
         assert(isActive.toNumber() === 1);
     });
 
@@ -140,7 +140,7 @@ contract("Lock", accounts => {
         assert(perTermInterest.toNumber() === expectedPerTermInterest.toNumber());
         assert(durationInSecs.toNumber() === expectedDurationInSecs.toNumber());
         assert(minimumLockAmount.toNumber() === expectedMinimumLockAmount.toNumber());
-        assert.equal(maxLockAmount.toString(), tokenTestHelpers.allowedLtdDifferenceAmount.toString());
+        assert.equal(maxLockAmount.toString(), tokenTestHelpers.ltdParams.allowedDifferenceAmount.toString());
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 
