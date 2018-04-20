@@ -49,7 +49,7 @@ contract Exchange {
 
     event CancelledOrder(uint64 indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
-    function Exchange(AugmintTokenInterface _augmintToken) public {
+    constructor(AugmintTokenInterface _augmintToken) public {
         augmintToken = _augmintToken;
     }
 

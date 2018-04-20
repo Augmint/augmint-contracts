@@ -65,7 +65,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     event LegacyTokenConverted(address oldTokenAddress, address account, uint amount);
 
-    function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
+    constructor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
         uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount) public {
         augmintToken = _augmintToken;

@@ -28,7 +28,7 @@ contract Restricted {
         _;
     }
 
-    function Restricted() public {
+    constructor() public {
         permissions[msg.sender]["MonetaryBoard"] = true;
         emit PermissionGranted(msg.sender, "MonetaryBoard");
     }

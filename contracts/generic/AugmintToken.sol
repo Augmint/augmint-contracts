@@ -25,7 +25,7 @@ contract AugmintToken is AugmintTokenInterface {
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
-    function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
+    constructor(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _feeAccount,
         uint _transferFeePt, uint _transferFeeMin, uint _transferFeeMax) public {
 
         require(_feeAccount != address(0));

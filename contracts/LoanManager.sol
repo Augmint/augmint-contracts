@@ -68,7 +68,7 @@ contract LoanManager is Restricted {
     event LoanCollected(uint loanId, address indexed borrower, uint collectedCollateral,
         uint releasedCollateral, uint defaultingFee);
 
-    function LoanManager(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor, Rates _rates,
+    constructor(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor, Rates _rates,
                             InterestEarnedAccount _interestEarnedAccount)
     public {
         augmintToken = _augmintToken;
