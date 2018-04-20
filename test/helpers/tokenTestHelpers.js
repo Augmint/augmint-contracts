@@ -32,11 +32,17 @@ module.exports = {
     get monetarySupervisor() {
         return monetarySupervisor;
     },
+    get allowedLtdDifferenceAmount() {
+        return ltdParams.allowedLtdDifferenceAmount;
+    },
+    get ltdParams() {
+        return ltdParams;
+    },
     get interestEarnedAccount() {
         return interestEarnedAccount;
     },
     get feeAccount() {
-        return FeeAccount.address;
+        return feeAccount;
     }
 };
 
@@ -45,12 +51,18 @@ let augmintReserves = null;
 let monetarySupervisor = null;
 let peggedSymbol = null;
 let interestEarnedAccount = null;
+let feeAccount;
+let ltdParams = {};
 
 before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
+    feeAccount = FeeAccount.at(FeeAccount.address);
+
+    const ltdParamsArray = await monetarySupervisor.ltdParams();
+    [ltdParams.lockDifferenceLimit, ltdParams.loanDifferenceLimit, ltdParams.allowedDifferenceAmount] = ltdParamsArray;
 
     peggedSymbol = web3.toAscii(await augmintToken.peggedSymbol());
 });
@@ -60,7 +72,7 @@ async function issueToReserve(amount) {
 }
 
 async function withdrawFromReserve(to, amount) {
-    await augmintReserves.withdrawTokens(augmintToken.address, to, amount, "withdrawal for tests");
+    await augmintReserves.withdraw(augmintToken.address, to, amount, 0, "withdrawal for tests");
 }
 
 async function transferTest(testInstance, expTransfer) {
@@ -191,14 +203,14 @@ async function transferFromTest(testInstance, expTransfer) {
 
 async function getTransferFee(transfer) {
     const [fromAllowed, toAllowed] = await Promise.all([
-        augmintToken.permissions(transfer.from, "NoFeeTransferContracts"),
-        augmintToken.permissions(transfer.from, "NoFeeTransferContracts")
+        feeAccount.permissions(transfer.from, "NoFeeTransferContracts"),
+        feeAccount.permissions(transfer.from, "NoFeeTransferContracts")
     ]);
     if (fromAllowed || toAllowed) {
         return 0;
     }
 
-    const [feePt, feeMin, feeMax] = await augmintToken.transferFee();
+    const [feePt, feeMin, feeMax] = await feeAccount.transferFee();
     const amount = new BigNumber(transfer.amount);
 
     let fee =

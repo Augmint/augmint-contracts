@@ -69,12 +69,12 @@ contract("Loans tests", accounts => {
 
     it("Shouldn't get a loan for a disabled product", async function() {
         await testHelpers.expectThrow(
-            loanManager.newEthBackedLoan(products.disabledProduct.id, { from: accounts[0], value: web3.toWei(0.5) })
+            loanManager.newEthBackedLoan(products.disabledProduct.id, { from: accounts[0], value: web3.toWei(0.05) })
         );
     });
 
     it("Should repay an A-EUR loan before maturity", async function() {
-        const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.05));
         // send interest to borrower to have enough A-EUR to repay in test
         await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
@@ -83,27 +83,27 @@ contract("Loans tests", accounts => {
     });
 
     it("Should get and repay a loan whith discountRate = 1 (zero interest)", async function() {
-        const loan = await loanTestHelpers.createLoan(this, products.zeroInterest, accounts[0], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.zeroInterest, accounts[0], web3.toWei(0.05));
         await loanTestHelpers.repayLoan(this, loan);
     });
 
     it("Should get and repay a loan whith discountRate > 1 (negative interest)", async function() {
-        const loan = await loanTestHelpers.createLoan(this, products.negativeInterest, accounts[0], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.negativeInterest, accounts[0], web3.toWei(0.05));
         await loanTestHelpers.repayLoan(this, loan);
     });
 
     it("Should get and repay a loan with colletaralRatio = 1", async function() {
-        const loan = await loanTestHelpers.createLoan(this, products.fullCoverage, accounts[0], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.fullCoverage, accounts[0], web3.toWei(0.05));
         await loanTestHelpers.repayLoan(this, loan);
     });
 
     it("Should get and repay a loan with colletaralRatio > 1", async function() {
-        const loan = await loanTestHelpers.createLoan(this, products.moreCoverage, accounts[0], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.moreCoverage, accounts[0], web3.toWei(0.05));
         await loanTestHelpers.repayLoan(this, loan);
     });
 
     it("Non owner should be able to repay a loan too", async function() {
-        const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, accounts[1], web3.toWei(0.05));
 
         await augmintToken.transferAndNotify(loanManager.address, loan.repaymentAmount, loan.id, {
             from: accounts[0]
@@ -117,7 +117,7 @@ contract("Loans tests", accounts => {
 
     it("Should NOT repay an A-EUR loan on maturity if A-EUR balance is insufficient", async function() {
         const borrower = accounts[2];
-        const loan = await loanTestHelpers.createLoan(this, products.notDue, borrower, web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, borrower, web3.toWei(0.05));
         const accBal = await augmintToken.balanceOf(borrower);
 
         // send just 0.01 A€ less than required for repayment
@@ -134,7 +134,7 @@ contract("Loans tests", accounts => {
 
     it("should not repay a loan with smaller amount than repaymentAmount", async function() {
         const borrower = accounts[1];
-        const loan = await loanTestHelpers.createLoan(this, products.notDue, borrower, web3.toWei(0.2));
+        const loan = await loanTestHelpers.createLoan(this, products.notDue, borrower, web3.toWei(0.05));
 
         await augmintToken.transfer(loan.borrower, loan.interestAmount, {
             from: accounts[0]
@@ -154,7 +154,7 @@ contract("Loans tests", accounts => {
 
     it("Should NOT repay a loan after maturity", async function() {
         const borrower = accounts[0];
-        const loan = await loanTestHelpers.createLoan(this, products.defaulting, borrower, web3.toWei(0.5));
+        const loan = await loanTestHelpers.createLoan(this, products.defaulting, borrower, web3.toWei(0.05));
 
         const [accBal] = await Promise.all([
             augmintToken.balanceOf(borrower),
@@ -184,8 +184,8 @@ contract("Loans tests", accounts => {
         const product = products.repaying;
         const product2 = products.defaulting;
 
-        const loan1 = await loanTestHelpers.createLoan(this, product, accounts[1], web3.toWei(2));
-        const loan2 = await loanTestHelpers.createLoan(this, product2, accounts[2], web3.toWei(0.3));
+        const loan1 = await loanTestHelpers.createLoan(this, product, accounts[1], web3.toWei(0.05));
+        const loan2 = await loanTestHelpers.createLoan(this, product2, accounts[2], web3.toWei(0.06));
 
         await testHelpers.waitForTimeStamp(loan2.maturity);
 
@@ -219,8 +219,8 @@ contract("Loans tests", accounts => {
         const product2 = products.defaulting;
         const borrower = accounts[1];
 
-        const loan1 = await loanTestHelpers.createLoan(this, product1, borrower, web3.toWei(0.2));
-        const loan2 = await loanTestHelpers.createLoan(this, product2, borrower, web3.toWei(0.3));
+        const loan1 = await loanTestHelpers.createLoan(this, product1, borrower, web3.toWei(0.05));
+        const loan2 = await loanTestHelpers.createLoan(this, product2, borrower, web3.toWei(0.06));
         const accountLoanCount = await loanManager.getLoanCountForAddress(borrower);
 
         await testHelpers.waitForTimeStamp(loan2.maturity);
@@ -248,23 +248,17 @@ contract("Loans tests", accounts => {
     });
 
     it("should only allow whitelisted loan contract to be used", async function() {
-        const interestEarnedAcc = await monetarySupervisor.interestEarnedAccount();
-        const craftedLender = await LoanManager.new(
-            augmintToken.address,
-            monetarySupervisor.address,
-            rates.address,
-            interestEarnedAcc
-        );
+        const craftedLender = await LoanManager.new(augmintToken.address, monetarySupervisor.address, rates.address);
         await rates.setRate("EUR", 99800);
         await craftedLender.grantPermission(accounts[0], "MonetaryBoard");
         await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true);
 
         // testing Lender not having "LoanManagerContracts" permission on monetarySupervisor:
-        await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: web3.toWei(1) }));
+        await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: web3.toWei(0.05) }));
 
         // grant permission to create new loan
         await monetarySupervisor.grantPermission(craftedLender.address, "LoanManagerContracts");
-        await craftedLender.newEthBackedLoan(0, { value: web3.toWei(1) });
+        await craftedLender.newEthBackedLoan(0, { value: web3.toWei(0.05) });
 
         // revoke permission and try to repay
         await monetarySupervisor.revokePermission(craftedLender.address, "LoanManagerContracts"),

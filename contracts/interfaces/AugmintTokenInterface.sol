@@ -4,11 +4,13 @@ TODO: overload transfer() & transferFrom() instead of transferWithNarrative() & 
       when this fix available in web3& truffle also uses that web3: https://github.com/ethereum/web3.js/pull/1185
 TODO: shall we use bytes for narrative?
  */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
+
 import "../generic/SafeMath.sol";
 import "../generic/Restricted.sol";
 import "./ERC20Interface.sol";
 import "./TokenReceiver.sol";
+import "../interfaces/TransferFeeInterface.sol";
 
 
 contract AugmintTokenInterface is Restricted, ERC20Interface {
@@ -23,6 +25,8 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     mapping(address => uint256) public balances; // Balances for each account
     mapping(address => mapping (address => uint256)) public allowed; // allowances added with approve()
 
+    TransferFeeInterface public feeAccount;
+
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
     event Transfer(address indexed from, address indexed to, uint amount);
     event AugmintTransfer(address indexed from, address indexed to, uint amount, string narrative, uint fee);
@@ -36,7 +40,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function increaseApproval(address spender, uint addedValue) external returns (bool);
     function decreaseApproval(address spender, uint subtractedValue) external returns (bool);
 
-    function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract");
+    function issueTo(address to, uint amount) external; // restrict it to "MonetarySupervisorContract" in impl.;
     function burn(uint amount) external;
 
     function transferAndNotify(TokenReceiver target, uint amount, uint data) external;

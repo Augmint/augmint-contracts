@@ -14,12 +14,7 @@ contract("token conversion tests", accounts => {
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
         [newToken] = await Promise.all([
-            AugmintToken.new(
-                tokenTestHelpers.feeAccount,
-                2000, // transferFeePt in parts per million = 0.2%
-                2, // min: 0.02 A-EUR
-                500 // max fee: 5 A-EUR
-            ),
+            AugmintToken.new(tokenTestHelpers.feeAccount.address),
             tokenTestHelpers.issueToReserve(10000000)
         ]);
 
@@ -28,11 +23,12 @@ contract("token conversion tests", accounts => {
             tokenTestHelpers.augmintReserves.address,
             tokenTestHelpers.interestEarnedAccount.address,
             200000,
+            200000,
             500000
         );
 
         await Promise.all([
-            augmintToken.grantPermission(newMS.address, "NoFeeTransferContracts"),
+            tokenTestHelpers.feeAccount.grantPermission(newMS.address, "NoFeeTransferContracts"),
             newToken.grantPermission(newMS.address, "MonetarySupervisorContract")
         ]);
     });

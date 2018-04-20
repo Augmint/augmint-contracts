@@ -1,26 +1,20 @@
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
-const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 const Rates = artifacts.require("./Rates.sol");
 const SafeMath = artifacts.require("./SafeMath.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
+const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer) {
     deployer.link(SafeMath, LoanManager);
-    deployer.deploy(
-        LoanManager,
-        TokenAEur.address,
-        MonetarySupervisor.address,
-        Rates.address,
-        InterestEarnedAccount.address
-    );
+    deployer.deploy(LoanManager, TokenAEur.address, MonetarySupervisor.address, Rates.address);
     deployer.then(async () => {
         const lm = LoanManager.at(LoanManager.address);
-        const tokenAEur = TokenAEur.at(TokenAEur.address);
+        const feeAccount = FeeAccount.at(FeeAccount.address);
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
 
         await Promise.all([
-            tokenAEur.grantPermission(LoanManager.address, "NoFeeTransferContracts"),
+            feeAccount.grantPermission(LoanManager.address, "NoFeeTransferContracts"),
             monetarySupervisor.grantPermission(LoanManager.address, "LoanManagerContracts")
         ]);
 
@@ -41,12 +35,15 @@ module.exports = function(deployer) {
         }
         console.log("   On a test network. Adding test loanProducts. Network id: ", web3.version.network);
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
-        await lm.addLoanProduct(31536000, 800000, 800000, 3000, 50000, true); // due in 365d
-        await lm.addLoanProduct(15552000, 850000, 800000, 3000, 50000, true); // due in 180d
-        await lm.addLoanProduct(7776000, 910000, 800000, 3000, 50000, true); // due in 90d
-        await lm.addLoanProduct(2592000, 950000, 800000, 3000, 50000, true); // due in 30d
-        await lm.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // due in 1 day
-        await lm.addLoanProduct(3600, 985000, 900000, 2000, 50000, true); // due in 1hr for testing repayments
-        await lm.addLoanProduct(1, 990000, 950000, 1000, 50000, true); // defaults in 1 secs for testing
+        await lm.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true); // 365d, 14% p.a.
+        await lm.addLoanProduct(15552000, 937874, 550000, 1000, 50000, true); // 180d, 13% p.a.
+
+        await lm.addLoanProduct(7776000, 971661, 600000, 1000, 50000, true); // 90d, 12%. p.a.
+        await lm.addLoanProduct(2592000, 990641, 600000, 1000, 50000, true); // 30d, 12% p.a.
+        await lm.addLoanProduct(1209600, 996337, 600000, 1000, 50000, true); // 14d, 10% p.a.
+        await lm.addLoanProduct(604800, 998170, 600000, 1000, 50000, true); // 7d, 10% p.a.
+
+        await lm.addLoanProduct(3600, 999989, 980000, 2000, 50000, true); // due in 1hr for testing repayments ? p.a.
+        await lm.addLoanProduct(1, 999999, 990000, 3000, 50000, true); // defaults in 1 secs for testing ? p.a.
     });
 };

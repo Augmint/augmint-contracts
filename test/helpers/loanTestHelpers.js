@@ -234,7 +234,8 @@ async function collectLoan(testInstance, loan, collector) {
             collector: loan.collector,
             borrower: loan.borrower,
             loanManager: loanManager.address,
-            interestEarned: interestEarnedAcc
+            interestEarned: interestEarnedAcc,
+            feeAccount: tokenTestHelpers.feeAccount
         }),
         rates.convertFromWei(peggedSymbol, loan.collateralAmount),
         rates.convertToWei(peggedSymbol, loan.repaymentAmount),
@@ -249,13 +250,13 @@ async function collectLoan(testInstance, loan, collector) {
     // const rate = await rates.rates("EUR");
     // console.log(
     //     `    *** Collection params:
-    //      A-EUR/EUR: ${rate[0] / 10000}
+    //      A-EUR/EUR: ${rate[0] / 100}
     //      defaulting fee pt: ${loan.product.defaultingFeePt / 10000} %
     //      repaymentAmount: ${loan.repaymentAmount / 10000} A-EUR = ${web3.fromWei(repaymentAmountInWei)} ETH
-    //      collateral: ${web3.fromWei(loan.collateralAmount).toString()} ETH = ${collateralInToken / 10000} A-EUR
+    //      collateral: ${web3.fromWei(loan.collateralAmount).toString()} ETH = ${collateralInToken / 100} A-EUR
     //      --------------------
-    //      targetFee: ${targetFeeInToken / 10000} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
-    //      target collection : ${targetCollectionInToken / 10000} A-EUR = ${web3
+    //      targetFee: ${targetFeeInToken / 100} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
+    //      target collection : ${targetCollectionInToken / 100} A-EUR = ${web3
     // .fromWei(targetCollectionInWei)
     // .toString()} ETH
     //      collected: ${web3.fromWei(collectedCollateral).toString()} ETH
@@ -282,7 +283,11 @@ async function collectLoan(testInstance, loan, collector) {
 
         tokenTestHelpers.assertBalances(balBefore, {
             reserve: {
-                eth: balBefore.reserve.eth.add(collectedCollateral)
+                eth: balBefore.reserve.eth.add(collectedCollateral).sub(defaultingFee)
+            },
+
+            feeAccount: {
+                eth: balBefore.feeAccount.eth.add(defaultingFee)
             },
 
             collector: {
@@ -314,11 +319,30 @@ async function getProductsInfo(offset) {
     assert.equal(products.length, CHUNK_SIZE);
     const result = [];
     products.map(prod => {
-        const [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive] = prod;
+        const [
+            id,
+            minDisbursedAmount,
+            term,
+            discountRate,
+            collateralRatio,
+            defaultingFeePt,
+            maxLoanAmount,
+            isActive
+        ] = prod;
         if (term.gt(0)) {
-            result.push({ id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive });
+            result.push({
+                id,
+                minDisbursedAmount,
+                term,
+                discountRate,
+                collateralRatio,
+                defaultingFeePt,
+                maxLoanAmount,
+                isActive
+            });
         }
     });
+
     return result;
 }
 
@@ -371,10 +395,9 @@ async function calcLoanValues(rates, product, collateralWei) {
         .div(ppmDiv)
         .round(0, BigNumber.ROUND_DOWN);
 
-    ret.loanAmount = ret.tokenValue
-        .mul(product.collateralRatio)
+    ret.loanAmount = ret.repaymentAmount
         .mul(product.discountRate)
-        .div(ppmDiv * ppmDiv)
+        .div(ppmDiv)
         .round(0, BigNumber.ROUND_DOWN);
 
     ret.interestAmount = ret.repaymentAmount.gt(ret.loanAmount)
