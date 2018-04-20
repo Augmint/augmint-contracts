@@ -4,7 +4,7 @@ TODO: overload transfer() & transferFrom() instead of transferWithNarrative() & 
       when this fix available in web3& truffle also uses that web3: https://github.com/ethereum/web3.js/pull/1185
 TODO: shall we use bytes for narrative?
  */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 import "../generic/SafeMath.sol";
 import "../generic/Restricted.sol";
 import "./ERC20Interface.sol";

@@ -2,7 +2,7 @@
  *  receiver contract interface
  * see https://github.com/ethereum/EIPs/issues/677
  */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 
 
 interface TokenReceiver {

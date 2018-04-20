@@ -15,7 +15,7 @@
   -> return only active loan products from getLoanProducts?
 */
 
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 
 import "./generic/Restricted.sol";
 import "./generic/SafeMath.sol";

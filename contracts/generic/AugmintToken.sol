@@ -7,7 +7,7 @@
         - consider generic bytes arg instead of uint for transferAndNotify
         - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 import "../interfaces/AugmintTokenInterface.sol";
 
 

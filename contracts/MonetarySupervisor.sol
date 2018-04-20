@@ -13,7 +13,7 @@
 
 */
 
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";

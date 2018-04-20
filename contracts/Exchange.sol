@@ -6,7 +6,7 @@
         - deduct fee
         - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 
 import "./generic/SafeMath.sol";
 import "./interfaces/AugmintTokenInterface.sol";

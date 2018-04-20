@@ -1,6 +1,6 @@
 /* Contract to collect fees from system */
 
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 import "./generic/SystemAccount.sol";
 
 

@@ -9,7 +9,7 @@
         - create and use InterestEarnedAccount interface instead?
         - make collect() run as long as gas provided allows
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 
 import "./Rates.sol";
 import "./generic/Restricted.sol";
