@@ -20,10 +20,12 @@ module.exports = async function(deployer, network, accounts) {
                 "On local ganache - deployed a mock legacy token contract for manual testing at " + oldToken.address
             );
         } else if (web3.version.network == 4) {
-            const oldToken = TokenAEur.at("0xa35d9de06895a3a2e7ecae26654b88fe71c179ea");
+            const oldToken1 = TokenAEur.at("0xa35d9de06895a3a2e7ecae26654b88fe71c179ea");
+            const oldToken2 = TokenAEur.at("0x03fe291f8a30e54cd05459f368d554b40784ca78");
             await Promise.all([
                 feeAccount.grantPermission(monetarySupervisor.address, "NoFeeTransferContracts"),
-                monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken.address, true)
+                monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken1.address, true),
+                monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken2.address, true)
             ]);
         }
     });
