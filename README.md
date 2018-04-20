@@ -33,6 +33,8 @@ Read more and try it: **[www.augmint.cc](http://www.augmint.cc)**
 
 ## Flows
 
+[Contract dependency graph](docs/contractDependencies.png)
+
 Sequence diagrams:
 
 *   [Loan flow](docs/loanFlow.png)
