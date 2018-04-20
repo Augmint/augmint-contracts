@@ -3,10 +3,8 @@
     For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/loanFlow.png
 
     TODO:
-        - interestEarnedAccount setter?
         - create MonetarySupervisor interface and use it instead?
         - make data arg generic bytes?
-        - create and use InterestEarnedAccount interface instead?
         - make collect() run as long as gas provided allows
 */
 pragma solidity 0.4.21;
@@ -15,7 +13,6 @@ import "./Rates.sol";
 import "./generic/Restricted.sol";
 import "./generic/SafeMath.sol";
 import "./interfaces/AugmintTokenInterface.sol";
-import "./InterestEarnedAccount.sol";
 import "./MonetarySupervisor.sol";
 
 
@@ -54,7 +51,6 @@ contract LoanManager is Restricted {
     Rates public rates; // instance of ETH/pegged currency rate provider contract
     AugmintTokenInterface public augmintToken; // instance of token contract
     MonetarySupervisor public monetarySupervisor;
-    InterestEarnedAccount public interestEarnedAccount;
 
     event NewLoan(uint32 productId, uint loanId, address indexed borrower, uint collateralAmount, uint loanAmount,
         uint repaymentAmount, uint40 maturity);
@@ -68,13 +64,13 @@ contract LoanManager is Restricted {
     event LoanCollected(uint loanId, address indexed borrower, uint collectedCollateral,
         uint releasedCollateral, uint defaultingFee);
 
-    function LoanManager(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor, Rates _rates,
-                            InterestEarnedAccount _interestEarnedAccount)
+    event SystemContractsChanged(Rates newRatesContract, MonetarySupervisor newMonetarySupervisor);
+
+    function LoanManager(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor, Rates _rates)
     public {
         augmintToken = _augmintToken;
         monetarySupervisor = _monetarySupervisor;
         rates = _rates;
-        interestEarnedAccount = _interestEarnedAccount;
     }
 
     function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
@@ -147,6 +143,7 @@ contract LoanManager is Restricted {
         */
         uint totalLoanAmountCollected;
         uint totalCollateralToCollect;
+        uint totalDefaultingFee;
         for (uint i = 0; i < loanIds.length; i++) {
             LoanData storage loan = loans[loanIds[i]];
             require(loan.state == LoanState.Open);
@@ -172,21 +169,37 @@ contract LoanManager is Restricted {
                 loan.borrower.transfer(releasedCollateral);
             }
             uint collateralToCollect = loan.collateralAmount.sub(releasedCollateral);
-            if (defaultingFee > collateralToCollect) {
+            if (defaultingFee >= collateralToCollect) {
                 defaultingFee = collateralToCollect;
+                collateralToCollect = 0;
+            } else {
+                collateralToCollect = collateralToCollect.sub(defaultingFee);
             }
+            totalDefaultingFee = totalDefaultingFee.add(defaultingFee);
 
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
 
-            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect, releasedCollateral, defaultingFee);
+            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect.add(defaultingFee), releasedCollateral, defaultingFee);
         }
 
         if (totalCollateralToCollect > 0) {
             address(monetarySupervisor.augmintReserves()).transfer(totalCollateralToCollect);
         }
 
+        if (totalDefaultingFee > 0){
+            address(augmintToken.feeAccount()).transfer(totalDefaultingFee);
+        }
+
         monetarySupervisor.loanCollectionNotification(totalLoanAmountCollected);// update KPIs
 
+    }
+
+    /* to allow upgrade of Rates and MonetarySupervisor contracts */
+    function setSystemContracts(Rates newRatesContract, MonetarySupervisor newMonetarySupervisor)
+    external restrict("MonetaryBoard") {
+        rates = newRatesContract;
+        monetarySupervisor = newMonetarySupervisor;
+        emit SystemContractsChanged(newRatesContract, newMonetarySupervisor);
     }
 
     function getProductCount() external view returns (uint ct) {
@@ -283,7 +296,7 @@ contract LoanManager is Restricted {
         loans[loanId].state = LoanState.Repaid;
 
         if (interestAmount > 0) {
-            augmintToken.transfer(interestEarnedAccount, interestAmount);
+            augmintToken.transfer(monetarySupervisor.interestEarnedAccount(), interestAmount);
             augmintToken.burn(loanAmount);
         } else {
             // negative or zero interest (i.e. discountRate >= 0)

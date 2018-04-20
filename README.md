@@ -33,19 +33,21 @@ Read more and try it: **[www.augmint.cc](http://www.augmint.cc)**
 
 ## Flows
 
-Sequence diagrams about the planned:
+[Contract dependency graph](docs/contractDependencies.png)
+
+Sequence diagrams:
 
 *   [Loan flow](docs/loanFlow.png)
 *   [Lock flow](docs/lockFlow.png)
 *   [Exchange flow](docs/exchangeFlow.png)
 *   [Reserve Sales flow](docs/reserveSalesFlow.png) _(not implemented yet)_
 
-[Flow of funds](https://docs.google.com/drawings/d/13BP5sj-GZ41zdBC2WPIdfLpVJbYia_9Tdw5_g4M4Psg/edit?usp=sharing)
+[Flow of funds](https://docs.google.com/document/d/1IQwGEsImpAv2Nlz5IgU_iCJkEqlM2VUHf5SFkcvb80A/#heading=h.jsbfubuh6okn)
 
 ## Solidity Contracts
 
-*   [Restricted.sol](./contracts/generic/Owned.sol)  
-     Stores which address can access which function call.
+*   [Restricted.sol](./contracts/generic/Restricted.sol)  
+    Stores which address can access which function call.
 *   [ERC20.sol](./contracts/generic/ERC20.sol)  
     Standard [ERC20](https://theethereum.wiki/w/index.php/ERC20_Token_Standard) token interface.
 *   [SystemAccount.sol](./contracts/generic/ERC20.sol)
@@ -53,36 +55,37 @@ Sequence diagrams about the planned:
 *   [AugmintReserves](./contracts/AugmintReserves.sol)
     *   Holds Augmint's ETH and token reserves
 *   [InterestEarnedAccount](./contracts/InterestEarnedAccount.sol)
-    *   Holds interest from lending (token) - only repaid loans, ie. already "earned"
+    *   Holds interest earning from token lending - only from repaid loans, i.e. already "earned"
     *   Provides interest for Locks
 *   [FeeAccount.sol](./contracts/FeeAccount.sol)
-    *   holds all fees (ETH & Token)
-    *   calculates fees (not implemented yet, to be split out from AugmintToken & Exchange & LoanManager)
+    *   holds all fees: tokens from transfer and exchange fees (to be implemented) + ETH fees from defaulting fees
+    *   calculates transferFees
 *   [AugmintToken.sol](./contracts/generic/AugmintToken.sol)  
-    Base contract for all Augmint tokens.
+    Base contract for all Augmint tokens, [TokenAEur.sol](./contracts/TokenAEur.sol) being the first implementation.
     *   ERC20 standard functions
     *   maintains account token balances
     *   Generic `transferAndNotify` "convenience" function
-    *   allow MonetarySupervisor to issue tokens on loan disbursement and for reserve
+    *   allows MonetarySupervisor to issue tokens on loan disbursement and for reserve
     *   allows accounts to burn their tokens (used by repay loan and burn from reserves via MonetarySupervisor contract)
 *   [MonetarySupervisor.sol](./contracts/MonetarySupervisor.sol)
-    *   maintains system wide KPIs (eg totalLockAmount, totalLoanAmount)
-    *   holds system wide parameters/limits
-    *   enforces system wide limits
+    *   maintains system wide KPIs (totalLockAmount, totalLoanAmount)
+    *   enforces system wide limits (Loan to Deposit ratio limits)
     *   issue to & from reserve functions
 *   [TokenAEur.sol](./contracts/TokenAEur.sol)
     *   First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Crypto Euro aka A€ )
     *   Sets standard token parameters (name, symbol, decimals, peggedSymbol etc.)
 *   [Rates.sol](./contracts/Rates.sol)  
-    A contract to return fiat/ETH exchange rates
+    A contract to return fiat/ETH exchange rates.
 *   [Exchange.sol](./contracts/Exchange.sol)  
-    A-EUR / ETH exchange contract. Sell or buy A-EUR for ETH on A-EUR/ETH market rates.
+    EUR / ETH exchange contract. Sell or buy A-EUR for ETH
 *   [LoanManager.sol](./contracts/LoanManager.sol)
     *   Loan products and their parameters
-    *   Maintains all loans: new loans, repayment, collection
+    *   Maintains all loans via new loan, repayment, collection functions
+    *   Holds collateral in escrow
 *   [Locker.sol](./contracts/Lock.sol)
     *   Lock products and parameters
-    *   Token fund locking and releasing
+    *   Token funds locking and releasing
+    *   Holds locked tokens (with interest)
 
 ## Contribution
 

@@ -12,7 +12,7 @@ contract("Transfer Augmint tokens tests", accounts => {
             tokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
             tokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
         ]);
-        [feePt, minFee, maxFee] = await augmintToken.transferFee();
+        [feePt, minFee, maxFee] = await tokenTestHelpers.feeAccount.transferFee();
         minFeeAmount = minFee.div(feePt).mul(1000000);
         maxFeeAmount = maxFee.div(feePt).mul(1000000);
     });
@@ -86,8 +86,8 @@ contract("Transfer Augmint tokens tests", accounts => {
         );
     });
 
-    it("should have zero fee if 'to' or from is NoFeeTransferContracts", async function() {
-        await augmintToken.grantPermission(accounts[0], "NoFeeTransferContracts");
+    it("should have zero fee if 'to' or 'from' is NoFeeTransferContracts", async function() {
+        await tokenTestHelpers.feeAccount.grantPermission(accounts[0], "NoFeeTransferContracts");
         await tokenTestHelpers.transferTest(this, {
             from: accounts[0],
             to: accounts[1],

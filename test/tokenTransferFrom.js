@@ -7,9 +7,10 @@ let maxFee = null;
 contract("TransferFrom AugmintToken tests", accounts => {
     before(async function() {
         augmintToken = tokenTestHelpers.augmintToken;
+
         await tokenTestHelpers.issueToReserve(1000000000);
         [[, , maxFee], ,] = await Promise.all([
-            augmintToken.transferFee(),
+            tokenTestHelpers.feeAccount.transferFee(),
             tokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
             tokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
         ]);
@@ -153,7 +154,7 @@ contract("TransferFrom AugmintToken tests", accounts => {
     it("should have zero fee for transferFrom if 'to' is NoFeeTransferContracts", async function() {});
 
     it("should have zero fee for transferFrom if 'from' or 'to' is NoFeeTransferContracts ", async function() {
-        await augmintToken.grantPermission(accounts[0], "NoFeeTransferContracts");
+        await tokenTestHelpers.feeAccount.grantPermission(accounts[0], "NoFeeTransferContracts");
 
         const expApprove1 = {
             owner: accounts[0],

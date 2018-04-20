@@ -7,9 +7,8 @@
     - Converts older versions of AugmintTokens in 1:1 to new
 
     TODO:
-        - MonetarySupervisorInterface (and use it everywhere)
-        - interestEarnedAccount setter?
-        - create and use InterestEarnedAccount interface instead?
+        - Mcreate and use MonetarySupervisorInterface?
+        - create and use InterestEarnedAccount interface ?
 
 */
 
@@ -64,6 +63,10 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     event AcceptedLegacyAugmintTokenChanged(address augmintTokenAddress, bool newAcceptedState);
 
     event LegacyTokenConverted(address oldTokenAddress, address account, uint amount);
+
+    event KPIsAdjusted(uint totalLoanAmountAdjustment, uint totalLockedAmountAdjustment);
+
+    event SystemContractsChanged(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves);
 
     function MonetarySupervisor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
@@ -132,6 +135,25 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
 
         emit LtdParamsChanged(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
+    }
+
+    /* function to migrate old totalLoanAmount and totalLockedAmount from old monetarySupervisor contract
+        when it's upgraded.
+        Set new monetarySupervisor contract in all locker and loanManager contracts before executing this */
+    function adjustKPIs(uint totalLoanAmountAdjustment, uint totalLockedAmountAdjustment)
+    external restrict("MonetaryBoard") {
+        totalLoanAmount = totalLoanAmount.add(totalLoanAmountAdjustment);
+        totalLockedAmount = totalLockedAmount.add(totalLockedAmountAdjustment);
+
+        emit KPIsAdjusted(totalLoanAmountAdjustment, totalLockedAmountAdjustment);
+    }
+
+    /* to allow upgrades of InterestEarnedAccount and AugmintReserves contracts. */
+    function setSystemContracts(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves)
+    external restrict("MonetaryBoard") {
+        interestEarnedAccount = newInterestEarnedAccount;
+        augmintReserves = newAugmintReserves;
+        emit SystemContractsChanged(newInterestEarnedAccount, newAugmintReserves);
     }
 
     /* User can request to convert their tokens from older AugmintToken versions in 1:1
