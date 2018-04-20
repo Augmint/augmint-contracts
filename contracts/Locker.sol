@@ -1,4 +1,4 @@
-/* contract for tracking locked funds etc.
+/* contract for tracking locked funds
 
  requirements
   -> lock funds
@@ -8,11 +8,8 @@
  For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/lockFlow.png
 
  TODO / think about:
-    - monetarySupervisor setter?
-
- to do/think about:
   -> self-destruct function?
-  -> return only active loan products from getLoanProducts?
+
 */
 
 pragma solidity ^0.4.23;
@@ -40,6 +37,8 @@ contract Locker is Restricted, TokenReceiver {
                     uint40 lockedUntil, uint32 perTermInterest, uint32 durationInSecs);
 
     event LockReleased(address indexed lockOwner, uint lockId);
+
+    event MonetarySupervisorChanged(MonetarySupervisor newMonetarySupervisor);
 
     struct LockProduct {
         // perTermInterest is in millionths (i.e. 1,000,000 = 100%):
@@ -133,6 +132,11 @@ contract Locker is Restricted, TokenReceiver {
                                                                                 "Funds released from lock");
 
         emit LockReleased(lock.owner, lockId);
+    }
+
+    function setMonetarySupervisor(MonetarySupervisor newMonetarySupervisor) external restrict("MonetaryBoard") {
+        monetarySupervisor = newMonetarySupervisor;
+        emit MonetarySupervisorChanged(newMonetarySupervisor);
     }
 
     function getLockProductCount() external view returns (uint) {

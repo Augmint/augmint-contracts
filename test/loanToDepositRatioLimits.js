@@ -55,11 +55,12 @@ contract("Loan to Deposit ratio tests", accounts => {
             locker.getLockProductCount().then(res => res.toNumber() - 1),
             rates.rates("EUR").then(res => res[0]),
             tokenTestHelpers.withdrawFromReserve(accounts[0], 10000000),
-            tokenTestHelpers.interestEarnedAccount.withdrawTokens(
+            tokenTestHelpers.interestEarnedAccount.withdraw(
                 augmintToken.address,
                 accounts[0],
                 interestEarnedBalance,
-                "clear balance for tests"
+                0,
+                "clear token balance for tests"
             )
         ]);
     });

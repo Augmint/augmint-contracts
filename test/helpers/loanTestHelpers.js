@@ -234,7 +234,8 @@ async function collectLoan(testInstance, loan, collector) {
             collector: loan.collector,
             borrower: loan.borrower,
             loanManager: loanManager.address,
-            interestEarned: interestEarnedAcc
+            interestEarned: interestEarnedAcc,
+            feeAccount: tokenTestHelpers.feeAccount
         }),
         rates.convertFromWei(peggedSymbol, loan.collateralAmount),
         rates.convertToWei(peggedSymbol, loan.repaymentAmount),
@@ -282,7 +283,11 @@ async function collectLoan(testInstance, loan, collector) {
 
         tokenTestHelpers.assertBalances(balBefore, {
             reserve: {
-                eth: balBefore.reserve.eth.add(collectedCollateral)
+                eth: balBefore.reserve.eth.add(collectedCollateral).sub(defaultingFee)
+            },
+
+            feeAccount: {
+                eth: balBefore.feeAccount.eth.add(defaultingFee)
             },
 
             collector: {

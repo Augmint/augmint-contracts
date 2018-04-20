@@ -5,8 +5,7 @@
     "homepage": ".",
     "private": true,
     "scripts": {
-        "start":
-            "./runganache.sh & $(yarn bin)/truffle migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+        "start": "./runganache.sh & $(yarn bin)/truffle migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
         "build": "truffle compile",
         "clean": "rm build/contracts/*",
         "test": "truffle test",
@@ -28,6 +27,8 @@
         "truffle": "4.1.7"
     },
     "greenkeeper": {
-        "ignore": ["bignumber.js"]
+        "ignore": [
+            "bignumber.js"
+        ]
     }
 }

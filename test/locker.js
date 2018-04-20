@@ -850,4 +850,24 @@ contract("Lock", accounts => {
 
         await testHelpers.expectThrow(monetarySupervisor.releaseFundsNotification(amountToLock, { from: accounts[0] }));
     });
+
+    it("Should allow to change  monetarySupervisor contract", async function() {
+        const newMonetarySupervisor = monetarySupervisor.address;
+        const tx = await lockerInstance.setMonetarySupervisor(newMonetarySupervisor);
+        testHelpers.logGasUse(this, tx, "setSystemContracts");
+
+        const [actualMonetarySupervisor] = await Promise.all([
+            lockerInstance.monetarySupervisor(),
+            testHelpers.assertEvent(lockerInstance, "MonetarySupervisorChanged", { newMonetarySupervisor })
+        ]);
+
+        assert.equal(actualMonetarySupervisor, newMonetarySupervisor);
+    });
+
+    it("Only allowed should change rates and monetarySupervisor contracts", async function() {
+        const newMonetarySupervisor = monetarySupervisor.address;
+        await testHelpers.expectThrow(
+            lockerInstance.setMonetarySupervisor(newMonetarySupervisor, { from: accounts[1] })
+        );
+    });
 });

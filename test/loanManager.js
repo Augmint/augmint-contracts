@@ -1,6 +1,7 @@
 const testHelpers = require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const loanTestHelpers = require("./helpers/loanTestHelpers.js");
+const ratesTestHelpers = require("./helpers/ratesTestHelpers.js");
 
 let loanManager = null;
 let loanProduct = null;
@@ -158,6 +159,30 @@ contract("loanManager  tests", accounts => {
     it("Only allowed should set loan product state", async function() {
         await testHelpers.expectThrow(
             loanManager.setLoanProductActiveState(loanProduct.id, true, { from: accounts[1] })
+        );
+    });
+
+    it("Should allow to change rates and monetarySupervisor contract", async function() {
+        const newRatesContract = ratesTestHelpers.rates.address;
+        const newMonetarySupervisor = tokenTestHelpers.monetarySupervisor.address;
+        const tx = await loanManager.setSystemContracts(newRatesContract, newMonetarySupervisor);
+        testHelpers.logGasUse(this, tx, "setSystemContracts");
+
+        const [actualRatesContract, actualMonetarySupervisor] = await Promise.all([
+            loanManager.rates(),
+            loanManager.monetarySupervisor(),
+            testHelpers.assertEvent(loanManager, "SystemContractsChanged", { newRatesContract, newMonetarySupervisor })
+        ]);
+
+        assert.equal(actualRatesContract, newRatesContract);
+        assert.equal(actualMonetarySupervisor, newMonetarySupervisor);
+    });
+
+    it("Only allowed should change rates and monetarySupervisor contracts", async function() {
+        const newRatesContract = ratesTestHelpers.rates.address;
+        const newMonetarySupervisor = tokenTestHelpers.monetarySupervisor.address;
+        await testHelpers.expectThrow(
+            loanManager.setSystemContracts(newRatesContract, newMonetarySupervisor, { from: accounts[1] })
         );
     });
 });

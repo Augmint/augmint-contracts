@@ -6,9 +6,11 @@ const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const Locker = artifacts.require("./Locker.sol");
+const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer, network, accounts) {
     deployer.then(async () => {
+        const feeAccount = FeeAccount.at(FeeAccount.address);
         let monetaryBoardAccounts;
         if (web3.version.network == 4) {
             // on Rinkeby testnet
@@ -28,6 +30,7 @@ module.exports = function(deployer, network, accounts) {
         const locker = Locker.at(Locker.address);
 
         const grantTxs = monetaryBoardAccounts.map(acc => [
+            feeAccount.grantPermission(acc, "MonetaryBoard"),
             locker.grantPermission(acc, "MonetaryBoard"),
             tokenAEur.grantPermission(acc, "MonetaryBoard"),
             loanManager.grantPermission(acc, "MonetaryBoard"),

@@ -2,33 +2,11 @@ const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 const AugmintToken = artifacts.require("./generic/AugmintToken.sol");
 
-let augmintTokenInstance;
+let augmintToken;
 
 contract("AugmintToken tests", accounts => {
     before(async () => {
-        augmintTokenInstance = tokenTestHelpers.augmintToken;
-    });
-
-    it("should be possible to set transfer fees ", async function() {
-        const fee = { pt: 100000, max: 80, min: 90 };
-        const tx = await augmintTokenInstance.setTransferFees(fee.pt, fee.min, fee.max, { from: accounts[0] });
-        testHelpers.logGasUse(this, tx, "setTransferFees");
-
-        const [feePt, feeMin, feeMax] = await augmintTokenInstance.transferFee();
-
-        await testHelpers.assertEvent(augmintTokenInstance, "TransferFeesChanged", {
-            transferFeePt: fee.pt,
-            transferFeeMin: fee.min,
-            transferFeeMax: fee.max
-        });
-
-        assert.equal(feePt, fee.pt);
-        assert.equal(feeMin, fee.min);
-        assert.equal(feeMax, fee.max);
-    });
-
-    it("only allowed should set transfer fees ", async function() {
-        await testHelpers.expectThrow(augmintTokenInstance.setTransferFees(10000, 10000, 10000, { from: accounts[1] }));
+        augmintToken = tokenTestHelpers.augmintToken;
     });
 
     it("shouldn't create a token contract without feeAccount", async function() {
@@ -38,10 +16,7 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                0, // feeaccount
-                2000 /* transferFeePt in parts per million = 0.2% */,
-                200 /* min: 0.02 ACE */,
-                50000 /* max fee: 5 ACE */
+                0 // feeaccount
             )
         );
     });
@@ -53,10 +28,7 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                tokenTestHelpers.feeAccount,
-                2000 /* transferFeePt in parts per million = 0.2% */,
-                200 /* min: 0.02 ACE */,
-                50000 /* max fee: 5 ACE */
+                tokenTestHelpers.feeAccount.address
             )
         );
     });
@@ -68,11 +40,28 @@ contract("AugmintToken tests", accounts => {
                 "", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                tokenTestHelpers.feeAccount,
-                2000 /* transferFeePt in parts per million = 0.2% */,
-                200 /* min: 0.02 ACE */,
-                50000 /* max fee: 5 ACE */
+                tokenTestHelpers.feeAccount.address
             )
         );
+    });
+
+    it("should change feeAccount", async function() {
+        const newFeeAccount = accounts[2];
+        const tx = await augmintToken.setFeeAccount(newFeeAccount);
+        testHelpers.logGasUse(this, tx, "setFeeAccount");
+
+        const [actualFeeAccount] = await Promise.all([
+            augmintToken.feeAccount(),
+            testHelpers.assertEvent(augmintToken, "FeeAccountChanged", {
+                newFeeAccount
+            })
+        ]);
+
+        assert.equal(actualFeeAccount, newFeeAccount);
+    });
+
+    it("only allowed should change feeAccount", async function() {
+        const newFeeAccount = accounts[2];
+        await testHelpers.expectThrow(augmintToken.setFeeAccount(newFeeAccount, { from: accounts[1] }));
     });
 });

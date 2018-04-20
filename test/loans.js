@@ -248,13 +248,7 @@ contract("Loans tests", accounts => {
     });
 
     it("should only allow whitelisted loan contract to be used", async function() {
-        const interestEarnedAcc = await monetarySupervisor.interestEarnedAccount();
-        const craftedLender = await LoanManager.new(
-            augmintToken.address,
-            monetarySupervisor.address,
-            rates.address,
-            interestEarnedAcc
-        );
+        const craftedLender = await LoanManager.new(augmintToken.address, monetarySupervisor.address, rates.address);
         await rates.setRate("EUR", 99800);
         await craftedLender.grantPermission(accounts[0], "MonetaryBoard");
         await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true);

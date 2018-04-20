@@ -1,0 +1,42 @@
+@startuml
+title **Augmint** - Contract dependencies
+skinparam ArrowColor #blue
+skinparam noteBackgroundColor #lightgrey
+
+artifact Rates
+artifact AugmintReserves
+artifact FeeAccount
+artifact AugmintToken
+artifact InterestEarnedAccount
+artifact MonetarySupervisor
+artifact LoanManager
+artifact Locker
+artifact Exchange
+
+
+rectangle "Legend" #Beige {
+	artifact contract1
+	artifact contract2
+    artifact contract3
+	artifact contract4
+    contract1 ==>> contract2 : Dependency without setter\nChange via new deployment
+    contract3 ..>> contract4 : Amendable dependency\nChange via setter
+}
+
+AugmintToken ..>> FeeAccount
+
+MonetarySupervisor ==>> AugmintToken
+MonetarySupervisor ..>> AugmintReserves
+MonetarySupervisor ..>> InterestEarnedAccount
+
+LoanManager ==>> AugmintToken
+LoanManager ..>> MonetarySupervisor
+LoanManager ..>> Rates
+
+Locker ==>> AugmintToken
+Locker ..>> MonetarySupervisor
+
+Exchange ==>> AugmintToken
+Exchange ..>> FeeAccount : Exchange fees \nto be implemented
+
+@enduml
