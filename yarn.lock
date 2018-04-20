@@ -3236,9 +3236,9 @@ sol-explore@^1.6.2:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/sol-explore/-/sol-explore-1.6.2.tgz#43ae8c419fd3ac056a05f8a9d1fb1022cd41ecc2"
 
-solc@0.4.21:
-  version "0.4.21"
-  resolved "https://registry.yarnpkg.com/solc/-/solc-0.4.21.tgz#6a7ecd505bfa0fc268330d5de6b9ae65c8c68264"
+solc@0.4.23:
+  version "0.4.23"
+  resolved "https://registry.yarnpkg.com/solc/-/solc-0.4.23.tgz#54a0ff4015827b32fddb62c0a418b5247310a58e"
   dependencies:
     fs-extra "^0.30.0"
     memorystream "^0.3.1"
@@ -3526,13 +3526,13 @@ trim-right@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/trim-right/-/trim-right-1.0.1.tgz#cb2e1203067e0c8de1f614094b9fe45704ea6003"
 
-truffle@4.1.6:
-  version "4.1.6"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-4.1.6.tgz#3887081d73973c4e79de52fb25c27bac5e527dd7"
+truffle@4.1.7:
+  version "4.1.7"
+  resolved "https://registry.yarnpkg.com/truffle/-/truffle-4.1.7.tgz#b2d66d26eafd92da868d67765953e12c8160aedb"
   dependencies:
     mocha "^3.4.2"
     original-require "^1.0.1"
-    solc "0.4.21"
+    solc "0.4.23"
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
