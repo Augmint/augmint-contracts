@@ -7,7 +7,7 @@
         - consider generic bytes arg instead of uint for transferAndNotify
         - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 import "../interfaces/AugmintTokenInterface.sol";
 import "../interfaces/TransferFeeInterface.sol";
 
@@ -16,12 +16,11 @@ contract AugmintToken is AugmintTokenInterface {
 
     event FeeAccountChanged(TransferFeeInterface newFeeAccount);
 
-    function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals,
-                            TransferFeeInterface _feeAccount) public {
-
-        require(_feeAccount != address(0));
-        require(bytes(_name).length > 0);
-        require(bytes(_symbol).length > 0);
+    constructor(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, TransferFeeInterface _feeAccount)
+    public {
+        require(_feeAccount != address(0), "feeAccount must be set");
+        require(bytes(_name).length > 0, "name must be set");
+        require(bytes(_symbol).length > 0, "symbol must be set");
 
         name = _name;
         symbol = _symbol;
@@ -38,7 +37,7 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function approve(address _spender, uint256 amount) external returns (bool) {
-        require(_spender != 0x0);
+        require(_spender != 0x0, "spender must be set");
         allowed[msg.sender][_spender] = amount;
         emit Approval(msg.sender, _spender, amount);
         return true;
@@ -83,6 +82,7 @@ contract AugmintToken is AugmintTokenInterface {
     // Burn tokens. Anyone can burn from its own account. YOLO.
     // Used by to burn from Augmint reserve or by Lender contract after loan repayment
     function burn(uint amount) external {
+        require(balances[msg.sender] >= amount, "balance must be >= amount");
         balances[msg.sender] = balances[msg.sender].sub(amount);
         totalSupply = totalSupply.sub(amount);
         emit Transfer(msg.sender, 0x0, amount);
@@ -131,9 +131,10 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function _transferFrom(address from, address to, uint256 amount, string narrative) private {
-        require(balances[from] >= amount);
-        require(allowed[from][msg.sender] >= amount);
-        require(allowed[from][msg.sender] > 0); // don't allow 0 transferFrom if no approval
+        require(balances[from] >= amount, "balance must >= amount");
+        require(allowed[from][msg.sender] >= amount, "allowance must be >= amount");
+        // don't allow 0 transferFrom if no approval:
+        require(allowed[from][msg.sender] > 0, "allowance must be >= 0 even with 0 amount");
 
         /* NB: fee is deducted from owner. It can result that transferFrom of amount x to fail
                 when x + fee is not availale on owner balance */
@@ -143,15 +144,21 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function _transfer(address from, address to, uint256 amount, string narrative) private {
-        require(to != 0x0);
+        require(to != 0x0, "to must be set");
+
         uint fee = feeAccount.calculateTransferFee(from, to, amount);
+        uint transferAmount = amount.add(fee);
+
+        // to emit proper reason instead of failing on from.sub()
+        require(balances[from] >= transferAmount, "balance must be >= amount + transfer fee");
+
         if (fee > 0) {
             balances[feeAccount] = balances[feeAccount].add(fee);
-            balances[from] = balances[from].sub(amount).sub(fee);
-        } else {
-            balances[from] = balances[from].sub(amount);
         }
+
+        balances[from] = balances[from].sub(transferAmount);
         balances[to] = balances[to].add(amount);
+
         emit Transfer(from, to, amount);
         emit AugmintTransfer(from, to, amount, narrative, fee);
     }

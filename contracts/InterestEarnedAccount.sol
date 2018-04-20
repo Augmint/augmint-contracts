@@ -1,7 +1,7 @@
 /* Contract to hold earned interest from loans repaid
    premiums for locks are being accrued (i.e. transferred) to Locker */
 
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 import "./generic/SystemAccount.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 

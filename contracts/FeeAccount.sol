@@ -2,7 +2,7 @@
     TODO: calculateExchangeFee + Exchange params and setters
 */
 
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 import "./generic/SafeMath.sol";
 import "./generic/SystemAccount.sol";
 import "./interfaces/TransferFeeInterface.sol";
@@ -22,7 +22,7 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
-    function FeeAccount( uint transferFeePt, uint transferFeeMin, uint transferFeeMax) public {
+    constructor(uint transferFeePt, uint transferFeeMin, uint transferFeeMax) public {
         transferFee = TransferFee(transferFeePt, transferFeeMin, transferFeeMax);
     }
 
@@ -50,8 +50,8 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
 
     function calculateExchangeFee(uint weiAmount) external view returns (uint256 weiFee) {
         /* TODO: to be implemented and use in Exchange.sol. always revert for now */
-        require(weiAmount != weiAmount);
-        weiFee = 0; // to silence compiler warnings until it's implemented
+        require(weiAmount != weiAmount, "not yet implemented");
+        weiFee = transferFee.max; // to silence compiler warnings until it's implemented
     }
 
 }

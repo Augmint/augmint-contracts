@@ -1,5 +1,5 @@
-/* Generic contract for system accounts: FeeAccount, AugmintReserves and InterestEarnedAccount */
-pragma solidity 0.4.21;
+/* Contract to collect fees from system */
+pragma solidity ^0.4.23;
 import "./Restricted.sol";
 import "./AugmintToken.sol";
 
