@@ -54,8 +54,8 @@ contract Exchange {
     }
 
     function placeBuyTokenOrder(uint32 price) external payable returns (uint64 orderId) {
-        require(price > 0);
-        require(msg.value > 0);
+        require(price > 0, "price must be > 0");
+        require(msg.value > 0, "msg.value must be > 0");
 
         orderId = ++orderCount;
         buyTokenOrders[orderId] = Order(uint64(activeBuyOrders.length), msg.sender, price, msg.value);
@@ -77,13 +77,13 @@ contract Exchange {
         3) transferAndNotify calls Exchange.transferNotification with lockProductId
     */
     function transferNotification(address maker, uint tokenAmount, uint price) external {
-        require(msg.sender == address(augmintToken));
+        require(msg.sender == address(augmintToken), "msg.sender must be augmintToken");
         _placeSellTokenOrder(maker, uint32(price), tokenAmount);
     }
 
     function cancelBuyTokenOrder(uint64 buyTokenId) external {
         Order storage order = buyTokenOrders[buyTokenId];
-        require(order.maker == msg.sender);
+        require(order.maker == msg.sender, "msg.sender must be order.maker");
 
         uint amount = order.amount;
         order.amount = 0;
@@ -96,7 +96,7 @@ contract Exchange {
 
     function cancelSellTokenOrder(uint64 sellTokenId) external {
         Order storage order = sellTokenOrders[sellTokenId];
-        require(order.maker == msg.sender);
+        require(order.maker == msg.sender, "msg.sender must be order.maker");
 
         uint amount = order.amount;
         order.amount = 0;
@@ -121,8 +121,8 @@ contract Exchange {
     */
     function matchMultipleOrders(uint64[] buyTokenIds, uint64[] sellTokenIds) external returns(uint matchCount) {
         uint len = buyTokenIds.length;
-        require(len == sellTokenIds.length);
         for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {
+        require(len == sellTokenIds.length, "buyTokenIds and sellTokenIds lengths must be equal");
             _fillOrder(buyTokenIds[i], sellTokenIds[i]);
             matchCount++;
         }
@@ -154,7 +154,7 @@ contract Exchange {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
 
-        require(buy.price >= sell.price);
+        require(buy.price >= sell.price, "buy price must be >= sell price");
 
         // meet in the middle
         uint price = uint(buy.price).add(sell.price).div(2);
@@ -190,8 +190,8 @@ contract Exchange {
 
     function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
     private returns (uint64 orderId) {
-        require(price > 0);
-        require(tokenAmount > 0);
+        require(price > 0, "price must be > 0");
+        require(tokenAmount > 0, "tokenAmount must be > 0");
 
         orderId = ++orderCount;
         sellTokenOrders[orderId] = Order(uint64(activeSellOrders.length), maker, price, tokenAmount);

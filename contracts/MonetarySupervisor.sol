@@ -88,36 +88,47 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     /* Locker requesting interest when locking funds. Enforcing LTD to stay within range allowed by LTD params
         NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it  */
     function requestInterest(uint amountToLock, uint interestAmount) external {
-        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
-        require(amountToLock <= getMaxLockAmountAllowedByLtd());
+        // only whitelisted LockerContracts
+        require(permissions[msg.sender]["LockerContracts"], "msg.sender must have LockerContracts permission");
+        require(amountToLock <= getMaxLockAmountAllowedByLtd(), "amountToLock must be <= maxLockAmountAllowedByLtd");
 
         totalLockedAmount = totalLockedAmount.add(amountToLock);
+        // next line would revert but require to emit reason:
+        require(augmintToken.balanceOf(address(interestEarnedAccount)) >= interestAmount,
+            "interestEarnedAccount balance must be >= interestAmount");
         interestEarnedAccount.transferInterest(augmintToken, msg.sender, interestAmount); // transfer interest to Locker
     }
 
     // Locker notifying when releasing funds to update KPIs
     function releaseFundsNotification(uint lockedAmount) external {
-        require(permissions[msg.sender]["LockerContracts"]); // only whitelisted LockerContracts
+        // only whitelisted LockerContracts
+        require(permissions[msg.sender]["LockerContracts"], "msg.sender must have LockerContracts permission");
         totalLockedAmount = totalLockedAmount.sub(lockedAmount);
     }
 
     /* Issue loan if LTD stays within range allowed by LTD params
         NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it */
     function issueLoan(address borrower, uint loanAmount) external {
-        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted LoanManager contracts
-        require(loanAmount <= getMaxLoanAmountAllowedByLtd());
+         // only whitelisted LoanManager contracts
+        require(permissions[msg.sender]["LoanManagerContracts"],
+            "msg.sender must have LoanManagerContracts permission");
+        require(loanAmount <= getMaxLoanAmountAllowedByLtd(), "loanAmount must be <= maxLoanAmountAllowedByLtd");
         totalLoanAmount = totalLoanAmount.add(loanAmount);
         augmintToken.issueTo(borrower, loanAmount);
     }
 
     function loanRepaymentNotification(uint loanAmount) external {
-        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted Lender contracts
+        // only whitelisted LoanManager contracts
+       require(permissions[msg.sender]["LoanManagerContracts"],
+           "msg.sender must have LoanManagerContracts permission");
         totalLoanAmount = totalLoanAmount.sub(loanAmount);
     }
 
     // NB: this is called by Lender contract with the sum of all loans collected in batch
     function loanCollectionNotification(uint totalLoanAmountCollected) external {
-        require(permissions[msg.sender]["LoanManagerContracts"]); // only whitelisted Lender contracts
+        // only whitelisted LoanManager contracts
+       require(permissions[msg.sender]["LoanManagerContracts"],
+           "msg.sender must have LoanManagerContracts permission");
         totalLoanAmount = totalLoanAmount.sub(totalLoanAmountCollected);
     }
 
@@ -147,7 +158,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     */
     function transferNotification(address from, uint amount, uint /* data, not used */ ) external {
         AugmintTokenInterface legacyToken = AugmintTokenInterface(msg.sender);
-        require(acceptedLegacyAugmintTokens[legacyToken]);
+        require(acceptedLegacyAugmintTokens[legacyToken], "msg.sender must be allowed in acceptedLegacyAugmintTokens");
 
         legacyToken.burn(amount);
         augmintToken.issueTo(from, amount);

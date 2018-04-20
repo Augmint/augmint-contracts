@@ -24,7 +24,7 @@ contract Restricted {
     event PermissionRevoked(address indexed agent, bytes32 revokedPermission);
 
     modifier restrict(bytes32 requiredPermission) {
-        require(permissions[msg.sender][requiredPermission]);
+        require(permissions[msg.sender][requiredPermission], "msg.sender must have permission");
         _;
     }
 
@@ -34,13 +34,13 @@ contract Restricted {
     }
 
     function grantPermission(address agent, bytes32 requiredPermission) public {
-        require(permissions[msg.sender]["MonetaryBoard"]);
+        require(permissions[msg.sender]["MonetaryBoard"], "msg.sender must have MonetaryBoard permission");
         permissions[agent][requiredPermission] = true;
         emit PermissionGranted(agent, requiredPermission);
     }
 
     function grantMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
-        require(permissions[msg.sender]["MonetaryBoard"]);
+        require(permissions[msg.sender]["MonetaryBoard"], "msg.sender must have MonetaryBoard permission");
         uint256 length = requiredPermissions.length;
         for (uint256 i = 0; i < length; i++) {
             grantPermission(agent, requiredPermissions[i]);
@@ -48,7 +48,7 @@ contract Restricted {
     }
 
     function revokePermission(address agent, bytes32 requiredPermission) public {
-        require(permissions[msg.sender]["MonetaryBoard"]);
+        require(permissions[msg.sender]["MonetaryBoard"], "msg.sender must have MonetaryBoard permission");
         permissions[agent][requiredPermission] = false;
         emit PermissionRevoked(agent, requiredPermission);
     }

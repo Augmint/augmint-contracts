@@ -81,12 +81,14 @@ contract Locker is Restricted, TokenReceiver {
         uint _newLockProductId = lockProducts.push(
                                     LockProduct(perTermInterest, durationInSecs, minimumLockAmount, isActive)) - 1;
         uint32 newLockProductId = uint32(_newLockProductId);
-        require(newLockProductId == _newLockProductId);
+        require(newLockProductId == _newLockProductId, "lockProduct overflow");
         emit NewLockProduct(newLockProductId, perTermInterest, durationInSecs, minimumLockAmount, isActive);
 
     }
 
     function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("MonetaryBoard") {
+        // next line would revert but require to emit reason:
+        require(lockProductId < lockProducts.length, "invalid lockProductId");
 
         lockProducts[lockProductId].isActive = isActive;
         emit LockProductActiveChange(lockProductId, isActive);
@@ -100,9 +102,11 @@ contract Locker is Restricted, TokenReceiver {
         3) transferAndNotify calls Lock.transferNotification with lockProductId
     */
     function transferNotification(address from, uint256 amountToLock, uint _lockProductId) external {
-        require(msg.sender == address(augmintToken));
+        require(msg.sender == address(augmintToken), "msg.sender must be augmintToken");
+        // next line would revert but require to emit reason:
+        require(lockProductId < lockProducts.length, "invalid lockProductId");
         uint32 lockProductId = uint32(_lockProductId);
-        require(lockProductId == _lockProductId);
+        require(lockProductId == _lockProductId, "lockProductId overflow");
         /* TODO: make data arg generic bytes
             uint productId;
             assembly { // solhint-disable-line no-inline-assembly
@@ -112,11 +116,13 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     function releaseFunds(uint lockId) external {
+        // next line would revert but require to emit reason:
+        require(lockId < locks.length, "invalid lockId");
         Lock storage lock = locks[lockId];
         LockProduct storage lockProduct = lockProducts[lock.productId];
 
-        require(lock.isActive);
-        require(now >= lock.lockedUntil);
+        require(lock.isActive, "lock must be in active state");
+        require(now >= lock.lockedUntil, "current time must be later than lockedUntil");
 
         lock.isActive = false;
 
@@ -206,13 +212,13 @@ contract Locker is Restricted, TokenReceiver {
     // Internal function. assumes amountToLock is already transferred to this Lock contract
     function _createLock(uint32 lockProductId, address lockOwner, uint amountToLock) internal returns(uint lockId) {
         LockProduct storage lockProduct = lockProducts[lockProductId];
-        require(lockProduct.isActive);
-        require(amountToLock >= lockProduct.minimumLockAmount);
+        require(lockProduct.isActive, "lockProduct must be in active state");
+        require(amountToLock >= lockProduct.minimumLockAmount, "amountToLock must be >= minimumLockAmount");
 
         uint interestEarned = calculateInterest(lockProduct.perTermInterest, amountToLock);
         uint expiration = now.add(lockProduct.durationInSecs);
         uint40 lockedUntil = uint40(expiration);
-        require(lockedUntil == expiration);
+        require(lockedUntil == expiration, "lockedUntil overflow");
 
         lockId = locks.push(Lock(amountToLock, lockOwner, lockProductId, lockedUntil, true)) - 1;
         accountLocks[lockOwner].push(lockId);

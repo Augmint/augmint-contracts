@@ -33,7 +33,7 @@ contract Rates is Restricted {
     }
 
     function setMultipleRates(bytes32[] symbols, uint[] newRates) external restrict("setRate") {
-        require(symbols.length == newRates.length);
+        require(symbols.length == newRates.length, "symobls and newRates lengths must be equal");
         for (uint256 i = 0; i < symbols.length; i++) {
             rates[symbols[i]] = RateInfo(newRates[i], now);
             emit RateChanged(symbols[i], newRates[i]);
@@ -41,12 +41,13 @@ contract Rates is Restricted {
     }
 
     function convertFromWei(bytes32 bSymbol, uint weiValue) external view returns(uint value) {
-        require(rates[bSymbol].rate > 0);
+        require(rates[bSymbol].rate > 0, "rates[bSymbol] must be > 0");
         return weiValue.mul(rates[bSymbol].rate).roundedDiv(1000000000000000000);
     }
 
     function convertToWei(bytes32 bSymbol, uint value) external view returns(uint weiValue) {
-        // no require(rates[symbol].rate >  0) needed b/c it will revert with div by zero
+        // next line would revert with div by zero but require to emit reason
+        require(rates[bSymbol].rate > 0, "rates[bSymbol] must be > 0");
         /* TODO: can we make this not loosing max scale? */
         return value.mul(1000000000000000000).roundedDiv(rates[bSymbol].rate);
     }

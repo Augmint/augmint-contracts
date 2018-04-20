@@ -86,20 +86,23 @@ contract LoanManager is Restricted {
         ) - 1;
 
         uint32 newProductId = uint32(_newProductId);
-        require(newProductId == _newProductId);
+        require(newProductId == _newProductId, "productId overflow");
 
         emit LoanProductAdded(newProductId);
     }
 
     function setLoanProductActiveState(uint32 productId, bool newState)
     external restrict ("MonetaryBoard") {
+        require(productId < products.length, "invalid productId"); // next line would revert but require to emit reason
         products[productId].isActive = false;
         emit LoanProductActiveStateChanged(productId, newState);
     }
 
     function newEthBackedLoan(uint32 productId) external payable {
+        require(productId < products.length, "invalid productId"); // next line would revert but require to emit reason
         LoanProduct storage product = products[productId];
-        require(product.isActive); // valid productId?
+        require(product.isActive, "product must be in active state"); // valid product
+
 
         // calculate loan values based on ETH sent in with Tx
         uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
@@ -108,11 +111,11 @@ contract LoanManager is Restricted {
         uint loanAmount;
         (loanAmount, ) = calculateLoanValues(product, repaymentAmount);
 
-        require(loanAmount >= product.minDisbursedAmount);
+        require(loanAmount >= product.minDisbursedAmount, "loanAmount must be >= minDisbursedAmount");
 
         uint expiration = now.add(product.term);
         uint40 maturity = uint40(expiration);
-        require(maturity == expiration);
+        require(maturity == expiration, "maturity overflow");
 
         // Create new loan
         uint loanId = loans.push(LoanData(msg.value, repaymentAmount, msg.sender,
@@ -135,7 +138,8 @@ contract LoanManager is Restricted {
     */
     // from arg is not used as we allow anyone to repay a loan:
     function transferNotification(address, uint repaymentAmount, uint loanId) external {
-        require(msg.sender == address(augmintToken));
+        require(msg.sender == address(augmintToken), "msg.sender must be augmintToken");
+
         _repayLoan(loanId, repaymentAmount);
     }
 
@@ -148,9 +152,10 @@ contract LoanManager is Restricted {
         uint totalLoanAmountCollected;
         uint totalCollateralToCollect;
         for (uint i = 0; i < loanIds.length; i++) {
+            require(i < loans.length, "invalid loanId"); // next line would revert but require to emit reason
             LoanData storage loan = loans[loanIds[i]];
-            require(loan.state == LoanState.Open);
-            require(now >= loan.maturity);
+            require(loan.state == LoanState.Open, "loan state must be Open");
+            require(now >= loan.maturity, "current time must be later than maturity");
             LoanProduct storage product = products[loan.productId];
 
             uint loanAmount;
@@ -246,6 +251,7 @@ contract LoanManager is Restricted {
     }
 
     function getLoanTuple(uint loanId) public view returns (uint[10] result) {
+        require(loanId < loans.length, "invalid loanId"); // next line would revert but require to emit reason
         LoanData storage loan = loans[loanId];
         LoanProduct storage product = products[loan.productId];
 
@@ -270,10 +276,11 @@ contract LoanManager is Restricted {
 
     /* internal function, assuming repayment amount already transfered  */
     function _repayLoan(uint loanId, uint repaymentAmount) internal {
+        require(loanId < loans.length, "invalid loanId"); // next line would revert but require to emit reason
         LoanData storage loan = loans[loanId];
-        require(loan.state == LoanState.Open);
-        require(repaymentAmount == loan.repaymentAmount);
-        require(now <= loan.maturity);
+        require(loan.state == LoanState.Open, "loan state must be Open");
+        require(repaymentAmount == loan.repaymentAmount, "repaymentAmount must be equal to tokens sent");
+        require(now <= loan.maturity, "current time must be earlier than maturity");
 
         LoanProduct storage product = products[loan.productId];
         uint loanAmount;
