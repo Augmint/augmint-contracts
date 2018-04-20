@@ -5,10 +5,10 @@
 pragma solidity 0.4.21;
 import "./generic/SafeMath.sol";
 import "./generic/SystemAccount.sol";
-import "./interfaces/FeeAccountInterface.sol";
+import "./interfaces/TransferFeeInterface.sol";
 
 
-contract FeeAccount is SystemAccount, FeeAccountInterface {
+contract FeeAccount is SystemAccount, TransferFeeInterface {
 
     using SafeMath for uint256;
 

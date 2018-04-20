@@ -9,15 +9,15 @@
 */
 pragma solidity 0.4.21;
 import "../interfaces/AugmintTokenInterface.sol";
-import "../interfaces/FeeAccountInterface.sol";
+import "../interfaces/TransferFeeInterface.sol";
 
 
 contract AugmintToken is AugmintTokenInterface {
 
-    event FeeAccountChanged(FeeAccountInterface newFeeAccount);
+    event FeeAccountChanged(TransferFeeInterface newFeeAccount);
 
     function AugmintToken(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals,
-                            FeeAccountInterface _feeAccount) public {
+                            TransferFeeInterface _feeAccount) public {
 
         require(_feeAccount != address(0));
         require(bytes(_name).length > 0);
@@ -90,7 +90,7 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     /* to upgrade feeAccount (eg. for fee calculation changes) */
-    function setFeeAccount(FeeAccountInterface newFeeAccount) external restrict("MonetaryBoard") {
+    function setFeeAccount(TransferFeeInterface newFeeAccount) external restrict("MonetaryBoard") {
         feeAccount = newFeeAccount;
         emit FeeAccountChanged(newFeeAccount);
     }
