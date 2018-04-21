@@ -143,24 +143,24 @@ contract AugmintToken is AugmintTokenInterface {
         allowed[from][msg.sender] = allowed[from][msg.sender].sub(amount);
     }
 
-    function _transfer(address from, address to, uint256 amount, string narrative) private {
+    function _transfer(address from, address to, uint transferAmount, string narrative) private {
         require(to != 0x0, "to must be set");
 
-        uint fee = feeAccount.calculateTransferFee(from, to, amount);
-        uint transferAmount = amount.add(fee);
+        uint fee = feeAccount.calculateTransferFee(from, to, transferAmount);
+        uint amountWithFee = transferAmount.add(fee);
 
         // to emit proper reason instead of failing on from.sub()
-        require(balances[from] >= transferAmount, "balance must be >= amount + transfer fee");
+        require(balances[from] >= amountWithFee, "balance must be >= amount + transfer fee");
 
         if (fee > 0) {
             balances[feeAccount] = balances[feeAccount].add(fee);
         }
 
-        balances[from] = balances[from].sub(transferAmount);
-        balances[to] = balances[to].add(amount);
+        balances[from] = balances[from].sub(amountWithFee);
+        balances[to] = balances[to].add(transferAmount);
 
-        emit Transfer(from, to, amount);
-        emit AugmintTransfer(from, to, amount, narrative, fee);
+        emit Transfer(from, to, transferAmount);
+        emit AugmintTransfer(from, to, transferAmount, narrative, fee);
     }
 
 }
