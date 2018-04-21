@@ -21,11 +21,14 @@ module.exports = async function(deployer, network, accounts) {
             );
         } else if (web3.version.network == 4) {
             const oldToken1 = TokenAEur.at("0xa35d9de06895a3a2e7ecae26654b88fe71c179ea");
-            const oldToken2 = TokenAEur.at("0x03fe291f8a30e54cd05459f368d554b40784ca78");
+            const oldToken2 = TokenAEur.at("0x95aa79d7410eb60f49bfd570b445836d402bd7b1");
+            // latest TokenAEur deployed at 0x135893F1A6B3037BB45182841f18F69327366992
             await Promise.all([
                 feeAccount.grantPermission(monetarySupervisor.address, "NoFeeTransferContracts"),
                 monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken1.address, true),
-                monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken2.address, true)
+                monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken2.address, true),
+                oldToken1.grantPermission(monetarySupervisor.address, "NoFeeTransferContracts"),
+                oldToken2.grantPermission(monetarySupervisor.address, "NoFeeTransferContracts")
             ]);
         }
     });
