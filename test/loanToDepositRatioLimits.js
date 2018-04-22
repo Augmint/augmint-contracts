@@ -15,7 +15,8 @@ let loanProductId;
 let lockProductId;
 let snapshotId;
 let rate;
-let ltdParams;
+
+const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 100000 };
 
 const lockPerTermInterest = 8330;
 const PERCENT_100 = 1000000;
@@ -37,8 +38,6 @@ contract("Loan to Deposit ratio tests", accounts => {
         loanManager = loanTestHelpers.loanManager;
         locker = Locker.at(Locker.address);
 
-        ltdParams = tokenTestHelpers.ltdParams;
-
         const rates = Rates.at(Rates.address);
 
         const [interestEarnedBalance] = await Promise.all([
@@ -47,7 +46,12 @@ contract("Loan to Deposit ratio tests", accounts => {
             // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount, defaultingFeePt, isActive
             loanManager.addLoanProduct(60, 1000000, 1000000, 500, 5000, true),
             // (perTermInterest,  durationInSecs, minimumLockAmount, isActive)
-            locker.addLockProduct(lockPerTermInterest, 60, 100, true)
+            locker.addLockProduct(lockPerTermInterest, 60, 100, true),
+            monetarySupervisor.setLtdParams(
+                ltdParams.lockDifferenceLimit,
+                ltdParams.loanDifferenceLimit,
+                ltdParams.allowedDifferenceAmount
+            )
         ]);
 
         [loanProductId, lockProductId, rate] = await Promise.all([
@@ -284,8 +288,8 @@ contract("Loan to Deposit ratio tests", accounts => {
 
     it("maxLock & maxLoan should be 0 if lock/loan allowed by LTD is < minLock/LoanAmount", async function() {
         const [maxLock, maxLoan] = await Promise.all([
-            monetarySupervisor.getMaxLockAmount(ltdParams.allowedDifferenceAmount.add(1), lockPerTermInterest),
-            monetarySupervisor.getMaxLoanAmount(ltdParams.allowedDifferenceAmount.add(1))
+            monetarySupervisor.getMaxLockAmount(ltdParams.allowedDifferenceAmount + 1, lockPerTermInterest),
+            monetarySupervisor.getMaxLoanAmount(ltdParams.allowedDifferenceAmount + 1)
         ]);
         assert.equal(maxLock.toString(), "0");
         assert.equal(maxLoan.toString(), "0");
@@ -294,12 +298,12 @@ contract("Loan to Deposit ratio tests", accounts => {
     it("should NOT allow to lock more than maxLockAmountAllowedByLtd ", async function() {
         // transfer enough to interestEarnedAccount so lock is not be bound by it
         await augmintToken.transfer(InterestEarnedAccount.address, 10000);
-        const amountToLock = ltdParams.allowedDifferenceAmount.add(1);
+        const amountToLock = ltdParams.allowedDifferenceAmount + 1;
         await testHelpers.expectThrow(augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId));
     });
 
     it("should NOT allow to borrow more than maxLoanAmountAllowedByLtd ", async function() {
-        const collateralAmount = web3.toWei(ltdParams.allowedDifferenceAmount.add(1) / rate);
+        const collateralAmount = web3.toWei((ltdParams.allowedDifferenceAmount + 1) / rate);
         await testHelpers.expectThrow(loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount }));
     });
 });
