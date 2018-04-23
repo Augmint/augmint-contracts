@@ -1,0 +1,34 @@
+{
+  "contractName": "InterestEarnedAccount",
+  "abiHash": "72a73972d565bb24463e7368fd263af4",
+  "networks": {
+    "4": {
+      "latest": {
+        "address": "0x3a414d7636defb9d3dfb7342984fe3f7b5125df6",
+        "generatedAt": "2018-04-23T20:20:45.646Z",
+        "deployTransactionHash": "0x696dc4d8dc61fe00debe2d7b625805c5d087689de87dcaddb9fc4fe037c4b3f8",
+        "compiler": {
+          "name": "solc",
+          "version": "0.4.23+commit.124ca40d.Emscripten.clang"
+        },
+        "byteCodeHash": "e12b38103657a4ae2a9c1fad1bbe7498",
+        "sourceHash": "080bdccd163b74b49fb908b443c45199",
+        "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity ^0.4.23;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisorContract\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+      }
+    },
+    "999": {
+      "latest": {
+        "address": "0xbbecff5db2f9cccc936895121802fc15053344c6",
+        "generatedAt": "2018-04-23T20:20:45.646Z",
+        "deployTransactionHash": "0x5a5a87ca23ed706c3c81c5c5655c57ca2d21ac35582e1bb5ef1bf03f1793936b",
+        "compiler": {
+          "name": "solc",
+          "version": "0.4.23+commit.124ca40d.Emscripten.clang"
+        },
+        "byteCodeHash": "e12b38103657a4ae2a9c1fad1bbe7498",
+        "sourceHash": "080bdccd163b74b49fb908b443c45199",
+        "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity ^0.4.23;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisorContract\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+      }
+    }
+  }
+}
