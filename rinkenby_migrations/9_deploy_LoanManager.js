@@ -18,7 +18,7 @@ module.exports = function(deployer) {
             monetarySupervisor.grantPermission(LoanManager.address, "LoanManagerContracts")
         ]);
 
-        console.log("   On a test network. Adding test loanProducts. Network id: ", web3.version.network);
+        console.log("   Adding test loanProducts. Network id: ", web3.version.network);
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
         await lm.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true); // 365d, 14% p.a.
         await lm.addLoanProduct(15552000, 937874, 550000, 1000, 50000, true); // 180d, 13% p.a.
