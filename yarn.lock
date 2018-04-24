@@ -14,9 +14,9 @@ abbrev@1.0.x:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.0.9.tgz#91b4792588a7738c25f35dd6f63752a2f8776135"
 
-abiniser@0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/abiniser/-/abiniser-0.1.0.tgz#e4237c15dac0b567a5868eebb64d9e29221937ce"
+abiniser@0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/abiniser/-/abiniser-0.2.1.tgz#36192e12c74599d04a730b790bf643d07bb9af2e"
   dependencies:
     commander "2.15.1"
     json-stable-stringify "1.0.1"
