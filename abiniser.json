@@ -1,0 +1,15 @@
+{
+    "truffleContractFiles": [
+        "SafeMath.json",
+        "Migrations.json",
+        "Rates.json",
+        "AugmintReserves.json",
+        "FeeAccount.json",
+        "InterestEarnedAccount.json",
+        "TokenAEur.json",
+        "MonetarySupervisor.json",
+        "LoanManager.json",
+        "Locker.json",
+        "Exchange.json"
+    ]
+}
