@@ -6,6 +6,7 @@ const ratesTestHelpers = require("./helpers/ratesTestHelpers.js");
 let loanManager = null;
 let monetarySupervisor = null;
 let rates = null;
+const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 100000 };
 let products = {};
 
 contract("Loans collection tests", accounts => {
@@ -15,7 +16,14 @@ contract("Loans collection tests", accounts => {
         loanManager = loanTestHelpers.loanManager;
         await tokenTestHelpers.issueToReserve(1000000000);
 
-        const prodCount = (await loanManager.getProductCount()).toNumber();
+        const [prodCount] = await Promise.all([
+            loanManager.getProductCount().then(res => res.toNumber()),
+            monetarySupervisor.setLtdParams(
+                ltdParams.lockDifferenceLimit,
+                ltdParams.loanDifferenceLimit,
+                ltdParams.allowedDifferenceAmount
+            )
+        ]);
         // These neeed to be sequantial b/c product order assumed when retreving via getProducts
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive
         await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // notDue
