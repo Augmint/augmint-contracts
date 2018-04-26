@@ -16,11 +16,11 @@ module.exports = function(deployer) {
 
         /* Parameters Used to ensure totalLoanAmount or totalLockedAmount difference is withing limit and system also works
             when any of those 0 or low. */
-        300000 /* ltdLockDifferenceLimit = 30%  allow lock if Loan To Deposit ratio stays within 1 - this param
+        200000 /* ltdLockDifferenceLimit = 20%  allow lock if Loan To Deposit ratio stays within 1 - this param
                                                 stored as parts per million */,
         200000 /* ltdLoanDifferenceLimit = 20%  allow loan if Loan To Deposit ratio stays within 1 + this param
                                                                                         stored as parts per million */,
-        100000 /* allowedLtdDifferenceAmount = 1,000 A-EUR - if totalLoan and totalLock difference is less than that
+        10000 /* allowedLtdDifferenceAmount = 100 A-EUR  if totalLoan and totalLock difference is less than that
                                         then allow loan or lock even if ltdDifference limit would go off with it */
     );
 
