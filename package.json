@@ -16,6 +16,7 @@
         "runmigrate": "yarn start"
     },
     "devDependencies": {
+        "abiniser": "0.3.0",
         "babel-register": "6.26.0",
         "bignumber.js": "5.0.0",
         "coveralls": "3.0.0",

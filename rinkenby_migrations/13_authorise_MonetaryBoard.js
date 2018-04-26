@@ -11,7 +11,12 @@ const FeeAccount = artifacts.require("./FeeAccount.sol");
 module.exports = function(deployer, network, accounts) {
     deployer.then(async () => {
         const feeAccount = FeeAccount.at(FeeAccount.address);
-        const monetaryBoardAccounts = [accounts[0]];
+        // on Rinkeby testnet
+        const monetaryBoardAccounts = [
+            accounts[0],
+            "0x14A9dc091053fCbA9474c5734078238ff9904364" /* Krosza */,
+            "0xe71E9636e31B838aF0A3c38B3f3449cdC2b7aa87" /* Phraktle */
+        ];
 
         const tokenAEur = TokenAEur.at(TokenAEur.address);
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);

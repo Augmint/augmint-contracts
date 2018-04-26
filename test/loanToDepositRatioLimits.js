@@ -241,7 +241,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLoan.toString(), "80000");
     });
 
-    it.only("LTD when totalLock < totalLoan & difference > allowedDifferenceAmount", async function() {
+    it("LTD when totalLock < totalLoan & difference > allowedDifferenceAmount", async function() {
         // set allowedDifferenceAmount temporaly to allow setup test base
         await monetarySupervisor.setLtdParams(ltdParams.lockDifferenceLimit, ltdParams.loanDifferenceLimit, 1000000);
 
@@ -327,7 +327,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         assert.equal(limits.maxLoan.toString(), "168000");
     });
 
-    it.only("LTD when totalLock > totalLoan & difference > allowedDifferenceAmount", async function() {
+    it("LTD when totalLock > totalLoan & difference > allowedDifferenceAmount", async function() {
         // set allowedDifferenceAmount temporaly to allow setup test base
         await monetarySupervisor.setLtdParams(ltdParams.lockDifferenceLimit, ltdParams.loanDifferenceLimit, 10000000);
 
