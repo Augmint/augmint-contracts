@@ -215,7 +215,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
                                         0 : allowedByLtdDifferencePt.sub(totalLockedAmount);
 
         uint allowedByLtdDifferenceAmount =
-            totalLoanAmount <= totalLockedAmount.add(ltdParams.allowedDifferenceAmount) ?
+            totalLockedAmount >= totalLoanAmount.add(ltdParams.allowedDifferenceAmount) ?
                 0 : totalLoanAmount.add(ltdParams.allowedDifferenceAmount).sub(totalLockedAmount);
 
         maxLockByLtd = allowedByLtdDifferencePt > allowedByLtdDifferenceAmount ?
