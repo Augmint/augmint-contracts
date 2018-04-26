@@ -1,11 +1,9 @@
 const Locker = artifacts.require("./Locker.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
-const SafeMath = artifacts.require("./SafeMath.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer) {
-    deployer.link(SafeMath, Locker);
     deployer.deploy(Locker, TokenAEur.address, MonetarySupervisor.address);
     deployer.then(async () => {
         const feeAccount = FeeAccount.at(FeeAccount.address);

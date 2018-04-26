@@ -1,4 +1,3 @@
-const SafeMath = artifacts.require("./SafeMath.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
@@ -6,8 +5,6 @@ const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer) {
-    deployer.link(SafeMath, MonetarySupervisor);
-
     deployer.deploy(
         MonetarySupervisor,
         TokenAEur.address,
