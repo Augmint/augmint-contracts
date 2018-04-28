@@ -18,6 +18,7 @@ import "./Rates.sol";
 
 contract Exchange is Restricted {
     using SafeMath for uint256;
+
     AugmintTokenInterface public augmintToken;
     Rates public rates;
 
@@ -27,7 +28,7 @@ contract Exchange is Restricted {
         uint64 index;
         address maker;
 
-        // tokens per ether
+        // tokens per ether for limit orders. 0 when order is on current published peggedSymbol/ETH rates
         uint32 price;
 
         // buy order: amount in wei
@@ -46,8 +47,7 @@ contract Exchange is Restricted {
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
     uint32 private constant ORDER_MATCH_WORST_GAS = 100000;
 
-    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount,
-        uint weiAmount);
+    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount, uint weiAmount);
 
     event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint64 buyTokenOrderId,
         uint64 sellTokenOrderId, uint32 price, uint weiAmount, uint tokenAmount);
@@ -69,7 +69,6 @@ contract Exchange is Restricted {
     }
 
     function placeBuyTokenOrder(uint32 price) external payable returns (uint64 orderId) {
-        require(price > 0, "price must be > 0");
         require(msg.value > 0, "msg.value must be > 0");
 
         orderId = ++orderCount;
@@ -170,10 +169,15 @@ contract Exchange is Restricted {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
 
-        require(buy.price >= sell.price, "buy price must be >= sell price");
+        require(buy.price >= sell.price || buy.price == 0, "buy price must be >= sell price or sell or buy price == 0");
+
+        uint publishedRate;
+        (publishedRate, ) = rates.rates(augmintToken.peggedSymbol());
+        uint buyPrice = buy.price > 0 ? buy.price : publishedRate;
+        uint sellPrice = sell.price > 0 ? sell.price : publishedRate;
 
         // meet in the middle
-        uint price = uint(buy.price).add(sell.price).div(2);
+        uint price = uint(buyPrice).add(sellPrice).div(2);
 
         uint sellWei = sell.amount.mul(1 ether).roundedDiv(price);
 
@@ -206,7 +210,6 @@ contract Exchange is Restricted {
 
     function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
     private returns (uint64 orderId) {
-        require(price > 0, "price must be > 0");
         require(tokenAmount > 0, "tokenAmount must be > 0");
 
         orderId = ++orderCount;

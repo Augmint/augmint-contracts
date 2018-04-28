@@ -70,6 +70,48 @@ contract("Exchange matching tests", accounts => {
         assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
     });
 
+    it("should match a limit sell and published rate buy type order", async function() {
+        const buyOrder = { amount: web3.toWei(1), maker: maker, price: 0, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 100000, maker: maker, price: 90000, orderType: TOKEN_SELL };
+
+        await exchangeTestHelper.newOrder(this, buyOrder);
+        await exchangeTestHelper.newOrder(this, sellOrder);
+        //await exchangeTestHelper.printOrderBook(10);
+        await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
+
+        const stateAfter = await exchangeTestHelper.getState();
+        assert.equal(stateAfter.sellCount, 1, "Sell token order count should be 1");
+        assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
+    });
+
+    it("should match a limit buy and published rate sell type order", async function() {
+        const buyOrder = { amount: web3.toWei(1), maker: maker, price: 90000, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 100000, maker: maker, price: 0, orderType: TOKEN_SELL };
+
+        await exchangeTestHelper.newOrder(this, buyOrder);
+        await exchangeTestHelper.newOrder(this, sellOrder);
+        //await exchangeTestHelper.printOrderBook(10);
+        await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
+
+        const stateAfter = await exchangeTestHelper.getState();
+        assert.equal(stateAfter.sellCount, 1, "Sell token order count should be 1");
+        assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
+    });
+
+    it("should match two published rate sell type orders", async function() {
+        const buyOrder = { amount: web3.toWei(1), maker: maker, price: 0, orderType: TOKEN_BUY };
+        const sellOrder = { amount: 100000, maker: maker, price: 0, orderType: TOKEN_SELL };
+
+        await exchangeTestHelper.newOrder(this, buyOrder);
+        await exchangeTestHelper.newOrder(this, sellOrder);
+        //await exchangeTestHelper.printOrderBook(10);
+        await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
+
+        const stateAfter = await exchangeTestHelper.getState();
+        assert.equal(stateAfter.sellCount, 1, "Sell token order count should be 1");
+        assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
+    });
+
     it("should fully fill both orders when buy token amount expected to be same as sell token amount", async function() {
         /* from users perspective:
          Sell: 100A€ / 998 A€/ETH = 0.1002004008 ETH

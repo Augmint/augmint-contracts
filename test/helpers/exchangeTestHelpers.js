@@ -1,6 +1,7 @@
 const BigNumber = require("bignumber.js");
 
 const Exchange = artifacts.require("./Exchange.sol");
+const Rates = artifacts.require("./Rates.sol");
 const testHelpers = new require("./testHelpers.js");
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 
@@ -30,10 +31,12 @@ module.exports = {
 
 let exchange = null;
 let augmintToken = null;
+let rates;
 
 before(async function() {
     augmintToken = tokenTestHelpers.augmintToken;
     exchange = Exchange.at(Exchange.address);
+    rates = Rates.at(Rates.address);
     CHUNK_SIZE = (await exchange.CHUNK_SIZE()).toNumber();
 });
 
@@ -209,6 +212,7 @@ async function cancelOrder(testInstance, order) {
 
 async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const stateBefore = await getState();
+
     const balancesBefore = await tokenTestHelpers.getAllBalances({
         exchange: exchange.address,
         seller: sellTokenOrder.maker,
@@ -217,14 +221,22 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     //await printOrderBook();
 
     const matchCaller = web3.eth.accounts[0];
-    const expPrice = Math.floor((sellTokenOrder.price + buyTokenOrder.price) / 2);
+    const currentRate =
+        buyTokenOrder.price === 0 || sellTokenOrder.price === 0 ? parseInt((await rates.rates("EUR"))[0]) : 0;
+
+    const buyPrice = buyTokenOrder.price === 0 ? currentRate : buyTokenOrder.price;
+    const sellPrice = sellTokenOrder.price === 0 ? currentRate : sellTokenOrder.price;
+
+    const expPrice = Math.floor((buyPrice + sellPrice) / 2);
+
     const sellWeiValue = sellTokenOrder.amount
         .mul(testHelpers.ONE_ETH)
         .div(expPrice)
         .round(0, BigNumber.ROUND_HALF_UP);
     const buyTokenValue = Math.round(buyTokenOrder.amount * expPrice / testHelpers.ONE_ETH);
-    const tradedWeiAmount = Math.min(buyTokenOrder.amount, sellWeiValue);
-    const tradedTokenAmount = Math.min(sellTokenOrder.amount, buyTokenValue);
+
+    const tradedWeiAmount = BigNumber.min(buyTokenOrder.amount, sellWeiValue);
+    const tradedTokenAmount = BigNumber.min(sellTokenOrder.amount, buyTokenValue);
     const buyFilled = buyTokenOrder.amount.eq(tradedWeiAmount);
     const sellFilled = sellTokenOrder.amount.eq(tradedTokenAmount);
 
@@ -374,13 +386,13 @@ async function printOrderBook(_limit) {
     const [sellOrders, buyOrders] = await Promise.all([getActiveSellOrders(0), getActiveBuyOrders(0)]);
     sellOrders.slice(0, limit).map((order, i) => {
         console.log(
-            `${i}. SELL token: ACE/ETH: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
+            `${i}. SELL token: ACE/ETH: ${order.price / 100} amount: ${order.amount.toString() / 100} ACE` +
                 `  orderId: ${order.id} acc: ${order.maker}`
         );
     });
     buyOrders.slice(0, _limit).map((order, i) => {
         console.log(
-            `        ${i}. BUY token: ACE/EUR: ${order.price / 10000} amount: ${web3.fromWei(order.amount)} ETH` +
+            `        ${i}. BUY token: ACE/EUR: ${order.price / 100} amount: ${web3.fromWei(order.amount)} ETH` +
                 `  orderId: ${order.id} acc: ${order.maker}`
         );
     });
