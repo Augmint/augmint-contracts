@@ -1,9 +1,6 @@
-var Rates = artifacts.require("./Rates.sol");
-var SafeMath = artifacts.require("./SafeMath.sol");
+const Rates = artifacts.require("./Rates.sol");
 
 module.exports = function(deployer, network, accounts) {
-    deployer.link(SafeMath, Rates);
-
     deployer.deploy(Rates);
 
     deployer.then(async () => {

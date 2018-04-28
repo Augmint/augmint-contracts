@@ -31,13 +31,24 @@ module.exports = {
         },
         privatechain: {
             host: "localhost",
-            port: 8545,
+            port: 8565,
             network_id: "1976",
             gas: 4707806
         },
         rinkeby: {
             host: "localhost", // Connect to geth on the specified
-            port: 8545,
+            port: 8544,
+            from: "0xae653250B4220835050B75D3bC91433246903A95", // default address to use for any transaction Truffle makes during migrations
+            network_id: 4,
+            gas: 4700000, // Gas limit used for deploys
+            gasPrice: 1000000000 // 1 Gwei
+        },
+        rinkebyFork: {
+            // Rinkeby deploy Forks for dry runs.
+            // Couldn't make it work yet, queries pending:
+            //  launch with ganache-cli --fork http://localhost:8544 --port 8575
+            host: "localhost", // Connect to geth on the specified
+            port: 8546,
             from: "0xae653250B4220835050B75D3bC91433246903A95", // default address to use for any transaction Truffle makes during migrations
             network_id: 4,
             gas: 4700000, // Gas limit used for deploys
