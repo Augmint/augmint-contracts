@@ -210,7 +210,10 @@ contract("Loans tests", accounts => {
         assert.equal(loan1Actual.id.toNumber(), loan1.id);
         assert.equal(loan1Actual.collateralAmount.toNumber(), loan1.collateralAmount);
         assert.equal(loan1Actual.repaymentAmount.toNumber(), loan1.repaymentAmount);
-        assert.equal("0x" + loan1Actual.borrower.toString(16), loan1.borrower);
+        assert.equal(
+            "0x" + loan1Actual.borrower.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
+            loan1.borrower
+        );
         assert.equal(loan1Actual.productId.toNumber(), product.id);
         assert.equal(loan1Actual.state.toNumber(), loan1.state);
         assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);
@@ -221,7 +224,10 @@ contract("Loans tests", accounts => {
         const loan2Actual = loanInfo[1];
 
         assert.equal(loan2Actual.id.toNumber(), loan2.id);
-        assert.equal("0x" + loan2Actual.borrower.toString(16), loan2.borrower);
+        assert.equal(
+            "0x" + loan2Actual.borrower.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
+            loan2.borrower
+        );
         assert.equal(loan2Actual.state.toNumber(), 2); // Defaulted (not collected)
     });
 
@@ -245,7 +251,10 @@ contract("Loans tests", accounts => {
         assert.equal(loan1Actual.id.toNumber(), loan1.id);
         assert.equal(loan1Actual.collateralAmount.toNumber(), loan1.collateralAmount);
         assert.equal(loan1Actual.repaymentAmount.toNumber(), loan1.repaymentAmount);
-        assert.equal("0x" + loan1Actual.borrower.toString(16), loan1.borrower);
+        assert.equal(
+            "0x" + loan1Actual.borrower.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
+            loan1.borrower
+        );
         assert.equal(loan1Actual.productId.toNumber(), product1.id);
         assert.equal(loan1Actual.state.toNumber(), loan1.state);
         assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);

@@ -344,7 +344,7 @@ function parseOrders(orderType, orders) {
         return {
             orderType: orderType,
             id: order[0].toNumber(),
-            maker: "0x" + order[1].toString(16),
+            maker: "0x" + order[1].toString(16).padStart(40, "0"), // leading 0s if address starts with 0
             price: order[2].toNumber(),
             amount: order[3]
         };
