@@ -176,8 +176,8 @@ contract Exchange is Restricted {
         uint buyPrice = buy.price > 0 ? buy.price : publishedRate;
         uint sellPrice = sell.price > 0 ? sell.price : publishedRate;
 
-        // meet in the middle
-        uint price = uint(buyPrice).add(sellPrice).div(2);
+        // pick maker's price (whoever placed order sooner considered as maker)
+        uint price = buyTokenId > sellTokenId ? sellPrice : buyPrice;
 
         uint sellWei = sell.amount.mul(1 ether).roundedDiv(price);
 

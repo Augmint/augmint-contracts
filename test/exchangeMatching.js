@@ -57,7 +57,7 @@ contract("Exchange matching tests", accounts => {
     });
 
     it("should match two matching orders (both fully filled)", async function() {
-        const buyOrder = { amount: web3.toWei(1), maker: maker, price: 110000, orderType: TOKEN_BUY };
+        const buyOrder = { amount: web3.toWei(1), maker: maker, price: 100000, orderType: TOKEN_BUY };
         const sellOrder = { amount: 100000, maker: maker, price: 90000, orderType: TOKEN_SELL };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
@@ -132,12 +132,13 @@ contract("Exchange matching tests", accounts => {
         assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
     });
 
-    it("should match two matching orders from the same account", async function() {
+    it("should match two matching orders from the same account on sell price if placed first ", async function() {
         const buyOrder = { amount: web3.toWei(1.7504), maker: maker, price: 110000, orderType: TOKEN_BUY };
         const sellOrder = { amount: 56141, maker: maker, price: 90000, orderType: TOKEN_SELL };
 
-        await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
+        await exchangeTestHelper.newOrder(this, buyOrder);
+
         await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
 
         const stateAfter = await exchangeTestHelper.getState();

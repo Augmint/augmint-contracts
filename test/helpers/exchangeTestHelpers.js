@@ -218,7 +218,6 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         seller: sellTokenOrder.maker,
         buyer: buyTokenOrder.maker
     });
-    //await printOrderBook();
 
     const matchCaller = web3.eth.accounts[0];
     const currentRate =
@@ -227,7 +226,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const buyPrice = buyTokenOrder.price === 0 ? currentRate : buyTokenOrder.price;
     const sellPrice = sellTokenOrder.price === 0 ? currentRate : sellTokenOrder.price;
 
-    const expPrice = Math.floor((buyPrice + sellPrice) / 2);
+    const expPrice = buyTokenOrder.id > sellTokenOrder.id ? sellPrice : buyPrice;
 
     const sellWeiValue = sellTokenOrder.amount
         .mul(testHelpers.ONE_ETH)
