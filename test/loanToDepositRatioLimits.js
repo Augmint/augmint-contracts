@@ -1,6 +1,7 @@
 /* for test case calculations see: https://docs.google.com/spreadsheets/d/1MeWYPYZRIm1n9lzpvbq8kLfQg1hhvk5oJY6NrR401S0 */
 
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
+const MonetarySupervisor = artifacts.require("MonetarySupervisor.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 const Rates = artifacts.require("Rates.sol");
 const Locker = artifacts.require("Locker.sol");
@@ -34,11 +35,34 @@ const getLtdLimits = async () => {
 contract("Loan to Deposit ratio tests", accounts => {
     before(async () => {
         augmintToken = tokenTestHelpers.augmintToken;
-        monetarySupervisor = tokenTestHelpers.monetarySupervisor;
         loanManager = loanTestHelpers.loanManager;
         locker = Locker.at(Locker.address);
-
         const rates = Rates.at(Rates.address);
+
+        /* setup a new blank MS independent from migration scripts */
+
+        monetarySupervisor = await MonetarySupervisor.new(
+            augmintToken.address,
+            tokenTestHelpers.augmintReserves.address,
+            InterestEarnedAccount.address,
+            ltdParams.lockDifferenceLimit,
+            ltdParams.loanDifferenceLimit,
+            ltdParams.allowedDifferenceAmount
+        );
+
+        await Promise.all([
+            tokenTestHelpers.interestEarnedAccount.grantPermission(
+                monetarySupervisor.address,
+                "MonetarySupervisorContract"
+            ),
+            augmintToken.grantPermission(monetarySupervisor.address, "MonetarySupervisorContract"),
+            tokenTestHelpers.feeAccount.grantPermission(monetarySupervisor.address, "NoFeeTransferContracts"),
+            tokenTestHelpers.augmintReserves.grantPermission(monetarySupervisor.address, "MonetarySupervisorContract"),
+            locker.setMonetarySupervisor(monetarySupervisor.address),
+            loanManager.setSystemContracts(rates.address, monetarySupervisor.address),
+            monetarySupervisor.grantPermission(locker.address, "LockerContracts"),
+            monetarySupervisor.grantPermission(loanManager.address, "LoanManagerContracts")
+        ]);
 
         const [interestEarnedBalance] = await Promise.all([
             augmintToken.balanceOf(InterestEarnedAccount.address),
