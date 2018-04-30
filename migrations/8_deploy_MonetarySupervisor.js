@@ -17,7 +17,7 @@ module.exports = function(deployer) {
                                                 stored as parts per million */,
         200000 /* ltdLoanDifferenceLimit = 20%  allow loan if Loan To Deposit ratio stays within 1 + this param
                                                                                         stored as parts per million */,
-        10000 /* allowedLtdDifferenceAmount = 100 A-EUR  if totalLoan and totalLock difference is less than that
+        50000 /* allowedLtdDifferenceAmount = 500 A-EUR  if totalLoan and totalLock difference is less than that
                                         then allow loan or lock even if ltdDifference limit would go off with it */
     );
 
