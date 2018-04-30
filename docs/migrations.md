@@ -11,14 +11,16 @@ NB: New deployments to Rinkeby is now a testbed for future mainnet upgrades. I.e
 
 1.  Dry run
 
-    *   on local ganache:
+    *   Test the migration script
 
     ```
-    truffle migrate --reset --migrations_directory=./rinkeby_migrations
+    ./runrinkeby.sh
+    truffle migrate --dry-run -f <migration step number> --network rinkeby --migrations_directory=./rinkeby_migrations
     ```
 
-    *   on a forked Rinkeby chain:  
-        _NB: this method doesn't work currently, couldn't unlock account on ganache and historic queries hang._
+    *   Test results (not working)  
+        _NB: Ideally this way we could test the result of migration via truffle console and UI.
+        It doesn't work currently: Truffle migrate hangs, we couldn't unlock rinkeby account and historic queries seem to hang._
 
     ```
     yarn ganache-cli --fork http://localhost:8544 --port 8546 --db ./chain
@@ -35,8 +37,13 @@ NB: New deployments to Rinkeby is now a testbed for future mainnet upgrades. I.e
 
     Notes:
 
-    *   You can check last migration step recorded on chain from Migrations contract deployed. You can specify any arbitrary `<migration step number>` if you need to rerun a failed migration.  
-        _NB: In theory `truffle migrate` would query last_completed_migration from deployed contract but you likely cleared truffe json files from where truffle reads deployment address of Migrations contract._
+    *   You need to set `last_completed_migration` in truffle's Migrations contract in your migration script:
+        ```
+        await Migrations.at("<Migrations contract address,").setLastCompletedMigration("")
+        ```
+        _NB: In theory `truffle migrate` would query last_completed_migration from deployed contract but you likely cleared truffe json files from where truffle reads deployment address of Migrations contract. Therefore it a) can't update the Migration contract and that's why you need to specify the migration step with -f_
+    *   You can specify any arbitrary `<migration step number>` if you need to rerun a failed migration.
+
     *   `yarn clean` is to ensure abiniser only extracts info about real deployments from truffle artifacts (e.g. output from previous dry runs in contracts/build folder would pollute abiniser/deployments files)
     *   `truffle migrate` tested with Truffle v4.1.7 and Geth 1.8.6-stable.
 
