@@ -28,7 +28,8 @@ contract Exchange is Restricted {
         uint64 index;
         address maker;
 
-        // tokens per ether for limit orders. 0 when order is on current published peggedSymbol/ETH rates
+        // % of published current peggedSymbol/ETH rates published by Rates contract. Stored as parts per million
+        // I.e. 1,000,000 = 100% (parity), 990,000 = 1% below parity
         uint32 price;
 
         // buy order: amount in wei
@@ -50,7 +51,7 @@ contract Exchange is Restricted {
     event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount, uint weiAmount);
 
     event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint64 buyTokenOrderId,
-        uint64 sellTokenOrderId, uint32 price, uint weiAmount, uint tokenAmount);
+        uint64 sellTokenOrderId, uint publishedRate, uint32 price, uint fillRate, uint weiAmount, uint tokenAmount);
 
     event CancelledOrder(uint64 indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
@@ -69,6 +70,7 @@ contract Exchange is Restricted {
     }
 
     function placeBuyTokenOrder(uint32 price) external payable returns (uint64 orderId) {
+        require(price > 0, "price must be > 0");
         require(msg.value > 0, "msg.value must be > 0");
 
         orderId = ++orderCount;
@@ -169,17 +171,16 @@ contract Exchange is Restricted {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
 
-        require(buy.price >= sell.price || buy.price == 0, "buy price must be >= sell price or sell or buy price == 0");
+        require(buy.price >= sell.price, "buy price must be >= sell price");
+
+        // pick maker's price (whoever placed order sooner considered as maker)
+        uint32 price = buyTokenId > sellTokenId ? sell.price : buy.price;
 
         uint publishedRate;
         (publishedRate, ) = rates.rates(augmintToken.peggedSymbol());
-        uint buyPrice = buy.price > 0 ? buy.price : publishedRate;
-        uint sellPrice = sell.price > 0 ? sell.price : publishedRate;
+        uint fillRate = publishedRate.mul(price).roundedDiv(1000000);
 
-        // pick maker's price (whoever placed order sooner considered as maker)
-        uint price = buyTokenId > sellTokenId ? sellPrice : buyPrice;
-
-        uint sellWei = sell.amount.mul(1 ether).roundedDiv(price);
+        uint sellWei = sell.amount.mul(1 ether).roundedDiv(fillRate);
 
         uint tradedWei;
         uint tradedTokens;
@@ -188,7 +189,7 @@ contract Exchange is Restricted {
             tradedTokens = sell.amount;
         } else {
             tradedWei = buy.amount;
-            tradedTokens = buy.amount.mul(price).roundedDiv(1 ether);
+            tradedTokens = buy.amount.mul(fillRate).roundedDiv(1 ether);
         }
 
         buy.amount = buy.amount.sub(tradedWei);
@@ -205,11 +206,12 @@ contract Exchange is Restricted {
         sell.maker.transfer(tradedWei);
 
         emit OrderFill(buy.maker, sell.maker, buyTokenId,
-            sellTokenId, uint32(price), tradedWei, tradedTokens);
+            sellTokenId, publishedRate, price, fillRate, tradedWei, tradedTokens);
     }
 
     function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
     private returns (uint64 orderId) {
+        require(price > 0, "price must be > 0");
         require(tokenAmount > 0, "tokenAmount must be > 0");
 
         orderId = ++orderCount;

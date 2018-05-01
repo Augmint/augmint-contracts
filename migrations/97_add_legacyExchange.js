@@ -19,10 +19,10 @@ module.exports = async function(deployer, network, accounts) {
         ]);
 
         await Promise.all([
-            tokenAEur.transferAndNotify(oldExchange.address, 2000, 0),
-            tokenAEur.transferAndNotify(oldExchange.address, 1100, 997),
-            oldExchange.placeBuyTokenOrder(999, { value: web3.toWei(0.01) }),
-            oldExchange.placeBuyTokenOrder(0, { value: web3.toWei(0.011) })
+            tokenAEur.transferAndNotify(oldExchange.address, 2000, 1010000),
+            tokenAEur.transferAndNotify(oldExchange.address, 1100, 980000),
+            oldExchange.placeBuyTokenOrder(990000, { value: web3.toWei(0.01) }),
+            oldExchange.placeBuyTokenOrder(1020000, { value: web3.toWei(0.011) })
         ]);
 
         console.log(
