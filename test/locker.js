@@ -147,10 +147,12 @@ contract("Lock", accounts => {
         // the products should be [ perTermInterest, durationInSecs, maxLockAmount, isActive ] all
         // represented as uints (i.e. BigNumber objects in JS land):
         const [perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive] = product;
+        const expMaxLockAmount = await monetarySupervisor.getMaxLockAmount(minimumLockAmount, perTermInterest);
+
         assert(perTermInterest.toNumber() === expectedPerTermInterest.toNumber());
         assert(durationInSecs.toNumber() === expectedDurationInSecs.toNumber());
         assert(minimumLockAmount.toNumber() === expectedMinimumLockAmount.toNumber());
-        assert.equal(maxLockAmount.toString(), ltdParams.allowedDifferenceAmount.toString());
+        assert.equal(maxLockAmount.toString(), expMaxLockAmount.toString());
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 
@@ -429,7 +431,10 @@ contract("Lock", accounts => {
             isActive
         ] = lock2;
         assert.equal(lockId.toNumber(), lockId2);
-        assert.equal("0x" + owner.toString(16), tokenHolder);
+        assert.equal(
+            "0x" + owner.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
+            tokenHolder
+        );
         assert.equal(amountLocked.toNumber(), amountToLock);
         assert.equal(interestEarned.toNumber(), expectedInterestEarned);
         assert.isAtLeast(lockedUntil.toNumber(), expectedLockedUntil);

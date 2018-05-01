@@ -155,8 +155,8 @@ contract("MonetarySupervisor tests", accounts => {
             })
         ]);
 
-        assert.equal(totalLoanAmountAfter.toNumber(), totalLockedAmountBefore.add(10));
-        assert.equal(totalLockedAmountAfter.toNumber(), totalLoanAmountBefore.add(20));
+        assert.equal(totalLoanAmountAfter.toString(), totalLoanAmountBefore.add(10).toString());
+        assert.equal(totalLockedAmountAfter.toString(), totalLockedAmountBefore.add(20).toString());
     });
 
     it("only allowed should adjust KPIs", async function() {
