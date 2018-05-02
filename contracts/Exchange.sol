@@ -3,18 +3,24 @@
   For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/exchangeFlow.png
 
     TODO:
+        - change to wihtdrawal pattern, see: https://github.com/Augmint/augmint-contracts/issues/17
         - deduct fee
         - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
+        - use Rates interface?
 */
 pragma solidity ^0.4.23;
 
 import "./generic/SafeMath.sol";
+import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
+import "./Rates.sol";
 
 
-contract Exchange {
+contract Exchange is Restricted {
     using SafeMath for uint256;
+
     AugmintTokenInterface public augmintToken;
+    Rates public rates;
 
     uint public constant CHUNK_SIZE = 100;
 
@@ -22,7 +28,7 @@ contract Exchange {
         uint64 index;
         address maker;
 
-        // tokens per ether
+        // tokens per ether for limit orders. 0 when order is on current published peggedSymbol/ETH rates
         uint32 price;
 
         // buy order: amount in wei
@@ -41,20 +47,28 @@ contract Exchange {
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
     uint32 private constant ORDER_MATCH_WORST_GAS = 100000;
 
-    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount,
-        uint weiAmount);
+    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount, uint weiAmount);
 
     event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint64 buyTokenOrderId,
         uint64 sellTokenOrderId, uint32 price, uint weiAmount, uint tokenAmount);
 
     event CancelledOrder(uint64 indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
-    constructor(AugmintTokenInterface _augmintToken) public {
+    event RatesContractChanged(Rates newRatesContract);
+
+    constructor(AugmintTokenInterface _augmintToken, Rates _rates) public {
         augmintToken = _augmintToken;
+        rates = _rates;
+    }
+
+    /* to allow upgrade of Rates  contract */
+    function setRatesContract(Rates newRatesContract)
+    external restrict("MonetaryBoard") {
+        rates = newRatesContract;
+        emit RatesContractChanged(newRatesContract);
     }
 
     function placeBuyTokenOrder(uint32 price) external payable returns (uint64 orderId) {
-        require(price > 0, "price must be > 0");
         require(msg.value > 0, "msg.value must be > 0");
 
         orderId = ++orderCount;
@@ -123,7 +137,7 @@ contract Exchange {
         uint len = buyTokenIds.length;
         require(len == sellTokenIds.length, "buyTokenIds and sellTokenIds lengths must be equal");
 
-        for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {        
+        for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {
             _fillOrder(buyTokenIds[i], sellTokenIds[i]);
             matchCount++;
         }
@@ -155,10 +169,15 @@ contract Exchange {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
 
-        require(buy.price >= sell.price, "buy price must be >= sell price");
+        require(buy.price >= sell.price || buy.price == 0, "buy price must be >= sell price or sell or buy price == 0");
 
-        // meet in the middle
-        uint price = uint(buy.price).add(sell.price).div(2);
+        uint publishedRate;
+        (publishedRate, ) = rates.rates(augmintToken.peggedSymbol());
+        uint buyPrice = buy.price > 0 ? buy.price : publishedRate;
+        uint sellPrice = sell.price > 0 ? sell.price : publishedRate;
+
+        // pick maker's price (whoever placed order sooner considered as maker)
+        uint price = buyTokenId > sellTokenId ? sellPrice : buyPrice;
 
         uint sellWei = sell.amount.mul(1 ether).roundedDiv(price);
 
@@ -191,7 +210,6 @@ contract Exchange {
 
     function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
     private returns (uint64 orderId) {
-        require(price > 0, "price must be > 0");
         require(tokenAmount > 0, "tokenAmount must be > 0");
 
         orderId = ++orderCount;

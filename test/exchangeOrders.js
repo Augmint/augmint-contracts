@@ -52,6 +52,22 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelpers.newOrder(this, order);
     });
 
+    it("should place published price SELL token orders (0 price) directly on Exchange", async function() {
+        const order = {
+            amount: 10000,
+            maker: makers[0],
+            price: 0,
+            orderType: TOKEN_SELL,
+            viaAugmintToken: false
+        };
+
+        const tx = await augmintToken.approve(exchange.address, order.amount * 2, { from: order.maker });
+        testHelpers.logGasUse(this, tx, "approve");
+
+        await exchangeTestHelpers.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
+    });
+
     it("shouldn't place a sell token order directly if approval < amount", async function() {
         const order = {
             amount: 10000,
@@ -74,8 +90,21 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelpers.newOrder(this, order);
     });
 
+    it("place published price sell token orders (price 0) via AugmintToken", async function() {
+        const order = { amount: 10000, maker: makers[0], price: 0, orderType: TOKEN_SELL };
+
+        await exchangeTestHelpers.newOrder(this, order);
+        await exchangeTestHelpers.newOrder(this, order);
+    });
+
     it("should place a BUY token order", async function() {
         const order = { amount: 10000, maker: makers[0], price: 110000, orderType: TOKEN_BUY };
+
+        await exchangeTestHelpers.newOrder(this, order);
+    });
+
+    it("should place a published price BUY token order (0 price)", async function() {
+        const order = { amount: 10000, maker: makers[0], price: 0, orderType: TOKEN_BUY };
 
         await exchangeTestHelpers.newOrder(this, order);
     });
@@ -85,21 +114,9 @@ contract("Exchange orders tests", accounts => {
         await testHelpers.expectThrow(augmintToken.transferAndNotify(exchange.address, 0, price, { from: makers[0] }));
     });
 
-    it("shouldn't place a SELL token order with 0 price", async function() {
-        const price = 0;
-        await testHelpers.expectThrow(
-            augmintToken.transferAndNotify(exchange.address, 1000, price, { from: makers[0] })
-        );
-    });
-
     it("shouldn't place a BUY token order with 0 ETH", async function() {
         const price = 110000;
         await testHelpers.expectThrow(exchange.placeBuyTokenOrder(price, { value: 0 }));
-    });
-
-    it("shouldn't place a BUY token order with 0 price", async function() {
-        const price = 0;
-        await testHelpers.expectThrow(exchange.placeBuyTokenOrder(price, { value: web3.toWei(0.1) }));
     });
 
     it("no SELL token order when user doesn't have enough ACE", async function() {

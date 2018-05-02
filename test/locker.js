@@ -431,7 +431,10 @@ contract("Lock", accounts => {
             isActive
         ] = lock2;
         assert.equal(lockId.toNumber(), lockId2);
-        assert.equal("0x" + owner.toString(16), tokenHolder);
+        assert.equal(
+            "0x" + owner.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
+            tokenHolder
+        );
         assert.equal(amountLocked.toNumber(), amountToLock);
         assert.equal(interestEarned.toNumber(), expectedInterestEarned);
         assert.isAtLeast(lockedUntil.toNumber(), expectedLockedUntil);

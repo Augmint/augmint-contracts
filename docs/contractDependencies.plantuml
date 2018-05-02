@@ -37,6 +37,7 @@ Locker ==>> AugmintToken
 Locker ..>> MonetarySupervisor
 
 Exchange ==>> AugmintToken
-Exchange ..>> FeeAccount : Exchange fees \nto be implemented
+Exchange ..>> Rates
+Exchange ..>> FeeAccount
 
 @enduml
