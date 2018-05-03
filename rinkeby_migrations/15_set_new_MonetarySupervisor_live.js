@@ -29,18 +29,30 @@ module.exports = function(deployer, network) {
             const feeAccount = FeeAccount.at("0xc26667132b0B798ab87864f7c29c0819c887aADB");
             const oldMonetarySupervisor = MonetarySupervisor.at("0x2E8b07A973f8E136Aa39922DFF21AD187a6E8E7d");
 
+            const oldToken1 = TokenAEur.at("0x95aa79d7410eb60f49bfd570b445836d402bd7b1");
+            const oldToken2 = TokenAEur.at("0xa35d9de06895a3a2e7ecae26654b88fe71c179ea");
+
             // New MS which has been deployed in prev. step but not live yet
             const newMonetarySupervisor = MonetarySupervisor.at("0xa00a5d1882c3f690e3d0d975ebe378120b70ae87");
 
             // 1.  grant permissions for new MS
             await Promise.all([
-                interestEarnedAccount.grantPermission(newMonetarySupervisor.address, "monetarySupervisor"),
-                tokenAEur.grantPermission(newMonetarySupervisor.address, "monetarySupervisor"),
-                augmintReserves.grantPermission(newMonetarySupervisor.address, "monetarySupervisor"),
-                feeAccount.grantPermission(newMonetarySupervisor.address, "NoFeeTransferContract"),
+                interestEarnedAccount.grantPermission(newMonetarySupervisor.address, "MonetarySupervisorContract"),
+                tokenAEur.grantPermission(newMonetarySupervisor.address, "MonetarySupervisorContract"),
+                augmintReserves.grantPermission(newMonetarySupervisor.address, "MonetarySupervisorContract"),
+                feeAccount.grantPermission(newMonetarySupervisor.address, "NoFeeTransferContracts"),
 
                 newMonetarySupervisor.grantPermission(locker.address, "LockerContracts"),
-                newMonetarySupervisor.grantPermission(loanManager.address, "LoanManagerContracts")
+                newMonetarySupervisor.grantPermission(loanManager.address, "LoanManagerContracts"),
+
+                newMonetarySupervisor.setAcceptedLegacyAugmintToken(oldToken1.address, true),
+                newMonetarySupervisor.setAcceptedLegacyAugmintToken(oldToken2.address, true),
+
+                // to allow token conversion w/o fee
+                // NB: NoFeeTransferContracts was set on the token contract in legacy token version.
+                //      For upcoming versions this permission needs to be set on feeAccount
+                oldToken1.grantPermission(newMonetarySupervisor.address, "NoFeeTransferContracts"),
+                oldToken2.grantPermission(newMonetarySupervisor.address, "NoFeeTransferContracts")
             ]);
 
             // 2. switch new MS to live:
@@ -66,10 +78,10 @@ module.exports = function(deployer, network) {
             //  4. Revoke permission from old MS
 
             await Promise.all([
-                interestEarnedAccount.revokePermission(oldMonetarySupervisor.address, "monetarySupervisor"),
-                tokenAEur.revokePermission(oldMonetarySupervisor.address, "monetarySupervisor"),
-                augmintReserves.revokePermission(oldMonetarySupervisor.address, "monetarySupervisor"),
-                feeAccount.revokePermission(oldMonetarySupervisor.address, "NoFeeTransferContract"),
+                feeAccount.revokePermission(oldMonetarySupervisor.address, "NoFeeTransferContracts"),
+                interestEarnedAccount.revokePermission(oldMonetarySupervisor.address, "MonetarySupervisorContract"),
+                tokenAEur.revokePermission(oldMonetarySupervisor.address, "MonetarySupervisorContract"),
+                augmintReserves.revokePermission(oldMonetarySupervisor.address, "MonetarySupervisorContract"),
 
                 oldMonetarySupervisor.revokePermission(locker.address, "LockerContracts"),
                 oldMonetarySupervisor.revokePermission(loanManager.address, "LoanManagerContracts")
