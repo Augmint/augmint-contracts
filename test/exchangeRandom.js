@@ -11,15 +11,14 @@ const TOKEN_SELL = testHelpers.TOKEN_SELL;
 
 const ORDER_COUNT = 10;
 const MARKET_EURETH_RATE = 50000; // 1ETH = 500 EUR
-const PUBLISHED_RATE_ORDER_CHANCE = 0.3;
-const MIN_ORDER_RATE = MARKET_EURETH_RATE - 1000;
-const MAX_ORDER_RATE = MARKET_EURETH_RATE + 1000;
+const MIN_ORDER_RATE = 990000; // 99% - 1% below parity
+const MAX_ORDER_RATE = 1010000; // 101% - 1 % above parity
 const MIN_TOKEN = 10000; // 100 ACE
 const MAX_TOKEN = 100000; // 1,000 ACE
 const TEST_ACCS_CT = web3.eth.accounts.length;
 const ACC_INIT_ACE = 1000000;
 const CHUNK_SIZE = 100;
-const random = new RandomSeed("Have the same test data.");
+const random = new RandomSeed("Have the same test data");
 
 let augmintToken = null;
 let exchange = null;
@@ -54,10 +53,8 @@ const getOrderToFill = async () => {
         const buy = buyTokenOrders[buyIdx];
         for (let sellIdx = 0; !match && sellIdx < sellTokenOrders.length; sellIdx++) {
             const sell = sellTokenOrders[sellIdx];
-            const buyPrice = buy.price === 0 ? MARKET_EURETH_RATE : buy.price;
-            const sellPrice = sell.price === 0 ? MARKET_EURETH_RATE : sell.price;
 
-            if (sellPrice <= buyPrice) {
+            if (sell.price <= buy.price) {
                 match = { buyTokenOrder: buy, sellTokenOrder: sell };
             }
         }
@@ -87,12 +84,7 @@ contract("Exchange random tests", accounts => {
         const orders = [];
         for (let i = 0; i < ORDER_COUNT; i++) {
             const tokenAmount = Math.round(random.random() * 100 * (MAX_TOKEN - MIN_TOKEN) / 100) + MIN_TOKEN;
-            let price;
-            if (random.random() < PUBLISHED_RATE_ORDER_CHANCE) {
-                price = 0;
-            } else {
-                price = Math.floor(random.random() * (MAX_ORDER_RATE - MIN_ORDER_RATE)) + MIN_ORDER_RATE;
-            }
+            const price = Math.floor(random.random() * (MAX_ORDER_RATE - MIN_ORDER_RATE)) + MIN_ORDER_RATE;
 
             const weiAmount = new BigNumber(tokenAmount)
                 .mul(testHelpers.ONE_ETH)

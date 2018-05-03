@@ -9,6 +9,8 @@ const PLACE_ORDER_MAX_GAS = 200000;
 const CANCEL_SELL_MAX_GAS = 150000;
 const MATCH_ORDER_MAX_GAS = 80000;
 
+const PPM_DIV = 1000000;
+
 let CHUNK_SIZE = null;
 
 module.exports = {
@@ -220,19 +222,16 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     });
 
     const matchCaller = web3.eth.accounts[0];
-    const currentRate =
-        buyTokenOrder.price === 0 || sellTokenOrder.price === 0 ? parseInt((await rates.rates("EUR"))[0]) : 0;
+    const currentRate = parseInt((await rates.rates("EUR"))[0]);
 
-    const buyPrice = buyTokenOrder.price === 0 ? currentRate : buyTokenOrder.price;
-    const sellPrice = sellTokenOrder.price === 0 ? currentRate : sellTokenOrder.price;
-
-    const expPrice = buyTokenOrder.id > sellTokenOrder.id ? sellPrice : buyPrice;
+    const expPrice = buyTokenOrder.id > sellTokenOrder.id ? sellTokenOrder.price : buyTokenOrder.price;
+    const expFillRate = Math.round(currentRate * expPrice / PPM_DIV);
 
     const sellWeiValue = sellTokenOrder.amount
         .mul(testHelpers.ONE_ETH)
-        .div(expPrice)
+        .div(expFillRate)
         .round(0, BigNumber.ROUND_HALF_UP);
-    const buyTokenValue = Math.round(buyTokenOrder.amount * expPrice / testHelpers.ONE_ETH);
+    const buyTokenValue = Math.round(buyTokenOrder.amount * expFillRate / testHelpers.ONE_ETH);
 
     const tradedWeiAmount = BigNumber.min(buyTokenOrder.amount, sellWeiValue);
     const tradedTokenAmount = BigNumber.min(sellTokenOrder.amount, buyTokenValue);
@@ -245,6 +244,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         tokenSeller: sellTokenOrder.maker,
         tokenBuyer: buyTokenOrder.maker,
         price: expPrice,
+        fillRate: expFillRate,
         weiAmount: tradedWeiAmount,
         tokenAmount: tradedTokenAmount,
         buyFilled: buyFilled,
@@ -261,7 +261,9 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         buyTokenOrderId: expMatch.buyTokenOrderId,
         tokenSeller: expMatch.tokenSeller,
         tokenBuyer: expMatch.tokenBuyer,
+        publishedRate: currentRate,
         price: expMatch.price,
+        fillRate: expMatch.fillRate,
         weiAmount: expMatch.weiAmount.toString(),
         tokenAmount: expMatch.tokenAmount.toString()
     });
@@ -385,13 +387,13 @@ async function printOrderBook(_limit) {
     const [sellOrders, buyOrders] = await Promise.all([getActiveSellOrders(0), getActiveBuyOrders(0)]);
     sellOrders.slice(0, limit).map((order, i) => {
         console.log(
-            `${i}. SELL token: ACE/ETH: ${order.price / 100} amount: ${order.amount.toString() / 100} ACE` +
+            `${i}. SELL token: price: ${order.price / 10000} % amount: ${order.amount.toString() / 100} ACE` +
                 `  orderId: ${order.id} acc: ${order.maker}`
         );
     });
     buyOrders.slice(0, _limit).map((order, i) => {
         console.log(
-            `        ${i}. BUY token: ACE/EUR: ${order.price / 100} amount: ${web3.fromWei(order.amount)} ETH` +
+            `        ${i}. BUY token: price: ${order.price / 10000}% amount: ${web3.fromWei(order.amount)} ETH` +
                 `  orderId: ${order.id} acc: ${order.maker}`
         );
     });
