@@ -252,19 +252,18 @@ async function collectLoan(testInstance, loan, collector) {
     //     `    *** Collection params:
     //      A-EUR/EUR: ${rate[0] / 100}
     //      defaulting fee pt: ${loan.product.defaultingFeePt / 10000} %
-    //      repaymentAmount: ${loan.repaymentAmount / 10000} A-EUR = ${web3.fromWei(repaymentAmountInWei)} ETH
-    //      collateral: ${web3.fromWei(loan.collateralAmount).toString()} ETH = ${collateralInToken / 100} A-EUR
+    //      repaymentAmount: ${loan.repaymentAmount / 10000} A-EUR = ${repaymentAmountInWei / testHelpers.ONE_ETH} ETH
+    //      collateral: ${loan.collateralAmount / testHelpers.ONE_ETH} ETH = ${collateralInToken / 100} A-EUR
     //      --------------------
-    //      targetFee: ${targetFeeInToken / 100} A-EUR = ${web3.fromWei(targetFeeInWei).toString()} ETH
-    //      target collection : ${targetCollectionInToken / 100} A-EUR = ${web3
-    // .fromWei(targetCollectionInWei)
-    // .toString()} ETH
-    //      collected: ${web3.fromWei(collectedCollateral).toString()} ETH
-    //      released: ${web3.fromWei(releasedCollateral).toString()} ETH
-    //      defaultingFee: ${web3.fromWei(defaultingFee).toString()} ETH`
+    //      targetFee: ${targetFeeInToken / 100} A-EUR = ${targetFeeInWei / testHelpers.ONE_ETH} ETH
+    //      target collection : ${targetCollectionInToken / 100} A-EUR = ${targetCollectionInWei / testHelpers.ONE_ETH} ETH
+    //      collected: ${collectedCollateral / testHelpers.ONE_ETH} ETH
+    //      released: ${releasedCollateral / testHelpers.ONE_ETH} ETH
+    //      defaultingFee: ${defaultingFee / testHelpers.ONE_ETH} ETH`
     // );
 
     const tx = await loanManager.collect([loan.id], { from: loan.collector });
+
     testHelpers.logGasUse(testInstance, tx, "collect 1");
 
     const [totalSupplyAfter, totalLoanAmountAfter, , ,] = await Promise.all([

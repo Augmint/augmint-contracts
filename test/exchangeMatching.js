@@ -7,12 +7,14 @@ const TOKEN_SELL = testHelpers.TOKEN_SELL;
 
 let snapshotId;
 let exchange = null;
-const maker = web3.eth.accounts[1];
-const taker = web3.eth.accounts[2];
+let maker;
+let taker;
 
-contract("Exchange matching tests", accounts => {
+contract("Exchange matching tests", () => {
     before(async function() {
         exchange = exchangeTestHelper.exchange;
+        maker = global.accounts[1];
+        taker = global.accounts[2];
 
         await tokenTestHelpers.issueToReserve(10000000);
         await tokenTestHelpers.withdrawFromReserve(maker, 1000000);
@@ -28,7 +30,12 @@ contract("Exchange matching tests", accounts => {
     });
 
     it("should match two matching orders (buy token fully filled)", async function() {
-        const buyOrder = { amount: web3.toWei(0.535367), maker: maker, price: 1010000, orderType: TOKEN_BUY };
+        const buyOrder = {
+            amount: global.web3v1.utils.toWei("0.535367"),
+            maker: maker,
+            price: 1010000,
+            orderType: TOKEN_BUY
+        };
         const sellOrder = { amount: 95582, maker: taker, price: 990000, orderType: TOKEN_SELL };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
@@ -43,7 +50,12 @@ contract("Exchange matching tests", accounts => {
     });
 
     it("should match two matching orders (sell token fully filled)", async function() {
-        const buyOrder = { amount: web3.toWei(1.7504), maker: maker, price: 1010000, orderType: TOKEN_BUY };
+        const buyOrder = {
+            amount: global.web3v1.utils.toWei("1.7504"),
+            maker: maker,
+            price: 1010000,
+            orderType: TOKEN_BUY
+        };
         const sellOrder = { amount: 56141, maker: taker, price: 990000, orderType: TOKEN_SELL };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
@@ -57,7 +69,7 @@ contract("Exchange matching tests", accounts => {
     });
 
     it("should match two matching orders (both fully filled)", async function() {
-        const buyOrder = { amount: web3.toWei(1), maker: maker, price: 1000000, orderType: TOKEN_BUY };
+        const buyOrder = { amount: global.web3v1.utils.toWei("1"), maker: maker, price: 1000000, orderType: TOKEN_BUY };
         const sellOrder = { amount: 99800, maker: maker, price: 990000, orderType: TOKEN_SELL };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
@@ -75,7 +87,12 @@ contract("Exchange matching tests", accounts => {
          Sell: 100A€ / 998 A€/ETH = 0.1002004008 ETH
          Buy: 0.1002004008 ETH * 998 A€/ETH = 99.9999999984 A€ wich is 100A€ b/c A€ is w/ 2 decimals
         */
-        const buyOrder = { amount: web3.toWei(0.1002004008), maker: maker, price: 1000000, orderType: TOKEN_BUY };
+        const buyOrder = {
+            amount: global.web3v1.utils.toWei("0.1002004008"),
+            maker: maker,
+            price: 1000000,
+            orderType: TOKEN_BUY
+        };
         const sellOrder = { amount: 10000, maker: maker, price: 1000000, orderType: TOKEN_SELL };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
@@ -91,7 +108,12 @@ contract("Exchange matching tests", accounts => {
     });
 
     it("should match two matching orders from the same account on sell price if placed first ", async function() {
-        const buyOrder = { amount: web3.toWei(1.7504), maker: maker, price: 1010000, orderType: TOKEN_BUY };
+        const buyOrder = {
+            amount: global.web3v1.utils.toWei("1.7504"),
+            maker: maker,
+            price: 1010000,
+            orderType: TOKEN_BUY
+        };
         const sellOrder = { amount: 56141, maker: maker, price: 990000, orderType: TOKEN_SELL };
 
         await exchangeTestHelper.newOrder(this, sellOrder);
@@ -106,7 +128,12 @@ contract("Exchange matching tests", accounts => {
 
     it("should NOT match two non-matching orders", async function() {
         // buy price lower then sell price, should fail
-        const buyOrder = { amount: web3.toWei(1.7504), maker: maker, price: 1010000, orderType: TOKEN_BUY };
+        const buyOrder = {
+            amount: global.web3v1.utils.toWei("1.7504"),
+            maker: maker,
+            price: 1010000,
+            orderType: TOKEN_BUY
+        };
         const sellOrder = { amount: 56141, maker: maker, price: 1010001, orderType: TOKEN_SELL };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
@@ -115,7 +142,12 @@ contract("Exchange matching tests", accounts => {
     });
 
     it("shouldn't matchmultiple if different count of buy&sell orders passed ", async function() {
-        const buyOrder1 = { amount: web3.toWei(0.535367), maker: maker, price: 1010000, orderType: TOKEN_BUY };
+        const buyOrder1 = {
+            amount: global.web3v1.utils.toWei("0.535367"),
+            maker: maker,
+            price: 1010000,
+            orderType: TOKEN_BUY
+        };
         const sellOrder1 = { amount: 95582, maker: taker, price: 900000, orderType: TOKEN_SELL };
         const sellOrder2 = { amount: 95582, maker: taker, price: 900000, orderType: TOKEN_SELL };
 

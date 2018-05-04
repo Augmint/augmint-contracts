@@ -1,6 +1,21 @@
 const stringifier = require("stringifier");
 var gasUseLog = [];
 let gasPrice = null;
+let networkId;
+
+// Use web3v1 in tests. Nb: truffle uses web3 v0.x while web3 v1 is required for tx signatures
+const Web3v1 = require("web3v1");
+
+//global.web3v0 = new Web3v0(new Web3v0.providers.HttpProvider("http://localhost:8545"));
+global.web3v1 = new Web3v1(new Web3v1.providers.HttpProvider("http://localhost:8545"));
+global.accounts = [];
+
+//dirty hack for web3@1.0.0 support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
+if (typeof global.web3v1.currentProvider.sendAsync !== "function") {
+    global.web3v1.currentProvider.sendAsync = function() {
+        return global.web3v1.currentProvider.send.apply(global.web3v1.currentProvider, arguments);
+    };
+}
 
 module.exports = {
     stringify,
@@ -44,7 +59,11 @@ const gasUseLogDisabled =
     process.env.TEST_DISABLE_LOG_GAS_USE && process.env.TEST_DISABLE_LOG_GAS_USE.trim().toLowerCase() === "true";
 
 before(async function() {
-    gasPrice = await getGasPrice();
+    [global.accounts, gasPrice, networkId] = await Promise.all([
+        global.web3v1.eth.getAccounts().then(res => res.map(acc => acc.toLowerCase())),
+        global.web3v1.eth.getGasPrice(),
+        global.web3v1.eth.net.getId()
+    ]);
 });
 
 function stringify(values) {
@@ -65,20 +84,6 @@ function getEvents(contractInstance, eventName) {
 
 async function getGasCost(gas) {
     return gasPrice.mul(gas);
-}
-
-async function getGasPrice() {
-    // TODO: could we read gasPrice (and other global params) in a global beforeAll somehow ?
-    // web3 0.x doesn't seem to have promisified fx for this
-    return new Promise(function(resolve, reject) {
-        web3.eth.getGasPrice((error, gasPrice) => {
-            if (error) {
-                reject(new Error("Can't get gasprice from web3 (getGasPrice).\n " + error));
-            } else {
-                resolve(gasPrice);
-            }
-        });
-    });
 }
 
 async function assertEvent(contractInstance, eventName, expectedArgs) {
@@ -149,7 +154,7 @@ async function assertNoEvents(contractInstance, eventName) {
 //let snapshotCount = 0;
 function takeSnapshot() {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v1.currentProvider.sendAsync(
             {
                 method: "evm_snapshot",
                 params: [],
@@ -169,7 +174,7 @@ function takeSnapshot() {
 
 function revertSnapshot(snapshotId) {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v1.currentProvider.sendAsync(
             {
                 method: "evm_revert",
                 params: [snapshotId],
@@ -199,11 +204,10 @@ function waitFor(durationInMs = 1000) {
         setTimeout(() => {
             // make a transaction to force the local dev node to create a new block with
             // new timestamp:
-            web3.eth.sendTransaction({ from: web3.eth.accounts[0] }, err => {
+            global.web3v1.eth.sendTransaction({ from: global.accounts[0] }, err => {
                 if (err) {
                     return reject(err);
                 }
-
                 resolve();
             });
         }, durationInMs);
@@ -215,7 +219,7 @@ async function waitForTimeStamp(UnixTimestamp) {
 }
 
 function expectThrow(promise) {
-    const onPrivateChain = web3.version.network === 1976 ? true : false; // set by .runprivatechain.sh (geth ...  --networkid 1976 ..)
+    const onPrivateChain = networkId === 1976 ? true : false; // set by .runprivatechain.sh (geth ...  --networkid 1976 ..)
     return promise
         .then(res => {
             if (!onPrivateChain) {

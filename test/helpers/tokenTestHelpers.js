@@ -54,7 +54,7 @@ before(async function() {
     interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
     feeAccount = FeeAccount.at(FeeAccount.address);
 
-    peggedSymbol = web3.toAscii(await augmintToken.peggedSymbol());
+    peggedSymbol = global.web3v1.utils.toAscii(await augmintToken.peggedSymbol());
 });
 
 async function issueToReserve(amount) {
@@ -228,7 +228,7 @@ async function getAllBalances(accs) {
         const address = accs[ac].address ? accs[ac].address : accs[ac];
         ret[ac] = {};
         ret[ac].address = address;
-        ret[ac].eth = await web3.eth.getBalance(address);
+        ret[ac].eth = new BigNumber(await global.web3v1.eth.getBalance(address));
         ret[ac].ace = await augmintToken.balanceOf(address);
     }
 
