@@ -96,21 +96,25 @@ contract("Loans collection tests", accounts => {
 
     it("Should get and collect a loan with discountRate = 1 (zero interest)", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.zeroInterest, accounts[0], web3.toWei(0.05));
+        await testHelpers.waitForTimeStamp(loan.maturity);
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
     it("Should get and collect a loan with discountRate > 1 (negative interest)", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.negativeInterest, accounts[0], web3.toWei(0.05));
+        await testHelpers.waitForTimeStamp(loan.maturity);
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
     it("Should get and collect a loan with collateralRatio = 1", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.fullCoverage, accounts[0], web3.toWei(0.05));
+        await testHelpers.waitForTimeStamp(loan.maturity);
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
     it("Should get and collect a loan with collateralRatio > 1", async function() {
         const loan = await loanTestHelpers.createLoan(this, products.moreCoverage, accounts[0], web3.toWei(0.05));
+        await testHelpers.waitForTimeStamp(loan.maturity);
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
