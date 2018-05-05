@@ -26,10 +26,11 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     mapping(address => mapping (address => uint256)) public allowed; // allowances added with approve()
 
     TransferFeeInterface public feeAccount;
+    address public txDelegator;
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
     event Transfer(address indexed from, address indexed to, uint amount);
-    event AugmintTransfer(address indexed from, address indexed to, uint amount, string narrative, uint fee);
+    event AugmintTransfer(address from, address to, uint amount, string narrative, uint fee);
     event TokenIssued(uint amount);
     event TokenBurned(uint amount);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -37,6 +38,10 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function transfer(address to, uint value) external returns (bool); // solhint-disable-line no-simple-event-func-name
     function transferFrom(address from, address to, uint value) external returns (bool);
     function approve(address spender, uint value) external returns (bool);
+
+    function delegatedTransferExecution(address from, address to, uint amount, string narrative, uint executorFee)
+    external returns(bool);
+
     function increaseApproval(address spender, uint addedValue) external returns (bool);
     function decreaseApproval(address spender, uint subtractedValue) external returns (bool);
 

@@ -5,8 +5,8 @@ import "./generic/AugmintToken.sol";
 
 
 contract TokenAEur is AugmintToken {
-    constructor(TransferFeeInterface _feeAccount)
-    public AugmintToken("Augmint Crypto Euro", "AEUR", "EUR", 2, _feeAccount)
+    constructor(address _txDelegator, TransferFeeInterface _feeAccount)
+    public AugmintToken("Augmint Crypto Euro", "AEUR", "EUR", 2, _txDelegator, _feeAccount)
     {} // solhint-disable-line no-empty-blocks
 
 }

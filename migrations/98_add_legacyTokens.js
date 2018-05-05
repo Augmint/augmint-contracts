@@ -1,12 +1,13 @@
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+const TxDelegator = artifacts.require("./TxDelegator.sol");
 
 module.exports = async function(deployer, network, accounts) {
     deployer.then(async () => {
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
         const feeAccount = FeeAccount.at(FeeAccount.address);
-        const oldToken = await TokenAEur.new(FeeAccount.address);
+        const oldToken = await TokenAEur.new(TxDelegator.address, FeeAccount.address);
 
         await Promise.all([
             oldToken.grantPermission(accounts[0], "MonetarySupervisorContract"), // "hack" for test to issue

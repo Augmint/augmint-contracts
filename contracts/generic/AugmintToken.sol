@@ -4,6 +4,8 @@
         * Issues/burns tokens
 
     TODO:
+        - reconsider delegatedTransfer and how to structure it
+        - shall we allow change of txDelegator?
         - consider generic bytes arg instead of uint for transferAndNotify
         - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
 */
@@ -16,7 +18,8 @@ contract AugmintToken is AugmintTokenInterface {
 
     event FeeAccountChanged(TransferFeeInterface newFeeAccount);
 
-    constructor(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, TransferFeeInterface _feeAccount)
+    constructor(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, address _txDelegator,
+        TransferFeeInterface _feeAccount)
     public {
         require(_feeAccount != address(0), "feeAccount must be set");
         require(bytes(_name).length > 0, "name must be set");
@@ -28,11 +31,23 @@ contract AugmintToken is AugmintTokenInterface {
         decimals = _decimals;
 
         feeAccount = _feeAccount;
+        txDelegator = _txDelegator;
 
     }
-
     function transfer(address to, uint256 amount) external returns (bool) {
         _transfer(msg.sender, to, amount, "");
+        return true;
+    }
+
+    /* Transfers based on an offline signed transfer instruction.
+        It trusts txDelegator checked the signature of from account and the executorFee */
+    function delegatedTransferExecution(address from, address to, uint amount, string narrative, uint executorFee)
+    external returns(bool) {
+        require(msg.sender == txDelegator);
+
+        _transfer(from, msg.sender, executorFee, "Delegated execution fee");
+        _transfer(from, to, amount, narrative);
+
         return true;
     }
 

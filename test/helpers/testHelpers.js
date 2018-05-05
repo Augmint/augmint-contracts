@@ -195,7 +195,12 @@ function revertSnapshot(snapshotId) {
 
 function logGasUse(testObj, tx, txName) {
     if (!gasUseLogDisabled) {
-        gasUseLog.push([testObj.test.parent.title, testObj.test.fullTitle(), txName || "", tx.receipt.gasUsed]);
+        gasUseLog.push([
+            testObj.test.parent.title,
+            testObj.test.fullTitle(),
+            txName || "",
+            tx.receipt ? tx.receipt.gasUsed : tx.gasUsed /* web3v0 w/ receipt, v1 w/o */
+        ]);
     }
 }
 
