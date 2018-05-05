@@ -2,6 +2,7 @@ const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const AugmintToken = artifacts.require("./TokenAEur.sol");
+const TxDelegator = artifacts.require("TxDelegator.sol");
 
 let augmintToken = null;
 let monetarySupervisor = null;
@@ -14,7 +15,7 @@ contract("token conversion tests", accounts => {
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
         [newToken] = await Promise.all([
-            AugmintToken.new(tokenTestHelpers.feeAccount.address),
+            AugmintToken.new(TxDelegator.address, tokenTestHelpers.feeAccount.address),
             tokenTestHelpers.issueToReserve(10000000)
         ]);
 
