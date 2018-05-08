@@ -1,24 +1,21 @@
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
-const TxDelegator = artifacts.require("TxDelegator.sol");
 const TokenAEur = artifacts.require("TokenAEur.sol");
 
 let txDelegator;
 let tokenAEur;
 let from;
 
-contract("TxDelegator", accounts => {
+contract("Delegated Transfers", accounts => {
     before(async () => {
         from = accounts[1];
-        tokenAEur = tokenTestHelpers.augmintToken;
-        txDelegator = new global.web3v1.eth.Contract(TxDelegator.abi, TxDelegator.address);
+        tokenAEur = new global.web3v1.eth.Contract(TokenAEur.abi, TokenAEur.address);
         // txDelegator = TxDelegator.at(TxDelegator.address);
         await tokenTestHelpers.issueToReserve(1000000000);
         await tokenTestHelpers.withdrawFromReserve(from, 1000000000);
     });
 
-    it("should delegatedTransfer function signed", async function() {
-
+    it("should transfer when delegatedTransfer is signed", async function() {
         // params sent and signed by client
         const to = accounts[2];
         const amount = 1000;
@@ -37,8 +34,7 @@ contract("TxDelegator", accounts => {
         if (narrative === "") {
             // workaround b/c solidity keccak256 results different txHAsh with empty string than web3
             txHash = global.web3v1.utils.soliditySha3(
-                TxDelegator.address,
-                tokenAEur.address,
+                TokenAEur.address,
                 from,
                 to,
                 amount,
@@ -48,8 +44,7 @@ contract("TxDelegator", accounts => {
             );
         } else {
             txHash = global.web3v1.utils.soliditySha3(
-                TxDelegator.address,
-                tokenAEur.address,
+                TokenAEur.address,
                 from,
                 to,
                 amount,
@@ -62,9 +57,8 @@ contract("TxDelegator", accounts => {
 
         const signature = await global.web3v1.eth.sign(txHash, from);
 
-        const tx = await txDelegator.methods
+        const tx = await tokenAEur.methods
             .delegatedTransfer(
-                tokenAEur.address,
                 from,
                 to,
                 amount,

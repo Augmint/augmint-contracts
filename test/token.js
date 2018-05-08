@@ -1,7 +1,6 @@
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 const AugmintToken = artifacts.require("./generic/AugmintToken.sol");
-const TxDelegator = artifacts.require("TxDelegator.sol");
 
 let augmintToken;
 
@@ -17,7 +16,6 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                TxDelegator.address,
                 0 // feeaccount
             )
         );
@@ -30,7 +28,6 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                TxDelegator.address,
                 tokenTestHelpers.feeAccount.address
             )
         );
@@ -43,7 +40,6 @@ contract("AugmintToken tests", accounts => {
                 "", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                TxDelegator.address,
                 tokenTestHelpers.feeAccount.address
             )
         );
