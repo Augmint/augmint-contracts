@@ -46,7 +46,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
                                      /* ^^^^ end of signed data ^^^^ */
                                      bytes signature,
                                      uint requestedExecutorFee /* the executor can decide to request lower fee */
-                                ) external returns(bool);
+                                ) external;
 
     function increaseApproval(address spender, uint addedValue) external returns (bool);
     function decreaseApproval(address spender, uint subtractedValue) external returns (bool);

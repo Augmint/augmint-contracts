@@ -47,7 +47,7 @@ contract AugmintToken is AugmintTokenInterface {
                                      bytes signature,
                                      uint requestedExecutorFee /* the executor can decide to request lower fee */
                                      )
-    external returns(bool) {
+    external {
 
         require(!noncesUsed[nonce], "nonce already used");
         require(tx.gasprice >= minGasPrice, "tx.gasprice must be >= minGasPrice");
@@ -60,10 +60,9 @@ contract AugmintToken is AugmintTokenInterface {
 
         require(recovered == from, "invalid signature");
 
-        _transfer(from, msg.sender, requestedExecutorFee, "Delegated execution fee");
+        _transfer(from, msg.sender, requestedExecutorFee, "Delegated transfer fee");
         _transfer(from, to, amount, narrative);
 
-        return true;
     }
 
     function approve(address _spender, uint256 amount) external returns (bool) {
