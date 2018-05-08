@@ -17,6 +17,7 @@
 pragma solidity 0.4.23;
 
 import "./generic/SafeMath.sol";
+import "./generic/ECRecovery.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 
 contract TxDelegator {
@@ -38,46 +39,14 @@ contract TxDelegator {
         noncesUsed[nonce] = true;
 
         bytes32 txHash = keccak256(this, augmintToken, from, to, amount, narrative, minGasPrice, maxExecutorFee, nonce);
-        txHash = keccak256("\x19Ethereum Signed Message:\n32", txHash);
 
-        address recovered = recover(txHash, signature);
+        address recovered = ECRecovery.recover(ECRecovery.toEthSignedMessageHash(txHash), signature);
 
         require(recovered == from, "invalid signature");
 
         require(augmintToken.delegatedTransferExecution(from, to, amount, narrative, requestedExecutorFee),
                     "delegatedTransferExecution failed");
 
-    }
-
-    /* from: https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/ECRecovery.sol  */
-    function recover(bytes32 hash, bytes sig) internal pure returns (address) {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        //Check the signature length
-        if (sig.length != 65) {
-            return (address(0));
-        }
-
-        // Divide the signature in r, s and v variables
-        assembly { // solhint-disable-line no-inline-assembly
-            r := mload(add(sig, 32))
-            s := mload(add(sig, 64))
-            v := byte(0, mload(add(sig, 96)))
-        }
-
-        // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
-        if (v < 27) {
-            v += 27;
-        }
-
-        // If the version is correct return the signer address
-        if (v != 27 && v != 28) {
-            return (address(0));
-        } else {
-            return ecrecover(hash, v, r, s);
-        }
     }
 
 }

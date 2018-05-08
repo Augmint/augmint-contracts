@@ -13,11 +13,11 @@ contract("TxDelegator", accounts => {
         tokenAEur = tokenTestHelpers.augmintToken;
         txDelegator = new global.web3v1.eth.Contract(TxDelegator.abi, TxDelegator.address);
         // txDelegator = TxDelegator.at(TxDelegator.address);
+        await tokenTestHelpers.issueToReserve(1000000000);
+        await tokenTestHelpers.withdrawFromReserve(from, 1000000000);
     });
 
     it("should delegatedTransfer function signed", async function() {
-        await tokenTestHelpers.issueToReserve(1000000000);
-        await tokenTestHelpers.withdrawFromReserve(from, 500000000);
 
         // params sent and signed by client
         const to = accounts[2];
