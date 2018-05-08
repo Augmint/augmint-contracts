@@ -48,13 +48,13 @@ contract AugmintToken is AugmintTokenInterface {
                                      uint requestedExecutorFee /* the executor can decide to request lower fee */
                                      )
     external {
-
-        require(!noncesUsed[nonce], "nonce already used");
         require(tx.gasprice >= minGasPrice, "tx.gasprice must be >= minGasPrice");
         require(requestedExecutorFee <= maxExecutorFee, "requestedExecutorFee must be <= maxExecutorFee");
-        noncesUsed[nonce] = true;
 
         bytes32 txHash = keccak256(this, from, to, amount, narrative, minGasPrice, maxExecutorFee, nonce);
+
+        require(!delegatedTxHashesUsed[txHash], "nonce already used");
+        delegatedTxHashesUsed[txHash] = true;
 
         address recovered = ECRecovery.recover(ECRecovery.toEthSignedMessageHash(txHash), signature);
 

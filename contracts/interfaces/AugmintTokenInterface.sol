@@ -26,7 +26,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     mapping(address => mapping (address => uint256)) public allowed; // allowances added with approve()
 
     TransferFeeInterface public feeAccount;
-    mapping(bytes32 => bool) public noncesUsed; // record nonces used by delegatedTransfer
+    mapping(bytes32 => bool) public delegatedTxHashesUsed; // record txHashes used by delegatedTransfer
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
     event Transfer(address indexed from, address indexed to, uint amount);
