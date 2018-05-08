@@ -42,11 +42,6 @@ const signDelegatedTransfer = async clientParams => {
 
 const sendDelegatedTransfer = async (testInstance, clientParams, signature, executorParams) => {
     clientParams.fee = await tokenTestHelpers.getTransferFee(clientParams);
-    clientParams.executorFeeTransferFee = await tokenTestHelpers.getTransferFee({
-        from: clientParams.from,
-        to: clientParams.to,
-        amount: clientParams.fee
-    });
 
     const balBefore = await tokenTestHelpers.getAllBalances({
         from: clientParams.from,
@@ -77,7 +72,6 @@ const sendDelegatedTransfer = async (testInstance, clientParams, signature, exec
             ace: balBefore.from.ace
                 .sub(clientParams.amount)
                 .sub(clientParams.fee)
-                .sub(clientParams.executorFeeTransferFee)
                 .sub(executorParams.requestedExecutorFee),
             eth: balBefore.from.eth
         },
@@ -86,7 +80,7 @@ const sendDelegatedTransfer = async (testInstance, clientParams, signature, exec
             eth: balBefore.to.eth
         },
         feeAccount: {
-            ace: balBefore.feeAccount.ace.add(clientParams.fee).add(clientParams.executorFeeTransferFee),
+            ace: balBefore.feeAccount.ace.add(clientParams.fee),
             eth: balBefore.feeAccount.eth
         },
         executor: {

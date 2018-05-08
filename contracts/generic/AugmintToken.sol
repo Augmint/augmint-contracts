@@ -61,7 +61,7 @@ contract AugmintToken is AugmintTokenInterface {
 
         require(recovered == from, "invalid signature");
 
-        _transfer(from, msg.sender, requestedExecutorFeeInToken, "Delegated transfer fee");
+        _transfer(from, msg.sender, requestedExecutorFeeInToken, "Delegated transfer fee", 0);
         _transfer(from, to, amount, narrative);
 
     }
@@ -174,11 +174,14 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function _transfer(address from, address to, uint transferAmount, string narrative) private {
-        require(to != 0x0, "to must be set");
-
         uint fee = feeAccount.calculateTransferFee(from, to, transferAmount);
-        uint amountWithFee = transferAmount.add(fee);
 
+        _transfer(from, to, transferAmount, narrative, fee);
+    }
+
+    function _transfer(address from, address to, uint transferAmount, string narrative, uint fee) private {
+        require(to != 0x0, "to must be set");
+        uint amountWithFee = transferAmount.add(fee);
         // to emit proper reason instead of failing on from.sub()
         require(balances[from] >= amountWithFee, "balance must be >= amount + transfer fee");
 
