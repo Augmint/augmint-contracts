@@ -30,7 +30,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
     event Transfer(address indexed from, address indexed to, uint amount);
-    event AugmintTransfer(address from, address to, uint amount, string narrative, uint fee);
+    event AugmintTransfer(address indexed from, address indexed to, uint amount, string narrative, uint fee);
     event TokenIssued(uint amount);
     event TokenBurned(uint amount);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
