@@ -194,7 +194,7 @@ async function transferFromTest(testInstance, expTransfer) {
 async function getTransferFee(transfer) {
     const [fromAllowed, toAllowed] = await Promise.all([
         feeAccount.permissions(transfer.from, "NoFeeTransferContracts"),
-        feeAccount.permissions(transfer.from, "NoFeeTransferContracts")
+        feeAccount.permissions(transfer.to, "NoFeeTransferContracts")
     ]);
     if (fromAllowed || toAllowed) {
         return 0;
