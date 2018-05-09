@@ -102,7 +102,6 @@ contract("Delegated Transfers", accounts => {
     });
 
     it("should transfer when delegatedTransfer is signed", async function() {
-        // params sent and signed by client
         const clientParams = {
             tokenAEurAddress: TokenAEur.address,
             from,
@@ -126,7 +125,6 @@ contract("Delegated Transfers", accounts => {
     });
 
     it("should not execute with the same nonce twice", async function() {
-        // params sent and signed by client
         const clientParams = {
             tokenAEurAddress: TokenAEur.address,
             from,
@@ -141,7 +139,7 @@ contract("Delegated Transfers", accounts => {
         const executorParams = {
             executorAddress: accounts[3],
             actualGasPrice: clientParams.minGasPrice,
-            requestedExecutorFee: clientParams.maxExecutorFee - 1
+            requestedExecutorFee: clientParams.maxExecutorFee
         };
 
         const signature = await signDelegatedTransfer(clientParams);
@@ -151,11 +149,95 @@ contract("Delegated Transfers", accounts => {
         await testHelpers.expectThrow(sendDelegatedTransfer(this, clientParams, signature, executorParams));
     });
 
-    it("should execute with lower requestedExecutorFee than signed");
+    it("should execute with lower requestedExecutorFee than signed", async function() {
+        const clientParams = {
+            tokenAEurAddress: TokenAEur.address,
+            from,
+            to: accounts[2],
+            amount: 1000,
+            narrative: "here we go",
+            minGasPrice: 1,
+            maxExecutorFee: 300,
+            nonce: "0x0000000000000000000000000000000000000000000000000000000000000003" // to be a random hash with proper entrophy
+        };
 
-    it("should not execute with higher requestedExecutorFee than signed");
+        const executorParams = {
+            executorAddress: accounts[3],
+            actualGasPrice: clientParams.minGasPrice,
+            requestedExecutorFee: clientParams.maxExecutorFee - 10
+        };
 
-    it("should execute with higher gasPrice than signed");
+        const signature = await signDelegatedTransfer(clientParams);
 
-    it("should not execute with lower gasPrice than signed");
+        await sendDelegatedTransfer(this, clientParams, signature, executorParams);
+    });
+
+    it("should not execute with higher requestedExecutorFee than signed", async function() {
+        const clientParams = {
+            tokenAEurAddress: TokenAEur.address,
+            from,
+            to: accounts[2],
+            amount: 1000,
+            narrative: "here we go",
+            minGasPrice: 2,
+            maxExecutorFee: 300,
+            nonce: "0x0000000000000000000000000000000000000000000000000000000000000004" // to be a random hash with proper entrophy
+        };
+
+        const executorParams = {
+            executorAddress: accounts[3],
+            actualGasPrice: clientParams.minGasPrice,
+            requestedExecutorFee: clientParams.maxExecutorFee + 1
+        };
+
+        const signature = await signDelegatedTransfer(clientParams);
+
+        await testHelpers.expectThrow(sendDelegatedTransfer(this, clientParams, signature, executorParams));
+    });
+
+    it("should execute with higher gasPrice than signed", async function() {
+        const clientParams = {
+            tokenAEurAddress: TokenAEur.address,
+            from,
+            to: accounts[2],
+            amount: 1000,
+            narrative: "here we go",
+            minGasPrice: 1,
+            maxExecutorFee: 300,
+            nonce: "0x0000000000000000000000000000000000000000000000000000000000000005" // to be a random hash with proper entrophy
+        };
+
+        const executorParams = {
+            executorAddress: accounts[3],
+            actualGasPrice: clientParams.minGasPrice + 1,
+            requestedExecutorFee: clientParams.maxExecutorFee
+        };
+
+        const signature = await signDelegatedTransfer(clientParams);
+
+        await sendDelegatedTransfer(this, clientParams, signature, executorParams);
+    });
+
+    it("should not execute with lower gasPrice than signed", async function() {
+        const clientParams = {
+            tokenAEurAddress: TokenAEur.address,
+            from,
+            to: accounts[2],
+            amount: 1000,
+            narrative: "here we go",
+            minGasPrice: 2,
+            maxExecutorFee: 300,
+            nonce: "0x0000000000000000000000000000000000000000000000000000000000000006" // to be a random hash with proper entrophy
+        };
+
+        const executorParams = {
+            executorAddress: accounts[3],
+            actualGasPrice: clientParams.minGasPrice - 1,
+            requestedExecutorFee: clientParams.maxExecutorFee
+        };
+
+        const signature = await signDelegatedTransfer(clientParams);
+
+        await testHelpers.expectThrow(sendDelegatedTransfer(this, clientParams, signature, executorParams));
+    });
 });
