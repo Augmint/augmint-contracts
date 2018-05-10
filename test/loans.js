@@ -11,7 +11,7 @@ let loanManager = null;
 let monetarySupervisor = null;
 let rates = null;
 
-const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 100000 };
+const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 1000000 };
 
 let products = {};
 

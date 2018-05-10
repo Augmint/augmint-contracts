@@ -68,7 +68,7 @@ contract("Loans collection tests", accounts => {
             this,
             products.defaultingNoLeftOver,
             accounts[1],
-            global.web3v1.utils.toWei("1")
+            global.web3v1.utils.toWei("0.2")
         );
 
         await Promise.all([rates.setRate("EUR", 99000), testHelpers.waitForTimeStamp(loan.maturity)]);
