@@ -86,63 +86,79 @@ async function getGasCost(gas) {
     return gasPrice.mul(gas);
 }
 
-async function assertEvent(contractInstance, eventName, expectedArgs) {
+async function assertEvent(contractInstance, eventName, _expectedArgs) {
+    let expectedArgsArray;
+    if (!Array.isArray(_expectedArgs)) {
+        expectedArgsArray = [_expectedArgs];
+    } else {
+        expectedArgsArray = _expectedArgs;
+    }
     const events = await getEvents(contractInstance, eventName);
-    assert(events.length === 1, `Expected ${eventName} event wasn't received from ${contractInstance.address}`); // how to get contract name?
-
-    const event = events[0];
-
-    assert(event.event === eventName, `Expected ${eventName} event but got ${event.event}`);
-
-    const eventArgs = event.args;
-
-    const expectedArgNames = Object.keys(expectedArgs);
-    const receivedArgNames = Object.keys(eventArgs);
 
     assert(
-        expectedArgNames.length === receivedArgNames.length,
-        `Expected ${eventName} event to have ${expectedArgNames.length} arguments, but it had ${
-            receivedArgNames.length
+        events.length === expectedArgsArray.length,
+        `Expected ${expectedArgsArray.length} ${eventName} events from ${contractInstance.address} but received ${
+            events.length
         }`
-    );
+    ); // how to get contract name?
 
     const ret = {}; // we return values from event (useful when  custom validator passed for an id)
-    expectedArgNames.forEach(argName => {
+
+    for (let i = 0; i < events.length; i++) {
+        const event = events[i];
+        const expectedArgs = expectedArgsArray[i];
+
+        assert(event.event === eventName, `Expected ${eventName} event but got ${event.event}`);
+
+        const eventArgs = event.args;
+
+        const expectedArgNames = Object.keys(expectedArgs);
+        const receivedArgNames = Object.keys(eventArgs);
+
         assert(
-            typeof event.args[argName] !== "undefined",
-            `${argName} expected in ${eventName} event but it's not found`
+            expectedArgNames.length === receivedArgNames.length,
+            `Expected ${eventName} event to have ${expectedArgNames.length} arguments, but it had ${
+                receivedArgNames.length
+            }`
         );
 
-        const expectedValue = expectedArgs[argName];
-        let value;
-        switch (typeof expectedValue) {
-        case "function":
-            value = expectedValue(event.args[argName]);
-            break;
-        case "number":
-            value =
-                    typeof event.args[argName].toNumber === "function"
-                        ? event.args[argName].toNumber()
-                        : event.args[argName];
-            break;
-        case "string":
-            value =
-                    typeof event.args[argName].toString === "function"
-                        ? event.args[argName].toString()
-                        : event.args[argName];
-            break;
-        default:
-            value = event.args[argName];
-        }
-
-        if (typeof expectedValue !== "function") {
+        expectedArgNames.forEach(argName => {
             assert(
-                value === expectedValue,
-                `Event ${eventName} has ${argName} arg with a value of ${value} but expected ${expectedValue}`
+                typeof event.args[argName] !== "undefined",
+                `${argName} expected in ${eventName} event but it's not found`
             );
-        }
-        ret[argName] = value;
-    });
+
+            const expectedValue = expectedArgs[argName];
+            let value;
+            switch (typeof expectedValue) {
+            case "function":
+                value = expectedValue(event.args[argName]);
+                break;
+            case "number":
+                value =
+                        typeof event.args[argName].toNumber === "function"
+                            ? event.args[argName].toNumber()
+                            : event.args[argName];
+                break;
+            case "string":
+                value =
+                        typeof event.args[argName].toString === "function"
+                            ? event.args[argName].toString()
+                            : event.args[argName];
+                break;
+            default:
+                value = event.args[argName];
+            }
+
+            if (typeof expectedValue !== "function") {
+                assert(
+                    value === expectedValue,
+                    `Event ${eventName} has ${argName} arg with a value of ${value} but expected ${expectedValue}`
+                );
+            }
+            ret[argName] = value;
+        });
+    }
     return ret;
 }
 

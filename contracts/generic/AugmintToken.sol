@@ -205,6 +205,7 @@ contract AugmintToken is AugmintTokenInterface {
 
         if (fee > 0) {
             balances[feeAccount] = balances[feeAccount].add(fee);
+            emit Transfer(from, feeAccount, fee);
         }
 
         balances[from] = balances[from].sub(amountWithFee);

@@ -281,11 +281,23 @@ async function transferEventAsserts(expTransfer) {
         narrative: expTransfer.narrative
     });
 
-    await testHelpers.assertEvent(augmintToken, "Transfer", {
+    const expTransferEvents = [];
+
+    if (expTransfer.fee > 0) {
+        expTransferEvents.push({
+            from: expTransfer.from,
+            to: feeAccount.address,
+            amount: expTransfer.fee.toString()
+        });
+    }
+
+    expTransferEvents.push({
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString()
     });
+
+    await testHelpers.assertEvent(augmintToken, "Transfer", expTransferEvents);
 }
 
 async function approveEventAsserts(expApprove) {
