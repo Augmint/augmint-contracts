@@ -47,18 +47,10 @@ contract AugmintToken is AugmintTokenInterface {
                                      uint requestedExecutorFeeInToken /* the executor can decide to request lower fee */
                                      )
     external {
-        require(requestedExecutorFeeInToken <= maxExecutorFeeInToken, "requestedExecutorFee must be <= maxExecutorFee");
-
         bytes32 txHash = keccak256(this, from, to, amount, narrative, maxExecutorFeeInToken, nonce);
 
-        require(!delegatedTxHashesUsed[txHash], "txHash already used");
-        delegatedTxHashesUsed[txHash] = true;
+        _checkHashAndTransferExecutorFee(txHash, signature, from, maxExecutorFeeInToken, requestedExecutorFeeInToken);
 
-        address recovered = ECRecovery.recover(ECRecovery.toEthSignedMessageHash(txHash), signature);
-
-        require(recovered == from, "invalid signature");
-
-        _transfer(from, msg.sender, requestedExecutorFeeInToken, "Delegated transfer fee", 0);
         _transfer(from, to, amount, narrative);
     }
 
@@ -144,18 +136,10 @@ contract AugmintToken is AugmintTokenInterface {
                                      uint requestedExecutorFeeInToken /* the executor can decide to request lower fee */
                                      )
     external {
-        require(requestedExecutorFeeInToken <= maxExecutorFeeInToken, "requestedExecutorFee must be <= maxExecutorFee");
-
         bytes32 txHash = keccak256(this, from, target, amount, data, maxExecutorFeeInToken, nonce);
 
-        require(!delegatedTxHashesUsed[txHash], "txHash already used");
-        delegatedTxHashesUsed[txHash] = true;
+        _checkHashAndTransferExecutorFee(txHash, signature, from, maxExecutorFeeInToken, requestedExecutorFeeInToken);
 
-        address recovered = ECRecovery.recover(ECRecovery.toEthSignedMessageHash(txHash), signature);
-
-        require(recovered == from, "invalid signature");
-
-        _transfer(from, msg.sender, requestedExecutorFeeInToken, "Delegated execution fee", 0);
         _transfer(from, target, amount, "");
         target.transferNotification(from, amount, data);
     }
@@ -177,7 +161,19 @@ contract AugmintToken is AugmintTokenInterface {
         return allowed[_owner][_spender];
     }
 
-    function _increaseApproval(address _approver, address _spender, uint _addedValue) internal returns (bool) {
+    function _checkHashAndTransferExecutorFee(bytes32 txHash, bytes signature, address signer,
+                                                uint maxExecutorFeeInToken, uint requestedExecutorFeeInToken) private {
+        require(requestedExecutorFeeInToken <= maxExecutorFeeInToken, "requestedExecutorFee must be <= maxExecutorFee");
+        require(!delegatedTxHashesUsed[txHash], "txHash already used");
+        delegatedTxHashesUsed[txHash] = true;
+
+        address recovered = ECRecovery.recover(ECRecovery.toEthSignedMessageHash(txHash), signature);
+        require(recovered == signer, "invalid signature");
+
+        _transfer(signer, msg.sender, requestedExecutorFeeInToken, "Delegated transfer fee", 0);
+    }
+
+    function _increaseApproval(address _approver, address _spender, uint _addedValue) private returns (bool) {
         allowed[_approver][_spender] = allowed[_approver][_spender].add(_addedValue);
         emit Approval(_approver, _spender, allowed[_approver][_spender]);
     }
