@@ -3,7 +3,7 @@ const testHelpers = require("./helpers/testHelpers.js");
 const TokenAEur = artifacts.require("TokenAEur.sol");
 const FeeAccount = artifacts.require("FeeAccount.sol");
 
-const DELEGATED_TRANSFER_MAX_GAS = 120000;
+const DELEGATED_TRANSFER_MAX_GAS = 150000;
 
 let tokenAEur;
 let from;
@@ -18,7 +18,6 @@ const signDelegatedTransfer = async clientParams => {
             clientParams.from,
             clientParams.to,
             clientParams.amount,
-            clientParams.minGasPrice,
             clientParams.maxExecutorFee,
             clientParams.nonce
         );
@@ -29,7 +28,6 @@ const signDelegatedTransfer = async clientParams => {
             clientParams.to,
             clientParams.amount,
             clientParams.narrative,
-            clientParams.minGasPrice,
             clientParams.maxExecutorFee,
             clientParams.nonce
         );
@@ -56,13 +54,12 @@ const sendDelegatedTransfer = async (testInstance, clientParams, signature, exec
             clientParams.to,
             clientParams.amount,
             clientParams.narrative,
-            clientParams.minGasPrice,
             clientParams.maxExecutorFee,
             clientParams.nonce,
             signature,
             executorParams.requestedExecutorFee
         )
-        .send({ from: executorParams.executorAddress, gas: 1200000, gasPrice: executorParams.actualGasPrice });
+        .send({ from: executorParams.executorAddress, gas: 1200000 });
     testHelpers.logGasUse(testInstance, tx, "delegatedTransfer");
 
     // TODO: assert events
@@ -108,14 +105,12 @@ contract("Delegated Transfers", accounts => {
             to: accounts[2],
             amount: 1000,
             narrative: "here we go",
-            minGasPrice: 1,
             maxExecutorFee: 300,
             nonce: "0x0000000000000000000000000000000000000000000000000000000000000001" // to be a random hash with proper entrophy
         };
 
         const executorParams = {
             executorAddress: accounts[3],
-            actualGasPrice: clientParams.minGasPrice,
             requestedExecutorFee: clientParams.maxExecutorFee
         };
 
@@ -131,14 +126,12 @@ contract("Delegated Transfers", accounts => {
             to: accounts[2],
             amount: 1000,
             narrative: "here we go",
-            minGasPrice: 2,
             maxExecutorFee: 300,
             nonce: "0x0000000000000000000000000000000000000000000000000000000000000002" // to be a random hash with proper entrophy
         };
 
         const executorParams = {
             executorAddress: accounts[3],
-            actualGasPrice: clientParams.minGasPrice,
             requestedExecutorFee: clientParams.maxExecutorFee
         };
 
@@ -156,14 +149,12 @@ contract("Delegated Transfers", accounts => {
             to: accounts[2],
             amount: 1000,
             narrative: "here we go",
-            minGasPrice: 1,
             maxExecutorFee: 300,
             nonce: "0x0000000000000000000000000000000000000000000000000000000000000003" // to be a random hash with proper entrophy
         };
 
         const executorParams = {
             executorAddress: accounts[3],
-            actualGasPrice: clientParams.minGasPrice,
             requestedExecutorFee: clientParams.maxExecutorFee - 10
         };
 
@@ -179,61 +170,13 @@ contract("Delegated Transfers", accounts => {
             to: accounts[2],
             amount: 1000,
             narrative: "here we go",
-            minGasPrice: 2,
             maxExecutorFee: 300,
             nonce: "0x0000000000000000000000000000000000000000000000000000000000000004" // to be a random hash with proper entrophy
         };
 
         const executorParams = {
             executorAddress: accounts[3],
-            actualGasPrice: clientParams.minGasPrice,
             requestedExecutorFee: clientParams.maxExecutorFee + 1
-        };
-
-        const signature = await signDelegatedTransfer(clientParams);
-
-        await testHelpers.expectThrow(sendDelegatedTransfer(this, clientParams, signature, executorParams));
-    });
-
-    it("should execute with higher gasPrice than signed", async function() {
-        const clientParams = {
-            tokenAEurAddress: TokenAEur.address,
-            from,
-            to: accounts[2],
-            amount: 1000,
-            narrative: "here we go",
-            minGasPrice: 1,
-            maxExecutorFee: 300,
-            nonce: "0x0000000000000000000000000000000000000000000000000000000000000005" // to be a random hash with proper entrophy
-        };
-
-        const executorParams = {
-            executorAddress: accounts[3],
-            actualGasPrice: clientParams.minGasPrice + 1,
-            requestedExecutorFee: clientParams.maxExecutorFee
-        };
-
-        const signature = await signDelegatedTransfer(clientParams);
-
-        await sendDelegatedTransfer(this, clientParams, signature, executorParams);
-    });
-
-    it("should not execute with lower gasPrice than signed", async function() {
-        const clientParams = {
-            tokenAEurAddress: TokenAEur.address,
-            from,
-            to: accounts[2],
-            amount: 1000,
-            narrative: "here we go",
-            minGasPrice: 2,
-            maxExecutorFee: 300,
-            nonce: "0x0000000000000000000000000000000000000000000000000000000000000006" // to be a random hash with proper entrophy
-        };
-
-        const executorParams = {
-            executorAddress: accounts[3],
-            actualGasPrice: clientParams.minGasPrice - 1,
-            requestedExecutorFee: clientParams.maxExecutorFee
         };
 
         const signature = await signDelegatedTransfer(clientParams);
