@@ -19,7 +19,6 @@ module.exports = function(deployer, network, accounts) {
     const feeAccount = FeeAccount.at("0xc26667132b0B798ab87864f7c29c0819c887aADB");
     const augmintReserves = AugmintReserves.at("0xc70b65e40f877cdC6d8D2ebFd44d63EfBeb7fc6D");
     const interestEarnedAccount = InterestEarnedAccount.at("0x3a414d7636defb9d3dfb7342984fe3f7b5125df6");
-    const oldMonetarySupervisor = MonetarySupervisor.at("0xa00a5d1882C3F690E3d0D975ebE378120b70ae87");
 
     const oldToken1 = TokenAEur.at("0x95aa79d7410eb60f49bfd570b445836d402bd7b1");
     const oldToken2 = TokenAEur.at("0xa35d9de06895a3a2e7ecae26654b88fe71c179ea");
@@ -119,7 +118,7 @@ module.exports = function(deployer, network, accounts) {
         Promise.all(grantMonetaryBoardTxs);
 
         /*************************************************************
-         * Switch new MonetarySupervisor to live
+         * Grant permissions to new MonetarySupervisor
          **************************************************************/
         console.log(" granting permissions for new MS");
         await Promise.all([
@@ -145,36 +144,7 @@ module.exports = function(deployer, network, accounts) {
             feeAccount.grantPermission(oldToken3.address, "NoFeeTransferContracts")
         ]);
 
-        console.log(" switching new MS to live");
-        await Promise.all([
-            oldLocker1.setMonetarySupervisor(newMonetarySupervisor.address),
-            oldLoanManager1.setSystemContracts(ratesAddress, newMonetarySupervisor.address)
-        ]);
-
-        // 3. migrate totals from previous MS (using MS.adjustKPIs)
-        const [oldTotalLoan, oldTotalLock] = await Promise.all([
-            oldMonetarySupervisor.totalLoanAmount(),
-            oldMonetarySupervisor.totalLockedAmount()
-        ]);
-        console.log(
-            "Migrating KPIs to new MonetarySupervisor contract. totalLoanAmount:",
-            oldTotalLoan.toString(),
-            "totalLockedAmount",
-            oldTotalLock.toString()
-        );
-        await newMonetarySupervisor.adjustKPIs(oldTotalLoan, oldTotalLock);
-
-        console.log("Revoking permission from old MS");
-        await Promise.all([
-            feeAccount.revokePermission(oldMonetarySupervisor.address, "NoFeeTransferContracts"),
-            interestEarnedAccount.revokePermission(oldMonetarySupervisor.address, "MonetarySupervisorContract"),
-            oldToken3.revokePermission(oldMonetarySupervisor.address, "MonetarySupervisorContract"),
-            augmintReserves.revokePermission(oldMonetarySupervisor.address, "MonetarySupervisorContract"),
-
-            oldMonetarySupervisor.revokePermission(oldLocker1.address, "LockerContracts"),
-            oldMonetarySupervisor.revokePermission(oldLoanManager1.address, "LoanManagerContracts")
-        ]);
-
+        // NB: don't forget to top up earned interest account with new tokens
         console.log(" Done with all migration steps. Updating truffle Migrations step manually");
         await Migrations.at("0xb96f7e79a6b3faf4162e274ff764ca9de598b0c5").setCompleted(17);
     });
