@@ -221,7 +221,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         buyer: buyTokenOrder.maker
     });
 
-    const matchCaller = web3.eth.accounts[0];
+    const matchCaller = global.accounts[0];
     const currentRate = parseInt((await rates.rates("EUR"))[0]);
 
     const expPrice = buyTokenOrder.id > sellTokenOrder.id ? sellTokenOrder.price : buyTokenOrder.price;
@@ -393,8 +393,8 @@ async function printOrderBook(_limit) {
     });
     buyOrders.slice(0, _limit).map((order, i) => {
         console.log(
-            `        ${i}. BUY token: price: ${order.price / 10000}% amount: ${web3.fromWei(order.amount)} ETH` +
-                `  orderId: ${order.id} acc: ${order.maker}`
+            `        ${i}. BUY token: price: ${order.price / 10000}% amount: ${order.amount /
+                testHelpers.ONE_ETH} ETH` + `  orderId: ${order.id} acc: ${order.maker}`
         );
     });
 

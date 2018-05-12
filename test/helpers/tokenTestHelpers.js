@@ -54,7 +54,7 @@ before(async function() {
     interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
     feeAccount = FeeAccount.at(FeeAccount.address);
 
-    peggedSymbol = web3.toAscii(await augmintToken.peggedSymbol());
+    peggedSymbol = global.web3v1.utils.toAscii(await augmintToken.peggedSymbol());
 });
 
 async function issueToReserve(amount) {
@@ -194,7 +194,7 @@ async function transferFromTest(testInstance, expTransfer) {
 async function getTransferFee(transfer) {
     const [fromAllowed, toAllowed] = await Promise.all([
         feeAccount.permissions(transfer.from, "NoFeeTransferContracts"),
-        feeAccount.permissions(transfer.from, "NoFeeTransferContracts")
+        feeAccount.permissions(transfer.to, "NoFeeTransferContracts")
     ]);
     if (fromAllowed || toAllowed) {
         return 0;
@@ -228,7 +228,7 @@ async function getAllBalances(accs) {
         const address = accs[ac].address ? accs[ac].address : accs[ac];
         ret[ac] = {};
         ret[ac].address = address;
-        ret[ac].eth = await web3.eth.getBalance(address);
+        ret[ac].eth = new BigNumber(await global.web3v1.eth.getBalance(address));
         ret[ac].ace = await augmintToken.balanceOf(address);
     }
 
@@ -281,11 +281,23 @@ async function transferEventAsserts(expTransfer) {
         narrative: expTransfer.narrative
     });
 
-    await testHelpers.assertEvent(augmintToken, "Transfer", {
+    const expTransferEvents = [];
+
+    if (expTransfer.fee > 0) {
+        expTransferEvents.push({
+            from: expTransfer.from,
+            to: feeAccount.address,
+            amount: expTransfer.fee.toString()
+        });
+    }
+
+    expTransferEvents.push({
         from: expTransfer.from,
         to: expTransfer.to,
         amount: expTransfer.amount.toString()
     });
+
+    await testHelpers.assertEvent(augmintToken, "Transfer", expTransferEvents);
 }
 
 async function approveEventAsserts(expApprove) {

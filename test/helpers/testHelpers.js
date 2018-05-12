@@ -1,6 +1,21 @@
 const stringifier = require("stringifier");
 var gasUseLog = [];
 let gasPrice = null;
+let networkId;
+
+// Use web3v1 in tests. Nb: truffle uses web3 v0.x while web3 v1 is required for tx signatures
+const Web3v1 = require("web3v1");
+
+//global.web3v0 = new Web3v0(new Web3v0.providers.HttpProvider("http://localhost:8545"));
+global.web3v1 = new Web3v1(new Web3v1.providers.HttpProvider("http://localhost:8545"));
+global.accounts = [];
+
+//dirty hack for web3@1.0.0 support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
+if (typeof global.web3v1.currentProvider.sendAsync !== "function") {
+    global.web3v1.currentProvider.sendAsync = function() {
+        return global.web3v1.currentProvider.send.apply(global.web3v1.currentProvider, arguments);
+    };
+}
 
 module.exports = {
     stringify,
@@ -44,7 +59,11 @@ const gasUseLogDisabled =
     process.env.TEST_DISABLE_LOG_GAS_USE && process.env.TEST_DISABLE_LOG_GAS_USE.trim().toLowerCase() === "true";
 
 before(async function() {
-    gasPrice = await getGasPrice();
+    [global.accounts, gasPrice, networkId] = await Promise.all([
+        global.web3v1.eth.getAccounts().then(res => res.map(acc => acc.toLowerCase())),
+        global.web3v1.eth.getGasPrice(),
+        global.web3v1.eth.net.getId()
+    ]);
 });
 
 function stringify(values) {
@@ -67,77 +86,79 @@ async function getGasCost(gas) {
     return gasPrice.mul(gas);
 }
 
-async function getGasPrice() {
-    // TODO: could we read gasPrice (and other global params) in a global beforeAll somehow ?
-    // web3 0.x doesn't seem to have promisified fx for this
-    return new Promise(function(resolve, reject) {
-        web3.eth.getGasPrice((error, gasPrice) => {
-            if (error) {
-                reject(new Error("Can't get gasprice from web3 (getGasPrice).\n " + error));
-            } else {
-                resolve(gasPrice);
-            }
-        });
-    });
-}
-
-async function assertEvent(contractInstance, eventName, expectedArgs) {
+async function assertEvent(contractInstance, eventName, _expectedArgs) {
+    let expectedArgsArray;
+    if (!Array.isArray(_expectedArgs)) {
+        expectedArgsArray = [_expectedArgs];
+    } else {
+        expectedArgsArray = _expectedArgs;
+    }
     const events = await getEvents(contractInstance, eventName);
-    assert(events.length === 1, `Expected ${eventName} event wasn't received from ${contractInstance.address}`); // how to get contract name?
-
-    const event = events[0];
-
-    assert(event.event === eventName, `Expected ${eventName} event but got ${event.event}`);
-
-    const eventArgs = event.args;
-
-    const expectedArgNames = Object.keys(expectedArgs);
-    const receivedArgNames = Object.keys(eventArgs);
 
     assert(
-        expectedArgNames.length === receivedArgNames.length,
-        `Expected ${eventName} event to have ${expectedArgNames.length} arguments, but it had ${
-            receivedArgNames.length
+        events.length === expectedArgsArray.length,
+        `Expected ${expectedArgsArray.length} ${eventName} events from ${contractInstance.address} but received ${
+            events.length
         }`
-    );
+    ); // how to get contract name?
 
     const ret = {}; // we return values from event (useful when  custom validator passed for an id)
-    expectedArgNames.forEach(argName => {
+
+    for (let i = 0; i < events.length; i++) {
+        const event = events[i];
+        const expectedArgs = expectedArgsArray[i];
+
+        assert(event.event === eventName, `Expected ${eventName} event but got ${event.event}`);
+
+        const eventArgs = event.args;
+
+        const expectedArgNames = Object.keys(expectedArgs);
+        const receivedArgNames = Object.keys(eventArgs);
+
         assert(
-            typeof event.args[argName] !== "undefined",
-            `${argName} expected in ${eventName} event but it's not found`
+            expectedArgNames.length === receivedArgNames.length,
+            `Expected ${eventName} event to have ${expectedArgNames.length} arguments, but it had ${
+                receivedArgNames.length
+            }`
         );
 
-        const expectedValue = expectedArgs[argName];
-        let value;
-        switch (typeof expectedValue) {
-        case "function":
-            value = expectedValue(event.args[argName]);
-            break;
-        case "number":
-            value =
-                    typeof event.args[argName].toNumber === "function"
-                        ? event.args[argName].toNumber()
-                        : event.args[argName];
-            break;
-        case "string":
-            value =
-                    typeof event.args[argName].toString === "function"
-                        ? event.args[argName].toString()
-                        : event.args[argName];
-            break;
-        default:
-            value = event.args[argName];
-        }
-
-        if (typeof expectedValue !== "function") {
+        expectedArgNames.forEach(argName => {
             assert(
-                value === expectedValue,
-                `Event ${eventName} has ${argName} arg with a value of ${value} but expected ${expectedValue}`
+                typeof event.args[argName] !== "undefined",
+                `${argName} expected in ${eventName} event but it's not found`
             );
-        }
-        ret[argName] = value;
-    });
+
+            const expectedValue = expectedArgs[argName];
+            let value;
+            switch (typeof expectedValue) {
+            case "function":
+                value = expectedValue(event.args[argName]);
+                break;
+            case "number":
+                value =
+                        typeof event.args[argName].toNumber === "function"
+                            ? event.args[argName].toNumber()
+                            : event.args[argName];
+                break;
+            case "string":
+                value =
+                        typeof event.args[argName].toString === "function"
+                            ? event.args[argName].toString()
+                            : event.args[argName];
+                break;
+            default:
+                value = event.args[argName];
+            }
+
+            if (typeof expectedValue !== "function") {
+                assert(
+                    value === expectedValue,
+                    `Event ${eventName} has ${argName} arg with a value of ${value} but expected ${expectedValue}`
+                );
+            }
+            ret[argName] = value;
+        });
+    }
     return ret;
 }
 
@@ -149,7 +170,7 @@ async function assertNoEvents(contractInstance, eventName) {
 //let snapshotCount = 0;
 function takeSnapshot() {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v1.currentProvider.sendAsync(
             {
                 method: "evm_snapshot",
                 params: [],
@@ -169,7 +190,7 @@ function takeSnapshot() {
 
 function revertSnapshot(snapshotId) {
     return new Promise(function(resolve, reject) {
-        web3.currentProvider.sendAsync(
+        global.web3v1.currentProvider.sendAsync(
             {
                 method: "evm_revert",
                 params: [snapshotId],
@@ -190,7 +211,12 @@ function revertSnapshot(snapshotId) {
 
 function logGasUse(testObj, tx, txName) {
     if (!gasUseLogDisabled) {
-        gasUseLog.push([testObj.test.parent.title, testObj.test.fullTitle(), txName || "", tx.receipt.gasUsed]);
+        gasUseLog.push([
+            testObj.test.parent.title,
+            testObj.test.fullTitle(),
+            txName || "",
+            tx.receipt ? tx.receipt.gasUsed : tx.gasUsed /* web3v0 w/ receipt, v1 w/o */
+        ]);
     }
 }
 
@@ -199,11 +225,10 @@ function waitFor(durationInMs = 1000) {
         setTimeout(() => {
             // make a transaction to force the local dev node to create a new block with
             // new timestamp:
-            web3.eth.sendTransaction({ from: web3.eth.accounts[0] }, err => {
+            global.web3v1.eth.sendTransaction({ from: global.accounts[0] }, err => {
                 if (err) {
                     return reject(err);
                 }
-
                 resolve();
             });
         }, durationInMs);
@@ -215,7 +240,7 @@ async function waitForTimeStamp(UnixTimestamp) {
 }
 
 function expectThrow(promise) {
-    const onPrivateChain = web3.version.network === 1976 ? true : false; // set by .runprivatechain.sh (geth ...  --networkid 1976 ..)
+    const onPrivateChain = networkId === 1976 ? true : false; // set by .runprivatechain.sh (geth ...  --networkid 1976 ..)
     return promise
         .then(res => {
             if (!onPrivateChain) {

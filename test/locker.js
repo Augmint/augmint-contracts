@@ -210,7 +210,7 @@ contract("Lock", accounts => {
         const interestEarned = Math.floor(amountToLock * perTermInterest / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + durationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
@@ -366,7 +366,7 @@ contract("Lock", accounts => {
         const expectedDurationInSecs = product[1].toNumber();
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + expectedDurationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
@@ -403,7 +403,7 @@ contract("Lock", accounts => {
         const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + expectedDurationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
@@ -464,7 +464,7 @@ contract("Lock", accounts => {
         const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + expectedDurationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));

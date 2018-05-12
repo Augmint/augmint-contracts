@@ -22,7 +22,7 @@ async function newRatesAsserts(tx, symbols, newRates) {
     for (let i = 0; i < symbols.length; i++) {
         assert.equal(tx.logs[i].event, "RateChanged", "RateChanged event should be emited for " + i + ". symbol");
         assert.equal(
-            web3.toAscii(tx.logs[i].args.symbol).slice(0, symbols[i].length),
+            global.web3v1.utils.toAscii(tx.logs[i].args.symbol).slice(0, symbols[i].length),
             symbols[i],
             "symbol " + i + ". should be set in RateChanged event"
         );
