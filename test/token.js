@@ -1,12 +1,15 @@
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 const AugmintToken = artifacts.require("./generic/AugmintToken.sol");
+const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
 
 let augmintToken;
+let stabilityBoardSigner;
 
 contract("AugmintToken tests", accounts => {
     before(async () => {
         augmintToken = tokenTestHelpers.augmintToken;
+        stabilityBoardSigner = StabilityBoardSigner.at(StabilityBoardSigner.address);
     });
 
     it("shouldn't create a token contract without feeAccount", async function() {
@@ -16,6 +19,7 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
+                StabilityBoardSigner.address,
                 0 // feeaccount
             )
         );
@@ -28,6 +32,7 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
+                StabilityBoardSigner.address,
                 tokenTestHelpers.feeAccount.address
             )
         );
@@ -39,7 +44,8 @@ contract("AugmintToken tests", accounts => {
                 "Augmint Crypto Euro", // name
                 "", // symbol
                 "EUR", // peggedSymbol
-                2, // decimals
+                2, // decimals,
+                StabilityBoardSigner.address,
                 tokenTestHelpers.feeAccount.address
             )
         );
@@ -47,7 +53,18 @@ contract("AugmintToken tests", accounts => {
 
     it("should change feeAccount", async function() {
         const newFeeAccount = accounts[2];
-        const tx = await augmintToken.setFeeAccount(newFeeAccount);
+        const signers = [global.accounts[0]];
+
+        const txData = tokenTestHelpers.augmintTokenWeb3Contract.methods.setFeeAccount(newFeeAccount).encodeABI();
+
+        const tx = await testHelpers.signAndExecute(
+            stabilityBoardSigner,
+            augmintToken.address,
+            signers,
+            txData,
+            "0x0000000000000000000000000000000000000000000000000000000000000002"
+        );
+
         testHelpers.logGasUse(this, tx, "setFeeAccount");
 
         const [actualFeeAccount] = await Promise.all([
@@ -60,8 +77,8 @@ contract("AugmintToken tests", accounts => {
         assert.equal(actualFeeAccount, newFeeAccount);
     });
 
-    it("only allowed should change feeAccount", async function() {
+    it("should not call setFeeAccount directly", async function() {
         const newFeeAccount = accounts[2];
-        await testHelpers.expectThrow(augmintToken.setFeeAccount(newFeeAccount, { from: accounts[1] }));
+        await testHelpers.expectThrow(augmintToken.setFeeAccount(newFeeAccount, { from: accounts[0] }));
     });
 });

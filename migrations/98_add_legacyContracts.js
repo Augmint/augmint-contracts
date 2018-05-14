@@ -7,13 +7,14 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Locker = artifacts.require("./Locker.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const Exchange = artifacts.require("./Exchange.sol");
+const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
 
 module.exports = async function(deployer, network, accounts) {
     deployer.then(async () => {
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
         const feeAccount = FeeAccount.at(FeeAccount.address);
 
-        const oldToken = await TokenAEur.new(FeeAccount.address);
+        const oldToken = await TokenAEur.new(StabilityBoardSigner.address, FeeAccount.address);
 
         const [oldLocker, oldLoanManager, oldExchange] = await Promise.all([
             Locker.new(oldToken.address, MonetarySupervisor.address),

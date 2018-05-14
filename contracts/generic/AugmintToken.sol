@@ -13,13 +13,15 @@ pragma solidity ^0.4.23;
 import "../interfaces/AugmintTokenInterface.sol";
 import "./ECRecovery.sol";
 import "../interfaces/TransferFeeInterface.sol";
+import "../StabilityBoardSigner.sol";
 
 
 contract AugmintToken is AugmintTokenInterface {
 
     event FeeAccountChanged(TransferFeeInterface newFeeAccount);
 
-    constructor(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, TransferFeeInterface _feeAccount)
+    constructor(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals,
+                address _stabilityBoardSigner, TransferFeeInterface _feeAccount)
     public {
         require(_feeAccount != address(0), "feeAccount must be set");
         require(bytes(_name).length > 0, "name must be set");
@@ -30,6 +32,7 @@ contract AugmintToken is AugmintTokenInterface {
         peggedSymbol = _peggedSymbol;
         decimals = _decimals;
 
+        stabilityBoardSigner = _stabilityBoardSigner;
         feeAccount = _feeAccount;
 
     }
@@ -108,7 +111,8 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     /* to upgrade feeAccount (eg. for fee calculation changes) */
-    function setFeeAccount(TransferFeeInterface newFeeAccount) external restrict("MonetaryBoard") {
+    function setFeeAccount(TransferFeeInterface newFeeAccount) external {
+        require(msg.sender == stabilityBoardSigner, "not permitted sender"); // only via multisig
         feeAccount = newFeeAccount;
         emit FeeAccountChanged(newFeeAccount);
     }
