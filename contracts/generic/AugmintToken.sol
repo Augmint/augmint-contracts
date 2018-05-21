@@ -9,7 +9,7 @@
         - consider generic bytes arg instead of uint for transferAndNotify
         - consider separate transfer fee params and calculation to separate contract (to feeAccount?)
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 import "../interfaces/AugmintTokenInterface.sol";
 import "./ECRecovery.sol";
 import "../interfaces/TransferFeeInterface.sol";
@@ -47,7 +47,7 @@ contract AugmintToken is AugmintTokenInterface {
                                      uint requestedExecutorFeeInToken /* the executor can decide to request lower fee */
                                      )
     external {
-        bytes32 txHash = keccak256(this, from, to, amount, narrative, maxExecutorFeeInToken, nonce);
+        bytes32 txHash = keccak256(abi.encodePacked(this, from, to, amount, narrative, maxExecutorFeeInToken, nonce));
 
         _checkHashAndTransferExecutorFee(txHash, signature, from, maxExecutorFeeInToken, requestedExecutorFeeInToken);
 
@@ -136,7 +136,7 @@ contract AugmintToken is AugmintTokenInterface {
                                      uint requestedExecutorFeeInToken /* the executor can decide to request lower fee */
                                      )
     external {
-        bytes32 txHash = keccak256(this, from, target, amount, data, maxExecutorFeeInToken, nonce);
+        bytes32 txHash = keccak256(abi.encodePacked(this, from, target, amount, data, maxExecutorFeeInToken, nonce));
 
         _checkHashAndTransferExecutorFee(txHash, signature, from, maxExecutorFeeInToken, requestedExecutorFeeInToken);
 
