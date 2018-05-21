@@ -11,7 +11,7 @@
   - use bytes[] signature instead of s[], r[] , v[] when ABIEncoderV2 is not experimental anymore
   - what is the max number of signers ( block gas limit)?
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 import "./SafeMath.sol";
 
@@ -47,11 +47,11 @@ contract MultiSig {
         require(sigR.length == sigS.length, "sigR & sigS length mismatch");
         require(sigR.length == sigV.length, "sigR & sigV length mismatch");
 
-        bytes32 txHash = keccak256(this, destination, value, data, nonce);
+        bytes32 txHash = keccak256(abi.encodePacked(this, destination, value, data, nonce));
         require(!txHashesUsed[txHash], "txHash already used");
         txHashesUsed[txHash] = true;
 
-        txHash = keccak256("\x19Ethereum Signed Message:\n32", txHash);
+        txHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", txHash));
 
         _checkSignatures(txHash, sigV, sigR, sigS); // will revert if any sig is incorrect
 

@@ -1,5 +1,5 @@
 /* allows tx to execute if 50% +1 vote of active signers signed */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 import "./generic/MultiSig.sol";
 
 
