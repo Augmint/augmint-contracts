@@ -2,7 +2,7 @@
     TODO: calculateExchangeFee + Exchange params and setters
 */
 
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 import "./generic/SafeMath.sol";
 import "./generic/SystemAccount.sol";
 import "./interfaces/TransferFeeInterface.sol";

@@ -7,7 +7,7 @@ NB: reserves are held under the contract address, therefore any transaction on t
 
  */
 
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 import "./generic/SystemAccount.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 
