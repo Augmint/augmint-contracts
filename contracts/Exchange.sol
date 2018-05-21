@@ -8,7 +8,7 @@
         - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
         - use Rates interface?
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 import "./generic/SafeMath.sol";
 import "./generic/Restricted.sol";

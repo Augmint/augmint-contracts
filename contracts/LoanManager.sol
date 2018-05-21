@@ -7,7 +7,7 @@
         - make data arg generic bytes?
         - make collect() run as long as gas provided allows
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 import "./Rates.sol";
 import "./generic/Restricted.sol";
