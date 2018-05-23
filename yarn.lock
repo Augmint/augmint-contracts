@@ -4481,9 +4481,9 @@ solc@0.4.24:
     semver "^5.3.0"
     yargs "^4.7.1"
 
-solidity-coverage@0.5.2:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.5.2.tgz#466abfa9b0470a11224a1b256fa39618232f978a"
+solidity-coverage@0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.5.4.tgz#f61d8de310fc17102ffd8bac38d660b7017c10c3"
   dependencies:
     death "^1.1.0"
     ethereumjs-testrpc-sc "6.1.2"
