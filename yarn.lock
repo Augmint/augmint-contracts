@@ -4481,9 +4481,9 @@ solc@0.4.24:
     semver "^5.3.0"
     yargs "^4.7.1"
 
-solidity-coverage@0.5.2:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.5.2.tgz#466abfa9b0470a11224a1b256fa39618232f978a"
+solidity-coverage@0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.5.4.tgz#f61d8de310fc17102ffd8bac38d660b7017c10c3"
   dependencies:
     death "^1.1.0"
     ethereumjs-testrpc-sc "6.1.2"
@@ -4892,9 +4892,9 @@ trim@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/trim/-/trim-0.0.1.tgz#5858547f6b290757ee95cccc666fb50084c460dd"
 
-truffle@4.1.10:
-  version "4.1.10"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-4.1.10.tgz#8e81391475fd036fc571ab5d788816714608e366"
+truffle@4.1.11:
+  version "4.1.11"
+  resolved "https://registry.yarnpkg.com/truffle/-/truffle-4.1.11.tgz#a4df812ebf4a564892900c4a1dac1131104a0799"
   dependencies:
     mocha "^4.1.0"
     original-require "^1.0.1"
