@@ -87,6 +87,31 @@ contract localTest_initialSetup {
         // set LockerContracts permissions
         _monetarySupervisor.grantPermission(_locker, "LockerContracts");
 
+        // add test loan Products
+        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
+        _loanManager.addLoanProduct(365 days, 860000, 550000, 1000, 50000, true); //  14% p.a.
+        _loanManager.addLoanProduct(180 days, 937874, 550000, 1000, 50000, true); // 13% p.a.
+
+        _loanManager.addLoanProduct(90 days, 971661, 600000, 1000, 50000, true); // 12%. p.a.
+        _loanManager.addLoanProduct(30 days, 990641, 600000, 1000, 50000, true); //  12% p.a.
+        _loanManager.addLoanProduct(14 days, 996337, 600000, 1000, 50000, true); // 10% p.a.
+        _loanManager.addLoanProduct(7 days, 998170, 600000, 1000, 50000, true); // 10% p.a.
+
+        _loanManager.addLoanProduct(1 hours, 999989, 980000, 2000, 50000, true); // due in 1hr for testing repayments ? p.a.
+        _loanManager.addLoanProduct(1 seconds, 999999, 990000, 3000, 50000, true); // defaults in 1 secs for testing ? p.a.
+
+        // add test lock products
+        // (perTermInterest, durationInSecs, minimumLockAmount, isActive)
+        _locker.addLockProduct(80001, 365 days, 1000, true); // 8% p.a.
+        _locker.addLockProduct(33929, 180 days, 1000, true); // 7% p.a.
+
+        _locker.addLockProduct(14472, 90 days, 1000, true); // 6% p.a.
+        _locker.addLockProduct(4019, 30 days, 1000, true);  // 5% p.a.
+        _locker.addLockProduct(1506, 14 days, 1000, true);  // 4% p.a.
+        _locker.addLockProduct(568, 7 days, 1000, true);    //  3% p.a.
+
+        _locker.addLockProduct(3, 1 hours, 2000, true); // for testing, ~2.66% p.a.
+        _locker.addLockProduct(1 , 1 minutes, 3000, true); // for testing, ~69.15% p.a.
 
     }
 

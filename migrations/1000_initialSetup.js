@@ -33,13 +33,17 @@ module.exports = function(deployer) {
             const tokenAEur = TokenAEur.at(TokenAEur.address);
             const augmintReserves = AugmintReserves.at(AugmintReserves.address);
             const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+            const loanManager = LoanManager.at(LoanManager.address);
+            const locker = Locker.at(Locker.address);
             await Promise.all([
                 rates.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
                 feeAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
                 interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
                 tokenAEur.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
                 augmintReserves.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "MonetaryBoard")
+                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
+                loanManager.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
+                locker.grantPermission(StabilityBoardSigner.address, "MonetaryBoard")
             ]);
 
             // run initial setup script
