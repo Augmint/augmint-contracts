@@ -3,7 +3,7 @@ const TokenAEur = artifacts.require("./TokenAEur.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 
-module.exports = async function(deployer, network, accounts) {
+module.exports = function(deployer) {
     deployer.then(async () => {
         const tokenAEur = TokenAEur.at(TokenAEur.address);
         const loanManager = LoanManager.at(LoanManager.address);
