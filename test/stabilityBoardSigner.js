@@ -3,11 +3,31 @@ const SB_addSigners = artifacts.require("scriptTests/SB_addSigners.sol");
 const SB_removeSigners = artifacts.require("scriptTests/SB_removeSigners.sol");
 const SB_revertingScript = artifacts.require("scriptTests/SB_revertingScript.sol");
 const SB_outOfGasScript = artifacts.require("scriptTests/SB_outOfGasScript.sol");
+const SB_cancelScript = artifacts.require("scriptTests/SB_cancelScript.sol");
 const testHelpers = require("./helpers/testHelpers.js");
 
+let snapshotId;
 let stabilityBoardSigner;
 let stabilityBoardSignerWeb3Contract;
 const scriptState = { New: 0, Approved: 1, Done: 2, Cancelled: 3, Failed: 4 };
+
+async function addSigners(newSigners) {
+    // assuming allSigners are active
+    const [addSignerScript, currentSigners] = await Promise.all([
+        SB_addSigners.new(newSigners),
+        stabilityBoardSigner.getAllSigners(0)
+    ]);
+
+    const signTxs = currentSigners.filter(signerTuple => !signerTuple[1].eq(0)).map(tuple => {
+        const signerAddress = "0x" + tuple[1].toString(16).padStart(40, "0");
+        return stabilityBoardSigner.sign(addSignerScript.address, { from: signerAddress });
+    });
+
+    const signCount = Math.floor(signTxs.length / 2) + 1;
+    await Promise.all(signTxs.slice(0, signCount));
+
+    await stabilityBoardSigner.execute(addSignerScript.address);
+}
 
 contract("StabilityBoardSigner", accounts => {
     before(async () => {
@@ -16,6 +36,14 @@ contract("StabilityBoardSigner", accounts => {
             StabilityBoardSigner.abi,
             StabilityBoardSigner.address
         );
+    });
+
+    beforeEach(async function() {
+        snapshotId = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("only signer should sign", async function() {
@@ -48,7 +76,7 @@ contract("StabilityBoardSigner", accounts => {
         await testHelpers.expectThrow(stabilityBoardSigner.sign(scriptAddress, { from: accounts[0] }));
     });
 
-    it("should add then disable signers", async function() {
+    it("should add then disable signers and should not cancel or execute in Done state", async function() {
         const newSigners = [accounts[1], accounts[2]];
 
         const signersCountBefore = (await stabilityBoardSigner.activeSignersCount()).toNumber();
@@ -115,19 +143,136 @@ contract("StabilityBoardSigner", accounts => {
         assert.equal(signersAfter[2][2].toNumber(), 0, "signer 2 should be inactive");
         assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
         assert.equal(signersCountAfter.toNumber(), signersCountBefore);
+
+        // try to execute again
+        await testHelpers.expectThrow(stabilityBoardSigner.execute(removeSignerScript.address));
+
+        // try to cancel: create, sign & execute a script to try to cancel our already Done removeSignerScript
+        const cancelScript = await SB_cancelScript.new(removeSignerScript.address);
+        await stabilityBoardSigner.sign(cancelScript.address);
+
+        await stabilityBoardSigner.execute(cancelScript.address);
+        const [script2After] = await Promise.all([
+            stabilityBoardSignerWeb3Contract.methods.scripts(cancelScript.address).call(),
+            testHelpers.assertEvent(stabilityBoardSigner, "ScriptExecuted", {
+                scriptAddress: cancelScript.address,
+                result: false
+            })
+        ]);
+        assert(script2After.state, scriptState.Failed);
     });
 
-    it("should not execute when script is New state (no quorum)");
+    it("should not execute when script is New state (no quorum)", async function() {
+        const newSigners = [accounts[1]];
+        await addSigners(newSigners);
 
-    it("should accept signatures after quorum reached");
+        const removeSignerScript = await SB_removeSigners.new(newSigners);
 
-    it("should cancel a script in New state");
+        const signTx1 = await stabilityBoardSigner.sign(removeSignerScript.address, { from: newSigners[0] });
+        testHelpers.logGasUse(this, signTx1, "multiSig.sign");
+        const script = await stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call();
 
-    it("should cancel a script in Approved state");
+        assert.equal(script.state, scriptState.New);
 
-    it("should not cancel a script in Done / Cancelled / Failed state");
+        await testHelpers.expectThrow(stabilityBoardSigner.execute(removeSignerScript.address, { from: accounts[0] }));
+    });
 
-    it("should set script state to Failed if script fails", async function() {
+    it("should accept signatures after quorum reached", async function() {
+        const newSigners = [accounts[1], accounts[2]];
+        await addSigners(newSigners);
+
+        const removeSignerScript = await SB_removeSigners.new(newSigners);
+
+        await Promise.all(
+            newSigners.map(signer =>
+                stabilityBoardSigner
+                    .sign(removeSignerScript.address, { from: signer })
+                    .then(tx => testHelpers.logGasUse(this, tx, "multiSig.sign"))
+            )
+        );
+
+        const scriptBefore = await stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call();
+        assert.equal(scriptBefore.state, scriptState.Approved);
+
+        const signTx = await stabilityBoardSigner.sign(removeSignerScript.address, { from: accounts[0] });
+        testHelpers.logGasUse(this, signTx, "multiSig.sign");
+
+        const scriptAfter = await stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call();
+        assert.equal(scriptAfter.state, scriptState.Approved);
+        assert.equal(scriptAfter.signCount, newSigners.length + 1);
+    });
+
+    it("should cancel a script in New state", async function() {
+        const newSigners = [accounts[1]];
+        await addSigners(newSigners);
+
+        // Create a script to be cancelled (w/ one approval from 2 signers)
+        const removeSignerScript = await SB_removeSigners.new(newSigners);
+        await stabilityBoardSigner.sign(removeSignerScript.address);
+        const scriptBefore = await stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call();
+        assert.equal(scriptBefore.state, scriptState.New);
+
+        // create , sign & execute a script to cancel our removeSignerScript
+        const cancelScript = await SB_cancelScript.new(removeSignerScript.address);
+        await Promise.all(
+            [...newSigners, accounts[0]].map(signer =>
+                stabilityBoardSigner.sign(cancelScript.address, { from: signer })
+            )
+        );
+
+        const cancelTx = await stabilityBoardSigner.execute(cancelScript.address, { from: accounts[0] });
+        testHelpers.logGasUse(this, cancelTx, "multiSig.execute cancelScript");
+
+        const [scriptAfter] = await Promise.all([
+            stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call(),
+            testHelpers.assertEvent(stabilityBoardSigner, "ScriptCancelled", {
+                scriptAddress: removeSignerScript.address
+            })
+        ]);
+        assert.equal(scriptAfter.state, scriptState.Cancelled);
+    });
+
+    it("should cancel an Approved script then should not cancel or execute in Cancelled state", async function() {
+        // Create and apprive script to be cancelled
+        const removeSignerScript = await SB_removeSigners.new([accounts[0]]);
+        await stabilityBoardSigner.sign(removeSignerScript.address);
+        const scriptBefore = await stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call();
+        assert.equal(scriptBefore.state, scriptState.Approved);
+
+        // create, sign & execute a script to cancel our removeSignerScript
+        const cancelScript = await SB_cancelScript.new(removeSignerScript.address);
+        await stabilityBoardSigner.sign(cancelScript.address);
+
+        const cancelTx = await stabilityBoardSigner.execute(cancelScript.address);
+        testHelpers.logGasUse(this, cancelTx, "multiSig.execute cancelScript");
+
+        const [scriptAfter] = await Promise.all([
+            stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call(),
+            testHelpers.assertEvent(stabilityBoardSigner, "ScriptCancelled", {
+                scriptAddress: removeSignerScript.address
+            })
+        ]);
+        assert.equal(scriptAfter.state, scriptState.Cancelled);
+
+        // try to execute again
+        await testHelpers.expectThrow(stabilityBoardSigner.execute(removeSignerScript.address));
+
+        // try to cancel: create, sign & execute a script to try to cancel our already Cancelled removeSignerScript
+        const cancelScript2 = await SB_cancelScript.new(removeSignerScript.address);
+        await stabilityBoardSigner.sign(cancelScript2.address);
+
+        await stabilityBoardSigner.execute(cancelScript2.address);
+        const [script2After] = await Promise.all([
+            stabilityBoardSignerWeb3Contract.methods.scripts(cancelScript2.address).call(),
+            testHelpers.assertEvent(stabilityBoardSigner, "ScriptExecuted", {
+                scriptAddress: cancelScript2.address,
+                result: false
+            })
+        ]);
+        assert(script2After.state, scriptState.Failed);
+    });
+
+    it("should set script state to Failed if script fails & should not cancel or execute in Failed state", async function() {
         const revertingScript = await SB_revertingScript.new();
         await stabilityBoardSigner.sign(revertingScript.address);
 
@@ -145,6 +290,23 @@ contract("StabilityBoardSigner", accounts => {
 
         assert.equal(signersCountAfter.toNumber(), 1);
         assert.equal(script.state, scriptState.Failed);
+
+        // try to execute again
+        await testHelpers.expectThrow(stabilityBoardSigner.execute(revertingScript.address));
+
+        // try to cancel: create, sign & execute a script to try to cancel our already Cancelled removeSignerScript
+        const revertingScript2 = await SB_revertingScript.new(revertingScript.address);
+        await stabilityBoardSigner.sign(revertingScript2.address);
+
+        await stabilityBoardSigner.execute(revertingScript2.address);
+        const [script2After] = await Promise.all([
+            stabilityBoardSignerWeb3Contract.methods.scripts(revertingScript2.address).call(),
+            testHelpers.assertEvent(stabilityBoardSigner, "ScriptExecuted", {
+                scriptAddress: revertingScript2.address,
+                result: false
+            })
+        ]);
+        assert(script2After.state, scriptState.Failed);
     });
 
     it("should set script state to Failed if script runs out of gas", async function() {
@@ -164,7 +326,6 @@ contract("StabilityBoardSigner", accounts => {
         assert.equal(script.state, scriptState.Failed);
     });
 
-    it("should not execute a script in Done / Failed / Cancelled state");
     it("Should list scripts", async function() {
         const [approvedScript, revertingScript, doneScript] = await Promise.all([
             SB_addSigners.new([accounts[1]]),
