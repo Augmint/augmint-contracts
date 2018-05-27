@@ -29,7 +29,6 @@ module.exports = {
     expectThrow,
     waitForTimeStamp,
     waitFor,
-    signAndExecute,
 
     /* CONSTANT getters */
     get ONE_ETH() {
@@ -279,26 +278,6 @@ function expectThrow(promise) {
             );
             return;
         });
-}
-
-async function signAndExecute(multiSigContract, destinationAddress, signers, txData, nonce) {
-    if (typeof nonce === "undefined") {
-        throw new Error("provide a nonce. TODO: generate one if null passed");
-    }
-
-    const txHash = global.web3v1.utils.soliditySha3(multiSigContract.address, destinationAddress, 0, txData, nonce);
-
-    const sigs = { v: [], r: [], s: [] };
-
-    for (let i = 0; i < signers.length; i++) {
-        const signature = await global.web3v1.eth.sign(txHash, signers[i]);
-        const sig = signature.substr(2, signature.length);
-        sigs.r.push("0x" + sig.substr(0, 64));
-        sigs.s.push("0x" + sig.substr(64, 64));
-        sigs.v.push(global.web3v1.utils.toDecimal(sig.substr(128, 2)) + 27);
-    }
-    const tx = await multiSigContract.execute(sigs.v, sigs.r, sigs.s, destinationAddress, 0, txData, nonce);
-    return tx;
 }
 
 after(function() {

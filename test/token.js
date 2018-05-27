@@ -2,6 +2,7 @@ const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 const AugmintToken = artifacts.require("./generic/AugmintToken.sol");
 const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
+const SB_setFeeAccount = artifacts.require("./scriptTests/SB_setFeeAccount.sol");
 
 let augmintToken;
 let stabilityBoardSigner;
@@ -53,19 +54,12 @@ contract("AugmintToken tests", accounts => {
 
     it("should change feeAccount", async function() {
         const newFeeAccount = accounts[2];
-        const signers = [global.accounts[0]];
+        const setFeeAccountScript = await SB_setFeeAccount.new(augmintToken.address, newFeeAccount);
 
-        const txData = tokenTestHelpers.augmintTokenWeb3Contract.methods.setFeeAccount(newFeeAccount).encodeABI();
+        await stabilityBoardSigner.sign(setFeeAccountScript.address);
+        const executeTx = await stabilityBoardSigner.execute(setFeeAccountScript.address);
 
-        const tx = await testHelpers.signAndExecute(
-            stabilityBoardSigner,
-            augmintToken.address,
-            signers,
-            txData,
-            "0x0000000000000000000000000000000000000000000000000000000000000002"
-        );
-
-        testHelpers.logGasUse(this, tx, "setFeeAccount");
+        testHelpers.logGasUse(this, executeTx, "multiSig.execute - setFeeAccount");
 
         const [actualFeeAccount] = await Promise.all([
             augmintToken.feeAccount(),

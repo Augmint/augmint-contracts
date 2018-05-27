@@ -1,15 +1,16 @@
-/* Abstract multisig contract. Each derived contract should implement checkQuorum
-
- TODO/CHECK:
-  - how to ensure  lost private key(s) of signers not causing complete block of any execution?
-  - shall we restrict  execute to be called by a signer?
-  - test signing with trezor signature:
-    https://github.com/0xProject/0x-monorepo/blob/095388ffe05ca51e92db87ba81d6e4f29b1ab087/packages/contracts/src/contracts/current/protocol/Exchange/MixinSignatureValidator.sol
-  - EIP712 & ERC191 signature schemes?
-  - use a modifer and this.call instead of destination?
-  - UX flow? what helper functions required?
-  - use bytes[] signature instead of s[], r[] , v[] when ABIEncoderV2 is not experimental anymore
-  - what is the max number of signers ( block gas limit)?
+/* Abstract multisig contract to allow multi approval execution of atomic contracts scripts
+        e.g. migrations or settings.
+    Scripts are allowed to run only once.
+    Each derived contract should implement checkQuorum
+    TODO:
+    - consider allowing only one pending script by:
+        a) store prevScript and don't allow new script until that is New or Approved
+            OR
+        b) store script approve date and don't allow running it after x days
+    - allSigners batch getter in chunks, from offset
+    - scripts batch getter in chunks, from offset
+    - script.allSigners batch getter in chunks, from offset
+    - do we need signature revoke?
 */
 pragma solidity 0.4.24;
 
@@ -19,47 +20,107 @@ import "./SafeMath.sol";
 contract MultiSig {
     using SafeMath for uint256;
 
-    mapping(bytes32 => bool) public txHashesUsed; // record txHashes used by execute
-
     mapping(address => bool) public isSigner;
     address[] public allSigners; // all signers, even the disabled ones
     uint public activeSignersCount;
 
+    enum ScriptState {New, Approved, Done, Cancelled, Failed}
+
+    struct Script {
+        ScriptState state;  // do we want to calculate quorum at the time time of sign or execute call ?
+        uint signCount;
+        mapping(address => bool) signedBy;
+        address[] allSigners;  // all signers even whom revoked their signature
+    }
+
+    mapping(address => Script) public scripts;
+    address[] public scriptAddresses;
+
     event SignerAdded(address signer);
     event SignerRemoved(address signer);
 
-    constructor(address[] _signers) public {
-        require(_signers.length > 0);
+    event ScriptSigned(address scriptAddress, address signer);
+    /* event ScriptSignatureRevoked(address scriptAddress, address signer); */
+    event ScriptApproved(address scriptAddress);
+    event ScriptCancelled(address scriptAddress);
 
-        for (uint i = 0; i < _signers.length; i++) {
-            isSigner[_signers[i]] = true;
+    event ScriptExecuted(address scriptAddress, bool result);
+
+    constructor() public {
+        // deployer address is the first signer. Deployer should add signers after deployed and configured contracts
+        // The first script which sets the new contracts live should revoke deployer's signature
+        isSigner[msg.sender] = true;
+        allSigners.push(msg.sender);
+        activeSignersCount = 1;
+    }
+
+    function sign(address scriptAddress) public {
+        require(isSigner[msg.sender], "sender must be signer");
+        Script storage script = scripts[scriptAddress];
+        require(script.state == ScriptState.Approved || script.state == ScriptState.New,
+                "script state must be New or Approved");
+        require(!script.signedBy[msg.sender], "script must not be signed by signer yet");
+
+        if(script.allSigners.length == 0) {
+            // first sign of a new script
+            scriptAddresses.push(scriptAddress);
         }
-        allSigners = _signers;
-        activeSignersCount = allSigners.length;
+
+        script.allSigners.push(msg.sender);
+        script.signedBy[msg.sender] =  true;
+        script.signCount = script.signCount.add(1);
+
+        emit ScriptSigned(scriptAddress, msg.sender);
+
+        if(checkQuorum(script.signCount)){
+            script.state = ScriptState.Approved;
+            emit ScriptApproved(scriptAddress);
+        }
     }
 
-    // Note that address recovered from signatures must be strictly increasing
-    //  (protect against someone submitting multiple signatures from the same address)
-    function execute(uint8[] sigV, bytes32[] sigR, bytes32[] sigS,
-                        address destination, uint value, bytes data, bytes32 nonce)
-    external {
-        require(checkQuorum(sigR.length), "not enough signatures");
-        require(sigR.length == sigS.length, "sigR & sigS length mismatch");
-        require(sigR.length == sigV.length, "sigR & sigV length mismatch");
+    /* Do we need this?
+     function revokeApproval(address scriptAddress) public {
+        require(isSigner[msg.sender], "sender must be signer");
+        require(script.state = ScriptState.New, "script state must be New");
+        require(script.signedBy[msg.sender], "script must be signed by signer");
+        // ....
+    } */
 
-        bytes32 txHash = keccak256(abi.encodePacked(this, destination, value, data, nonce));
-        require(!txHashesUsed[txHash], "txHash already used");
-        txHashesUsed[txHash] = true;
+    function execute(address scriptAddress) public returns (bool result) {
+        // only allow execute to signers to avoid someone set an approved script failed by calling it with low gaslimit
+        require(isSigner[msg.sender], "sender must be signer");
+        Script storage script = scripts[scriptAddress];
+        require(script.state == ScriptState.Approved, "script state must be Approved");
 
-        txHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", txHash));
+        /* init to failed because if delegatecall rans out of gas we won't have enough left to set it.
+           NB: delegatecall leaves 63/64 part of gasLimit for the caller.
+                Therefore the execute might revert with out of gas, leaving script in Approved state
+                when execute() is called with small gas limits.
+        */
+        script.state = ScriptState.Failed;
 
-        _checkSignatures(txHash, sigV, sigR, sigS); // will revert if any sig is incorrect
-
-        // If we make it here all signatures are accounted for
-        require(destination.call.value(value)(data)); // solhint-disable-line avoid-call-value
+        // passing scriptAddress to allow called script access its own storage if needed
+        if(scriptAddress.delegatecall(bytes4(keccak256("execute(address)")), scriptAddress)) {
+            script.state = ScriptState.Done;
+            result = true;
+        } else {
+            result = false;
+        }
+        emit ScriptExecuted(scriptAddress, result);
     }
 
-    /* requires quorum so it's callable only via execute */
+    function cancelScript(address scriptAddress) public {
+        require(msg.sender == address(this), "only callable via MultiSig");
+        Script storage script = scripts[scriptAddress];
+        require(script.state == ScriptState.Approved || script.state == ScriptState.New,
+                "script state must be New or Approved");
+
+        script.state= ScriptState.Cancelled;
+
+        emit ScriptCancelled(scriptAddress);
+    }
+
+    /* requires quorum so it's callable only via a script executed by this contract */
     function addSigners(address[] signers) public {
         require(msg.sender == address(this), "only callable via MultiSig");
         for (uint i= 0; i < signers.length; i++) {
@@ -72,7 +133,7 @@ contract MultiSig {
         }
     }
 
-    /* requires quorum so it's callable only via execute */
+    /* requires quorum so it's callable only via a script executed by this contract */
     function removeSigners(address[] signers) public {
         require(msg.sender == address(this), "only callable via MultiSig");
         for (uint i= 0; i < signers.length; i++) {
@@ -86,15 +147,5 @@ contract MultiSig {
 
     /* implement it in derived contract */
     function checkQuorum(uint signersCount) internal view returns(bool isQuorum);
-
-    function _checkSignatures(bytes32 txHash, uint8[] sigV, bytes32[] sigR, bytes32[] sigS) internal view {
-        address lastAdd = 0x0; // cannot have address(0) as an owner
-        for (uint i = 0; i < sigR.length; i++) {
-            address recovered = ecrecover(txHash, sigV[i], sigR[i], sigS[i]);
-            require(recovered > lastAdd, "signer addresses not increasing");
-            require(isSigner[recovered], "signer is not permitted");
-            lastAdd = recovered;
-        }
-    }
 
 }
