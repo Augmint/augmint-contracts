@@ -61,10 +61,9 @@ contract("StabilityBoardSigner", accounts => {
         const executeAddTx = await stabilityBoardSigner.execute(addSignerScript.address);
         testHelpers.logGasUse(this, executeAddTx, "multiSig.execute - add 2 signers");
 
-        let [signersCountAfter, isSignerAfter0, isSignerAfter1, script] = await Promise.all([
+        let [signersCountAfter, signersAfter, script] = await Promise.all([
             stabilityBoardSigner.activeSignersCount(),
-            stabilityBoardSigner.isSigner(newSigners[0]),
-            stabilityBoardSigner.isSigner(newSigners[1]),
+            stabilityBoardSigner.getAllSigners(0),
             stabilityBoardSignerWeb3Contract.methods.scripts(addSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardSigner, "SignerAdded", [
                 { signer: newSigners[0] },
@@ -77,8 +76,10 @@ contract("StabilityBoardSigner", accounts => {
         ]);
 
         assert.equal(script.state, scriptState.Done);
-        assert(isSignerAfter0);
-        assert(isSignerAfter1);
+        assert.equal(signersAfter[0][2].toNumber(), 1, "signer 0 should be active");
+        assert.equal(signersAfter[1][2].toNumber(), 1, "signer 1 should be active");
+        assert.equal(signersAfter[2][2].toNumber(), 1, "signer 2 should be active");
+        assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
         assert.equal(signersCountAfter.toNumber(), signersCountBefore + newSigners.length);
 
         // REMOVE
@@ -94,11 +95,10 @@ contract("StabilityBoardSigner", accounts => {
         const executeRemoveTx = await stabilityBoardSigner.execute(removeSignerScript.address);
         testHelpers.logGasUse(this, executeRemoveTx, "multiSig.execute - remove 2 signers");
 
-        [signersCountAfter, isSignerAfter0, isSignerAfter1, script] = await Promise.all([
+        [signersCountAfter, signersAfter, script] = await Promise.all([
             stabilityBoardSigner.activeSignersCount(),
-            stabilityBoardSigner.isSigner(newSigners[0]),
-            stabilityBoardSigner.isSigner(newSigners[1]),
-            stabilityBoardSignerWeb3Contract.methods.scripts(addSignerScript.address).call(),
+            stabilityBoardSigner.getAllSigners(0),
+            stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardSigner, "SignerRemoved", [
                 { signer: newSigners[0] },
                 { signer: newSigners[1] }
@@ -110,8 +110,10 @@ contract("StabilityBoardSigner", accounts => {
         ]);
 
         assert.equal(script.state, scriptState.Done);
-        assert(!isSignerAfter0);
-        assert(!isSignerAfter1);
+        assert.equal(signersAfter[0][2].toNumber(), 1, "signer 0 should be active");
+        assert.equal(signersAfter[1][2].toNumber(), 0, "signer 1 should be inactive");
+        assert.equal(signersAfter[2][2].toNumber(), 0, "signer 2 should be inactive");
+        assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
         assert.equal(signersCountAfter.toNumber(), signersCountBefore);
     });
 
@@ -163,6 +165,42 @@ contract("StabilityBoardSigner", accounts => {
     });
 
     it("should not execute a script in Done / Failed / Cancelled state");
+    it("Should list scripts", async function() {
+        const [approvedScript, revertingScript, doneScript] = await Promise.all([
+            SB_addSigners.new([accounts[1]]),
+            SB_revertingScript.new(),
+            SB_addSigners.new([accounts[1]])
+        ]);
+
+        // need to do it in sequence for deterministic order
+        await stabilityBoardSigner.sign(approvedScript.address);
+        await stabilityBoardSigner.sign(revertingScript.address);
+        await stabilityBoardSigner.sign(doneScript.address);
+
+        await Promise.all([
+            stabilityBoardSigner.execute(revertingScript.address),
+            stabilityBoardSigner.execute(doneScript.address)
+        ]);
+
+        const scriptsArray = await stabilityBoardSigner.getAllScripts(0);
+        const scripts = scriptsArray.filter(item => !item[1].eq(0)).map(item => {
+            return {
+                index: item[0].toNumber(),
+                address: "0x" + item[1].toString(16).padStart(40, "0"),
+                state: item[2].toNumber(),
+                signCount: item[3].toNumber()
+            };
+        });
+        assert.equal(scripts[0].state, scriptState.Approved);
+        assert.equal(scripts[0].address, approvedScript.address);
+        assert.equal(scripts[0].signCount, 1);
+        assert.equal(scripts[1].state, scriptState.Failed);
+        assert.equal(scripts[1].address, revertingScript.address);
+        assert.equal(scripts[1].signCount, 1);
+        assert.equal(scripts[2].state, scriptState.Done);
+        assert.equal(scripts[2].address, doneScript.address);
+        assert.equal(scripts[2].signCount, 1);
+    });
 
     it("only a signer should execute an Approved script", async function() {
         const addSignerScript = await SB_addSigners.new([accounts[1]]);
