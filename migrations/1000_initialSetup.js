@@ -28,9 +28,19 @@ module.exports = function(deployer) {
         .then(async initialSetupScript => {
             // TODO: MonetaryBoard permissions , should be removed once Restricted is using multiSig
             const rates = Rates.at(Rates.address);
-            await rates.grantPermission(StabilityBoardSigner.address, "MonetaryBoard");
             const feeAccount = FeeAccount.at(FeeAccount.address);
-            await feeAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard");
+            const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
+            const tokenAEur = TokenAEur.at(TokenAEur.address);
+            const augmintReserves = AugmintReserves.at(AugmintReserves.address);
+            const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
+            await Promise.all([
+                rates.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
+                feeAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
+                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
+                tokenAEur.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
+                augmintReserves.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
+                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "MonetaryBoard")
+            ]);
 
             // run initial setup script
             const stabilityBoardSigner = StabilityBoardSigner.at(StabilityBoardSigner.address);

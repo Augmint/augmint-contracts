@@ -67,7 +67,7 @@ contract localTest_initialSetup {
         _rates.grantPermission(address(this), "setRate");
         _rates.setRate("EUR", 99800);
 
-        // set NoFeeTransferContracts
+        // set NoFeeTransferContracts permissions
         _feeAccount.grantPermission(_feeAccount, "NoFeeTransferContracts");
         _feeAccount.grantPermission(_augmintReserves, "NoFeeTransferContracts");
         _feeAccount.grantPermission(_interestEarnedAccount, "NoFeeTransferContracts");
@@ -75,6 +75,18 @@ contract localTest_initialSetup {
         _feeAccount.grantPermission(_loanManager, "NoFeeTransferContracts");
         _feeAccount.grantPermission(_locker, "NoFeeTransferContracts");
         _feeAccount.grantPermission(_exchange, "NoFeeTransferContracts");
+
+        // set MonetarySupervisorContract permissions
+        _interestEarnedAccount.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
+        _tokenAEur.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
+        _augmintReserves.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
+
+        // set LoanManagerContracts permissions
+        _monetarySupervisor.grantPermission(_loanManager, "LoanManagerContracts");
+
+        // set LockerContracts permissions
+        _monetarySupervisor.grantPermission(_locker, "LockerContracts");
+
 
     }
 

@@ -5,11 +5,8 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 module.exports = function(deployer) {
     deployer.deploy(Locker, TokenAEur.address, MonetarySupervisor.address);
     deployer.then(async () => {
-        const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
         const locker = Locker.at(Locker.address);
         await Promise.all([
-            monetarySupervisor.grantPermission(Locker.address, "LockerContracts"),
-
             // (perTermInterest,  durationInSecs, minimumLockAmount, isActive)
             locker.addLockProduct(80001, 31536000, 1000, true), // 365 days, 8% p.a.
             locker.addLockProduct(33929, 15552000, 1000, true), // 180 days, 7% p.a.
