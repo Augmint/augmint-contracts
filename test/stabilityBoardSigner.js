@@ -79,7 +79,10 @@ contract("StabilityBoardSigner", accounts => {
     it("should add then disable signers and should not cancel or execute in Done state", async function() {
         const newSigners = [accounts[1], accounts[2]];
 
-        const signersCountBefore = (await stabilityBoardSigner.activeSignersCount()).toNumber();
+        const [allSignersCountBefore, activeSignersCountBefore] = await Promise.all([
+            stabilityBoardSigner.getAllSignersCount().then(res => res.toNumber()),
+            stabilityBoardSigner.activeSignersCount().then(res => res.toNumber())
+        ]);
 
         const addSignerScript = await SB_addSigners.new(newSigners);
 
@@ -89,7 +92,8 @@ contract("StabilityBoardSigner", accounts => {
         const executeAddTx = await stabilityBoardSigner.execute(addSignerScript.address);
         testHelpers.logGasUse(this, executeAddTx, "multiSig.execute - add 2 signers");
 
-        let [signersCountAfter, signersAfter, script] = await Promise.all([
+        let [allSignersCountAfter, activeSignersCountAfter, signersAfter, script] = await Promise.all([
+            stabilityBoardSigner.getAllSignersCount(),
             stabilityBoardSigner.activeSignersCount(),
             stabilityBoardSigner.getAllSigners(0),
             stabilityBoardSignerWeb3Contract.methods.scripts(addSignerScript.address).call(),
@@ -108,7 +112,8 @@ contract("StabilityBoardSigner", accounts => {
         assert.equal(signersAfter[1][2].toNumber(), 1, "signer 1 should be active");
         assert.equal(signersAfter[2][2].toNumber(), 1, "signer 2 should be active");
         assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
-        assert.equal(signersCountAfter.toNumber(), signersCountBefore + newSigners.length);
+        assert.equal(activeSignersCountAfter.toNumber(), activeSignersCountBefore + newSigners.length);
+        assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + newSigners.length);
 
         // REMOVE
         const removeSignerScript = await SB_removeSigners.new(newSigners);
@@ -123,7 +128,7 @@ contract("StabilityBoardSigner", accounts => {
         const executeRemoveTx = await stabilityBoardSigner.execute(removeSignerScript.address);
         testHelpers.logGasUse(this, executeRemoveTx, "multiSig.execute - remove 2 signers");
 
-        [signersCountAfter, signersAfter, script] = await Promise.all([
+        [activeSignersCountAfter, signersAfter, script] = await Promise.all([
             stabilityBoardSigner.activeSignersCount(),
             stabilityBoardSigner.getAllSigners(0),
             stabilityBoardSignerWeb3Contract.methods.scripts(removeSignerScript.address).call(),
@@ -142,7 +147,8 @@ contract("StabilityBoardSigner", accounts => {
         assert.equal(signersAfter[1][2].toNumber(), 0, "signer 1 should be inactive");
         assert.equal(signersAfter[2][2].toNumber(), 0, "signer 2 should be inactive");
         assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
-        assert.equal(signersCountAfter.toNumber(), signersCountBefore);
+        assert.equal(activeSignersCountAfter.toNumber(), activeSignersCountBefore);
+        assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + newSigners.length);
 
         // try to execute again
         await testHelpers.expectThrow(stabilityBoardSigner.execute(removeSignerScript.address));
@@ -327,7 +333,8 @@ contract("StabilityBoardSigner", accounts => {
     });
 
     it("Should list scripts", async function() {
-        const [approvedScript, revertingScript, doneScript] = await Promise.all([
+        const [scriptCountBefore, approvedScript, revertingScript, doneScript] = await Promise.all([
+            stabilityBoardSigner.getScriptsCount().then(res => res.toNumber()),
             SB_addSigners.new([accounts[1]]),
             SB_revertingScript.new(),
             SB_addSigners.new([accounts[1]])
@@ -343,7 +350,10 @@ contract("StabilityBoardSigner", accounts => {
             stabilityBoardSigner.execute(doneScript.address)
         ]);
 
-        const scriptsArray = await stabilityBoardSigner.getAllScripts(0);
+        const [scriptsCountAfter, scriptsArray] = await Promise.all([
+            stabilityBoardSigner.getScriptsCount().then(res => res.toNumber()),
+            stabilityBoardSigner.getAllScripts(scriptCountBefore)
+        ]);
         const scripts = scriptsArray.filter(item => !item[1].eq(0)).map(item => {
             return {
                 index: item[0].toNumber(),
@@ -352,6 +362,9 @@ contract("StabilityBoardSigner", accounts => {
                 signCount: item[3].toNumber()
             };
         });
+
+        assert.equal(scripts.length, 3);
+        assert.equal(scriptsCountAfter, scriptCountBefore + 3);
         assert.equal(scripts[0].state, scriptState.Approved);
         assert.equal(scripts[0].address, approvedScript.address);
         assert.equal(scripts[0].signCount, 1);
