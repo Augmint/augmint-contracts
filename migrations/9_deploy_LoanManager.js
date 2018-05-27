@@ -2,19 +2,14 @@ const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Rates = artifacts.require("./Rates.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
-const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer) {
     deployer.deploy(LoanManager, TokenAEur.address, MonetarySupervisor.address, Rates.address);
     deployer.then(async () => {
         const lm = LoanManager.at(LoanManager.address);
-        const feeAccount = FeeAccount.at(FeeAccount.address);
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
 
-        await Promise.all([
-            feeAccount.grantPermission(LoanManager.address, "NoFeeTransferContracts"),
-            monetarySupervisor.grantPermission(LoanManager.address, "LoanManagerContracts")
-        ]);
+        await monetarySupervisor.grantPermission(LoanManager.address, "LoanManagerContracts");
 
         console.log("   On a test network. Adding test loanProducts. Network id: ", web3.version.network);
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive

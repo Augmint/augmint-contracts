@@ -11,7 +11,7 @@ const Exchange = artifacts.require("./Exchange.sol");
 
 const localTest_initialSetup = artifacts.require("./SB_scripts/localTest/localTest_initialSetup.sol");
 
-module.exports = function(deployer, network) {
+module.exports = function(deployer) {
     deployer
         .deploy(
             localTest_initialSetup,
@@ -29,6 +29,8 @@ module.exports = function(deployer, network) {
             // TODO: MonetaryBoard permissions , should be removed once Restricted is using multiSig
             const rates = Rates.at(Rates.address);
             await rates.grantPermission(StabilityBoardSigner.address, "MonetaryBoard");
+            const feeAccount = FeeAccount.at(FeeAccount.address);
+            await feeAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard");
 
             // run initial setup script
             const stabilityBoardSigner = StabilityBoardSigner.at(StabilityBoardSigner.address);

@@ -7,9 +7,4 @@ module.exports = function(deployer) {
         2, // min: 0.02 A-EUR
         500 // max fee: 5 A-EUR);
     );
-
-    deployer.then(async () => {
-        const feeAccount = FeeAccount.at(FeeAccount.address);
-        await feeAccount.grantPermission(FeeAccount.address, "NoFeeTransferContracts");
-    });
 };

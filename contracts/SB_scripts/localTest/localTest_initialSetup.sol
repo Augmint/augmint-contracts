@@ -19,6 +19,7 @@ import "../..//Exchange.sol";
 
 
 contract localTest_initialSetup {
+    /* struct SystemContracts  */
     Rates public rates;
     FeeAccount public feeAccount;
     AugmintReserves public augmintReserves;
@@ -51,12 +52,30 @@ contract localTest_initialSetup {
 
     function execute(localTest_initialSetup self) external {
         //MultiSig multiSig = MultiSig(address(this));
-
-        // Set ETH/EUR rates
         Rates _rates = self.rates();
+        FeeAccount _feeAccount = self.feeAccount();
+        AugmintReserves _augmintReserves = self.augmintReserves();
+        InterestEarnedAccount _interestEarnedAccount = self.interestEarnedAccount();
+        TokenAEur _tokenAEur = self.tokenAEur();
+        MonetarySupervisor _monetarySupervisor = self.monetarySupervisor();
+        LoanManager _loanManager = self.loanManager();
+        Locker _locker = self.locker();
+        Exchange _exchange = self.exchange();
+
+        // setRate permissions and initial ETH/EUR rates
         _rates.grantPermission(msg.sender, "setRate");
         _rates.grantPermission(address(this), "setRate");
         _rates.setRate("EUR", 99800);
+
+        // set NoFeeTransferContracts
+        _feeAccount.grantPermission(_feeAccount, "NoFeeTransferContracts");
+        _feeAccount.grantPermission(_augmintReserves, "NoFeeTransferContracts");
+        _feeAccount.grantPermission(_interestEarnedAccount, "NoFeeTransferContracts");
+        _feeAccount.grantPermission(_monetarySupervisor, "NoFeeTransferContracts");
+        _feeAccount.grantPermission(_loanManager, "NoFeeTransferContracts");
+        _feeAccount.grantPermission(_locker, "NoFeeTransferContracts");
+        _feeAccount.grantPermission(_exchange, "NoFeeTransferContracts");
+
     }
 
 }

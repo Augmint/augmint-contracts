@@ -1,16 +1,13 @@
 const Locker = artifacts.require("./Locker.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
-const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer) {
     deployer.deploy(Locker, TokenAEur.address, MonetarySupervisor.address);
     deployer.then(async () => {
-        const feeAccount = FeeAccount.at(FeeAccount.address);
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
         const locker = Locker.at(Locker.address);
         await Promise.all([
-            feeAccount.grantPermission(Locker.address, "NoFeeTransferContracts"),
             monetarySupervisor.grantPermission(Locker.address, "LockerContracts"),
 
             // (perTermInterest,  durationInSecs, minimumLockAmount, isActive)
