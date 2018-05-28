@@ -19,11 +19,11 @@ module.exports = function(deployer, network, accounts) {
         const exchange = Exchange.at(Exchange.address);
 
         const grantTxs = monetaryBoardAccounts.map(acc => [
-            feeAccount.grantPermission(acc, "MonetaryBoard"),
-            locker.grantPermission(acc, "MonetaryBoard"),
-            loanManager.grantPermission(acc, "MonetaryBoard"),
-            monetarySupervisor.grantPermission(acc, "MonetaryBoard"),
-            exchange.grantPermission(acc, "MonetaryBoard")
+            feeAccount.grantPermission(acc, "StabilityBoardSignerContract"),
+            locker.grantPermission(acc, "StabilityBoardSignerContract"),
+            loanManager.grantPermission(acc, "StabilityBoardSignerContract"),
+            monetarySupervisor.grantPermission(acc, "StabilityBoardSignerContract"),
+            exchange.grantPermission(acc, "StabilityBoardSignerContract")
         ]);
         await Promise.all(grantTxs);
     });

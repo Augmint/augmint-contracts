@@ -26,7 +26,7 @@ module.exports = function(deployer) {
             Exchange.address
         )
         .then(async initialSetupScript => {
-            // TODO: MonetaryBoard permissions , should be removed once Restricted is using multiSig
+            // StabilityBoardSignerContract permissions
             const rates = Rates.at(Rates.address);
             const feeAccount = FeeAccount.at(FeeAccount.address);
             const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
@@ -36,14 +36,14 @@ module.exports = function(deployer) {
             const loanManager = LoanManager.at(LoanManager.address);
             const locker = Locker.at(Locker.address);
             await Promise.all([
-                rates.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                feeAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                tokenAEur.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                augmintReserves.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                loanManager.grantPermission(StabilityBoardSigner.address, "MonetaryBoard"),
-                locker.grantPermission(StabilityBoardSigner.address, "MonetaryBoard")
+                rates.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
+                feeAccount.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
+                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
+                tokenAEur.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
+                augmintReserves.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
+                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
+                loanManager.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
+                locker.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract")
             ]);
 
             // run initial setup script
@@ -56,5 +56,8 @@ module.exports = function(deployer) {
                     Script address: ${initialSetupScript.address}
                     Execution hash: ${tx.receipt.transactionHash}\n`);
             }
+
+            // In non test ( non local) deployments deployer account
+            // must revoke it's own StabilityBoardSignerContract permission
         });
 };

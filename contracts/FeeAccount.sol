@@ -31,7 +31,7 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
     }
 
     function setTransferFees(uint transferFeePt, uint transferFeeMin, uint transferFeeMax)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
         transferFee = TransferFee(transferFeePt, transferFeeMin, transferFeeMax);
         emit TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
     }

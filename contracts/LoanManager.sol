@@ -75,7 +75,7 @@ contract LoanManager is Restricted {
 
     function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
                                 uint32 defaultingFeePt, bool isActive)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
 
         uint _newProductId = products.push(
             LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive)
@@ -88,7 +88,7 @@ contract LoanManager is Restricted {
     }
 
     function setLoanProductActiveState(uint32 productId, bool newState)
-    external restrict ("MonetaryBoard") {
+    external restrict ("StabilityBoardSignerContract") {
         require(productId < products.length, "invalid productId"); // next line would revert but require to emit reason
         products[productId].isActive = false;
         emit LoanProductActiveStateChanged(productId, newState);
@@ -201,7 +201,7 @@ contract LoanManager is Restricted {
 
     /* to allow upgrade of Rates and MonetarySupervisor contracts */
     function setSystemContracts(Rates newRatesContract, MonetarySupervisor newMonetarySupervisor)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
         rates = newRatesContract;
         monetarySupervisor = newMonetarySupervisor;
         emit SystemContractsChanged(newRatesContract, newMonetarySupervisor);

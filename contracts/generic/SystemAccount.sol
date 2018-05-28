@@ -11,7 +11,7 @@ contract SystemAccount is Restricted {
     /* FIXME: this is only for first pilots to avoid funds stuck in contract due to bugs.
       remove this function for higher volume pilots */
     function withdraw(AugmintToken tokenAddress, address to, uint tokenAmount, uint weiAmount, string narrative)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
         tokenAddress.transferWithNarrative(to, tokenAmount, narrative);
         if (weiAmount > 0) {
             to.transfer(weiAmount);
