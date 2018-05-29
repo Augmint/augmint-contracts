@@ -170,6 +170,8 @@ contract Exchange is Restricted {
     function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
+        require(buy.amount > 0, "buy order must have unfilled amount left");
+        require(sell.amount > 0, "sell order must have unfilled amount left");
 
         require(buy.price >= sell.price, "buy price must be >= sell price");
 
