@@ -8,14 +8,14 @@ pragma solidity 0.4.24;
 import "../../generic/AugmintToken.sol";
 import "../../generic/MultiSig.sol";
 import  "../../Rates.sol";
-import "../..//FeeAccount.sol";
-import "../..//AugmintReserves.sol";
-import "../..//InterestEarnedAccount.sol";
-import "../..//TokenAEur.sol";
-import "../..//MonetarySupervisor.sol";
-import "../..//LoanManager.sol";
-import "../..//Locker.sol";
-import "../..//Exchange.sol";
+import "../../FeeAccount.sol";
+import "../../AugmintReserves.sol";
+import "../../InterestEarnedAccount.sol";
+import "../../TokenAEur.sol";
+import "../../MonetarySupervisor.sol";
+import "../../LoanManager.sol";
+import "../../Locker.sol";
+import "../../Exchange.sol";
 
 
 contract localTest_initialSetup {
