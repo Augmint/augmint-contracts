@@ -124,24 +124,26 @@ contract Exchange is Restricted {
     }
 
     /* matches any two orders if the sell price >= buy price
-        trade price meets in the middle
+        trade price is the price of the maker (the order placed earlier)
         reverts if any of the orders have been removed
     */
     function matchOrders(uint64 buyTokenId, uint64 sellTokenId) external {
-        _fillOrder(buyTokenId, sellTokenId);
+        require(_fillOrder(buyTokenId, sellTokenId), "fill order failed");
     }
 
     /*  matches as many orders as possible from the passed orders
         Runs as long as gas is available for the call.
-        Stops if any match is invalid (case when any of the orders removed after client generated the match list sent)
+        Reverts if any match is invalid (e.g sell price > buy price)
+        Skips match if any of the matched orders is removed / already filled (i.e. amount = 0)
     */
     function matchMultipleOrders(uint64[] buyTokenIds, uint64[] sellTokenIds) external returns(uint matchCount) {
         uint len = buyTokenIds.length;
         require(len == sellTokenIds.length, "buyTokenIds and sellTokenIds lengths must be equal");
 
         for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {
-            _fillOrder(buyTokenIds[i], sellTokenIds[i]);
-            matchCount++;
+            if(_fillOrder(buyTokenIds[i], sellTokenIds[i])) {
+                matchCount++;
+            }
         }
     }
 
@@ -167,11 +169,13 @@ contract Exchange is Restricted {
         }
     }
 
-    function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private {
+    function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private returns(bool success) {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
-        require(buy.amount > 0, "buy order must have unfilled amount left");
-        require(sell.amount > 0, "sell order must have unfilled amount left");
+        if( buy.amount == 0 || sell.amount == 0 ) {
+            return false; // one order is already filled and removed.
+                          // we let matchMultiple continue, indivudal match will revert
+        }
 
         require(buy.price >= sell.price, "buy price must be >= sell price");
 
@@ -209,6 +213,8 @@ contract Exchange is Restricted {
 
         emit OrderFill(buy.maker, sell.maker, buyTokenId,
             sellTokenId, publishedRate, price, fillRate, tradedWei, tradedTokens);
+
+        return true;
     }
 
     function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)
