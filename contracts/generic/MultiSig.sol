@@ -1,13 +1,14 @@
 /* Abstract multisig contract to allow multi approval execution of atomic contracts scripts
         e.g. migrations or settings.
-    Scripts are allowed to run only once.
-    Each derived contract should implement checkQuorum
-    TODO:
-    - consider allowing only one pending script by:
-        a) store prevScript and don't allow new script until that is New or Approved
-            OR
-        b) store script approve date and don't allow running it after x days
-    - do we need signature revoke?
+    * Script added by signing a script address by a signer  (NEW state)
+    * Script goes to ALLOWED state once a quorom of signers sign it (quorom fx is defined in each derived contracts)
+    * Script can be signed even in APPROVED state
+    * APPROVED scripts can be executed only once.
+        - if script succeeds then state set to DONE
+        - If script runs out of gas or reverts then script state set to FAILEd and not allowed to run again
+          (To avoid leaving "behind" scripts which fail in a given state but eventually execute in the future)
+    * Scripts can be cancelled by an other multisig script approved and calling cancelScript()
+    * Adding/removing signers is only via multisig approved scripts using addSigners / removeSigners fxs
 */
 pragma solidity 0.4.24;
 
@@ -21,15 +22,17 @@ contract MultiSig {
 
     mapping(address => bool) public isSigner;
     address[] public allSigners; // all signers, even the disabled ones
+                                // NB: it can contain duplicates when a signer is added, removed then readded again
+                                //   the purpose of this array is to being able to iterate on signers in isSigner
     uint public activeSignersCount;
 
     enum ScriptState {New, Approved, Done, Cancelled, Failed}
 
     struct Script {
-        ScriptState state;  // do we want to calculate quorum at the time time of sign or execute call ?
+        ScriptState state;
         uint signCount;
         mapping(address => bool) signedBy;
-        address[] allSigners;  // all signers even whom revoked their signature
+        address[] allSigners;
     }
 
     mapping(address => Script) public scripts;
@@ -39,15 +42,14 @@ contract MultiSig {
     event SignerRemoved(address signer);
 
     event ScriptSigned(address scriptAddress, address signer);
-    /* event ScriptSignatureRevoked(address scriptAddress, address signer); */
     event ScriptApproved(address scriptAddress);
     event ScriptCancelled(address scriptAddress);
 
     event ScriptExecuted(address scriptAddress, bool result);
 
     constructor() public {
-        // deployer address is the first signer. Deployer should add signers after deployed and configured contracts
-        // The first script which sets the new contracts live should revoke deployer's signature
+        // deployer address is the first signer. Deployer can configure new contracts by itself being the only "signer"
+        // The first script which sets the new contracts live should add signers and revoke deployer's signature right
         isSigner[msg.sender] = true;
         allSigners.push(msg.sender);
         activeSignersCount = 1;
@@ -77,14 +79,6 @@ contract MultiSig {
         }
     }
 
-    /* Do we need this?
-     function revokeApproval(address scriptAddress) public {
-        require(isSigner[msg.sender], "sender must be signer");
-        require(script.state = ScriptState.New, "script state must be New");
-        require(script.signedBy[msg.sender], "script must be signed by signer");
-        // ....
-    } */
-
     function execute(address scriptAddress) public returns (bool result) {
         // only allow execute to signers to avoid someone set an approved script failed by calling it with low gaslimit
         require(isSigner[msg.sender], "sender must be signer");
@@ -98,7 +92,7 @@ contract MultiSig {
         */
         script.state = ScriptState.Failed;
 
-        // passing scriptAddress to allow called script access its own storage if needed
+        // passing scriptAddress to allow called script access its own public fx-s if needed
         if(scriptAddress.delegatecall(bytes4(keccak256("execute(address)")), scriptAddress)) {
             script.state = ScriptState.Done;
             result = true;
