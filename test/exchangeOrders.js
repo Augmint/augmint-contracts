@@ -136,6 +136,34 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelpers.cancelOrder(this, order);
     });
 
+    it("should fail when cancelling an already deleted sell order", async function() {
+        const sellOrder1 = { amount: 45454, maker: makers[0], price: 1010000, orderType: TOKEN_SELL };
+        const sellOrder2 = { amount: 45454, maker: makers[0], price: 1010000, orderType: TOKEN_SELL };
+
+        await exchangeTestHelpers.newOrder(this, sellOrder1);
+        await exchangeTestHelpers.newOrder(this, sellOrder2);
+        await testHelpers.expectThrow(exchange.cancelSellTokenOrder(sellOrder2.id));
+    });
+
+    it("should fail when cancelling an already deleted buy order", async function() {
+        const buyOrder1 = {
+            amount: global.web3v1.utils.toWei("1"),
+            maker: makers[0],
+            price: 1020000,
+            orderType: TOKEN_BUY
+        };
+        const buyOrder2 = {
+            amount: global.web3v1.utils.toWei("1"),
+            maker: makers[0],
+            price: 1020000,
+            orderType: TOKEN_BUY
+        };
+
+        await exchangeTestHelpers.newOrder(this, buyOrder1);
+        await exchangeTestHelpers.newOrder(this, buyOrder2);
+        await testHelpers.expectThrow(exchange.cancelBuyTokenOrder(buyOrder2.id));
+    });
+
     it("only own orders should be possible to cancel", async function() {
         const buyOrder = {
             amount: global.web3v1.utils.toWei("1"),

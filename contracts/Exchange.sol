@@ -100,6 +100,7 @@ contract Exchange is Restricted {
     function cancelBuyTokenOrder(uint64 buyTokenId) external {
         Order storage order = buyTokenOrders[buyTokenId];
         require(order.maker == msg.sender, "msg.sender must be order.maker");
+        require(order.amount > 0, "buy order already removed");
 
         uint amount = order.amount;
         order.amount = 0;
@@ -113,6 +114,7 @@ contract Exchange is Restricted {
     function cancelSellTokenOrder(uint64 sellTokenId) external {
         Order storage order = sellTokenOrders[sellTokenId];
         require(order.maker == msg.sender, "msg.sender must be order.maker");
+        require(order.amount > 0, "sell order already removed");
 
         uint amount = order.amount;
         order.amount = 0;
