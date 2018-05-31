@@ -21,35 +21,35 @@ rectangle "Legend" #Beige {
     artifact contract3
 	artifact contract4
     contract1 ==>> contract2 : Dependency without setter\nChange via new deployment
-    contract3 ..>> contract4 : Amendable dependency\nChange via setter
+    contract3 ..>> contract4 : Amendable dependency\nChange via setter or Restricted.grantPermission
 }
 
-AugmintToken ==>> StabilityBoardSigner
 AugmintToken ..>> FeeAccount
+AugmintToken ..>> StabilityBoardSigner
 
-MonetarySupervisor ==>> StabilityBoardSigner
 MonetarySupervisor ==>> AugmintToken
+MonetarySupervisor ..>> StabilityBoardSigner
 MonetarySupervisor ..>> AugmintReserves
 MonetarySupervisor ..>> InterestEarnedAccount
 
-LoanManager ==>> StabilityBoardSigner
 LoanManager ==>> AugmintToken
+LoanManager ..>> StabilityBoardSigner
 LoanManager ..>> MonetarySupervisor
 LoanManager ..>> Rates
 
-Locker ==>> StabilityBoardSigner
 Locker ==>> AugmintToken
+Locker ..>> StabilityBoardSigner
 Locker ..>> MonetarySupervisor
 
-Exchange ==>> StabilityBoardSigner
 Exchange ==>> AugmintToken
+Exchange ..>> StabilityBoardSigner
 Exchange ..>> Rates
 Exchange ..>> FeeAccount
 
-InterestEarnedAccount ==>> StabilityBoardSigner
+InterestEarnedAccount ..>> StabilityBoardSigner
 
-FeeAccount ==>> StabilityBoardSigner
+FeeAccount ..>> StabilityBoardSigner
 
-AugmintReserves ==>> StabilityBoardSigner
+AugmintReserves ..>> StabilityBoardSigner
 
 @enduml

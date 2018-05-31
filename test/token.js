@@ -20,7 +20,6 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                StabilityBoardSigner.address,
                 0 // feeaccount
             )
         );
@@ -33,7 +32,6 @@ contract("AugmintToken tests", accounts => {
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
-                StabilityBoardSigner.address,
                 tokenTestHelpers.feeAccount.address
             )
         );
@@ -46,7 +44,6 @@ contract("AugmintToken tests", accounts => {
                 "", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals,
-                StabilityBoardSigner.address,
                 tokenTestHelpers.feeAccount.address
             )
         );
@@ -73,6 +70,6 @@ contract("AugmintToken tests", accounts => {
 
     it("should not call setFeeAccount directly", async function() {
         const newFeeAccount = accounts[2];
-        await testHelpers.expectThrow(augmintToken.setFeeAccount(newFeeAccount, { from: accounts[0] }));
+        await testHelpers.expectThrow(augmintToken.setFeeAccount(newFeeAccount, { from: accounts[1] }));
     });
 });
