@@ -15,11 +15,9 @@ module.exports = async function(deployer, network, accounts) {
 
         const oldToken = await TokenAEur.new(FeeAccount.address);
 
-        const [oldLocker, oldLoanManager, oldExchange] = await Promise.all([
-            Locker.new(oldToken.address, MonetarySupervisor.address),
-            LoanManager.new(oldToken.address, MonetarySupervisor.address, Rates.address),
-            Exchange.new(oldToken.address, Rates.address)
-        ]);
+        const oldLocker = await Locker.new(oldToken.address, MonetarySupervisor.address);
+        const oldLoanManager = await LoanManager.new(oldToken.address, MonetarySupervisor.address, Rates.address);
+        const oldExchange = await Exchange.new(oldToken.address, Rates.address);
 
         await Promise.all([
             oldToken.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
