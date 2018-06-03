@@ -7,12 +7,14 @@ const LoanManager = artifacts.require("./LoanManager.sol");
 const Locker = artifacts.require("./Locker.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const Exchange = artifacts.require("./Exchange.sol");
+const PreToken = artifacts.require("./PreToken.sol");
 
 module.exports = function(deployer, network, accounts) {
     deployer.then(async () => {
         const feeAccount = FeeAccount.at(FeeAccount.address);
         const monetaryBoardAccounts = [accounts[0]];
 
+        const preToken = PreToken.at(PreToken.address);
         const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
         const loanManager = LoanManager.at(LoanManager.address);
         const locker = Locker.at(Locker.address);
@@ -25,6 +27,13 @@ module.exports = function(deployer, network, accounts) {
             monetarySupervisor.grantPermission(acc, "StabilityBoardSignerContract"),
             exchange.grantPermission(acc, "StabilityBoardSignerContract")
         ]);
+        grantTxs.push(
+            preToken.grantMultiplePermissions(accounts[0], [
+                "PreTokenAgreementSignerContract",
+                "PreTokenIssueSignerContract"
+            ])
+        );
+
         await Promise.all(grantTxs);
     });
 };
