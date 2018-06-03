@@ -207,7 +207,7 @@ contract("Lock", accounts => {
 
         const perTermInterest = product[0].toNumber();
         const durationInSecs = product[1].toNumber();
-        const interestEarned = Math.floor(amountToLock * perTermInterest / 1000000);
+        const interestEarned = Math.floor((amountToLock * perTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
         const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
@@ -400,7 +400,7 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
+        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
         const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
@@ -461,7 +461,7 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
+        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
         const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
@@ -513,7 +513,7 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
+        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
 
         const expectedAccountLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)) - 1;
 
@@ -738,7 +738,7 @@ contract("Lock", accounts => {
         testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
 
         const perTermInterest = product[0];
-        const interestEarned = Math.floor(amountToLock * perTermInterest / 1000000);
+        const interestEarned = Math.floor((amountToLock * perTermInterest) / 1000000);
 
         const newestLockId = (await lockerInstance.getLockCount()) - 1;
 
@@ -836,6 +836,7 @@ contract("Lock", accounts => {
 
     it("should only allow whitelisted lock contract to be used", async function() {
         const craftedLocker = await Locker.new(augmintToken.address, monetarySupervisor.address);
+        await craftedLocker.grantPermission(accounts[0], "StabilityBoardSignerContract");
         await craftedLocker.addLockProduct(1000000, 120, 0, true);
         const newLockProductId = (await craftedLocker.getLockProductCount()).toNumber() - 1;
         await testHelpers.expectThrow(

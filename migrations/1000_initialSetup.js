@@ -36,14 +36,38 @@ module.exports = function(deployer) {
             const loanManager = LoanManager.at(LoanManager.address);
             const locker = Locker.at(Locker.address);
             await Promise.all([
-                rates.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                feeAccount.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                tokenAEur.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                augmintReserves.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                loanManager.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                locker.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract")
+                rates.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ]),
+                feeAccount.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ]),
+                interestEarnedAccount.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ]),
+                tokenAEur.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ]),
+                augmintReserves.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ]),
+                monetarySupervisor.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ]),
+                loanManager.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ]),
+                locker.grantMultiplePermissions(StabilityBoardSigner.address, [
+                    "StabilityBoardSignerContract",
+                    "PermissionGranterContract"
+                ])
             ]);
 
             // run initial setup script

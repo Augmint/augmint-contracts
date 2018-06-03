@@ -60,6 +60,7 @@ contract("Loan to Deposit ratio tests", accounts => {
             tokenTestHelpers.augmintReserves.grantPermission(monetarySupervisor.address, "MonetarySupervisorContract"),
             locker.setMonetarySupervisor(monetarySupervisor.address),
             loanManager.setSystemContracts(rates.address, monetarySupervisor.address),
+            monetarySupervisor.grantPermission(accounts[0], "StabilityBoardSignerContract"),
             monetarySupervisor.grantPermission(locker.address, "LockerContracts"),
             monetarySupervisor.grantPermission(loanManager.address, "LoanManagerContracts")
         ]);
@@ -128,7 +129,7 @@ contract("Loan to Deposit ratio tests", accounts => {
     it("LTD when totalLoan 0 and totalLock > 0 and allowed difference amount is in effect", async function() {
         //lock some
         const amountToLock = 1000;
-        const interestAmount = Math.floor(amountToLock * lockPerTermInterest / PERCENT_100);
+        const interestAmount = Math.floor((amountToLock * lockPerTermInterest) / PERCENT_100);
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 
@@ -192,7 +193,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // lock the same amount
         const amountToLock = 3000;
-        const interestAmount = Math.floor(amountToLock * lockPerTermInterest / PERCENT_100);
+        const interestAmount = Math.floor((amountToLock * lockPerTermInterest) / PERCENT_100);
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 
@@ -230,7 +231,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // lock less than the loan
         const amountToLock = 600000;
-        const interestAmount = Math.floor(amountToLock * lockPerTermInterest / PERCENT_100);
+        const interestAmount = Math.floor((amountToLock * lockPerTermInterest) / PERCENT_100);
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 
@@ -275,7 +276,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // lock less than the loan
         const amountToLock = 600000;
-        const interestAmount = Math.floor(amountToLock * lockPerTermInterest / PERCENT_100);
+        const interestAmount = Math.floor((amountToLock * lockPerTermInterest) / PERCENT_100);
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 
@@ -316,7 +317,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // lock more than the loan
         const amountToLock = 640000;
-        const interestAmount = Math.floor(amountToLock * lockPerTermInterest / PERCENT_100);
+        const interestAmount = Math.floor((amountToLock * lockPerTermInterest) / PERCENT_100);
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 
@@ -361,7 +362,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // lock more than the loan
         const amountToLock = 410000;
-        const interestAmount = Math.floor(amountToLock * lockPerTermInterest / PERCENT_100);
+        const interestAmount = Math.floor((amountToLock * lockPerTermInterest) / PERCENT_100);
         await augmintToken.transfer(InterestEarnedAccount.address, interestAmount);
         await augmintToken.transferAndNotify(locker.address, amountToLock, lockProductId);
 

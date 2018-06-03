@@ -1,5 +1,5 @@
-/* deploy a legacy augmintToken, Locker,  LoanManager & Exchange contracts
-    with test loans , locks & orders for local manual testing  */
+/* deploy legacy augmintToken, Locker,  LoanManager & Exchange contracts
+    with test loans, locks & orders for local manual testing  */
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
 const Rates = artifacts.require("./Rates.sol");
@@ -18,6 +18,12 @@ module.exports = async function(deployer, network, accounts) {
         const oldLocker = await Locker.new(oldToken.address, MonetarySupervisor.address);
         const oldLoanManager = await LoanManager.new(oldToken.address, MonetarySupervisor.address, Rates.address);
         const oldExchange = await Exchange.new(oldToken.address, Rates.address);
+
+        await Promise.all([
+            oldLoanManager.grantPermission(accounts[0], "StabilityBoardSignerContract"),
+            oldLocker.grantPermission(accounts[0], "StabilityBoardSignerContract"),
+            oldExchange.grantPermission(accounts[0], "StabilityBoardSignerContract")
+        ]);
 
         await Promise.all([
             oldToken.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
