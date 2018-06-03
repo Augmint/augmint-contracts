@@ -5,11 +5,6 @@
     - burns and issues to AugmintReserves
     - Send funds from reserve to exchange when intervening (not implemented yet)
     - Converts older versions of AugmintTokens in 1:1 to new
-
-    TODO:
-        - Mcreate and use MonetarySupervisorInterface?
-        - create and use InterestEarnedAccount interface ?
-
 */
 
 pragma solidity 0.4.24;
@@ -30,7 +25,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     InterestEarnedAccount public interestEarnedAccount;
     AugmintReserves public augmintReserves;
 
-    uint public issuedByMonetaryBoard; // supply issued manually by monetary board
+    uint public issuedByStabilityBoard; // token issued  by Stability Board
 
     uint public totalLoanAmount; // total amount of all loans without interest, in token
     uint public totalLockedAmount; // total amount of all locks without premium, in token
@@ -79,12 +74,12 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     }
 
     function issueToReserve(uint amount) external restrict("StabilityBoardSignerContract") {
-        issuedByMonetaryBoard = issuedByMonetaryBoard.add(amount);
+        issuedByStabilityBoard = issuedByStabilityBoard.add(amount);
         augmintToken.issueTo(augmintReserves, amount);
     }
 
     function burnFromReserve(uint amount) external restrict("StabilityBoardSignerContract") {
-        issuedByMonetaryBoard = issuedByMonetaryBoard.sub(amount);
+        issuedByStabilityBoard = issuedByStabilityBoard.sub(amount);
         augmintReserves.burn(augmintToken, amount);
     }
 

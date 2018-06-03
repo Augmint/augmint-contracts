@@ -90,7 +90,7 @@ contract AugmintToken is AugmintTokenInterface {
     // Issue tokens. See MonetarySupervisor but as a rule of thumb issueTo is only allowed:
     //      - on new loan (by trusted Lender contracts)
     //      - when converting old tokens using MonetarySupervisor
-    //      - strictly to reserve by MonetaryBoard (via MonetarySupervisor)
+    //      - strictly to reserve by Stability Board (via MonetarySupervisor)
     function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
         balances[to] = balances[to].add(amount);
         totalSupply = totalSupply.add(amount);

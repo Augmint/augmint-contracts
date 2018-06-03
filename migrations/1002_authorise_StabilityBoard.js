@@ -14,7 +14,7 @@ const Exchange = artifacts.require("./Exchange.sol");
 
 module.exports = function(deployer, network, accounts) {
     deployer.then(async () => {
-        const monetaryBoardAccounts = [accounts[0]];
+        const stabilityBoardAccounts = [accounts[0]];
 
         const preToken = PreToken.at(PreToken.address);
         const feeAccount = FeeAccount.at(FeeAccount.address);
@@ -26,7 +26,7 @@ module.exports = function(deployer, network, accounts) {
         const locker = Locker.at(Locker.address);
         const exchange = Exchange.at(Exchange.address);
 
-        const grantTxs = monetaryBoardAccounts.map(acc => [
+        const grantTxs = stabilityBoardAccounts.map(acc => [
             feeAccount.grantPermission(acc, "StabilityBoardSignerContract"),
             augmintReserves.grantPermission(acc, "StabilityBoardSignerContract"),
             tokenAEur.grantPermission(acc, "StabilityBoardSignerContract"),
