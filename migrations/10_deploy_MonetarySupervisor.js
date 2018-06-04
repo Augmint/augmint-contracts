@@ -1,11 +1,12 @@
-const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
+const TokenAEur = artifacts.require("./TokenAEur.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 
-module.exports = function(deployer) {
+module.exports = function(deployer, network, accounts) {
     deployer.deploy(
         MonetarySupervisor,
+        accounts[0],
         TokenAEur.address,
         AugmintReserves.address,
         InterestEarnedAccount.address,

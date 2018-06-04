@@ -36,38 +36,14 @@ module.exports = function(deployer) {
             const loanManager = LoanManager.at(LoanManager.address);
             const locker = Locker.at(Locker.address);
             await Promise.all([
-                rates.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ]),
-                feeAccount.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ]),
-                interestEarnedAccount.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ]),
-                tokenAEur.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ]),
-                augmintReserves.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ]),
-                monetarySupervisor.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ]),
-                loanManager.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ]),
-                locker.grantMultiplePermissions(StabilityBoardSigner.address, [
-                    "StabilityBoardSignerContract",
-                    "PermissionGranterContract"
-                ])
+                rates.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                feeAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                tokenAEur.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                augmintReserves.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                loanManager.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract")
             ]);
 
             // run initial setup script

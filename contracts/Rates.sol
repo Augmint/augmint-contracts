@@ -27,6 +27,8 @@ contract Rates is Restricted {
 
     event RateChanged(bytes32 symbol, uint newRate);
 
+    constructor(address permissionGranterContract) public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+
     function setRate(bytes32 symbol, uint newRate) external restrict("setRate") {
         rates[symbol] = RateInfo(newRate, now);
         emit RateChanged(symbol, newRate);

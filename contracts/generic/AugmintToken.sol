@@ -20,8 +20,8 @@ contract AugmintToken is AugmintTokenInterface {
 
     event FeeAccountChanged(TransferFeeInterface newFeeAccount);
 
-    constructor(string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, TransferFeeInterface _feeAccount)
-    public {
+    constructor(address permissionGranterContract, string _name, string _symbol, bytes32 _peggedSymbol, uint8 _decimals, TransferFeeInterface _feeAccount)
+    public Restricted(permissionGranterContract) {
         require(_feeAccount != address(0), "feeAccount must be set");
         require(bytes(_name).length > 0, "name must be set");
         require(bytes(_symbol).length > 0, "symbol must be set");

@@ -18,6 +18,8 @@ contract AugmintReserves is SystemAccount {
         // to accept ETH sent into reserve (from defaulted loan's collateral )
     }
 
+    constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+
     function burn(AugmintTokenInterface augmintToken, uint amount) external restrict("MonetarySupervisorContract") {
         augmintToken.burn(amount);
     }

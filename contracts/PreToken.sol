@@ -39,6 +39,8 @@ contract PreToken is Restricted {
 
     event NewAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap);
 
+    constructor(address permissionGranterContract) public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+
     function addAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap)
     external restrict("PreTokenAgreementSignerContract") {
         require(owner != address(0));

@@ -14,11 +14,12 @@ contract("token conversion tests", accounts => {
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
         [newToken] = await Promise.all([
-            AugmintToken.new(tokenTestHelpers.feeAccount.address),
+            AugmintToken.new(accounts[0], tokenTestHelpers.feeAccount.address),
             tokenTestHelpers.issueToReserve(10000000)
         ]);
 
         newMS = await MonetarySupervisor.new(
+            accounts[0],
             newToken.address,
             tokenTestHelpers.augmintReserves.address,
             tokenTestHelpers.interestEarnedAccount.address,

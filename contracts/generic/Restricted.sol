@@ -27,9 +27,10 @@ contract Restricted {
         _;
     }
 
-    constructor() public {
-        permissions[msg.sender]["PermissionGranterContract"] = true;
-        emit PermissionGranted(msg.sender, "PermissionGranterContract");
+    constructor(address permissionGranterContract) public {
+        require(permissionGranterContract != address(0), "permissionGranterContract must be set");
+        permissions[permissionGranterContract]["PermissionGranterContract"] = true;
+        emit PermissionGranted(permissionGranterContract, "PermissionGranterContract");
     }
 
     function grantPermission(address agent, bytes32 requiredPermission) public {

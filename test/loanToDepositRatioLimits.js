@@ -42,6 +42,7 @@ contract("Loan to Deposit ratio tests", accounts => {
         /* setup a new blank MS independent from migration scripts */
 
         monetarySupervisor = await MonetarySupervisor.new(
+            accounts[0],
             augmintToken.address,
             tokenTestHelpers.augmintReserves.address,
             InterestEarnedAccount.address,

@@ -63,9 +63,10 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     event SystemContractsChanged(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves);
 
-    constructor(AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
+    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
         InterestEarnedAccount _interestEarnedAccount,
-        uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount) public {
+        uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount)
+    public Restricted(permissionGranterContract) {
         augmintToken = _augmintToken;
         augmintReserves = _augmintReserves;
         interestEarnedAccount = _interestEarnedAccount;
