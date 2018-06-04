@@ -35,6 +35,7 @@ module.exports = function(deployer) {
             const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
             const loanManager = LoanManager.at(LoanManager.address);
             const locker = Locker.at(Locker.address);
+            const exchange = Exchange.at(Exchange.address);
             await Promise.all([
                 rates.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
                 feeAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
@@ -43,7 +44,8 @@ module.exports = function(deployer) {
                 augmintReserves.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
                 monetarySupervisor.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
                 loanManager.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract")
+                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                exchange.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract")
             ]);
 
             // run initial setup script
