@@ -23,6 +23,9 @@ module.exports = {
     get augmintToken() {
         return augmintToken;
     },
+    get augmintTokenWeb3Contract() {
+        return augmintTokenWeb3Contract;
+    },
     get peggedSymbol() {
         return peggedSymbol;
     },
@@ -41,6 +44,7 @@ module.exports = {
 };
 
 let augmintToken = null;
+let augmintTokenWeb3Contract;
 let augmintReserves = null;
 let monetarySupervisor = null;
 let peggedSymbol = null;
@@ -49,6 +53,8 @@ let feeAccount;
 
 before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
+    augmintTokenWeb3Contract = new global.web3v1.eth.Contract(AugmintToken.abi, AugmintToken.address);
+
     augmintReserves = AugmintReserves.at(AugmintReserves.address);
     monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
     interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);

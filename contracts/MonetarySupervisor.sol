@@ -78,12 +78,12 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
     }
 
-    function issueToReserve(uint amount) external restrict("MonetaryBoard") {
+    function issueToReserve(uint amount) external restrict("StabilityBoardSignerContract") {
         issuedByMonetaryBoard = issuedByMonetaryBoard.add(amount);
         augmintToken.issueTo(augmintReserves, amount);
     }
 
-    function burnFromReserve(uint amount) external restrict("MonetaryBoard") {
+    function burnFromReserve(uint amount) external restrict("StabilityBoardSignerContract") {
         issuedByMonetaryBoard = issuedByMonetaryBoard.sub(amount);
         augmintReserves.burn(augmintToken, amount);
     }
@@ -136,13 +136,13 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     }
 
     function setAcceptedLegacyAugmintToken(address legacyAugmintTokenAddress, bool newAcceptedState)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
         acceptedLegacyAugmintTokens[legacyAugmintTokenAddress] = newAcceptedState;
         emit AcceptedLegacyAugmintTokenChanged(legacyAugmintTokenAddress, newAcceptedState);
     }
 
     function setLtdParams(uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
         ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
 
         emit LtdParamsChanged(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
@@ -152,7 +152,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         when it's upgraded.
         Set new monetarySupervisor contract in all locker and loanManager contracts before executing this */
     function adjustKPIs(uint totalLoanAmountAdjustment, uint totalLockedAmountAdjustment)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
         totalLoanAmount = totalLoanAmount.add(totalLoanAmountAdjustment);
         totalLockedAmount = totalLockedAmount.add(totalLockedAmountAdjustment);
 
@@ -161,7 +161,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     /* to allow upgrades of InterestEarnedAccount and AugmintReserves contracts. */
     function setSystemContracts(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
         interestEarnedAccount = newInterestEarnedAccount;
         augmintReserves = newAugmintReserves;
         emit SystemContractsChanged(newInterestEarnedAccount, newAugmintReserves);

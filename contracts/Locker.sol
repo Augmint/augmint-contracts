@@ -75,7 +75,7 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     function addLockProduct(uint32 perTermInterest, uint32 durationInSecs, uint32 minimumLockAmount, bool isActive)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoardSignerContract") {
 
         uint _newLockProductId = lockProducts.push(
                                     LockProduct(perTermInterest, durationInSecs, minimumLockAmount, isActive)) - 1;
@@ -85,7 +85,7 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
-    function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("MonetaryBoard") {
+    function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("StabilityBoardSignerContract") {
         // next line would revert but require to emit reason:
         require(lockProductId < lockProducts.length, "invalid lockProductId");
 
@@ -134,7 +134,7 @@ contract Locker is Restricted, TokenReceiver {
         emit LockReleased(lock.owner, lockId);
     }
 
-    function setMonetarySupervisor(MonetarySupervisor newMonetarySupervisor) external restrict("MonetaryBoard") {
+    function setMonetarySupervisor(MonetarySupervisor newMonetarySupervisor) external restrict("StabilityBoardSignerContract") {
         monetarySupervisor = newMonetarySupervisor;
         emit MonetarySupervisorChanged(newMonetarySupervisor);
     }

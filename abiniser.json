@@ -10,6 +10,7 @@
         "MonetarySupervisor.json",
         "LoanManager.json",
         "Locker.json",
-        "Exchange.json"
+        "Exchange.json",
+        "StabilityBoardSigner.json"
     ]
 }

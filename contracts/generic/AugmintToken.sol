@@ -13,6 +13,7 @@ pragma solidity 0.4.24;
 import "../interfaces/AugmintTokenInterface.sol";
 import "./ECRecovery.sol";
 import "../interfaces/TransferFeeInterface.sol";
+import "./Restricted.sol";
 
 
 contract AugmintToken is AugmintTokenInterface {
@@ -108,7 +109,7 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     /* to upgrade feeAccount (eg. for fee calculation changes) */
-    function setFeeAccount(TransferFeeInterface newFeeAccount) external restrict("MonetaryBoard") {
+    function setFeeAccount(TransferFeeInterface newFeeAccount) external restrict("StabilityBoardSignerContract") {
         feeAccount = newFeeAccount;
         emit FeeAccountChanged(newFeeAccount);
     }

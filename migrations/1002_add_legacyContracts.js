@@ -29,14 +29,12 @@ module.exports = async function(deployer, network, accounts) {
             oldToken.grantPermission(accounts[0], "MonetarySupervisorContract"), // "hack" for test to issue
 
             /* Locker permissions  & products */
-            oldLocker.grantPermission(accounts[0], "MonetaryBoard"),
             monetarySupervisor.grantPermission(oldLocker.address, "LockerContracts"),
             feeAccount.grantPermission(oldLocker.address, "NoFeeTransferContracts"),
             oldLocker.addLockProduct(80001, 31536000, 1000, true), // 365 days, 8% p.a.
             oldLocker.addLockProduct(1, 60, 1000, true), // 1 minute for testing, ~69.15% p.a.
 
             /* LoanManager permissions & products */
-            oldLoanManager.grantPermission(accounts[0], "MonetaryBoard"),
             monetarySupervisor.grantPermission(oldLoanManager.address, "LoanManagerContracts"),
             feeAccount.grantPermission(oldLoanManager.address, "NoFeeTransferContracts"),
             oldLoanManager.addLoanProduct(1, 999999, 990000, 1000, 50000, true), // defaults in 1 secs for testing ? p.a.
@@ -44,8 +42,7 @@ module.exports = async function(deployer, network, accounts) {
             oldLoanManager.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true), // 365d, 14% p.a.
 
             /* Exchange permissions */
-            feeAccount.grantPermission(oldExchange.address, "NoFeeTransferContracts"),
-            oldExchange.grantPermission(accounts[0], "MonetaryBoard")
+            feeAccount.grantPermission(oldExchange.address, "NoFeeTransferContracts")
         ]);
 
         await oldToken.issueTo(accounts[0], 20000); // issue some to account 0

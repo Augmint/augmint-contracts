@@ -47,11 +47,15 @@ Sequence diagrams:
 ## Solidity Contracts
 
 *   [Restricted.sol](./contracts/generic/Restricted.sol)  
-    Stores which address can access which function call.
+    Stores permissions per address
+*   [MultiSig.sol](./contracts/generic/MultiSig.sol)  
+    Abstract contract to manage multi signature approval and execution of atomic, one-off contract scripts
+*   [StabilityBoardSigner.sol](./contracts/generic/StabilityBoardSigner.sol)  
+    Augmint parameters can be set only by this contract with a quorum approving a contract script to run.
 *   [ERC20.sol](./contracts/generic/ERC20.sol)  
     Standard [ERC20](https://theethereum.wiki/w/index.php/ERC20_Token_Standard) token interface.
 *   [SystemAccount.sol](./contracts/generic/ERC20.sol)
-    Generic contract to maintain balances of Augmint system accounts
+    Abstract contract to maintain balances of Augmint system accounts
 *   [AugmintReserves](./contracts/AugmintReserves.sol)
     *   Holds Augmint's ETH and token reserves
 *   [InterestEarnedAccount](./contracts/InterestEarnedAccount.sol)

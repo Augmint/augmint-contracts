@@ -2,7 +2,6 @@ const TokenAEur = artifacts.require("./TokenAEur.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const InterestEarnedAccount = artifacts.require("./InterestEarnedAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
-const FeeAccount = artifacts.require("./FeeAccount.sol");
 
 module.exports = function(deployer) {
     deployer.deploy(
@@ -20,17 +19,4 @@ module.exports = function(deployer) {
         50000 /* allowedLtdDifferenceAmount = 500 A-EUR  if totalLoan and totalLock difference is less than that
                                         then allow loan or lock even if ltdDifference limit would go off with it */
     );
-
-    deployer.then(async () => {
-        const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
-        const feeAccount = FeeAccount.at(FeeAccount.address);
-        const tokenAEur = TokenAEur.at(TokenAEur.address);
-        const augmintReserves = AugmintReserves.at(AugmintReserves.address);
-        await Promise.all([
-            interestEarnedAccount.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
-            tokenAEur.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
-            feeAccount.grantPermission(MonetarySupervisor.address, "NoFeeTransferContracts"),
-            augmintReserves.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract")
-        ]);
-    });
 };
