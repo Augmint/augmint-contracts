@@ -1,5 +1,6 @@
 const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
 const SB_addSigners = artifacts.require("scriptTests/SB_addSigners.sol");
+const SB_addAndRemoveSigners = artifacts.require("scriptTests/SB_addAndRemoveSigners.sol");
 const SB_removeSigners = artifacts.require("scriptTests/SB_removeSigners.sol");
 const SB_revertingScript = artifacts.require("scriptTests/SB_revertingScript.sol");
 const SB_outOfGasScript = artifacts.require("scriptTests/SB_outOfGasScript.sol");
@@ -166,6 +167,47 @@ contract("StabilityBoardSigner", accounts => {
             })
         ]);
         assert(script2After.state, scriptState.Failed);
+    });
+
+    it("should add then disable signers in same script", async function() {
+        const expNewSigners = [accounts[1], accounts[2]];
+
+        const [allSignersCountBefore, activeSignersCountBefore] = await Promise.all([
+            stabilityBoardSigner.getAllSignersCount().then(res => res.toNumber()),
+            stabilityBoardSigner.activeSignersCount().then(res => res.toNumber())
+        ]);
+
+        const addSignerScript = await SB_addAndRemoveSigners.new();
+
+        const signTx = await stabilityBoardSigner.sign(addSignerScript.address);
+        testHelpers.logGasUse(this, signTx, "multiSig.sign");
+
+        const executeAddTx = await stabilityBoardSigner.execute(addSignerScript.address);
+        testHelpers.logGasUse(this, executeAddTx, "multiSig.execute - add 2, remove 1 signers");
+
+        let [allSignersCountAfter, activeSignersCountAfter, signersAfter, script] = await Promise.all([
+            stabilityBoardSigner.getAllSignersCount(),
+            stabilityBoardSigner.activeSignersCount(),
+            stabilityBoardSigner.getAllSigners(0),
+            stabilityBoardSignerWeb3Contract.methods.scripts(addSignerScript.address).call(),
+            testHelpers.assertEvent(stabilityBoardSigner, "SignerAdded", [
+                { signer: expNewSigners[0] },
+                { signer: expNewSigners[1] }
+            ]),
+            testHelpers.assertEvent(stabilityBoardSigner, "SignerRemoved", { signer: accounts[0] }),
+            testHelpers.assertEvent(stabilityBoardSigner, "ScriptExecuted", {
+                scriptAddress: addSignerScript.address,
+                result: true
+            })
+        ]);
+
+        assert.equal(script.state, scriptState.Done);
+        assert.equal(signersAfter[0][2].toNumber(), 0, "signer 0 should be inactive");
+        assert.equal(signersAfter[1][2].toNumber(), 1, "signer 1 should be active");
+        assert.equal(signersAfter[2][2].toNumber(), 1, "signer 2 should be active");
+        assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
+        assert.equal(activeSignersCountAfter.toNumber(), activeSignersCountBefore + expNewSigners.length - 1);
+        assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + expNewSigners.length);
     });
 
     it("should not execute when script is New state (no quorum)", async function() {
