@@ -27,7 +27,8 @@ async function addSigners(newSigners) {
     const signCount = Math.floor(signTxs.length / 2) + 1;
     await Promise.all(signTxs.slice(0, signCount));
 
-    await stabilityBoardSigner.execute(addSignerScript.address);
+    const executeTx = await stabilityBoardSigner.execute(addSignerScript.address);
+    return executeTx;
 }
 
 contract("StabilityBoardSigner", accounts => {
@@ -208,6 +209,18 @@ contract("StabilityBoardSigner", accounts => {
         assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
         assert.equal(activeSignersCountAfter.toNumber(), activeSignersCountBefore + expNewSigners.length - 1);
         assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + expNewSigners.length);
+    });
+
+    it("should not add 0x0 signer", async function() {
+        const newSigners = [accounts[1], "0x0"];
+        await addSigners(newSigners);
+        await testHelpers.assertEvent(stabilityBoardSigner, "ScriptExecuted", {
+            scriptAddress: res => res,
+            result: false
+        });
+
+        const activeSignersCountAfter = await stabilityBoardSigner.activeSignersCount();
+        assert.equal(activeSignersCountAfter.toNumber(), 1);
     });
 
     it("should not execute when script is New state (no quorum)", async function() {
