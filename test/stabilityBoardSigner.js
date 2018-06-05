@@ -223,6 +223,24 @@ contract("StabilityBoardSigner", accounts => {
         assert.equal(activeSignersCountAfter.toNumber(), 1);
     });
 
+    it("should not remove all signers", async function() {
+        const removeSignerScript = await SB_removeSigners.new([accounts[0]]);
+
+        const signTx = await stabilityBoardSigner.sign(removeSignerScript.address, { from: accounts[0] });
+
+        testHelpers.logGasUse(this, signTx, "multiSig.sign");
+
+        await stabilityBoardSigner.execute(removeSignerScript.address);
+
+        await testHelpers.assertEvent(stabilityBoardSigner, "ScriptExecuted", {
+            scriptAddress: removeSignerScript.address,
+            result: false
+        });
+
+        const activeSignersCountAfter = await stabilityBoardSigner.activeSignersCount();
+        assert.equal(activeSignersCountAfter.toNumber(), 1);
+    });
+
     it("should not execute when script is New state (no quorum)", async function() {
         const newSigners = [accounts[1]];
         await addSigners(newSigners);
