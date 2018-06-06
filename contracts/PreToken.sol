@@ -41,7 +41,7 @@ contract PreToken is Restricted {
     event NewAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap);
 
     function addAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap)
-    external restrict("PreTokenAgreementSignerContract") {
+    external restrict("PreTokenSigner") {
         require(owner != address(0));
         require(agreements[owner].agreementHash == 0x0);
         require(agreementHash != 0x0);
@@ -52,7 +52,7 @@ contract PreToken is Restricted {
         emit NewAgreement(owner, agreementHash, discount, valuationCap);
     }
 
-    function issueTo(address _to, uint amount) external restrict("PreTokenIssueSignerContract") {
+    function issueTo(address _to, uint amount) external restrict("PreTokenSigner") {
         Agreement storage to = agreements[_to];
         require(to.agreementHash != 0x0);
 
@@ -64,7 +64,7 @@ contract PreToken is Restricted {
 
     /* Restricted function to allow pretoken signers to fix incorrect issuance */
     function burnFrom(address from, uint amount)
-    public restrict("PreTokenIssueSignerContract") returns (bool) {
+    public restrict("PreTokenSigner") returns (bool) {
         require(amount > 0, "burn amount must be > 0"); // this effectively restricts burning from agreement holders only
         require(agreements[from].balance >= amount, "must not burn more than balance"); // .sub would revert anyways but emit reason
 
@@ -86,7 +86,7 @@ contract PreToken is Restricted {
 
     /* Restricted function to allow pretoken signers to fix if pretoken owner lost keys */
     function transferFrom(address from, address to, uint amount)
-    public restrict("PreTokenIssueSignerContract") returns (bool) {
+    public restrict("PreTokenSigner") returns (bool) {
         _transfer(from, to, amount);
         return true;
     }

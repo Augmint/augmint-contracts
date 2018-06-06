@@ -27,12 +27,7 @@ module.exports = function(deployer, network, accounts) {
             monetarySupervisor.grantPermission(acc, "StabilityBoardSignerContract"),
             exchange.grantPermission(acc, "StabilityBoardSignerContract")
         ]);
-        grantTxs.push(
-            preToken.grantMultiplePermissions(accounts[0], [
-                "PreTokenAgreementSignerContract",
-                "PreTokenIssueSignerContract"
-            ])
-        );
+        grantTxs.push(preToken.grantPermission(accounts[0], "PreTokenSigner"));
 
         await Promise.all(grantTxs);
     });

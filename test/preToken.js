@@ -209,7 +209,7 @@ contract("PreToken", accounts => {
         await testHelpers.expectThrow(preToken.issueTo(accounts[6], 1000));
     });
 
-    it("only PreTokenIssueSignerContract should call issueTo", async function() {
+    it("only permitted should call issueTo", async function() {
         await testHelpers.expectThrow(preToken.issueTo(testAgreement.owner, 1000, { from: accounts[1] }));
     });
 
