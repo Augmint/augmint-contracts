@@ -63,7 +63,7 @@ contract("Loan to Deposit ratio tests", accounts => {
             loanManager.setSystemContracts(rates.address, monetarySupervisor.address),
             monetarySupervisor.grantPermission(accounts[0], "StabilityBoard"),
             monetarySupervisor.grantPermission(locker.address, "LockerContracts"),
-            monetarySupervisor.grantPermission(loanManager.address, "LoanManagerContracts")
+            monetarySupervisor.grantPermission(loanManager.address, "LoanManager")
         ]);
 
         const [interestEarnedBalance] = await Promise.all([

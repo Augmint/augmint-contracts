@@ -97,8 +97,8 @@ contract Rink0001_initNewContracts {
         tokenAEur.grantPermission(monetarySupervisor, "MonetarySupervisor");
         augmintReserves.grantPermission(monetarySupervisor, "MonetarySupervisor");
 
-        // set LoanManagerContracts permissions
-        monetarySupervisor.grantPermission(loanManager, "LoanManagerContracts");
+        // set LoanManager permissions
+        monetarySupervisor.grantPermission(loanManager, "LoanManager");
 
         // set LockerContracts permissions
         monetarySupervisor.grantPermission(locker, "LockerContracts");
@@ -110,8 +110,8 @@ contract Rink0001_initNewContracts {
         monetarySupervisor.grantPermission(oldLocker1, "LockerContracts");
         monetarySupervisor.grantPermission(oldLocker2, "LockerContracts");
 
-        monetarySupervisor.grantPermission(oldLoanManager1, "LoanManagerContracts");
-        monetarySupervisor.grantPermission(oldLoanManager2, "LoanManagerContracts");
+        monetarySupervisor.grantPermission(oldLoanManager1, "LoanManager");
+        monetarySupervisor.grantPermission(oldLoanManager2, "LoanManager");
 
         monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken3, true);
         monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken4, true);

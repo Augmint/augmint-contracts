@@ -109,8 +109,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it */
     function issueLoan(address borrower, uint loanAmount) external {
          // only whitelisted LoanManager contracts
-        require(permissions[msg.sender]["LoanManagerContracts"],
-            "msg.sender must have LoanManagerContracts permission");
+        require(permissions[msg.sender]["LoanManager"],
+            "msg.sender must have LoanManager permission");
         require(loanAmount <= getMaxLoanAmountAllowedByLtd(), "loanAmount must be <= maxLoanAmountAllowedByLtd");
         totalLoanAmount = totalLoanAmount.add(loanAmount);
         augmintToken.issueTo(borrower, loanAmount);
@@ -118,16 +118,16 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     function loanRepaymentNotification(uint loanAmount) external {
         // only whitelisted LoanManager contracts
-       require(permissions[msg.sender]["LoanManagerContracts"],
-           "msg.sender must have LoanManagerContracts permission");
+       require(permissions[msg.sender]["LoanManager"],
+           "msg.sender must have LoanManager permission");
         totalLoanAmount = totalLoanAmount.sub(loanAmount);
     }
 
     // NB: this is called by Lender contract with the sum of all loans collected in batch
     function loanCollectionNotification(uint totalLoanAmountCollected) external {
         // only whitelisted LoanManager contracts
-       require(permissions[msg.sender]["LoanManagerContracts"],
-           "msg.sender must have LoanManagerContracts permission");
+       require(permissions[msg.sender]["LoanManager"],
+           "msg.sender must have LoanManager permission");
         totalLoanAmount = totalLoanAmount.sub(totalLoanAmountCollected);
     }
 

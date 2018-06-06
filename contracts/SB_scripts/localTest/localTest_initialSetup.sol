@@ -93,8 +93,8 @@ contract localTest_initialSetup {
         _tokenAEur.grantPermission(_monetarySupervisor, "MonetarySupervisor");
         _augmintReserves.grantPermission(_monetarySupervisor, "MonetarySupervisor");
 
-        // set LoanManagerContracts permissions
-        _monetarySupervisor.grantPermission(_loanManager, "LoanManagerContracts");
+        // set LoanManager permissions
+        _monetarySupervisor.grantPermission(_loanManager, "LoanManager");
 
         // set LockerContracts permissions
         _monetarySupervisor.grantPermission(_locker, "LockerContracts");
