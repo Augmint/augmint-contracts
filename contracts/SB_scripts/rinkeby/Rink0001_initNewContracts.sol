@@ -1,5 +1,5 @@
 /* script to setup contracts after full redeploy on Rinkeby.
-    called via  StabilityBoardSignerContract (MultiSig) but deployer account is the only signer yet because
+    called via  StabilityBoardSigner (MultiSig) but deployer account is the only signer yet because
         these working on the new contracts only.
         Stability Board and pretoken signers will be added and deployer will be removed when setup is successful.
 */
@@ -59,7 +59,7 @@ contract Rink0001_initNewContracts {
     }
 
     function execute(Rink0001_initNewContracts /* self, not used */) external {
-        // called via StabilityBoardSignerContract
+        // called via StabilityBoardSigner
         require(address(this) == stabilityBoardSignerAddress, "only deploy via stabilityboardsigner");
 
         /******************************************************************************
@@ -69,16 +69,16 @@ contract Rink0001_initNewContracts {
         preToken.grantMultiplePermissions(preTokenProxyAddress, preTokenPermissions);
         preToken.revokePermission(stabilityBoardSignerAddress, "PermissionGranterContract"); // deploy script temporarly granted in order to run this script
 
-        // StabilityBoardSignerContract
-        rates.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        feeAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        interestEarnedAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        tokenAEur.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        augmintReserves.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        monetarySupervisor.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        loanManager.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        locker.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        exchange.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
+        // StabilityBoard
+        rates.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        feeAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        interestEarnedAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        tokenAEur.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        augmintReserves.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        monetarySupervisor.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        loanManager.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        locker.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        exchange.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
 
         // setRate permissions
         rates.grantPermission(RATES_FEEDER_ACCOUNT, "setRate");

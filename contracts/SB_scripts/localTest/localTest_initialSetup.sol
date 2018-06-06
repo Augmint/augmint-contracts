@@ -62,16 +62,16 @@ contract localTest_initialSetup {
         Locker _locker = self.locker();
         Exchange _exchange = self.exchange();
 
-        // StabilityBoardSignerContract
-        _rates.grantPermission(address(this), "StabilityBoardSignerContract");
-        _feeAccount.grantPermission(address(this), "StabilityBoardSignerContract");
-        _interestEarnedAccount.grantPermission(address(this), "StabilityBoardSignerContract");
-        _tokenAEur.grantPermission(address(this), "StabilityBoardSignerContract");
-        _augmintReserves.grantPermission(address(this), "StabilityBoardSignerContract");
-        _monetarySupervisor.grantPermission(address(this), "StabilityBoardSignerContract");
-        _loanManager.grantPermission(address(this), "StabilityBoardSignerContract");
-        _locker.grantPermission(address(this), "StabilityBoardSignerContract");
-        _exchange.grantPermission(address(this), "StabilityBoardSignerContract");
+        // StabilityBoard
+        _rates.grantPermission(address(this), "StabilityBoard");
+        _feeAccount.grantPermission(address(this), "StabilityBoard");
+        _interestEarnedAccount.grantPermission(address(this), "StabilityBoard");
+        _tokenAEur.grantPermission(address(this), "StabilityBoard");
+        _augmintReserves.grantPermission(address(this), "StabilityBoard");
+        _monetarySupervisor.grantPermission(address(this), "StabilityBoard");
+        _loanManager.grantPermission(address(this), "StabilityBoard");
+        _locker.grantPermission(address(this), "StabilityBoard");
+        _exchange.grantPermission(address(this), "StabilityBoard");
 
 
         // setRate permissions and initial ETH/EUR rates

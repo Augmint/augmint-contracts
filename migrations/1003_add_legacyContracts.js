@@ -25,9 +25,9 @@ module.exports = async function(deployer, network, accounts) {
         const oldExchange = await Exchange.new(accounts[0], oldToken.address, Rates.address);
 
         await Promise.all([
-            oldLoanManager.grantPermission(accounts[0], "StabilityBoardSignerContract"),
-            oldLocker.grantPermission(accounts[0], "StabilityBoardSignerContract"),
-            oldExchange.grantPermission(accounts[0], "StabilityBoardSignerContract")
+            oldLoanManager.grantPermission(accounts[0], "StabilityBoard"),
+            oldLocker.grantPermission(accounts[0], "StabilityBoard"),
+            oldExchange.grantPermission(accounts[0], "StabilityBoard")
         ]);
 
         await Promise.all([

@@ -26,7 +26,7 @@ module.exports = function(deployer) {
             Exchange.address
         )
         .then(async initialSetupScript => {
-            // StabilityBoardSignerContract permissions
+            // StabilityBoard permissions
             const rates = Rates.at(Rates.address);
             const feeAccount = FeeAccount.at(FeeAccount.address);
             const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
@@ -60,6 +60,6 @@ module.exports = function(deployer) {
             }
 
             // In non test ( non local) deployments deployer account
-            // must revoke it's own StabilityBoardSignerContract permission
+            // must revoke it's own StabilityBoard permission
         });
 };

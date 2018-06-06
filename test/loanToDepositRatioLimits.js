@@ -61,7 +61,7 @@ contract("Loan to Deposit ratio tests", accounts => {
             tokenTestHelpers.augmintReserves.grantPermission(monetarySupervisor.address, "MonetarySupervisorContract"),
             locker.setMonetarySupervisor(monetarySupervisor.address),
             loanManager.setSystemContracts(rates.address, monetarySupervisor.address),
-            monetarySupervisor.grantPermission(accounts[0], "StabilityBoardSignerContract"),
+            monetarySupervisor.grantPermission(accounts[0], "StabilityBoard"),
             monetarySupervisor.grantPermission(locker.address, "LockerContracts"),
             monetarySupervisor.grantPermission(loanManager.address, "LoanManagerContracts")
         ]);

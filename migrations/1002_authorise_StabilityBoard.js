@@ -27,14 +27,14 @@ module.exports = function(deployer, network, accounts) {
         const exchange = Exchange.at(Exchange.address);
 
         const grantTxs = stabilityBoardAccounts.map(acc => [
-            feeAccount.grantPermission(acc, "StabilityBoardSignerContract"),
-            augmintReserves.grantPermission(acc, "StabilityBoardSignerContract"),
-            tokenAEur.grantPermission(acc, "StabilityBoardSignerContract"),
-            interestEarnedAccount.grantPermission(acc, "StabilityBoardSignerContract"),
-            monetarySupervisor.grantPermission(acc, "StabilityBoardSignerContract"),
-            locker.grantPermission(acc, "StabilityBoardSignerContract"),
-            loanManager.grantPermission(acc, "StabilityBoardSignerContract"),
-            exchange.grantPermission(acc, "StabilityBoardSignerContract")
+            feeAccount.grantPermission(acc, "StabilityBoard"),
+            augmintReserves.grantPermission(acc, "StabilityBoard"),
+            tokenAEur.grantPermission(acc, "StabilityBoard"),
+            interestEarnedAccount.grantPermission(acc, "StabilityBoard"),
+            monetarySupervisor.grantPermission(acc, "StabilityBoard"),
+            locker.grantPermission(acc, "StabilityBoard"),
+            loanManager.grantPermission(acc, "StabilityBoard"),
+            exchange.grantPermission(acc, "StabilityBoard")
         ]);
         grantTxs.push(preToken.grantPermission(accounts[0], "PreTokenSigner"));
 

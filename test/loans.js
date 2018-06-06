@@ -324,7 +324,7 @@ contract("Loans tests", accounts => {
         );
         await Promise.all([
             await rates.setRate("EUR", 99800),
-            await craftedLender.grantPermission(accounts[0], "StabilityBoardSignerContract")
+            await craftedLender.grantPermission(accounts[0], "StabilityBoard")
         ]);
         await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true);
 
