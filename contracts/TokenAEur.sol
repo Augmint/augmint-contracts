@@ -1,4 +1,4 @@
-/* Augmint Crypto Euro token (ACE) implementation */
+/* Augmint Crypto Euro token (A-EUR) implementation */
 pragma solidity 0.4.24;
 import "./interfaces/TransferFeeInterface.sol";
 import "./generic/AugmintToken.sol";
