@@ -23,7 +23,7 @@ contract Rink0001_initNewContracts {
     address constant RATES_FEEDER_ACCOUNT = 0x8C58187a978979947b88824DCdA5Cb5fD4410387;
 
     // new contracts
-    address constant preTokenAgreementSignerAddress = 0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9;
+    address constant preTokenProxyAddress = 0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9;
     address constant stabilityBoardSignerAddress = 0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB;
 
     PreToken constant preToken = PreToken(0xB4d0B60Cd1b2407E80F4295AB84ABBe0b1E98d58);
@@ -54,8 +54,7 @@ contract Rink0001_initNewContracts {
     bytes32[] preTokenPermissions;
 
     constructor() public {
-        preTokenPermissions.push("PreTokenAgreementSignerContract");
-        preTokenPermissions.push("PreTokenIssueSignerContract");
+        preTokenPermissions.push("PreTokenSigner");
         preTokenPermissions.push("PermissionGranterContract");
     }
 
@@ -67,7 +66,7 @@ contract Rink0001_initNewContracts {
          * Set up permissions
          ******************************************************************************/
         //  preToken Permissions
-        preToken.grantMultiplePermissions(preTokenAgreementSignerAddress, preTokenPermissions);
+        preToken.grantMultiplePermissions(preTokenProxyAddress, preTokenPermissions);
         preToken.revokePermission(stabilityBoardSignerAddress, "PermissionGranterContract"); // deploy script temporarly granted in order to run this script
 
         // StabilityBoardSignerContract

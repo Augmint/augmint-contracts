@@ -1,7 +1,7 @@
 /* full redeploy of latest contracts without setting up anything */
 const Migrations = artifacts.require("./Migrations.sol");
 const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
-const PreTokenAgreementSigner = artifacts.require("./PreTokenAgreementSigner.sol");
+const PreTokenProxy = artifacts.require("./PreTokenProxy.sol");
 const PreToken = artifacts.require("./PreToken.sol");
 const Rates = artifacts.require("./Rates.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
@@ -17,7 +17,7 @@ module.exports = function(deployer) {
     deployer.then(async () => {
         const [stabilityBoardSigner, preTokenAgreementSigner] = await Promise.all([
             deployer.deploy(StabilityBoardSigner),
-            deployer.deploy(PreTokenAgreementSigner)
+            deployer.deploy(PreTokenProxy)
         ]);
 
         const [preToken, rates, feeAccount, augmintReserves, interestEarnedAccount] = await Promise.all([

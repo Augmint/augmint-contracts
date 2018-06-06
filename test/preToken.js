@@ -2,6 +2,7 @@ const PreToken = artifacts.require("./PreToken.sol");
 const testHelpers = require("./helpers/testHelpers.js");
 
 let preToken;
+let testAgreement; // used for test failing
 
 function parseAgreement(agreementArray) {
     return agreementArray.filter(agreementTuple => !agreementTuple[1].eq(0)).map(tuple => {
@@ -19,6 +20,14 @@ function parseAgreement(agreementArray) {
 contract("PreToken", accounts => {
     before(async () => {
         preToken = PreToken.at(PreToken.address);
+
+        testAgreement = {
+            owner: accounts[8],
+            hash: "0x0000000000000000000000000000000000000000000000000000000000000008",
+            discount: 800000,
+            cap: 20000000
+        };
+        await preToken.addAgreement(testAgreement.owner, testAgreement.hash, testAgreement.discount, testAgreement.cap);
     });
 
     it("should add an agreement", async function() {
@@ -148,7 +157,7 @@ contract("PreToken", accounts => {
 
     it("should NOT add an agreement if owner already has one", async function() {
         const agreement = {
-            owner: accounts[5],
+            owner: accounts[4],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000005",
             discount: 800000,
             cap: 20000000
@@ -176,27 +185,18 @@ contract("PreToken", accounts => {
     });
 
     it("should issueTo an account with agreement", async function() {
-        const agreement = {
-            owner: accounts[7],
-            hash: "0x0000000000000000000000000000000000000000000000000000000000000007",
-            discount: 800000,
-            cap: 20000000
-        };
         const amount = 1000;
-        const [supplyBefore] = await Promise.all([
-            preToken.totalSupply(),
-            preToken.addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap)
-        ]);
+        const supplyBefore = await preToken.totalSupply();
 
-        const tx = await preToken.issueTo(agreement.owner, amount);
+        const tx = await preToken.issueTo(testAgreement.owner, amount);
         testHelpers.logGasUse(this, tx, "issueTo");
 
         const [supplyAfter, balanceAfter] = await Promise.all([
             preToken.totalSupply(),
-            preToken.balanceOf(agreement.owner),
+            preToken.balanceOf(testAgreement.owner),
             testHelpers.assertEvent(preToken, "Transfer", {
                 from: "0x0000000000000000000000000000000000000000",
-                to: agreement.owner,
+                to: testAgreement.owner,
                 amount
             })
         ]);
@@ -209,16 +209,45 @@ contract("PreToken", accounts => {
         await testHelpers.expectThrow(preToken.issueTo(accounts[6], 1000));
     });
 
-    it("only PreTokenIssueSignerContract should call issueTo", async function() {
-        const agreement = {
-            owner: accounts[8],
-            hash: "0x0000000000000000000000000000000000000000000000000000000000000008",
-            discount: 800000,
-            cap: 20000000
-        };
-        const tx = await preToken.addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap);
-        testHelpers.logGasUse(this, tx, "addAgreement");
+    it("only permitted should call issueTo", async function() {
+        await testHelpers.expectThrow(preToken.issueTo(testAgreement.owner, 1000, { from: accounts[1] }));
+    });
 
-        await testHelpers.expectThrow(preToken.issueTo(agreement.owner, 1000, { from: accounts[1] }));
+    it("should burnFrom an account with agreement", async function() {
+        const amount = 100;
+        const [supplyBefore, balanceBefore] = await Promise.all([
+            preToken.totalSupply(),
+            preToken.balanceOf(testAgreement.owner)
+        ]);
+
+        const tx = await preToken.burnFrom(testAgreement.owner, amount);
+        testHelpers.logGasUse(this, tx, "burnFrom");
+
+        const [supplyAfter, balanceAfter] = await Promise.all([
+            preToken.totalSupply(),
+            preToken.balanceOf(testAgreement.owner),
+            testHelpers.assertEvent(preToken, "Transfer", {
+                to: "0x0000000000000000000000000000000000000000",
+                from: testAgreement.owner,
+                amount
+            })
+        ]);
+
+        assert.equal(supplyAfter.toString(), supplyBefore.sub(amount).toString());
+        assert.equal(balanceAfter.toString(), balanceBefore.sub(amount).toString());
+    });
+
+    it("shouldn't burnFrom more than balance", async function() {
+        const balanceBefore = await preToken.balanceOf(testAgreement.owner);
+
+        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.owner, balanceBefore.add(1)));
+    });
+
+    it("shouldn't burnFrom 0 amount", async function() {
+        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.owner, 0));
+    });
+
+    it("only allowed should burnFrom", async function() {
+        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.owner, 1, { from: accounts[1] }));
     });
 });

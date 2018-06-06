@@ -3,7 +3,7 @@ pragma solidity 0.4.24;
 import "./generic/MultiSig.sol";
 
 
-contract PreTokenAgreementSigner is MultiSig {
+contract PreTokenProxy is MultiSig {
 
     function checkQuorum(uint signersCount) internal view returns(bool isQuorum) {
         isQuorum = signersCount > activeSignersCount / 2 ;

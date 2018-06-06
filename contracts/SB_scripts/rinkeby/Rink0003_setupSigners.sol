@@ -3,7 +3,7 @@
 pragma solidity 0.4.24;
 
 import "../../generic/MultiSig.sol";
-import "../../PreTokenAgreementSigner.sol";
+import "../../PreTokenProxy.sol";
 import "../../StabilityBoardSigner.sol";
 
 
@@ -14,8 +14,8 @@ contract Rink0003_setupSigners {
 
     address constant DEPLOYER_ADDRESS = 0xae653250B4220835050B75D3bC91433246903A95;
 
-    PreTokenAgreementSigner constant
-            preTokenAgreementSigner = PreTokenAgreementSigner(0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9);
+    PreTokenProxy constant
+            preTokenProxy = PreTokenProxy(0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9);
     StabilityBoardSigner constant
                     stabilityBoardSigner = StabilityBoardSigner(0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB);
 
@@ -39,8 +39,8 @@ contract Rink0003_setupSigners {
         /******************************************************************************
          * Set up PretokenSigners
          ******************************************************************************/
-        preTokenAgreementSigner.addSigners(preTokenSignersToAdd);
-        preTokenAgreementSigner.removeSigners(signersToRemove);
+        preTokenProxy.addSigners(preTokenSignersToAdd);
+        preTokenProxy.removeSigners(signersToRemove);
 
         /******************************************************************************
          * Set up StabilityBoard Signers
