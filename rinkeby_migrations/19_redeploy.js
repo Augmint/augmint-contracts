@@ -1,6 +1,6 @@
 /* full redeploy of latest contracts without setting up anything */
 const Migrations = artifacts.require("./Migrations.sol");
-const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
+const StabilityBoardProxy = artifacts.require("./StabilityBoardProxy.sol");
 const PreTokenProxy = artifacts.require("./PreTokenProxy.sol");
 const PreToken = artifacts.require("./PreToken.sol");
 const Rates = artifacts.require("./Rates.sol");
@@ -15,30 +15,30 @@ const Exchange = artifacts.require("./Exchange.sol");
 
 module.exports = function(deployer) {
     deployer.then(async () => {
-        const [stabilityBoardSigner, preTokenProxy] = await Promise.all([
-            deployer.deploy(StabilityBoardSigner),
+        const [stabilityBoardProxy, preTokenProxy] = await Promise.all([
+            deployer.deploy(StabilityBoardProxy),
             deployer.deploy(PreTokenProxy)
         ]);
 
         const [preToken, rates, feeAccount, augmintReserves, interestEarnedAccount] = await Promise.all([
-            deployer.deploy(PreToken, stabilityBoardSigner.address), // temporary for preToken, init script will change it to preTokenProxy
-            deployer.deploy(Rates, stabilityBoardSigner.address),
+            deployer.deploy(PreToken, stabilityBoardProxy.address), // temporary for preToken, init script will change it to preTokenProxy
+            deployer.deploy(Rates, stabilityBoardProxy.address),
             deployer.deploy(
                 FeeAccount,
-                stabilityBoardSigner.address,
+                stabilityBoardProxy.address,
                 2000, // transferFeePt in parts per million = 0.2%
                 2, // min: 0.02 A-EUR
                 500 // max fee: 5 A-EUR)
             ),
-            deployer.deploy(AugmintReserves, stabilityBoardSigner.address),
-            deployer.deploy(InterestEarnedAccount, stabilityBoardSigner.address)
+            deployer.deploy(AugmintReserves, stabilityBoardProxy.address),
+            deployer.deploy(InterestEarnedAccount, stabilityBoardProxy.address)
         ]);
 
-        const tokenAEur = await deployer.deploy(TokenAEur, stabilityBoardSigner.address, feeAccount.address);
+        const tokenAEur = await deployer.deploy(TokenAEur, stabilityBoardProxy.address, feeAccount.address);
 
         const monetarySupervisor = await deployer.deploy(
             MonetarySupervisor,
-            stabilityBoardSigner.address,
+            stabilityBoardProxy.address,
             tokenAEur.address,
             augmintReserves.address,
             interestEarnedAccount.address,
@@ -51,14 +51,14 @@ module.exports = function(deployer) {
         await Promise.all([
             deployer.deploy(
                 LoanManager,
-                stabilityBoardSigner.address,
+                stabilityBoardProxy.address,
                 tokenAEur.address,
                 monetarySupervisor.address,
                 rates.address
             ),
-            deployer.deploy(Locker, stabilityBoardSigner.address, TokenAEur.address, MonetarySupervisor.address),
+            deployer.deploy(Locker, stabilityBoardProxy.address, TokenAEur.address, MonetarySupervisor.address),
 
-            deployer.deploy(Exchange, stabilityBoardSigner.address, tokenAEur.address, rates.address)
+            deployer.deploy(Exchange, stabilityBoardProxy.address, tokenAEur.address, rates.address)
         ]);
 
         // NB: don't forget to top up earned interest account with new tokens

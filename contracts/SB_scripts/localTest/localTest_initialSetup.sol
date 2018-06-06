@@ -1,5 +1,5 @@
 /* script to setup  contracts  deplyomed on local test ganache instance
-        - one instance can be executed by StabilityBoardSigner only once
+        - one instance can be executed by StabilityBoardProxy only once
     NB: live scripts (rinkeby & mainnet etc.) will have contracts setup from constant addresses
 */
 

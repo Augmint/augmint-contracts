@@ -1,4 +1,4 @@
-/* script to change fee account on augmintToken - one instance can be executed by StabilityBoardSigner only once
+/* script to change fee account on augmintToken - one instance can be executed by StabilityBoardProxy only once
     primarily for tets because for live using const for addresses is cheaper & more efficient
 */
 

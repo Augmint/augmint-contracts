@@ -1,4 +1,4 @@
-const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
+const StabilityBoardProxy = artifacts.require("./StabilityBoardProxy.sol");
 const Rates = artifacts.require("./Rates.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
@@ -37,21 +37,21 @@ module.exports = function(deployer) {
             const locker = Locker.at(Locker.address);
             const exchange = Exchange.at(Exchange.address);
             await Promise.all([
-                rates.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                feeAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                tokenAEur.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                augmintReserves.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                loanManager.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
-                exchange.grantPermission(StabilityBoardSigner.address, "PermissionGranter")
+                rates.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                feeAccount.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                interestEarnedAccount.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                tokenAEur.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                augmintReserves.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                monetarySupervisor.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                loanManager.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                locker.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                exchange.grantPermission(StabilityBoardProxy.address, "PermissionGranter")
             ]);
 
             // run initial setup script
-            const stabilityBoardSigner = StabilityBoardSigner.at(StabilityBoardSigner.address);
-            await stabilityBoardSigner.sign(initialSetupScript.address);
-            const tx = await stabilityBoardSigner.execute(initialSetupScript.address);
+            const stabilityBoardProxy = StabilityBoardProxy.at(StabilityBoardProxy.address);
+            await stabilityBoardProxy.sign(initialSetupScript.address);
+            const tx = await stabilityBoardProxy.execute(initialSetupScript.address);
 
             if (!tx.logs[0].args.result) {
                 throw new Error(`initialSetupScript execution failed.

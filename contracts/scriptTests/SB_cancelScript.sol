@@ -1,4 +1,4 @@
-/* script to cancel a multiSig script - one instance  can be executed by StabilityBoardSigner only once
+/* script to cancel a multiSig script - one instance  can be executed by StabilityBoardProxy only once
   primarily for tests because for live using const for script addresses is cheaper & more efficient
 */
 

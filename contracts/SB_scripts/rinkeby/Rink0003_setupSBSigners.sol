@@ -1,11 +1,11 @@
 /* script to add  StabilityBoard Signers and remove deployer account as signer
-    must be executed via StabilityBoardSigner
+    must be executed via StabilityBoardProxy
 */
 
 pragma solidity 0.4.24;
 
 import "../../generic/MultiSig.sol";
-import "../../StabilityBoardSigner.sol";
+import "../../StabilityBoardProxy.sol";
 
 
 contract Rink0003_setupSBSigners {
@@ -15,8 +15,8 @@ contract Rink0003_setupSBSigners {
 
     address constant DEPLOYER_ADDRESS = 0xae653250B4220835050B75D3bC91433246903A95;
 
-    StabilityBoardSigner constant
-                    stabilityBoardSigner = StabilityBoardSigner(0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB);
+    StabilityBoardProxy constant
+                    stabilityBoardProxy = StabilityBoardProxy(0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB);
 
     // dynamic array needed for addSigners() & removeSigners(), populated in constructor
     address[] SBSignersToAdd;
@@ -43,8 +43,8 @@ contract Rink0003_setupSBSigners {
         /******************************************************************************
          * Set up StabilityBoard Signers
          ******************************************************************************/
-        stabilityBoardSigner.addSigners(self.getSBSignersToAdd());
-        stabilityBoardSigner.removeSigners(self.getSignersToRemove());
+        stabilityBoardProxy.addSigners(self.getSBSignersToAdd());
+        stabilityBoardProxy.removeSigners(self.getSignersToRemove());
     }
 
 }

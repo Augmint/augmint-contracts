@@ -1,5 +1,5 @@
 /* script to setup contracts after full redeploy on Rinkeby.
-    called via  StabilityBoardSigner (MultiSig) but deployer account is the only signer yet because
+    called via  StabilityBoardProxy (MultiSig) but deployer account is the only signer yet because
         these working on the new contracts only.
         Stability Board and pretoken signers will be added and deployer will be removed when setup is successful.
 */
@@ -24,7 +24,7 @@ contract Rink0001_initNewContracts {
 
     // new contracts
     address constant preTokenProxyAddress = 0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9;
-    address constant stabilityBoardSignerAddress = 0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB;
+    address constant stabilityBoardProxyAddress = 0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB;
 
     PreToken constant preToken = PreToken(0xB4d0B60Cd1b2407E80F4295AB84ABBe0b1E98d58);
     Rates constant rates = Rates(0x582971C64de4b5E6Db2D95cf8103CfF7f0FdFF31);
@@ -59,26 +59,26 @@ contract Rink0001_initNewContracts {
     }
 
     function execute(Rink0001_initNewContracts /* self, not used */) external {
-        // called via StabilityBoardSigner
-        require(address(this) == stabilityBoardSignerAddress, "only deploy via stabilityboardsigner");
+        // called via StabilityBoardProxy
+        require(address(this) == stabilityBoardProxyAddress, "only deploy via stabilityboardsigner");
 
         /******************************************************************************
          * Set up permissions
          ******************************************************************************/
         //  preToken Permissions
         preToken.grantMultiplePermissions(preTokenProxyAddress, preTokenPermissions);
-        preToken.revokePermission(stabilityBoardSignerAddress, "PermissionGranter"); // deploy script temporarly granted in order to run this script
+        preToken.revokePermission(stabilityBoardProxyAddress, "PermissionGranter"); // deploy script temporarly granted in order to run this script
 
         // StabilityBoard
-        rates.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        feeAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        interestEarnedAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        tokenAEur.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        augmintReserves.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        monetarySupervisor.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        loanManager.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        locker.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
-        exchange.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
+        rates.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        feeAccount.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        interestEarnedAccount.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        tokenAEur.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        augmintReserves.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        monetarySupervisor.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        loanManager.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        locker.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        exchange.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
 
         // RatesFeeder permissions to allow calling setRate() 
         rates.grantPermission(RATES_FEEDER_ACCOUNT, "RatesFeeder");

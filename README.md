@@ -37,59 +37,59 @@ Read more and try it: **[www.augmint.cc](http://www.augmint.cc)**
 
 Sequence diagrams:
 
-*   [Loan flow](docs/loanFlow.png)
-*   [Lock flow](docs/lockFlow.png)
-*   [Exchange flow](docs/exchangeFlow.png)
-*   [Reserve Sales flow](docs/reserveSalesFlow.png) _(not implemented yet)_
+-   [Loan flow](docs/loanFlow.png)
+-   [Lock flow](docs/lockFlow.png)
+-   [Exchange flow](docs/exchangeFlow.png)
+-   [Reserve Sales flow](docs/reserveSalesFlow.png) _(not implemented yet)_
 
 [Flow of funds](https://docs.google.com/document/d/1IQwGEsImpAv2Nlz5IgU_iCJkEqlM2VUHf5SFkcvb80A/#heading=h.jsbfubuh6okn)
 
 ## Solidity Contracts
 
-*   [Restricted.sol](./contracts/generic/Restricted.sol)  
+-   [Restricted.sol](./contracts/generic/Restricted.sol)  
     Stores permissions per address
-*   [MultiSig.sol](./contracts/generic/MultiSig.sol)  
+-   [MultiSig.sol](./contracts/generic/MultiSig.sol)  
     Abstract contract to manage multi signature approval and execution of atomic, one-off contract scripts
-*   [StabilityBoardSigner.sol](./contracts/generic/StabilityBoardSigner.sol)  
-    Augmint parameters can be set only by this contract with a quorum approving a contract script to run.
-*   [ERC20.sol](./contracts/generic/ERC20.sol)  
+-   [StabilityBoardProxy.sol](./contracts/generic/StabilityBoardProxy.sol)  
+    Augmint parameters can be set only via this contract with a quorum approving a contract script to run.
+-   [ERC20.sol](./contracts/generic/ERC20.sol)  
     Standard [ERC20](https://theethereum.wiki/w/index.php/ERC20_Token_Standard) token interface.
-*   [SystemAccount.sol](./contracts/generic/ERC20.sol)
+-   [SystemAccount.sol](./contracts/generic/ERC20.sol)
     Abstract contract to maintain balances of Augmint system accounts
-*   [AugmintReserves](./contracts/AugmintReserves.sol)
-    *   Holds Augmint's ETH and token reserves
-*   [InterestEarnedAccount](./contracts/InterestEarnedAccount.sol)
-    *   Holds interest earning from token lending - only from repaid loans, i.e. already "earned"
-    *   Provides interest for Locks
-*   [FeeAccount.sol](./contracts/FeeAccount.sol)
-    *   holds all fees: tokens from transfer and exchange fees (to be implemented) + ETH fees from defaulting fees
-    *   calculates transferFees
-*   [AugmintToken.sol](./contracts/generic/AugmintToken.sol)  
+-   [AugmintReserves](./contracts/AugmintReserves.sol)
+    -   Holds Augmint's ETH and token reserves
+-   [InterestEarnedAccount](./contracts/InterestEarnedAccount.sol)
+    -   Holds interest earning from token lending - only from repaid loans, i.e. already "earned"
+    -   Provides interest for Locks
+-   [FeeAccount.sol](./contracts/FeeAccount.sol)
+    -   holds all fees: tokens from transfer and exchange fees (to be implemented) + ETH fees from defaulting fees
+    -   calculates transferFees
+-   [AugmintToken.sol](./contracts/generic/AugmintToken.sol)  
     Base contract for all Augmint tokens, [TokenAEur.sol](./contracts/TokenAEur.sol) being the first implementation.
-    *   ERC20 standard functions
-    *   maintains account token balances
-    *   Generic `transferAndNotify` "convenience" function
-    *   allows MonetarySupervisor to issue tokens on loan disbursement and for reserve
-    *   allows accounts to burn their tokens (used by repay loan and burn from reserves via MonetarySupervisor contract)
-*   [MonetarySupervisor.sol](./contracts/MonetarySupervisor.sol)
-    *   maintains system wide KPIs (totalLockAmount, totalLoanAmount)
-    *   enforces system wide limits (Loan to Deposit ratio limits)
-    *   issue to & from reserve functions
-*   [TokenAEur.sol](./contracts/TokenAEur.sol)
-    *   First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Crypto Euro aka A€ )
-    *   Sets standard token parameters (name, symbol, decimals, peggedSymbol etc.)
-*   [Rates.sol](./contracts/Rates.sol)  
+    -   ERC20 standard functions
+    -   maintains account token balances
+    -   Generic `transferAndNotify` "convenience" function
+    -   allows MonetarySupervisor to issue tokens on loan disbursement and for reserve
+    -   allows accounts to burn their tokens (used by repay loan and burn from reserves via MonetarySupervisor contract)
+-   [MonetarySupervisor.sol](./contracts/MonetarySupervisor.sol)
+    -   maintains system wide KPIs (totalLockAmount, totalLoanAmount)
+    -   enforces system wide limits (Loan to Deposit ratio limits)
+    -   issue to & from reserve functions
+-   [TokenAEur.sol](./contracts/TokenAEur.sol)
+    -   First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Crypto Euro aka A€ )
+    -   Sets standard token parameters (name, symbol, decimals, peggedSymbol etc.)
+-   [Rates.sol](./contracts/Rates.sol)  
     A contract to return fiat/ETH exchange rates.
-*   [Exchange.sol](./contracts/Exchange.sol)  
+-   [Exchange.sol](./contracts/Exchange.sol)  
     EUR / ETH exchange contract. Sell or buy A-EUR for ETH
-*   [LoanManager.sol](./contracts/LoanManager.sol)
-    *   Loan products and their parameters
-    *   Maintains all loans via new loan, repayment, collection functions
-    *   Holds collateral in escrow
-*   [Locker.sol](./contracts/Lock.sol)
-    *   Lock products and parameters
-    *   Token funds locking and releasing
-    *   Holds locked tokens (with interest)
+-   [LoanManager.sol](./contracts/LoanManager.sol)
+    -   Loan products and their parameters
+    -   Maintains all loans via new loan, repayment, collection functions
+    -   Holds collateral in escrow
+-   [Locker.sol](./contracts/Lock.sol)
+    -   Lock products and parameters
+    -   Token funds locking and releasing
+    -   Holds locked tokens (with interest)
 
 ## Contribution
 
@@ -113,8 +113,8 @@ The project was born at [DECENT Labs](http://www.decent.org)
 
 ### Concept, initial version
 
-*   [szerintedmi](https://github.com/szerintedmi)
-*   [Charlie](https://github.com/krosza)
+-   [szerintedmi](https://github.com/szerintedmi)
+-   [Charlie](https://github.com/krosza)
 
 Check the whole team on [augmint.cc](http://www.augmint.cc)
 

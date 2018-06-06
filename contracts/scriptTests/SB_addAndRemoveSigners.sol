@@ -1,4 +1,4 @@
-/* script to remove signers from multiSig - one instance can be executed by StabilityBoardSigner only once
+/* script to remove signers from multiSig - one instance can be executed by StabilityBoardProxy only once
     primarily for tests because for live using const for signer addresses is cheaper & more efficient
  */
 
@@ -6,7 +6,7 @@ pragma solidity 0.4.24;
 
 import "../generic/AugmintToken.sol";
 import "../generic/MultiSig.sol";
-import "../StabilityBoardSigner.sol";
+import "../StabilityBoardProxy.sol";
 
 
 contract SB_addAndRemoveSigners {
@@ -34,7 +34,7 @@ contract SB_addAndRemoveSigners {
     }
 
     function execute(SB_addAndRemoveSigners self) external {
-        StabilityBoardSigner multiSig = StabilityBoardSigner(address(this));
+        StabilityBoardProxy multiSig = StabilityBoardProxy(address(this));
         multiSig.addSigners(self.getSignersToAdd());
         multiSig.removeSigners(self.getSignersToRemove());
     }
