@@ -62,6 +62,19 @@ contract PreToken is Restricted {
         emit Transfer(0x0, _to, amount);
     }
 
+    /* Restricted function to allow pretoken signers to fix incorrect issuance */
+    function burnFrom(address from, uint amount)
+    public restrict("PreTokenIssueSignerContract") returns (bool) {
+        require(amount > 0, "burn amount must be > 0"); // this effectively restricts burning from agreement holders only
+        require(agreements[from].balance >= amount, "must not burn more than balance"); // .sub would revert anyways but emit reason
+
+        agreements[from].balance = agreements[from].balance.sub(amount);
+        totalSupply = totalSupply.sub(amount);
+
+        emit Transfer(from, 0x0, amount);
+        return true;
+    }
+
     function balanceOf(address who) public view returns (uint) {
         return agreements[who].balance;
     }
