@@ -68,6 +68,7 @@ contract PreToken is Restricted {
 
     function transfer(address to, uint amount) public returns (bool) { // solhint-disable-line no-simple-event-func-name
         require(agreements[msg.sender].agreementHash != 0x0, "only holder of an agreement can transfer");
+        require(to != 0x0, "must not transfer to 0x0");
         require(
             agreements[to].agreementHash == 0 ||  // allow to transfer to address without agreement
             amount == 0 || // allow 0 amount transfers to any acc for voting

@@ -115,7 +115,13 @@ contract("PreToken transfer", accounts => {
     it("should NOT transfer more than balance", async function() {
         const to = accounts[7];
         const amount = (await preToken.balanceOf(agreement.owner)).add(1);
-        await testHelpers.expectThrow(preToken.transfer(to, amount));
+        await testHelpers.expectThrow(preToken.transfer(to, amount, { from: agreement.owner }));
+    });
+
+    it("should NOT transfer to 0x0", async function() {
+        const to = "0x0";
+        const amount = await preToken.balanceOf(agreement.owner);
+        await testHelpers.expectThrow(preToken.transfer(to, amount, { from: agreement.owner }));
     });
 
     it("should NOT transfer if has no agreement", async function() {
