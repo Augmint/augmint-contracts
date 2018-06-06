@@ -3,6 +3,7 @@ These tokens are not fungible because agreements can have different conditions (
 Despite being non-fungible some ERC20 functions are implemented so agreement owners can see their balances and transfers
     in standard wallets.
 Where it's not ERC20 compliant:
+  - transfer is only allowed by agreement holders (to avoid polluting transfer logs)
   - transfer is only allowed to accounts without an agreement yet or same agreement
   - no approval and transferFrom
  */
@@ -66,6 +67,7 @@ contract PreToken is Restricted {
     }
 
     function transfer(address to, uint amount) public returns (bool) { // solhint-disable-line no-simple-event-func-name
+        require(agreements[msg.sender].agreementHash != 0x0, "only holder of an agreement can transfer");
         require(
             agreements[to].agreementHash == 0 ||  // allow to transfer to address without agreement
             amount == 0 || // allow 0 amount transfers to any acc for voting
