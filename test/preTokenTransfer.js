@@ -130,4 +130,43 @@ contract("PreToken transfer", accounts => {
         const amount = 0;
         await testHelpers.expectThrow(preToken.transfer(to, amount, { from }));
     });
+
+    it("should transferFrom", async function() {
+        const to = accounts[8];
+        const from = agreement.owner;
+        const amount = 100;
+        const [supplyBefore, ownerBalBefore] = await Promise.all([
+            preToken.totalSupply(),
+            preToken.balanceOf(agreement.owner),
+            preToken.balanceOf(to)
+        ]);
+
+        const tx = await preToken.transferFrom(from, to, amount, { from: accounts[0] });
+        testHelpers.logGasUse(this, tx, "PreToken.transfer");
+
+        const [supplyAfter, agreementAfter, ownerBalAfter, toBalAfter] = await Promise.all([
+            preToken.totalSupply(),
+            preToken.agreements(to),
+            preToken.balanceOf(agreement.owner),
+            preToken.balanceOf(to),
+            testHelpers.assertEvent(preToken, "Transfer", { from: agreement.owner, to, amount })
+        ]);
+
+        assert.equal(supplyAfter.toString(), supplyBefore.toString());
+        assert.equal(ownerBalAfter.toString(), ownerBalBefore.sub(amount).toString());
+        assert.equal(toBalAfter.toString(), amount.toString());
+
+        assert.equal(agreementAfter[0].toString(), amount.toString());
+        assert.equal(agreementAfter[1], agreement.hash);
+        assert.equal(agreementAfter[2].toNumber(), agreement.discount);
+        assert.equal(agreementAfter[3].toNumber(), agreement.cap);
+    });
+
+    it("only permitted should transferFrom", async function() {
+        const to = accounts[8];
+        const from = agreement.owner;
+        const amount = 100;
+
+        await testHelpers.expectThrow(preToken.transferFrom(from, to, amount, { from: accounts[1] }));
+    });
 });

@@ -67,24 +67,37 @@ contract PreToken is Restricted {
     }
 
     function transfer(address to, uint amount) public returns (bool) { // solhint-disable-line no-simple-event-func-name
-        require(agreements[msg.sender].agreementHash != 0x0, "only holder of an agreement can transfer");
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    /* Restricted function to allow pretoken signers to fix if pretoken owner lost keys */
+    function transferFrom(address from, address to, uint amount)
+    public restrict("PreTokenIssueSignerContract") returns (bool) {
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    /* private function used by transferFrom & transfer */
+    function _transfer(address from, address to, uint amount) private {
+        require(agreements[from].agreementHash != 0x0, "only holder of an agreement can transfer");
         require(to != 0x0, "must not transfer to 0x0");
         require(
             agreements[to].agreementHash == 0 ||  // allow to transfer to address without agreement
             amount == 0 || // allow 0 amount transfers to any acc for voting
-            agreements[to].agreementHash == agreements[msg.sender].agreementHash // allow transfer to acc w/ same agr.
+            agreements[to].agreementHash == agreements[from].agreementHash // allow transfer to acc w/ same agr.
         );
 
         if (amount > 0) { // transfer agreement if it's not a 0 amount "vote only" transfer
-            agreements[msg.sender].balance = agreements[msg.sender].balance.sub(amount);
+            agreements[from].balance = agreements[from].balance.sub(amount);
             agreements[to].balance = agreements[to].balance.add(amount);
 
-            agreements[to].agreementHash = agreements[msg.sender].agreementHash;
-            agreements[to].valuationCap = agreements[msg.sender].valuationCap;
-            agreements[to].discount = agreements[msg.sender].discount;
+            agreements[to].agreementHash = agreements[from].agreementHash;
+            agreements[to].valuationCap = agreements[from].valuationCap;
+            agreements[to].discount = agreements[from].discount;
         }
 
-        emit Transfer(msg.sender, to, amount);
+        emit Transfer(from, to, amount);
     }
 
     function getAgreementsCount() external view returns (uint agreementsCount) {
