@@ -18,33 +18,20 @@ contract Rink0003_setupSBSigners {
     StabilityBoardProxy constant
                     stabilityBoardProxy = StabilityBoardProxy(0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB);
 
-    // dynamic array needed for addSigners() & removeSigners(), populated in constructor
-    address[] SBSignersToAdd;
-    address[] signersToRemove;
-
-    constructor() public {
-        SBSignersToAdd.push(SZERT_ADDRESS);
-        SBSignersToAdd.push(KROSZA_ADDRESS);
-        SBSignersToAdd.push(PHRAKTLE_ADDRESS);
-
-        signersToRemove.push(DEPLOYER_ADDRESS);
-    }
-
-    // getters needed because we can't access state from execute because it's called from Multisig via delegatacall()
-    function getSBSignersToAdd() public view returns (address[]) {
-        return SBSignersToAdd;
-    }
-
-    function getSignersToRemove() public view returns (address[]) {
-        return signersToRemove;
-    }
-
-    function execute(Rink0003_setupSBSigners self) external {
+    function execute(Rink0003_setupSBSigners /* self (not used)*/ ) external {
         /******************************************************************************
          * Set up StabilityBoard Signers
          ******************************************************************************/
-        stabilityBoardProxy.addSigners(self.getSBSignersToAdd());
-        stabilityBoardProxy.removeSigners(self.getSignersToRemove());
+         address[] memory signersToAdd = new address[](3); // dynamic array needed for addSigners() & removeSigners()
+         signersToAdd[0] = SZERT_ADDRESS;
+         signersToAdd[1] = KROSZA_ADDRESS;
+         signersToAdd[2] = PHRAKTLE_ADDRESS;
+         stabilityBoardProxy.addSigners(signersToAdd);
+
+         // revoke deployer account signer rights
+         address[] memory signersToRemove = new address[](1); // dynamic array needed for addSigners() & removeSigners()
+         signersToRemove[0] = DEPLOYER_ADDRESS;
+         stabilityBoardProxy.removeSigners(signersToRemove);
     }
 
 }

@@ -14,29 +14,18 @@ contract SB_addAndRemoveSigners {
     address constant ACC1 = 0x5e09B21cCF42c1c30ca9C1C8D993d922E7c0d036;
     address constant ACC2 = 0x90993Fd3AC7c150ce24eb59a0AD2AaE8De1a84d8;
 
-    // workaround because we can't create dynamic array in execute and addSigners / removeSigners args are dynamic
-    address[] signersToRemove;
-    address[] signersToAdd;
-
-    // getters needed because we can't access state from execute because it's called from Multisig via delegatacall()
-    function getSignersToAdd() public view returns (address[]) {
-        return signersToAdd;
-    }
-
-    function getSignersToRemove() public view returns (address[]) {
-        return signersToRemove;
-    }
-
-    constructor() public {
-        signersToAdd.push(ACC1);
-        signersToAdd.push(ACC2);
-        signersToRemove.push(ACC0);
-    }
-
-    function execute(SB_addAndRemoveSigners self) external {
+    function execute(SB_addAndRemoveSigners /* self (not used) */) external {
         StabilityBoardProxy multiSig = StabilityBoardProxy(address(this));
-        multiSig.addSigners(self.getSignersToAdd());
-        multiSig.removeSigners(self.getSignersToRemove());
+
+        address[] memory signersToAdd = new address[](2); // dynamic array needed for addSigners() & removeSigners()
+        signersToAdd[0] = ACC1;
+        signersToAdd[1] = ACC2;
+        multiSig.addSigners(signersToAdd);
+
+        // revoke deployer account signer rights
+        address[] memory signersToRemove = new address[](1); // dynamic array needed for addSigners() & removeSigners()
+        signersToRemove[0] = ACC0;
+        multiSig.removeSigners(signersToRemove);
     }
 
 }

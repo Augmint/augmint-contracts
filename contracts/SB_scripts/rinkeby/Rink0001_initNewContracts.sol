@@ -50,13 +50,6 @@ contract Rink0001_initNewContracts {
     LoanManager constant oldLoanManager1 = LoanManager(0xBdb02f82d7Ad574f9F549895caf41E23a8981b07);
     LoanManager constant oldLoanManager2 = LoanManager(0x214919Abe3f2b7CA7a43a799C4FC7132bBf78e8A);
 
-    // dynamic array needed for addSigners() & removeSigners(). Populated in constructor
-    bytes32[] preTokenPermissions;
-
-    constructor() public {
-        preTokenPermissions.push("PreTokenSigner");
-        preTokenPermissions.push("PermissionGranter");
-    }
 
     function execute(Rink0001_initNewContracts /* self, not used */) external {
         // called via StabilityBoardProxy
@@ -66,8 +59,13 @@ contract Rink0001_initNewContracts {
          * Set up permissions
          ******************************************************************************/
         //  preToken Permissions
+        bytes32[] memory preTokenPermissions = new bytes32[](2); // dynamic array needed for grantMultiplePermissions()
+        preTokenPermissions[0] = "PreTokenSigner";
+        preTokenPermissions[1] = "PermissionGranter";
         preToken.grantMultiplePermissions(preTokenProxyAddress, preTokenPermissions);
-        preToken.revokePermission(stabilityBoardProxyAddress, "PermissionGranter"); // deploy script temporarly granted in order to run this script
+        // deploy script temporarly granted PermissionGranter to this script in order to run this script
+        //   now we can remove it as we add grant it to preTokenProxy
+        preToken.revokePermission(stabilityBoardProxyAddress, "PermissionGranter");
 
         // StabilityBoard
         rates.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
@@ -80,7 +78,7 @@ contract Rink0001_initNewContracts {
         locker.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
         exchange.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
 
-        // RatesFeeder permissions to allow calling setRate() 
+        // RatesFeeder permissions to allow calling setRate()
         rates.grantPermission(RATES_FEEDER_ACCOUNT, "RatesFeeder");
 
         // set NoTransferFee permissions

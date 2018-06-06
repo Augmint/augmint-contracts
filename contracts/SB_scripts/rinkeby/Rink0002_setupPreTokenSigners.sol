@@ -17,32 +17,20 @@ contract Rink0002_setupPreTokenSigners {
     PreTokenProxy constant
             preTokenProxy = PreTokenProxy(0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9);
 
-    // dynamic array needed for addSigners() & removeSigners(), populated in constructor
-    address[] preTokenSignersToAdd;
-    address[] signersToRemove;
-
-    constructor() public {
-        preTokenSignersToAdd.push(SZERT_ADDRESS);
-        preTokenSignersToAdd.push(KROSZA_ADDRESS);
-
-        signersToRemove.push(DEPLOYER_ADDRESS);
-    }
-
-    // getters needed because we can't access state from execute because it's called from Multisig via delegatacall()
-    function getPreTokenSignersToAdd() public view returns (address[]) {
-        return preTokenSignersToAdd;
-    }
-
-    function getSignersToRemove() public view returns (address[]) {
-        return signersToRemove;
-    }
-
-    function execute(Rink0002_setupPreTokenSigners self) external {
+    function execute(Rink0002_setupPreTokenSigners /* self (not used) */) external {
         /******************************************************************************
          * Set up PretokenSigners
          ******************************************************************************/
-        preTokenProxy.addSigners(self.getPreTokenSignersToAdd());
-        preTokenProxy.removeSigners(self.getSignersToRemove());
+
+        address[] memory signersToAdd = new address[](2); // dynamic array needed for addSigners() & removeSigners()
+        signersToAdd[0] = SZERT_ADDRESS;
+        signersToAdd[1] = KROSZA_ADDRESS;
+        preTokenProxy.addSigners(signersToAdd);
+
+        // revoke deployer account signer rights
+        address[] memory signersToRemove = new address[](1); // dynamic array needed for addSigners() & removeSigners()
+        signersToRemove[0] = DEPLOYER_ADDRESS;
+        preTokenProxy.removeSigners(signersToRemove);
     }
 
 }
