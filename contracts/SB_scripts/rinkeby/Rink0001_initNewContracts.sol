@@ -83,14 +83,14 @@ contract Rink0001_initNewContracts {
         // setRate permissions
         rates.grantPermission(RATES_FEEDER_ACCOUNT, "setRate");
 
-        // set NoFeeTransferContracts permissions
-        feeAccount.grantPermission(feeAccount, "NoFeeTransferContracts");
-        feeAccount.grantPermission(augmintReserves, "NoFeeTransferContracts");
-        feeAccount.grantPermission(interestEarnedAccount, "NoFeeTransferContracts");
-        feeAccount.grantPermission(monetarySupervisor, "NoFeeTransferContracts");
-        feeAccount.grantPermission(loanManager, "NoFeeTransferContracts");
-        feeAccount.grantPermission(locker, "NoFeeTransferContracts");
-        feeAccount.grantPermission(exchange, "NoFeeTransferContracts");
+        // set NoTransferFee permissions
+        feeAccount.grantPermission(feeAccount, "NoTransferFee");
+        feeAccount.grantPermission(augmintReserves, "NoTransferFee");
+        feeAccount.grantPermission(interestEarnedAccount, "NoTransferFee");
+        feeAccount.grantPermission(monetarySupervisor, "NoTransferFee");
+        feeAccount.grantPermission(loanManager, "NoTransferFee");
+        feeAccount.grantPermission(locker, "NoTransferFee");
+        feeAccount.grantPermission(exchange, "NoTransferFee");
 
         // set MonetarySupervisor permissions
         interestEarnedAccount.grantPermission(monetarySupervisor, "MonetarySupervisor");
@@ -117,7 +117,7 @@ contract Rink0001_initNewContracts {
         monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken4, true);
 
         /* NB: to allow token conversion w/o fee (oldToken.transferAndNotify transfers to MonetarySupervisor)
-            new MonetarySupervisor requires NoFeeTransferContracts permission on old feeAccount.
+            new MonetarySupervisor requires NoTransferFee permission on old feeAccount.
             It's not in this script b/c old feeAccount wasn't multisig (it's granted by deployer acc)
             This permission will need to be granted via Multisg in future token redeploys */
 
