@@ -55,7 +55,7 @@ contract Rink0001_initNewContracts {
 
     constructor() public {
         preTokenPermissions.push("PreTokenSigner");
-        preTokenPermissions.push("PermissionGranterContract");
+        preTokenPermissions.push("PermissionGranter");
     }
 
     function execute(Rink0001_initNewContracts /* self, not used */) external {
@@ -67,7 +67,7 @@ contract Rink0001_initNewContracts {
          ******************************************************************************/
         //  preToken Permissions
         preToken.grantMultiplePermissions(preTokenProxyAddress, preTokenPermissions);
-        preToken.revokePermission(stabilityBoardSignerAddress, "PermissionGranterContract"); // deploy script temporarly granted in order to run this script
+        preToken.revokePermission(stabilityBoardSignerAddress, "PermissionGranter"); // deploy script temporarly granted in order to run this script
 
         // StabilityBoard
         rates.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");

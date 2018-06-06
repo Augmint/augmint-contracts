@@ -37,15 +37,15 @@ module.exports = function(deployer) {
             const locker = Locker.at(Locker.address);
             const exchange = Exchange.at(Exchange.address);
             await Promise.all([
-                rates.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                feeAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                tokenAEur.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                augmintReserves.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                loanManager.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                exchange.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract")
+                rates.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                feeAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                tokenAEur.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                augmintReserves.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                loanManager.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranter"),
+                exchange.grantPermission(StabilityBoardSigner.address, "PermissionGranter")
             ]);
 
             // run initial setup script
