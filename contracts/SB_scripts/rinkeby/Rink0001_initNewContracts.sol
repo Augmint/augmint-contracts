@@ -116,11 +116,10 @@ contract Rink0001_initNewContracts {
         monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken3, true);
         monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken4, true);
 
-        /* to allow token conversion w/o fee (oldeToken.transferAndNotify transfers to MonetarySupervisor)
-        NB: NoFeeTransferContracts used to be set on the token contract in legacy token version.
-            Dropping support for those early day tokens on Rinkeby */
-        feeAccount.grantPermission(oldToken3, "NoFeeTransferContracts");
-        feeAccount.grantPermission(oldToken4, "NoFeeTransferContracts");
+        /* NB: to allow token conversion w/o fee (oldToken.transferAndNotify transfers to MonetarySupervisor)
+            new MonetarySupervisor requires NoFeeTransferContracts permission on old feeAccount.
+            It's not in this script b/c old feeAccount wasn't multisig (it's granted by deployer acc)
+            This permission will need to be granted via Multisg in future token redeploys */
 
         /******************************************************************************
          * Add loan products
