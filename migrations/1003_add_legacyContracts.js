@@ -38,7 +38,7 @@ module.exports = async function(deployer, network, accounts) {
             oldToken.grantPermission(accounts[0], "MonetarySupervisor"), // "hack" for test to issue
 
             /* Locker permissions  & products */
-            monetarySupervisor.grantPermission(oldLocker.address, "LockerContracts"),
+            monetarySupervisor.grantPermission(oldLocker.address, "Locker"),
             feeAccount.grantPermission(oldLocker.address, "NoTransferFee"),
             oldLocker.addLockProduct(80001, 31536000, 1000, true), // 365 days, 8% p.a.
             oldLocker.addLockProduct(1, 60, 1000, true), // 1 minute for testing, ~69.15% p.a.

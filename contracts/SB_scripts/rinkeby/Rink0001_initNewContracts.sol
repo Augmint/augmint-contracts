@@ -100,15 +100,15 @@ contract Rink0001_initNewContracts {
         // set LoanManager permissions
         monetarySupervisor.grantPermission(loanManager, "LoanManager");
 
-        // set LockerContracts permissions
-        monetarySupervisor.grantPermission(locker, "LockerContracts");
+        // set Locker permissions
+        monetarySupervisor.grantPermission(locker, "Locker");
 
         /******************************************************************************
          * Setup permissions for legacy contracts
          ******************************************************************************/
 
-        monetarySupervisor.grantPermission(oldLocker1, "LockerContracts");
-        monetarySupervisor.grantPermission(oldLocker2, "LockerContracts");
+        monetarySupervisor.grantPermission(oldLocker1, "Locker");
+        monetarySupervisor.grantPermission(oldLocker2, "Locker");
 
         monetarySupervisor.grantPermission(oldLoanManager1, "LoanManager");
         monetarySupervisor.grantPermission(oldLoanManager2, "LoanManager");

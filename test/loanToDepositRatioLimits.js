@@ -62,7 +62,7 @@ contract("Loan to Deposit ratio tests", accounts => {
             locker.setMonetarySupervisor(monetarySupervisor.address),
             loanManager.setSystemContracts(rates.address, monetarySupervisor.address),
             monetarySupervisor.grantPermission(accounts[0], "StabilityBoard"),
-            monetarySupervisor.grantPermission(locker.address, "LockerContracts"),
+            monetarySupervisor.grantPermission(locker.address, "Locker"),
             monetarySupervisor.grantPermission(loanManager.address, "LoanManager")
         ]);
 

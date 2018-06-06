@@ -87,8 +87,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     /* Locker requesting interest when locking funds. Enforcing LTD to stay within range allowed by LTD params
         NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it  */
     function requestInterest(uint amountToLock, uint interestAmount) external {
-        // only whitelisted LockerContracts
-        require(permissions[msg.sender]["LockerContracts"], "msg.sender must have LockerContracts permission");
+        // only whitelisted Locker
+        require(permissions[msg.sender]["Locker"], "msg.sender must have Locker permission");
         require(amountToLock <= getMaxLockAmountAllowedByLtd(), "amountToLock must be <= maxLockAmountAllowedByLtd");
 
         totalLockedAmount = totalLockedAmount.add(amountToLock);
@@ -100,8 +100,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     // Locker notifying when releasing funds to update KPIs
     function releaseFundsNotification(uint lockedAmount) external {
-        // only whitelisted LockerContracts
-        require(permissions[msg.sender]["LockerContracts"], "msg.sender must have LockerContracts permission");
+        // only whitelisted Locker
+        require(permissions[msg.sender]["Locker"], "msg.sender must have Locker permission");
         totalLockedAmount = totalLockedAmount.sub(lockedAmount);
     }
 

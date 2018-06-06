@@ -96,8 +96,8 @@ contract localTest_initialSetup {
         // set LoanManager permissions
         _monetarySupervisor.grantPermission(_loanManager, "LoanManager");
 
-        // set LockerContracts permissions
-        _monetarySupervisor.grantPermission(_locker, "LockerContracts");
+        // set Locker permissions
+        _monetarySupervisor.grantPermission(_locker, "Locker");
 
         // add test loan Products
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
