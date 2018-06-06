@@ -29,12 +29,12 @@ contract Rates is Restricted {
 
     constructor(address permissionGranterContract) public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
-    function setRate(bytes32 symbol, uint newRate) external restrict("setRate") {
+    function setRate(bytes32 symbol, uint newRate) external restrict("RatesFeeder") {
         rates[symbol] = RateInfo(newRate, now);
         emit RateChanged(symbol, newRate);
     }
 
-    function setMultipleRates(bytes32[] symbols, uint[] newRates) external restrict("setRate") {
+    function setMultipleRates(bytes32[] symbols, uint[] newRates) external restrict("RatesFeeder") {
         require(symbols.length == newRates.length, "symobls and newRates lengths must be equal");
         for (uint256 i = 0; i < symbols.length; i++) {
             rates[symbols[i]] = RateInfo(newRates[i], now);

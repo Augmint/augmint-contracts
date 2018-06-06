@@ -80,8 +80,8 @@ contract Rink0001_initNewContracts {
         locker.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
         exchange.grantPermission(stabilityBoardSignerAddress, "StabilityBoard");
 
-        // setRate permissions
-        rates.grantPermission(RATES_FEEDER_ACCOUNT, "setRate");
+        // RatesFeeder permissions to allow calling setRate() 
+        rates.grantPermission(RATES_FEEDER_ACCOUNT, "RatesFeeder");
 
         // set NoTransferFee permissions
         feeAccount.grantPermission(feeAccount, "NoTransferFee");
