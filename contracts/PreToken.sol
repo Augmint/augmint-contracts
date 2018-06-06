@@ -1,6 +1,6 @@
-/* Augmint pretoken contract to record tokens alloceted based on SAFE agreements
-These tokens are not fundigble because  agreements can have different conditions (valuationCap and discount).
-Despite being nonfundible some ERC20 functions are implemented so agreement owners can see their balances and transfers
+/* Augmint pretoken contract to record tokens allocated based on agreements.
+These tokens are not fungible because agreements can have different conditions (valuationCap and discount).
+Despite being non-fungible some ERC20 functions are implemented so agreement owners can see their balances and transfers
     in standard wallets.
 Where it's not ERC20 compliant:
   - transfer is only allowed to accounts without an agreement yet or same agreement
