@@ -92,10 +92,10 @@ contract Rink0001_initNewContracts {
         feeAccount.grantPermission(locker, "NoFeeTransferContracts");
         feeAccount.grantPermission(exchange, "NoFeeTransferContracts");
 
-        // set MonetarySupervisorContract permissions
-        interestEarnedAccount.grantPermission(monetarySupervisor, "MonetarySupervisorContract");
-        tokenAEur.grantPermission(monetarySupervisor, "MonetarySupervisorContract");
-        augmintReserves.grantPermission(monetarySupervisor, "MonetarySupervisorContract");
+        // set MonetarySupervisor permissions
+        interestEarnedAccount.grantPermission(monetarySupervisor, "MonetarySupervisor");
+        tokenAEur.grantPermission(monetarySupervisor, "MonetarySupervisor");
+        augmintReserves.grantPermission(monetarySupervisor, "MonetarySupervisor");
 
         // set LoanManagerContracts permissions
         monetarySupervisor.grantPermission(loanManager, "LoanManagerContracts");

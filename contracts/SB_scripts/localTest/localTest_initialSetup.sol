@@ -88,10 +88,10 @@ contract localTest_initialSetup {
         _feeAccount.grantPermission(_locker, "NoFeeTransferContracts");
         _feeAccount.grantPermission(_exchange, "NoFeeTransferContracts");
 
-        // set MonetarySupervisorContract permissions
-        _interestEarnedAccount.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
-        _tokenAEur.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
-        _augmintReserves.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
+        // set MonetarySupervisor permissions
+        _interestEarnedAccount.grantPermission(_monetarySupervisor, "MonetarySupervisor");
+        _tokenAEur.grantPermission(_monetarySupervisor, "MonetarySupervisor");
+        _augmintReserves.grantPermission(_monetarySupervisor, "MonetarySupervisor");
 
         // set LoanManagerContracts permissions
         _monetarySupervisor.grantPermission(_loanManager, "LoanManagerContracts");

@@ -31,11 +31,11 @@ module.exports = async function(deployer, network, accounts) {
         ]);
 
         await Promise.all([
-            oldToken.grantPermission(MonetarySupervisor.address, "MonetarySupervisorContract"),
+            oldToken.grantPermission(MonetarySupervisor.address, "MonetarySupervisor"),
 
             monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken.address, true),
 
-            oldToken.grantPermission(accounts[0], "MonetarySupervisorContract"), // "hack" for test to issue
+            oldToken.grantPermission(accounts[0], "MonetarySupervisor"), // "hack" for test to issue
 
             /* Locker permissions  & products */
             monetarySupervisor.grantPermission(oldLocker.address, "LockerContracts"),

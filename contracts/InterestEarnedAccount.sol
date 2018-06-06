@@ -11,7 +11,7 @@ contract InterestEarnedAccount is SystemAccount {
     constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
     function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)
-    external restrict("MonetarySupervisorContract") {
+    external restrict("MonetarySupervisor") {
         augmintToken.transfer(locker, interestAmount);
     }
 
