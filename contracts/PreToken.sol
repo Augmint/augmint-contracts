@@ -1,8 +1,9 @@
-/* Augmint pretoken contract to record tokens alloceted based on SAFE agreements
-These tokens are not fundigble because  agreements can have different conditions (valuationCap and discount).
-Despite being nonfundible some ERC20 functions are implemented so agreement owners can see their balances and transfers
+/* Augmint pretoken contract to record tokens allocated based on agreements.
+These tokens are not fungible because agreements can have different conditions (valuationCap and discount).
+Despite being non-fungible some ERC20 functions are implemented so agreement owners can see their balances and transfers
     in standard wallets.
 Where it's not ERC20 compliant:
+  - transfer is only allowed by agreement holders (to avoid polluting transfer logs)
   - transfer is only allowed to accounts without an agreement yet or same agreement
   - no approval and transferFrom
  */
@@ -42,7 +43,7 @@ contract PreToken is Restricted {
     constructor(address permissionGranterContract) public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
     function addAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap)
-    external restrict("PreTokenAgreementSignerContract") {
+    external restrict("PreTokenSigner") {
         require(owner != address(0));
         require(agreements[owner].agreementHash == 0x0);
         require(agreementHash != 0x0);
@@ -53,7 +54,7 @@ contract PreToken is Restricted {
         emit NewAgreement(owner, agreementHash, discount, valuationCap);
     }
 
-    function issueTo(address _to, uint amount) external restrict("PreTokenIssueSignerContract") {
+    function issueTo(address _to, uint amount) external restrict("PreTokenSigner") {
         Agreement storage to = agreements[_to];
         require(to.agreementHash != 0x0);
 
@@ -63,27 +64,55 @@ contract PreToken is Restricted {
         emit Transfer(0x0, _to, amount);
     }
 
+    /* Restricted function to allow pretoken signers to fix incorrect issuance */
+    function burnFrom(address from, uint amount)
+    public restrict("PreTokenSigner") returns (bool) {
+        require(amount > 0, "burn amount must be > 0"); // this effectively restricts burning from agreement holders only
+        require(agreements[from].balance >= amount, "must not burn more than balance"); // .sub would revert anyways but emit reason
+
+        agreements[from].balance = agreements[from].balance.sub(amount);
+        totalSupply = totalSupply.sub(amount);
+
+        emit Transfer(from, 0x0, amount);
+        return true;
+    }
+
     function balanceOf(address who) public view returns (uint) {
         return agreements[who].balance;
     }
 
     function transfer(address to, uint amount) public returns (bool) { // solhint-disable-line no-simple-event-func-name
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    /* Restricted function to allow pretoken signers to fix if pretoken owner lost keys */
+    function transferFrom(address from, address to, uint amount)
+    public restrict("PreTokenSigner") returns (bool) {
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    /* private function used by transferFrom & transfer */
+    function _transfer(address from, address to, uint amount) private {
+        require(agreements[from].agreementHash != 0x0, "only holder of an agreement can transfer");
+        require(to != 0x0, "must not transfer to 0x0");
         require(
             agreements[to].agreementHash == 0 ||  // allow to transfer to address without agreement
             amount == 0 || // allow 0 amount transfers to any acc for voting
-            agreements[to].agreementHash == agreements[msg.sender].agreementHash // allow transfer to acc w/ same agr.
+            agreements[to].agreementHash == agreements[from].agreementHash // allow transfer to acc w/ same agr.
         );
 
         if (amount > 0) { // transfer agreement if it's not a 0 amount "vote only" transfer
-            agreements[msg.sender].balance = agreements[msg.sender].balance.sub(amount);
+            agreements[from].balance = agreements[from].balance.sub(amount);
             agreements[to].balance = agreements[to].balance.add(amount);
 
-            agreements[to].agreementHash = agreements[msg.sender].agreementHash;
-            agreements[to].valuationCap = agreements[msg.sender].valuationCap;
-            agreements[to].discount = agreements[msg.sender].discount;
+            agreements[to].agreementHash = agreements[from].agreementHash;
+            agreements[to].valuationCap = agreements[from].valuationCap;
+            agreements[to].discount = agreements[from].discount;
         }
 
-        emit Transfer(msg.sender, to, amount);
+        emit Transfer(from, to, amount);
     }
 
     function getAgreementsCount() external view returns (uint agreementsCount) {
