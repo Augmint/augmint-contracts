@@ -20,9 +20,9 @@ function parseAgreement(agreementArray) {
 contract("PreToken", accounts => {
     before(async () => {
         preToken = PreToken.at(PreToken.address);
-
+        // NB: be aware that migration scripts are adding agreements to accounts 0, 1 & 2  for local FE testing
         testAgreement = {
-            owner: accounts[8],
+            owner: accounts[3],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000008",
             discount: 800000,
             cap: 20000000
@@ -32,7 +32,7 @@ contract("PreToken", accounts => {
 
     it("should add an agreement", async function() {
         const agreement = {
-            owner: accounts[1],
+            owner: accounts[4],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000001",
             discount: 800000,
             cap: 20000000
@@ -72,14 +72,14 @@ contract("PreToken", accounts => {
 
     it("Should list agreements", async function() {
         const agreement1 = {
-            owner: accounts[2],
+            owner: accounts[5],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000002",
             discount: 800000,
             cap: 20000000
         };
 
         const agreement2 = {
-            owner: accounts[3],
+            owner: accounts[6],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000003",
             discount: 900000,
             cap: 25000000
@@ -144,7 +144,7 @@ contract("PreToken", accounts => {
 
     it("should NOT add an agreement without agreementHash", async function() {
         const agreement = {
-            owner: accounts[4],
+            owner: accounts[7],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
             discount: 800000,
             cap: 20000000
@@ -157,7 +157,7 @@ contract("PreToken", accounts => {
 
     it("should NOT add an agreement if owner already has one", async function() {
         const agreement = {
-            owner: accounts[4],
+            owner: accounts[8],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000005",
             discount: 800000,
             cap: 20000000
@@ -172,7 +172,7 @@ contract("PreToken", accounts => {
 
     it("add agreement should be only via multiSig", async function() {
         const agreement = {
-            owner: accounts[6],
+            owner: accounts[7],
             hash: "0x0000000000000000000000000000000000000000000000000000000000000006",
             discount: 800000,
             cap: 20000000
@@ -206,7 +206,7 @@ contract("PreToken", accounts => {
     });
 
     it("should NOT issueTo an account without an agreement", async function() {
-        await testHelpers.expectThrow(preToken.issueTo(accounts[6], 1000));
+        await testHelpers.expectThrow(preToken.issueTo(accounts[9], 1000));
     });
 
     it("only permitted should call issueTo", async function() {

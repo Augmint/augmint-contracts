@@ -1,4 +1,6 @@
-/* create a few test preTokens */
+/* create a few test preTokens
+ NB: unit test are using accounts 3 and above
+\ */
 const PreToken = artifacts.require("./PreToken.sol");
 
 module.exports = function(deployer, network, accounts) {
@@ -10,21 +12,15 @@ module.exports = function(deployer, network, accounts) {
             // addAgreement(owner, agreementHash,  discount, valuationCap)
             preToken.addAgreement(
                 accounts[0],
-                "0x0000000000000000000000000000000000000000000000000000000000000001",
-                80000,
+                "0xa100000000000000000000000000000000000000000000000000000000000001",
+                800000,
                 30000000
             ),
             preToken.addAgreement(
                 accounts[1],
-                "0x0000000000000000000000000000000000000000000000000000000000000002",
-                85000,
+                "0xa200000000000000000000000000000000000000000000000000000000000002",
+                850000,
                 40000000
-            ),
-            preToken.addAgreement(
-                accounts[2],
-                "0x0000000000000000000000000000000000000000000000000000000000000003",
-                90000,
-                50000000
             )
         ]);
 
@@ -36,9 +32,7 @@ module.exports = function(deployer, network, accounts) {
         ]);
 
         await Promise.all([
-            preToken.transfer(accounts[3], 4000, { from: accounts[0] }),
-            preToken.transfer(accounts[3], 3000, { from: accounts[0] }),
-            preToken.transferFrom(accounts[1], accounts[4], 2000, { from: accounts[0] }),
+            preToken.transfer(accounts[2], 7000, { from: accounts[1] }),
             preToken.burnFrom(accounts[0], 1000)
         ]);
     });

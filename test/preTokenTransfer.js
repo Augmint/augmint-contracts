@@ -7,9 +7,9 @@ let agreement;
 contract("PreToken transfer", accounts => {
     before(async () => {
         preToken = PreToken.at(PreToken.address);
-        // account 0 used for issue/transfer tests
+        // NB: be aware that migration scripts are adding agreements to accounts 0, 1 & 2  for local FE testing
         agreement = {
-            owner: accounts[1],
+            owner: accounts[3],
             hash: "0x36517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 700000,
             cap: 15000000
@@ -20,7 +20,7 @@ contract("PreToken transfer", accounts => {
     });
 
     it("should transfer to an account which has no agreement yet", async function() {
-        const to = accounts[2];
+        const to = accounts[4];
         const amount = 100;
         const [supplyBefore, ownerBalBefore] = await Promise.all([
             preToken.totalSupply(),
@@ -50,7 +50,7 @@ contract("PreToken transfer", accounts => {
     });
 
     it("should transfer to an account which has the same agreement", async function() {
-        const to = accounts[3];
+        const to = accounts[5];
         const amount = 100;
 
         // first transfer to an account w/o agreement ("copy" agreement)
@@ -65,7 +65,7 @@ contract("PreToken transfer", accounts => {
     });
 
     it("should tansfer 0 amount (voting) to an account w/o agreement", async function() {
-        const to = accounts[4];
+        const to = accounts[6];
         const amount = 0;
 
         const tx = await preToken.transfer(to, amount, { from: agreement.owner });
@@ -82,10 +82,10 @@ contract("PreToken transfer", accounts => {
         assert.equal(agreementAfter[3].toNumber(), "0");
     });
 
-    it("should tansfer 0 amount (voting) to an account with a different agreement", async function() {
+    it("should transfer 0 amount (voting) to an account with a different agreement", async function() {
         const amount = 0;
         const agreement2 = {
-            owner: accounts[5],
+            owner: accounts[7],
             hash: "0x36517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 700000,
             cap: 15000000
@@ -102,7 +102,7 @@ contract("PreToken transfer", accounts => {
     it("should NOT transfer to an account which has a different agreement", async function() {
         const amount = 100;
         const agreement2 = {
-            owner: accounts[6],
+            owner: accounts[8],
             hash: "0x66517e28afd52e6a9fc53d6922833c67b02e339943d737f1abefa877ff69b68a",
             discount: 700000,
             cap: 15000000
@@ -113,7 +113,7 @@ contract("PreToken transfer", accounts => {
     });
 
     it("should NOT transfer more than balance", async function() {
-        const to = accounts[7];
+        const to = accounts[8];
         const amount = (await preToken.balanceOf(agreement.owner)).add(1);
         await testHelpers.expectThrow(preToken.transfer(to, amount, { from: agreement.owner }));
     });
@@ -132,7 +132,7 @@ contract("PreToken transfer", accounts => {
     });
 
     it("should transferFrom", async function() {
-        const to = accounts[8];
+        const to = accounts[9];
         const from = agreement.owner;
         const amount = 100;
         const [supplyBefore, ownerBalBefore] = await Promise.all([
