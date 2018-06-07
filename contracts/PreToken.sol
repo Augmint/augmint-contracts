@@ -1,16 +1,28 @@
 /* Augmint pretoken contract to record agreements and tokens allocated based on the agreement.
-Important: this is NOT an ERC20 token!
-These tokens are not fungible because agreements can have different conditions (valuationCap and discount)
-    and pretokens are not tradable.
-Only the total pretoken amount and the aggrement can be transfered to a different account to be able to change wallets
-Despite it some ERC20 functions are implemented so agreement owners can see their
-    balances and transfers in standard wallets.
-Restrictions:
-  - only total account balance can be transfered - effectively ERC20 transfer used to transfer agreement ownership
-  - only allowed to agreement holders can transfer
-    (i.e. can't transfer 0 amount if have no agreement to avoid polluting logs with Transfer events)
-  - transfer is only allowed to accounts without an agreement yet
-  - no approval and transferFrom ERC20 functions
+
+    Important: this is NOT an ERC20 token!
+
+    PreTokens are non-fungible: agreements can have different conditions (valuationCap and discount)
+        and pretokens are not tradable.
+
+    Ownership can be transferred if owner wasnt to change wallet but the whole agreement and
+        the total pretoken amount is moved to a new account
+
+    PreTokenSigner can (via MultiSig):
+      - add agreements and issue pretokens to each agreement
+      - change owner of any agreement to handle if an owner lost a private keys
+      - burn pretokens from any aggreement to fix potential enernous issuance
+    These are known compromises on trustlessness hence all these tokens distributed based on signed agreements and
+        preTokens are issued only to a closed group of contributors / team members.
+    If despite these something goes wrong then as a last resort a new pretoken contract can be recreated from agreements.
+
+    Some ERC20 functions are implemented so agreement owners can see their balances and use transfer in standard wallets.
+    Restrictions:
+      - only total balance can be transfered - effectively ERC20 transfer used to transfer agreement ownership
+      - only agreement holders can transfer
+        (i.e. can't transfer 0 amount if have no agreement to avoid polluting logs with Transfer events)
+      - transfer is only allowed to accounts without an agreement yet
+      - no approval and transferFrom ERC20 functions
  */
 
 pragma solidity 0.4.24;
