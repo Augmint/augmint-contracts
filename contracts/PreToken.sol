@@ -1,11 +1,14 @@
 /* Augmint pretoken contract to record tokens allocated based on agreements.
-These tokens are not fungible because agreements can have different conditions (valuationCap and discount).
-Despite being non-fungible some ERC20 functions are implemented so agreement owners can see their balances and transfers
-    in standard wallets.
-Where it's not ERC20 compliant:
+Important: this is NOT an ERC20 token!
+These tokens are not fungible because agreements can have different conditions (valuationCap and discount)
+    and pretokens are not tradable.
+Despite it some ERC20 functions are implemented so agreement owners can see their
+    balances and transfers in standard wallets.
+Restrictions:
+  - only 0 or the total account balance can be transfered
   - transfer is only allowed by agreement holders (to avoid polluting transfer logs)
-  - transfer is only allowed to accounts without an agreement yet or same agreement
-  - no approval and transferFrom
+  - transfer is only allowed to accounts without an agreement yet or the same agreement
+  - no approval and transferFrom ERC20 functions
  */
 
 pragma solidity 0.4.24;
@@ -97,8 +100,13 @@ contract PreToken is Restricted {
         require(to != 0x0, "must not transfer to 0x0");
         require(
             agreements[to].agreementHash == 0 ||  // allow to transfer to address without agreement
-            amount == 0 || // allow 0 amount transfers to any acc for voting
             agreements[to].agreementHash == agreements[from].agreementHash // allow transfer to acc w/ same agr.
+            , "must transfer to same or 0x0 agreementHash account"
+        );
+        require(
+            amount == 0 || // allow 0 amount transfers to any acc without agreementHash for voting
+            amount == agreements[from].balance // allow only to transfer full balance
+            , "must transfer 0 or full balance"
         );
 
         if (amount > 0) { // transfer agreement if it's not a 0 amount "vote only" transfer
