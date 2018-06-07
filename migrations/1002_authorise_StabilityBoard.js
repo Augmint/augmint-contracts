@@ -1,8 +1,7 @@
-/* Authorise accounts[0] on local test deploys to execute multiSig functions.
-  NB: for rinkeby / testnet deploys process is different
+/* Authorise accounts[0] on local test deploys to execute StabilityBoard functions.
+  NB: for testnets / mainnet deploys process is different
 */
 
-const PreToken = artifacts.require("./PreToken.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
@@ -16,7 +15,6 @@ module.exports = function(deployer, network, accounts) {
     deployer.then(async () => {
         const stabilityBoardAccounts = [accounts[0]];
 
-        const preToken = PreToken.at(PreToken.address);
         const feeAccount = FeeAccount.at(FeeAccount.address);
         const augmintReserves = AugmintReserves.at(AugmintReserves.address);
         const tokenAEur = TokenAEur.at(TokenAEur.address);
@@ -36,7 +34,6 @@ module.exports = function(deployer, network, accounts) {
             loanManager.grantPermission(acc, "StabilityBoard"),
             exchange.grantPermission(acc, "StabilityBoard")
         ]);
-        grantTxs.push(preToken.grantPermission(accounts[0], "PreTokenSigner"));
 
         await Promise.all(grantTxs);
     });
