@@ -12,6 +12,7 @@
         "Locker.json",
         "Exchange.json",
         "StabilityBoardProxy.json",
-        "PreTokenProxy.json"
+        "PreTokenProxy.json",
+        "PreToken.json"
     ]
 }
