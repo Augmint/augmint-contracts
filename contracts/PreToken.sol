@@ -5,13 +5,13 @@
     PreTokens are non-fungible: agreements can have different conditions (valuationCap and discount)
         and pretokens are not tradable.
 
-    Ownership can be transferred if owner wasnt to change wallet but the whole agreement and
+    Ownership can be transferred if owner wants to change wallet but the whole agreement and
         the total pretoken amount is moved to a new account
 
     PreTokenSigner can (via MultiSig):
-      - add agreements and issue pretokens to each agreement
+      - add agreements and issue pretokens to an agreement
       - change owner of any agreement to handle if an owner lost a private keys
-      - burn pretokens from any aggreement to fix potential enernous issuance
+      - burn pretokens from any agreement to fix potential erroneous issuance
     These are known compromises on trustlessness hence all these tokens distributed based on signed agreements and
         preTokens are issued only to a closed group of contributors / team members.
     If despite these something goes wrong then as a last resort a new pretoken contract can be recreated from agreements.
