@@ -43,9 +43,15 @@ contract("PreToken", accounts => {
         const tx = await preToken.addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap);
         testHelpers.logGasUse(this, tx, "addAgreement");
 
-        const [agreementsCountAfter, actualAgreementArray, actualAgreementGetter] = await Promise.all([
+        const [
+            agreementsCountAfter,
+            actualAgreementArray,
+            actualAgreementOwnerHash,
+            actualAgreementGetter
+        ] = await Promise.all([
             preToken.getAgreementsCount().then(res => res.toNumber()),
-            preToken.agreements(agreement.owner),
+            preToken.agreements(agreement.hash),
+            preToken.agreementOwners(agreement.owner),
             preToken.getAllAgreements(agreementsCountBefore),
             testHelpers.assertEvent(preToken, "NewAgreement", {
                 owner: agreement.owner,
@@ -64,8 +70,10 @@ contract("PreToken", accounts => {
         assert.equal(parsedAgreement.discount, agreement.discount);
         assert.equal(parsedAgreement.cap, agreement.cap);
 
-        assert.equal(actualAgreementArray[0].toString(), "0");
-        assert.equal(actualAgreementArray[1], agreement.hash);
+        assert.equal(actualAgreementOwnerHash, agreement.hash);
+
+        assert.equal(actualAgreementArray[0].toString(), agreement.owner);
+        assert.equal(actualAgreementArray[1].toString(), "0");
         assert.equal(actualAgreementArray[2].toNumber(), agreement.discount);
         assert.equal(actualAgreementArray[3].toNumber(), agreement.cap);
     });
@@ -142,6 +150,19 @@ contract("PreToken", accounts => {
         );
     });
 
+    it("should NOT add an agreement with 0 discount", async function() {
+        const agreement = {
+            owner: accounts[4],
+            hash: "0x0000000000000000000000000000000000000000000000000000000000000005",
+            discount: 0,
+            cap: 20000000
+        };
+
+        await testHelpers.expectThrow(
+            preToken.addAgreement(agreement.owner, agreement.hash, agreement.discount, agreement.cap)
+        );
+    });
+
     it("should NOT add an agreement without agreementHash", async function() {
         const agreement = {
             owner: accounts[4],
@@ -158,7 +179,7 @@ contract("PreToken", accounts => {
     it("should NOT add an agreement if owner already has one", async function() {
         const agreement = {
             owner: accounts[4],
-            hash: "0x0000000000000000000000000000000000000000000000000000000000000005",
+            hash: "0x0000000000000000000000000000000000000000000000000000000000000006",
             discount: 800000,
             cap: 20000000
         };
@@ -173,7 +194,7 @@ contract("PreToken", accounts => {
     it("add agreement should be only via multiSig", async function() {
         const agreement = {
             owner: accounts[6],
-            hash: "0x0000000000000000000000000000000000000000000000000000000000000006",
+            hash: "0x0000000000000000000000000000000000000000000000000000000000000007",
             discount: 800000,
             cap: 20000000
         };
@@ -188,7 +209,7 @@ contract("PreToken", accounts => {
         const amount = 1000;
         const supplyBefore = await preToken.totalSupply();
 
-        const tx = await preToken.issueTo(testAgreement.owner, amount);
+        const tx = await preToken.issueTo(testAgreement.hash, amount);
         testHelpers.logGasUse(this, tx, "issueTo");
 
         const [supplyAfter, balanceAfter] = await Promise.all([
@@ -205,8 +226,10 @@ contract("PreToken", accounts => {
         assert.equal(balanceAfter.toString(), amount.toString());
     });
 
-    it("should NOT issueTo an account without an agreement", async function() {
-        await testHelpers.expectThrow(preToken.issueTo(accounts[6], 1000));
+    it("should NOT issueTo a non existing agreement", async function() {
+        await testHelpers.expectThrow(
+            preToken.issueTo("0x0000000000000000000000000000000000000000000000000000000000000007", 1000)
+        );
     });
 
     it("only permitted should call issueTo", async function() {
@@ -220,7 +243,7 @@ contract("PreToken", accounts => {
             preToken.balanceOf(testAgreement.owner)
         ]);
 
-        const tx = await preToken.burnFrom(testAgreement.owner, amount);
+        const tx = await preToken.burnFrom(testAgreement.hash, amount);
         testHelpers.logGasUse(this, tx, "burnFrom");
 
         const [supplyAfter, balanceAfter] = await Promise.all([
@@ -240,14 +263,14 @@ contract("PreToken", accounts => {
     it("shouldn't burnFrom more than balance", async function() {
         const balanceBefore = await preToken.balanceOf(testAgreement.owner);
 
-        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.owner, balanceBefore.add(1)));
+        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.hash, balanceBefore.add(1)));
     });
 
     it("shouldn't burnFrom 0 amount", async function() {
-        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.owner, 0));
+        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.hash, 0));
     });
 
     it("only allowed should burnFrom", async function() {
-        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.owner, 1, { from: accounts[1] }));
+        await testHelpers.expectThrow(preToken.burnFrom(testAgreement.hash, 1, { from: accounts[1] }));
     });
 });
