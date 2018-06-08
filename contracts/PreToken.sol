@@ -108,31 +108,31 @@ contract PreToken is Restricted {
     /* function to transfer agreement ownership to other wallet by owner
         it's in ERC20 form so owners can use standard ERC20 wallet just need to pass full balance as value */
     function transfer(address to, uint amount) public returns (bool) { // solhint-disable-line no-simple-event-func-name
-        _transfer(msg.sender, to, amount);
+        require(amount == agreements[agreementOwners[msg.sender]].balance, "must transfer full balance");
+        _transfer(msg.sender, to);
         return true;
     }
 
     /* Restricted function to allow pretoken signers to fix if pretoken owner lost keys */
     function transferAgreement(bytes32 agreementHash, address to)
     public restrict("PreTokenSigner") returns (bool) {
-        _transfer(agreements[agreementHash].owner, to, agreements[agreementHash].balance);
+        _transfer(agreements[agreementHash].owner, to);
         return true;
     }
 
     /* private function used by transferAgreement & transfer */
-    function _transfer(address from, address to, uint amount) private {
+    function _transfer(address from, address to) private {
         Agreement storage agreement = agreements[agreementOwners[from]];
         require(agreementOwners[from] != 0x0, "from agreement must exists");
         require(agreementOwners[to] == 0, "to must not have an agreement");
         require(to != 0x0, "must not transfer to 0x0");
-        require(amount == agreement.balance, "must transfer full balance");
 
         agreement.owner = to;
 
         agreementOwners[to] = agreementOwners[from];
         agreementOwners[from] = 0x0;
 
-        emit Transfer(from, to, amount);
+        emit Transfer(from, to, agreement.balance);
     }
 
     function getAgreementsCount() external view returns (uint agreementsCount) {
