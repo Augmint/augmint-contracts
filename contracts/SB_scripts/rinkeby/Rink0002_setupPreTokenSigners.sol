@@ -15,7 +15,7 @@ contract Rink0002_setupPreTokenSigners {
     address constant DEPLOYER_ADDRESS = 0xae653250B4220835050B75D3bC91433246903A95;
 
     PreTokenProxy constant
-            preTokenProxy = PreTokenProxy(0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9);
+            preTokenProxy = PreTokenProxy(0x0775465245e523b45Cc3b41477d44F908e22feDE);
 
     function execute(Rink0002_setupPreTokenSigners /* self (not used) */) external {
         /******************************************************************************

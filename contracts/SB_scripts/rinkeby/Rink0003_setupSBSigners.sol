@@ -16,7 +16,7 @@ contract Rink0003_setupSBSigners {
     address constant DEPLOYER_ADDRESS = 0xae653250B4220835050B75D3bC91433246903A95;
 
     StabilityBoardProxy constant
-                    stabilityBoardProxy = StabilityBoardProxy(0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB);
+                    stabilityBoardProxy = StabilityBoardProxy(0x44022C28766652EC5901790E53CEd7A79a19c10A);
 
     function execute(Rink0003_setupSBSigners /* self (not used)*/ ) external {
         /******************************************************************************
