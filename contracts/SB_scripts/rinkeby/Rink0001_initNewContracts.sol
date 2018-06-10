@@ -23,19 +23,19 @@ contract Rink0001_initNewContracts {
     address constant RATES_FEEDER_ACCOUNT = 0x8C58187a978979947b88824DCdA5Cb5fD4410387;
 
     // new contracts
-    address constant preTokenProxyAddress = 0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9;
-    address constant stabilityBoardProxyAddress = 0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB;
+    address constant preTokenProxyAddress = 0x0775465245e523b45Cc3b41477d44F908e22feDE;
+    address constant stabilityBoardProxyAddress = 0x44022C28766652EC5901790E53CEd7A79a19c10A;
 
-    PreToken constant preToken = PreToken(0xB4d0B60Cd1b2407E80F4295AB84ABBe0b1E98d58);
-    Rates constant rates = Rates(0x582971C64de4b5E6Db2D95cf8103CfF7f0FdFF31);
-    FeeAccount constant feeAccount = FeeAccount(0x9B26f801C6078B76690b0D954f7fD662e04BE1d1);
-    AugmintReserves constant augmintReserves = AugmintReserves(0x8CfEf73Cf8CfBb78868fF8C37525E95AdfabBf09);
-    InterestEarnedAccount constant interestEarnedAccount = InterestEarnedAccount(0xDD1B8DFD9094E319a0Eb83c32b47331946CB761F);
-    TokenAEur constant tokenAEur = TokenAEur(0x0DA47C59d0C3166DdC2984d72b8C8FaC82275056);
-    MonetarySupervisor constant monetarySupervisor = MonetarySupervisor(0xa14e0c0e39f00ef051DF516F80E76208B716b0eB);
-    LoanManager constant loanManager = LoanManager(0x08281151718983b6dBF0AafB810738D8bd1d2e4a);
-    Locker constant locker = Locker(0xd3B0D67B30aAF25b5d644DF6e8c520B263D3De5B);
-    Exchange constant exchange = Exchange(0x27e3F7a0D2803B1a24fE05f3b609b8327B451650);
+    PreToken constant preToken = PreToken(0xFc69b4F2A7de7c68c46A8230eCDF0cff49Eb8f1F);
+    Rates constant rates = Rates(0xf25638C7d37fCa0cBc124b3925eCe156a20e1f03);
+    FeeAccount constant feeAccount = FeeAccount(0x0F5983a6d760BF6E385339af0e67e87420d413EC);
+    AugmintReserves constant augmintReserves = AugmintReserves(0x6386F25d2029ea3164838BF6494Ed85C01fC1B03);
+    InterestEarnedAccount constant interestEarnedAccount = InterestEarnedAccount(0xdf8c338A89f827A6D62804905ed415B6a382f92E);
+    TokenAEur constant tokenAEur = TokenAEur(0xe54f61d6EaDF03b658b3354BbD80cF563fEca34c);
+    MonetarySupervisor constant monetarySupervisor = MonetarySupervisor(0x01844c9bade08A8ffdB09aD9f1fecE2C83a6E6a8);
+    LoanManager constant loanManager = LoanManager(0x3b5DD323534659655EEccc642c3e338AAbD0B219);
+    Locker constant locker = Locker(0x5B94AaF241E8039ed6d3608760AE9fA7186767d7);
+    Exchange constant exchange = Exchange(0x5e2Be81aB4237c7c08d929c42b9F13cF4f9040D2);
 
     // Legacy contracts
     /* Dropped support for very old tokens:
