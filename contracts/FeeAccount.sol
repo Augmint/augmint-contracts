@@ -22,7 +22,8 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
-    constructor(uint transferFeePt, uint transferFeeMin, uint transferFeeMax) public {
+    constructor(address permissionGranterContract, uint transferFeePt, uint transferFeeMin, uint transferFeeMax)
+    public SystemAccount(permissionGranterContract) {
         transferFee = TransferFee(transferFeePt, transferFeeMin, transferFeeMax);
     }
 

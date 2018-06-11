@@ -3,17 +3,17 @@ title **Augmint** - Sales from reserves flows
 skinparam ArrowColor #blue
 skinparam noteBackgroundColor #lightgrey
 
-actor MonetaryBoard
+actor StabilityBoard
 control AugmintReserves
 control ReserveSales
 control AugmintToken
 actor Buyer
 
 == Increase token amount on sale from reserve ==
-MonetaryBoard -> AugmintReserves : increaseReserveTokenSale\n(ReserveSales, AugmintToken, tokenAmount, price)
+StabilityBoard -> AugmintReserves : increaseReserveTokenSale\n(ReserveSales, AugmintToken, tokenAmount, price)
 note over AugmintReserves
     sellTokenFromReserve is
-    restricted to MonetaryBoard and
+    restricted to StabilityBoard and
     whitelisted ReserveSales only
 end note
 
@@ -38,10 +38,10 @@ activate ReserveSales
 deactivate ReserveSales
 
 == Increase ETH amoount on sale from reserve  ==
-MonetaryBoard -> AugmintReserves : increaseReserveEthSale\n(ReserveSales, AugmintToken, ethAmount, price)
+StabilityBoard -> AugmintReserves : increaseReserveEthSale\n(ReserveSales, AugmintToken, ethAmount, price)
 note over AugmintReserves
     sellEthFromReserve is
-    restricted to MonetaryBoard
+    restricted to StabilityBoard
     and whitelisted ReserveSales only
 end note
 
@@ -74,11 +74,11 @@ activate ReserveSales
 deactivate ReserveSales
 
 == Reduce token sell order ==
-MonetaryBoard -> ReserveSales : reduceTokenSellOrder\n(amount)
+StabilityBoard -> ReserveSales : reduceTokenSellOrder\n(amount)
 ReserveSales -> AugmintReserves : AugmintToken.transfer(amount)
 
 == Reduce ETH sell order ==
-MonetaryBoard -> ReserveSales : reduceEthSellOrder\n()
+StabilityBoard -> ReserveSales : reduceEthSellOrder\n()
 ReserveSales -> AugmintReserves : transfer(AugmintReserves, amount)
 
 @enduml

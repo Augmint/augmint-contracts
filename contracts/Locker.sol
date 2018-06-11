@@ -67,8 +67,9 @@ contract Locker is Restricted, TokenReceiver {
     // lock ids for an account
     mapping(address => uint[]) public accountLocks;
 
-    constructor(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor) public {
-
+    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken,
+                    MonetarySupervisor _monetarySupervisor)
+    public Restricted(permissionGranterContract) {
         augmintToken = _augmintToken;
         monetarySupervisor = _monetarySupervisor;
 

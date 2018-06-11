@@ -53,6 +53,7 @@ contract MultiSig {
         isSigner[msg.sender] = true;
         allSigners.push(msg.sender);
         activeSignersCount = 1;
+        emit SignerAdded(msg.sender);
     }
 
     function sign(address scriptAddress) public {

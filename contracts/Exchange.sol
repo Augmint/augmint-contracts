@@ -57,7 +57,8 @@ contract Exchange is Restricted {
 
     event RatesContractChanged(Rates newRatesContract);
 
-    constructor(AugmintTokenInterface _augmintToken, Rates _rates) public {
+    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken, Rates _rates)
+    public Restricted(permissionGranterContract) {
         augmintToken = _augmintToken;
         rates = _rates;
     }

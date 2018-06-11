@@ -66,8 +66,9 @@ contract LoanManager is Restricted {
 
     event SystemContractsChanged(Rates newRatesContract, MonetarySupervisor newMonetarySupervisor);
 
-    constructor(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor, Rates _rates)
-    public {
+    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken,
+                    MonetarySupervisor _monetarySupervisor, Rates _rates)
+    public Restricted(permissionGranterContract) {
         augmintToken = _augmintToken;
         monetarySupervisor = _monetarySupervisor;
         rates = _rates;

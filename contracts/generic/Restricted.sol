@@ -4,11 +4,11 @@
 
     deployment works as:
            1. contract deployer account deploys contracts
-           2. constructor grants "StabilityBoardSignerContract" permission to deployer
-           3. deployer adds StabilityBoardSignerContract permission for the StabilityBoardSigner multisig  contract
-           4. deployer account revokes its own StabilityBoardSignerContract right
-           ( TBD: if  Restricted contracts get StabilityBoardSignerContract as constructor param
-            which would make the deploy scripts  complicated )
+           2. constructor grants "PermissionGranterContract" permission to deployer account
+           3. deployer account executes initial setup (no multiSig)
+           4. deployer account grants PermissionGranterContract permission for the MultiSig contract
+                (e.g. StabilityBoardSigner or PreTokenAgreementSigner)
+           5. deployer account revokes its own PermissionGranterContract permission
 */
 
 pragma solidity 0.4.24;
@@ -27,21 +27,22 @@ contract Restricted {
         _;
     }
 
-    constructor() public {
-        permissions[msg.sender]["StabilityBoardSignerContract"] = true;
-        emit PermissionGranted(msg.sender, "StabilityBoardSignerContract");
+    constructor(address permissionGranterContract) public {
+        require(permissionGranterContract != address(0), "permissionGranterContract must be set");
+        permissions[permissionGranterContract]["PermissionGranterContract"] = true;
+        emit PermissionGranted(permissionGranterContract, "PermissionGranterContract");
     }
 
     function grantPermission(address agent, bytes32 requiredPermission) public {
-        require(permissions[msg.sender]["StabilityBoardSignerContract"],
-            "msg.sender must have StabilityBoardSignerContract permission");
+        require(permissions[msg.sender]["PermissionGranterContract"],
+            "msg.sender must have PermissionGranterContract permission");
         permissions[agent][requiredPermission] = true;
         emit PermissionGranted(agent, requiredPermission);
     }
 
     function grantMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
-        require(permissions[msg.sender]["StabilityBoardSignerContract"],
-            "msg.sender must have StabilityBoardSignerContract permission");
+        require(permissions[msg.sender]["PermissionGranterContract"],
+            "msg.sender must have PermissionGranterContract permission");
         uint256 length = requiredPermissions.length;
         for (uint256 i = 0; i < length; i++) {
             grantPermission(agent, requiredPermissions[i]);
@@ -49,8 +50,8 @@ contract Restricted {
     }
 
     function revokePermission(address agent, bytes32 requiredPermission) public {
-        require(permissions[msg.sender]["StabilityBoardSignerContract"],
-            "msg.sender must have StabilityBoardSignerContract permission");
+        require(permissions[msg.sender]["PermissionGranterContract"],
+            "msg.sender must have PermissionGranterContract permission");
         permissions[agent][requiredPermission] = false;
         emit PermissionRevoked(agent, requiredPermission);
     }

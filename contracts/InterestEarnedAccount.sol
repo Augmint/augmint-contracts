@@ -8,6 +8,8 @@ import "./interfaces/AugmintTokenInterface.sol";
 
 contract InterestEarnedAccount is SystemAccount {
 
+    constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+
     function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)
     external restrict("MonetarySupervisorContract") {
         augmintToken.transfer(locker, interestAmount);

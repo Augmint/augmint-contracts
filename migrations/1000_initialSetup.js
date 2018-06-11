@@ -35,15 +35,17 @@ module.exports = function(deployer) {
             const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
             const loanManager = LoanManager.at(LoanManager.address);
             const locker = Locker.at(Locker.address);
+            const exchange = Exchange.at(Exchange.address);
             await Promise.all([
-                rates.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                feeAccount.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                tokenAEur.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                augmintReserves.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                loanManager.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract"),
-                locker.grantPermission(StabilityBoardSigner.address, "StabilityBoardSignerContract")
+                rates.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                feeAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                tokenAEur.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                augmintReserves.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                loanManager.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
+                exchange.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract")
             ]);
 
             // run initial setup script

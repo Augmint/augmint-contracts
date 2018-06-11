@@ -16,6 +16,7 @@ contract("AugmintToken tests", accounts => {
     it("shouldn't create a token contract without feeAccount", async function() {
         await testHelpers.expectThrow(
             AugmintToken.new(
+                accounts[0],
                 "Augmint Crypto Euro", // name
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
@@ -28,6 +29,7 @@ contract("AugmintToken tests", accounts => {
     it("shouldn't create a token contract without token name", async function() {
         await testHelpers.expectThrow(
             AugmintToken.new(
+                accounts[0],
                 "", // name
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
@@ -40,6 +42,7 @@ contract("AugmintToken tests", accounts => {
     it("shouldn't create a token contract without token symbol", async function() {
         await testHelpers.expectThrow(
             AugmintToken.new(
+                accounts[0],
                 "Augmint Crypto Euro", // name
                 "", // symbol
                 "EUR", // peggedSymbol
