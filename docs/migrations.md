@@ -84,4 +84,13 @@ TODO: revise this
 
 ## Main network
 
-TODO
+```
+truffle migrate --network mainnet --migrations_directory=./mainnet_migrations/ -f <migration step> --dry-run
+```
+
+Use `.env` to set:
+
+*   `DEPLOYER_ACCOUNT_MNENOMIC`
+*   `INFURA_API_KEY`
+
+NB: Couldn't make Ledger or Trezor wallet to work with `truffle migrate` yet. But deployer account doesn't require HW wallet level security because deployer account doesn't have any special permissions on the system once it removed itself from the signers after initial deploy.
