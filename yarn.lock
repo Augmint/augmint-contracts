@@ -2113,9 +2113,9 @@ fstream@^1.0.2, fstream@^1.0.8:
     mkdirp ">=0.5 0"
     rimraf "2"
 
-ganache-cli@6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.1.0.tgz#486c846497204b644166b5f0f74c9b41d02bdc25"
+ganache-cli@6.1.2:
+  version "6.1.2"
+  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.1.2.tgz#bf20546a351218b17db67661b85f693dd80c0f4a"
   dependencies:
     source-map-support "^0.5.3"
     webpack-cli "^2.0.9"
