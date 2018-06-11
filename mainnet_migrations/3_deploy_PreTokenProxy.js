@@ -1,5 +1,7 @@
 const PreTokenProxy = artifacts.require("./PreTokenProxy.sol");
 
 module.exports = function(deployer) {
-    deployer.deploy(PreTokenProxy);
+    deployer.then(async () => {
+        deployer.deploy(PreTokenProxy);
+    });
 };

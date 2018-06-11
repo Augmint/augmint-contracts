@@ -93,4 +93,8 @@ Use `.env` to set:
 *   `DEPLOYER_ACCOUNT_MNENOMIC`
 *   `INFURA_API_KEY`
 
-NB: Couldn't make Ledger or Trezor wallet to work with `truffle migrate` yet. But deployer account doesn't require HW wallet level security because deployer account doesn't have any special permissions on the system once it removed itself from the signers after initial deploy.
+NB:
+
+*   `Migrations.sol` is deployed but manually updated by deployer account (`deployer.deploy()` in migrations scripts is within `deployer.then()`, so truffle is not updating migrations automatically).  
+    Don't rely on `last_completed_migration` because it might be out of sync.
+*   Couldn't make Ledger or Trezor wallet to work with `truffle migrate` yet. But deployer account doesn't require HW wallet level security because deployer account doesn't have any special permissions on the system once it removed itself from the signers after initial deploy.
