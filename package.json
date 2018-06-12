@@ -22,7 +22,7 @@
         "bignumber.js": "5.0.0",
         "coveralls": "3.0.1",
         "dotenv": "6.0.0",
-        "ganache-cli": "6.1.0",
+        "ganache-cli": "6.1.2",
         "moment": "2.22.2",
         "random-seed": "0.3.0",
         "solidity-coverage": "0.5.4",
