@@ -324,19 +324,19 @@ contract("Loans tests", accounts => {
         );
         await Promise.all([
             await rates.setRate("EUR", 99800),
-            await craftedLender.grantPermission(accounts[0], "StabilityBoardSignerContract")
+            await craftedLender.grantPermission(accounts[0], "StabilityBoard")
         ]);
         await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true);
 
-        // testing Lender not having "LoanManagerContracts" permission on monetarySupervisor:
+        // testing Lender not having "LoanManager" permission on monetarySupervisor:
         await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") }));
 
         // grant permission to create new loan
-        await monetarySupervisor.grantPermission(craftedLender.address, "LoanManagerContracts");
+        await monetarySupervisor.grantPermission(craftedLender.address, "LoanManager");
         await craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") });
 
         // revoke permission and try to repay
-        await monetarySupervisor.revokePermission(craftedLender.address, "LoanManagerContracts"),
+        await monetarySupervisor.revokePermission(craftedLender.address, "LoanManager"),
         await testHelpers.expectThrow(
             augmintToken.transferAndNotify(craftedLender.address, 99800, 0, {
                 from: accounts[0]

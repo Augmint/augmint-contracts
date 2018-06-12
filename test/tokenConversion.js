@@ -29,10 +29,10 @@ contract("token conversion tests", accounts => {
         );
 
         await Promise.all([
-            tokenTestHelpers.feeAccount.grantPermission(newMS.address, "NoFeeTransferContracts"),
-            newToken.grantPermission(newMS.address, "MonetarySupervisorContract"),
-            newToken.grantPermission(accounts[0], "StabilityBoardSignerContract"),
-            newMS.grantPermission(accounts[0], "StabilityBoardSignerContract")
+            tokenTestHelpers.feeAccount.grantPermission(newMS.address, "NoTransferFee"),
+            newToken.grantPermission(newMS.address, "MonetarySupervisor"),
+            newToken.grantPermission(accounts[0], "StabilityBoard"),
+            newMS.grantPermission(accounts[0], "StabilityBoard")
         ]);
     });
 

@@ -20,7 +20,7 @@ contract AugmintReserves is SystemAccount {
 
     constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
-    function burn(AugmintTokenInterface augmintToken, uint amount) external restrict("MonetarySupervisorContract") {
+    function burn(AugmintTokenInterface augmintToken, uint amount) external restrict("MonetarySupervisor") {
         augmintToken.burn(amount);
     }
 

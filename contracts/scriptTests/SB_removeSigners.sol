@@ -1,4 +1,4 @@
-/* script to remove signers from multiSig - one instance can be executed by StabilityBoardSigner only once
+/* script to remove signers from multiSig - one instance can be executed by StabilityBoardProxy only once
     primarily for tests because for live using const for signer addresses is cheaper & more efficient
  */
 

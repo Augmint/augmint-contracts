@@ -1,5 +1,5 @@
 /* script to setup contracts after full redeploy on Rinkeby.
-    called via  StabilityBoardSignerContract (MultiSig) but deployer account is the only signer yet because
+    called via  StabilityBoardProxy (MultiSig) but deployer account is the only signer yet because
         these working on the new contracts only.
         Stability Board and pretoken signers will be added and deployer will be removed when setup is successful.
 */
@@ -23,19 +23,19 @@ contract Rink0001_initNewContracts {
     address constant RATES_FEEDER_ACCOUNT = 0x8C58187a978979947b88824DCdA5Cb5fD4410387;
 
     // new contracts
-    address constant preTokenProxyAddress = 0x43732139403ff83f41A6eBfA58C4Ed3D684Cb3d9;
-    address constant stabilityBoardSignerAddress = 0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB;
+    address constant preTokenProxyAddress = 0x0775465245e523b45Cc3b41477d44F908e22feDE;
+    address constant stabilityBoardProxyAddress = 0x44022C28766652EC5901790E53CEd7A79a19c10A;
 
-    PreToken constant preToken = PreToken(0xB4d0B60Cd1b2407E80F4295AB84ABBe0b1E98d58);
-    Rates constant rates = Rates(0x582971C64de4b5E6Db2D95cf8103CfF7f0FdFF31);
-    FeeAccount constant feeAccount = FeeAccount(0x9B26f801C6078B76690b0D954f7fD662e04BE1d1);
-    AugmintReserves constant augmintReserves = AugmintReserves(0x8CfEf73Cf8CfBb78868fF8C37525E95AdfabBf09);
-    InterestEarnedAccount constant interestEarnedAccount = InterestEarnedAccount(0xDD1B8DFD9094E319a0Eb83c32b47331946CB761F);
-    TokenAEur constant tokenAEur = TokenAEur(0x0DA47C59d0C3166DdC2984d72b8C8FaC82275056);
-    MonetarySupervisor constant monetarySupervisor = MonetarySupervisor(0xa14e0c0e39f00ef051DF516F80E76208B716b0eB);
-    LoanManager constant loanManager = LoanManager(0x08281151718983b6dBF0AafB810738D8bd1d2e4a);
-    Locker constant locker = Locker(0xd3B0D67B30aAF25b5d644DF6e8c520B263D3De5B);
-    Exchange constant exchange = Exchange(0x27e3F7a0D2803B1a24fE05f3b609b8327B451650);
+    PreToken constant preToken = PreToken(0xFc69b4F2A7de7c68c46A8230eCDF0cff49Eb8f1F);
+    Rates constant rates = Rates(0xf25638C7d37fCa0cBc124b3925eCe156a20e1f03);
+    FeeAccount constant feeAccount = FeeAccount(0x0F5983a6d760BF6E385339af0e67e87420d413EC);
+    AugmintReserves constant augmintReserves = AugmintReserves(0x6386F25d2029ea3164838BF6494Ed85C01fC1B03);
+    InterestEarnedAccount constant interestEarnedAccount = InterestEarnedAccount(0xdf8c338A89f827A6D62804905ed415B6a382f92E);
+    TokenAEur constant tokenAEur = TokenAEur(0xe54f61d6EaDF03b658b3354BbD80cF563fEca34c);
+    MonetarySupervisor constant monetarySupervisor = MonetarySupervisor(0x01844c9bade08A8ffdB09aD9f1fecE2C83a6E6a8);
+    LoanManager constant loanManager = LoanManager(0x3b5DD323534659655EEccc642c3e338AAbD0B219);
+    Locker constant locker = Locker(0x5B94AaF241E8039ed6d3608760AE9fA7186767d7);
+    Exchange constant exchange = Exchange(0x5e2Be81aB4237c7c08d929c42b9F13cF4f9040D2);
 
     // Legacy contracts
     /* Dropped support for very old tokens:
@@ -50,74 +50,72 @@ contract Rink0001_initNewContracts {
     LoanManager constant oldLoanManager1 = LoanManager(0xBdb02f82d7Ad574f9F549895caf41E23a8981b07);
     LoanManager constant oldLoanManager2 = LoanManager(0x214919Abe3f2b7CA7a43a799C4FC7132bBf78e8A);
 
-    // dynamic array needed for addSigners() & removeSigners(). Populated in constructor
-    bytes32[] preTokenPermissions;
-
-    constructor() public {
-        preTokenPermissions.push("PreTokenSigner");
-        preTokenPermissions.push("PermissionGranterContract");
-    }
 
     function execute(Rink0001_initNewContracts /* self, not used */) external {
-        // called via StabilityBoardSignerContract
-        require(address(this) == stabilityBoardSignerAddress, "only deploy via stabilityboardsigner");
+        // called via StabilityBoardProxy
+        require(address(this) == stabilityBoardProxyAddress, "only deploy via stabilityboardsigner");
 
         /******************************************************************************
          * Set up permissions
          ******************************************************************************/
         //  preToken Permissions
+        bytes32[] memory preTokenPermissions = new bytes32[](2); // dynamic array needed for grantMultiplePermissions()
+        preTokenPermissions[0] = "PreTokenSigner";
+        preTokenPermissions[1] = "PermissionGranter";
         preToken.grantMultiplePermissions(preTokenProxyAddress, preTokenPermissions);
-        preToken.revokePermission(stabilityBoardSignerAddress, "PermissionGranterContract"); // deploy script temporarly granted in order to run this script
+        // deploy script temporarly granted PermissionGranter to this script in order to run this script
+        //   now we can remove it as we add grant it to preTokenProxy
+        preToken.revokePermission(stabilityBoardProxyAddress, "PermissionGranter");
 
-        // StabilityBoardSignerContract
-        rates.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        feeAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        interestEarnedAccount.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        tokenAEur.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        augmintReserves.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        monetarySupervisor.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        loanManager.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        locker.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
-        exchange.grantPermission(stabilityBoardSignerAddress, "StabilityBoardSignerContract");
+        // StabilityBoard
+        rates.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        feeAccount.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        interestEarnedAccount.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        tokenAEur.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        augmintReserves.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        monetarySupervisor.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        loanManager.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        locker.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
+        exchange.grantPermission(stabilityBoardProxyAddress, "StabilityBoard");
 
-        // setRate permissions
-        rates.grantPermission(RATES_FEEDER_ACCOUNT, "setRate");
+        // RatesFeeder permissions to allow calling setRate()
+        rates.grantPermission(RATES_FEEDER_ACCOUNT, "RatesFeeder");
 
-        // set NoFeeTransferContracts permissions
-        feeAccount.grantPermission(feeAccount, "NoFeeTransferContracts");
-        feeAccount.grantPermission(augmintReserves, "NoFeeTransferContracts");
-        feeAccount.grantPermission(interestEarnedAccount, "NoFeeTransferContracts");
-        feeAccount.grantPermission(monetarySupervisor, "NoFeeTransferContracts");
-        feeAccount.grantPermission(loanManager, "NoFeeTransferContracts");
-        feeAccount.grantPermission(locker, "NoFeeTransferContracts");
-        feeAccount.grantPermission(exchange, "NoFeeTransferContracts");
+        // set NoTransferFee permissions
+        feeAccount.grantPermission(feeAccount, "NoTransferFee");
+        feeAccount.grantPermission(augmintReserves, "NoTransferFee");
+        feeAccount.grantPermission(interestEarnedAccount, "NoTransferFee");
+        feeAccount.grantPermission(monetarySupervisor, "NoTransferFee");
+        feeAccount.grantPermission(loanManager, "NoTransferFee");
+        feeAccount.grantPermission(locker, "NoTransferFee");
+        feeAccount.grantPermission(exchange, "NoTransferFee");
 
-        // set MonetarySupervisorContract permissions
-        interestEarnedAccount.grantPermission(monetarySupervisor, "MonetarySupervisorContract");
-        tokenAEur.grantPermission(monetarySupervisor, "MonetarySupervisorContract");
-        augmintReserves.grantPermission(monetarySupervisor, "MonetarySupervisorContract");
+        // set MonetarySupervisor permissions
+        interestEarnedAccount.grantPermission(monetarySupervisor, "MonetarySupervisor");
+        tokenAEur.grantPermission(monetarySupervisor, "MonetarySupervisor");
+        augmintReserves.grantPermission(monetarySupervisor, "MonetarySupervisor");
 
-        // set LoanManagerContracts permissions
-        monetarySupervisor.grantPermission(loanManager, "LoanManagerContracts");
+        // set LoanManager permissions
+        monetarySupervisor.grantPermission(loanManager, "LoanManager");
 
-        // set LockerContracts permissions
-        monetarySupervisor.grantPermission(locker, "LockerContracts");
+        // set Locker permissions
+        monetarySupervisor.grantPermission(locker, "Locker");
 
         /******************************************************************************
          * Setup permissions for legacy contracts
          ******************************************************************************/
 
-        monetarySupervisor.grantPermission(oldLocker1, "LockerContracts");
-        monetarySupervisor.grantPermission(oldLocker2, "LockerContracts");
+        monetarySupervisor.grantPermission(oldLocker1, "Locker");
+        monetarySupervisor.grantPermission(oldLocker2, "Locker");
 
-        monetarySupervisor.grantPermission(oldLoanManager1, "LoanManagerContracts");
-        monetarySupervisor.grantPermission(oldLoanManager2, "LoanManagerContracts");
+        monetarySupervisor.grantPermission(oldLoanManager1, "LoanManager");
+        monetarySupervisor.grantPermission(oldLoanManager2, "LoanManager");
 
         monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken3, true);
         monetarySupervisor.setAcceptedLegacyAugmintToken(oldToken4, true);
 
         /* NB: to allow token conversion w/o fee (oldToken.transferAndNotify transfers to MonetarySupervisor)
-            new MonetarySupervisor requires NoFeeTransferContracts permission on old feeAccount.
+            new MonetarySupervisor requires NoTransferFee permission on old feeAccount.
             It's not in this script b/c old feeAccount wasn't multisig (it's granted by deployer acc)
             This permission will need to be granted via Multisg in future token redeploys */
 

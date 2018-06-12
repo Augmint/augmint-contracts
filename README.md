@@ -50,8 +50,8 @@ Sequence diagrams:
     Stores permissions per address
 *   [MultiSig.sol](./contracts/generic/MultiSig.sol)  
     Abstract contract to manage multi signature approval and execution of atomic, one-off contract scripts
-*   [StabilityBoardSigner.sol](./contracts/generic/StabilityBoardSigner.sol)  
-    Augmint parameters can be set only by this contract with a quorum approving a contract script to run.
+*   [StabilityBoardProxy.sol](./contracts/generic/StabilityBoardProxy.sol)  
+    Augmint parameters can be set only via this contract with a quorum approving a contract script to run.
 *   [ERC20.sol](./contracts/generic/ERC20.sol)  
     Standard [ERC20](https://theethereum.wiki/w/index.php/ERC20_Token_Standard) token interface.
 *   [SystemAccount.sol](./contracts/generic/ERC20.sol)

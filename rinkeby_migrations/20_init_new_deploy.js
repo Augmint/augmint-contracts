@@ -5,18 +5,35 @@ NB: deployer account can sign these scripts b/c  initially the deployer is the s
     if migration succeed the following step will be to add new signers and remove deployer as signer
  */
 const Migrations = artifacts.require("./Migrations.sol");
-const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
+const StabilityBoardProxy = artifacts.require("./StabilityBoardProxy.sol");
+const FeeAccount = artifacts.require("./FeeAccount.sol");
 const Rink0001_initNewContracts = artifacts.require("./Rink0001_initNewContracts.sol");
 
 module.exports = function(deployer) {
     deployer.then(async () => {
         const rink0001_initNewContracts = await deployer.deploy(Rink0001_initNewContracts);
+        // new MS & feeAccount
+        const MONETARYSUPERVISOR_ADDRESS = "0x01844c9bade08A8ffdB09aD9f1fecE2C83a6E6a8";
+
+        // oldToken3 & oldToken4 both using this feeAccount
+        const oldFeeAccount1 = FeeAccount.at("0xc26667132b0b798ab87864f7c29c0819c887aadb");
 
         // run stabilityboard setup scripts. deployer is the only signer yet
         // (it's fine, these are new deployments, a script later will add signers and remove deployer)
-        const stabilityBoardSigner = StabilityBoardSigner.at("0xe733ddE64ce5b9930DFf8F97E5615635fd4095fB");
-        await stabilityBoardSigner.sign(rink0001_initNewContracts.address);
-        const tx = await stabilityBoardSigner.execute(rink0001_initNewContracts.address);
+        const stabilityBoardProxy = StabilityBoardProxy.at("0x44022C28766652EC5901790E53CEd7A79a19c10A");
+        await Promise.all([
+            stabilityBoardProxy.sign(rink0001_initNewContracts.address),
+
+            /*  to be able to convert old tokens. As oldFeeAccount1 was permissioned without multiSig,
+                it can be executed by deployer account.
+                NB:
+                1. This step need to be executed via an authorised StabilityBoardProxy script in the future
+                    (as new deploys are w/ MultiSig)
+                2. !!!! On newer FeeAccounts the permission is renamed to NoTransferFee !!!!*/
+            oldFeeAccount1.grantPermission(MONETARYSUPERVISOR_ADDRESS, "NoFeeTransferContracts")
+        ]);
+
+        const tx = await stabilityBoardProxy.execute(rink0001_initNewContracts.address);
 
         if (!tx.logs[0].args.result) {
             throw new Error(`rink0001_initNewContracts execution failed.

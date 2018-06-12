@@ -1,16 +1,16 @@
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 const AugmintToken = artifacts.require("./generic/AugmintToken.sol");
-const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
+const StabilityBoardProxy = artifacts.require("./StabilityBoardProxy.sol");
 const SB_setFeeAccount = artifacts.require("./scriptTests/SB_setFeeAccount.sol");
 
 let augmintToken;
-let stabilityBoardSigner;
+let stabilityBoardProxy;
 
 contract("AugmintToken tests", accounts => {
     before(async () => {
         augmintToken = tokenTestHelpers.augmintToken;
-        stabilityBoardSigner = StabilityBoardSigner.at(StabilityBoardSigner.address);
+        stabilityBoardProxy = StabilityBoardProxy.at(StabilityBoardProxy.address);
     });
 
     it("shouldn't create a token contract without feeAccount", async function() {
@@ -56,8 +56,8 @@ contract("AugmintToken tests", accounts => {
         const newFeeAccount = accounts[2];
         const setFeeAccountScript = await SB_setFeeAccount.new(augmintToken.address, newFeeAccount);
 
-        await stabilityBoardSigner.sign(setFeeAccountScript.address);
-        const executeTx = await stabilityBoardSigner.execute(setFeeAccountScript.address);
+        await stabilityBoardProxy.sign(setFeeAccountScript.address);
+        const executeTx = await stabilityBoardProxy.execute(setFeeAccountScript.address);
 
         testHelpers.logGasUse(this, executeTx, "multiSig.execute - setFeeAccount");
 

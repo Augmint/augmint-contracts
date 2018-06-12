@@ -1,5 +1,5 @@
 /* script to setup  contracts  deplyomed on local test ganache instance
-        - one instance can be executed by StabilityBoardSigner only once
+        - one instance can be executed by StabilityBoardProxy only once
     NB: live scripts (rinkeby & mainnet etc.) will have contracts setup from constant addresses
 */
 
@@ -62,42 +62,42 @@ contract localTest_initialSetup {
         Locker _locker = self.locker();
         Exchange _exchange = self.exchange();
 
-        // StabilityBoardSignerContract
-        _rates.grantPermission(address(this), "StabilityBoardSignerContract");
-        _feeAccount.grantPermission(address(this), "StabilityBoardSignerContract");
-        _interestEarnedAccount.grantPermission(address(this), "StabilityBoardSignerContract");
-        _tokenAEur.grantPermission(address(this), "StabilityBoardSignerContract");
-        _augmintReserves.grantPermission(address(this), "StabilityBoardSignerContract");
-        _monetarySupervisor.grantPermission(address(this), "StabilityBoardSignerContract");
-        _loanManager.grantPermission(address(this), "StabilityBoardSignerContract");
-        _locker.grantPermission(address(this), "StabilityBoardSignerContract");
-        _exchange.grantPermission(address(this), "StabilityBoardSignerContract");
+        // StabilityBoard
+        _rates.grantPermission(address(this), "StabilityBoard");
+        _feeAccount.grantPermission(address(this), "StabilityBoard");
+        _interestEarnedAccount.grantPermission(address(this), "StabilityBoard");
+        _tokenAEur.grantPermission(address(this), "StabilityBoard");
+        _augmintReserves.grantPermission(address(this), "StabilityBoard");
+        _monetarySupervisor.grantPermission(address(this), "StabilityBoard");
+        _loanManager.grantPermission(address(this), "StabilityBoard");
+        _locker.grantPermission(address(this), "StabilityBoard");
+        _exchange.grantPermission(address(this), "StabilityBoard");
 
 
-        // setRate permissions and initial ETH/EUR rates
-        _rates.grantPermission(msg.sender, "setRate");
-        _rates.grantPermission(address(this), "setRate");
+        // RatesFeeder permissions to allow calling setRate() and initial ETH/EUR rates
+        _rates.grantPermission(msg.sender, "RatesFeeder");
+        _rates.grantPermission(address(this), "RatesFeeder");
         _rates.setRate("EUR", 99800);
 
-        // set NoFeeTransferContracts permissions
-        _feeAccount.grantPermission(_feeAccount, "NoFeeTransferContracts");
-        _feeAccount.grantPermission(_augmintReserves, "NoFeeTransferContracts");
-        _feeAccount.grantPermission(_interestEarnedAccount, "NoFeeTransferContracts");
-        _feeAccount.grantPermission(_monetarySupervisor, "NoFeeTransferContracts");
-        _feeAccount.grantPermission(_loanManager, "NoFeeTransferContracts");
-        _feeAccount.grantPermission(_locker, "NoFeeTransferContracts");
-        _feeAccount.grantPermission(_exchange, "NoFeeTransferContracts");
+        // set NoTransferFee permissions
+        _feeAccount.grantPermission(_feeAccount, "NoTransferFee");
+        _feeAccount.grantPermission(_augmintReserves, "NoTransferFee");
+        _feeAccount.grantPermission(_interestEarnedAccount, "NoTransferFee");
+        _feeAccount.grantPermission(_monetarySupervisor, "NoTransferFee");
+        _feeAccount.grantPermission(_loanManager, "NoTransferFee");
+        _feeAccount.grantPermission(_locker, "NoTransferFee");
+        _feeAccount.grantPermission(_exchange, "NoTransferFee");
 
-        // set MonetarySupervisorContract permissions
-        _interestEarnedAccount.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
-        _tokenAEur.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
-        _augmintReserves.grantPermission(_monetarySupervisor, "MonetarySupervisorContract");
+        // set MonetarySupervisor permissions
+        _interestEarnedAccount.grantPermission(_monetarySupervisor, "MonetarySupervisor");
+        _tokenAEur.grantPermission(_monetarySupervisor, "MonetarySupervisor");
+        _augmintReserves.grantPermission(_monetarySupervisor, "MonetarySupervisor");
 
-        // set LoanManagerContracts permissions
-        _monetarySupervisor.grantPermission(_loanManager, "LoanManagerContracts");
+        // set LoanManager permissions
+        _monetarySupervisor.grantPermission(_loanManager, "LoanManager");
 
-        // set LockerContracts permissions
-        _monetarySupervisor.grantPermission(_locker, "LockerContracts");
+        // set Locker permissions
+        _monetarySupervisor.grantPermission(_locker, "Locker");
 
         // add test loan Products
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive

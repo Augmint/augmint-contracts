@@ -32,13 +32,13 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
     }
 
     function setTransferFees(uint transferFeePt, uint transferFeeMin, uint transferFeeMax)
-    external restrict("StabilityBoardSignerContract") {
+    external restrict("StabilityBoard") {
         transferFee = TransferFee(transferFeePt, transferFeeMin, transferFeeMax);
         emit TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
     }
 
     function calculateTransferFee(address from, address to, uint amount) external view returns (uint256 fee) {
-        if (!permissions[from]["NoFeeTransferContracts"] && !permissions[to]["NoFeeTransferContracts"]) {
+        if (!permissions[from]["NoTransferFee"] && !permissions[to]["NoTransferFee"]) {
             fee = amount.mul(transferFee.pt).div(1000000);
             if (fee > transferFee.max) {
                 fee = transferFee.max;

@@ -4,11 +4,11 @@
 
     deployment works as:
            1. contract deployer account deploys contracts
-           2. constructor grants "PermissionGranterContract" permission to deployer account
+           2. constructor grants "PermissionGranter" permission to deployer account
            3. deployer account executes initial setup (no multiSig)
-           4. deployer account grants PermissionGranterContract permission for the MultiSig contract
-                (e.g. StabilityBoardSigner or PreTokenProxy)
-           5. deployer account revokes its own PermissionGranterContract permission
+           4. deployer account grants PermissionGranter permission for the MultiSig contract
+                (e.g. StabilityBoardProxy or PreTokenProxy)
+           5. deployer account revokes its own PermissionGranter permission
 */
 
 pragma solidity 0.4.24;
@@ -29,20 +29,20 @@ contract Restricted {
 
     constructor(address permissionGranterContract) public {
         require(permissionGranterContract != address(0), "permissionGranterContract must be set");
-        permissions[permissionGranterContract]["PermissionGranterContract"] = true;
-        emit PermissionGranted(permissionGranterContract, "PermissionGranterContract");
+        permissions[permissionGranterContract]["PermissionGranter"] = true;
+        emit PermissionGranted(permissionGranterContract, "PermissionGranter");
     }
 
     function grantPermission(address agent, bytes32 requiredPermission) public {
-        require(permissions[msg.sender]["PermissionGranterContract"],
-            "msg.sender must have PermissionGranterContract permission");
+        require(permissions[msg.sender]["PermissionGranter"],
+            "msg.sender must have PermissionGranter permission");
         permissions[agent][requiredPermission] = true;
         emit PermissionGranted(agent, requiredPermission);
     }
 
     function grantMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
-        require(permissions[msg.sender]["PermissionGranterContract"],
-            "msg.sender must have PermissionGranterContract permission");
+        require(permissions[msg.sender]["PermissionGranter"],
+            "msg.sender must have PermissionGranter permission");
         uint256 length = requiredPermissions.length;
         for (uint256 i = 0; i < length; i++) {
             grantPermission(agent, requiredPermissions[i]);
@@ -50,8 +50,8 @@ contract Restricted {
     }
 
     function revokePermission(address agent, bytes32 requiredPermission) public {
-        require(permissions[msg.sender]["PermissionGranterContract"],
-            "msg.sender must have PermissionGranterContract permission");
+        require(permissions[msg.sender]["PermissionGranter"],
+            "msg.sender must have PermissionGranter permission");
         permissions[agent][requiredPermission] = false;
         emit PermissionRevoked(agent, requiredPermission);
     }
