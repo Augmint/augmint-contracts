@@ -7,7 +7,7 @@
            2. constructor grants "PermissionGranterContract" permission to deployer account
            3. deployer account executes initial setup (no multiSig)
            4. deployer account grants PermissionGranterContract permission for the MultiSig contract
-                (e.g. StabilityBoardSigner or PreTokenAgreementSigner)
+                (e.g. StabilityBoardSigner or PreTokenProxy)
            5. deployer account revokes its own PermissionGranterContract permission
 */
 
