@@ -15,13 +15,13 @@ const Exchange = artifacts.require("./Exchange.sol");
 
 module.exports = function(deployer) {
     deployer.then(async () => {
-        const [stabilityBoardSigner, preTokenAgreementSigner] = await Promise.all([
+        const [stabilityBoardSigner, preTokenProxy] = await Promise.all([
             deployer.deploy(StabilityBoardSigner),
             deployer.deploy(PreTokenProxy)
         ]);
 
         const [preToken, rates, feeAccount, augmintReserves, interestEarnedAccount] = await Promise.all([
-            deployer.deploy(PreToken, stabilityBoardSigner.address), // temporary for preToken, init script will change it to preTokenAgreementSigner
+            deployer.deploy(PreToken, stabilityBoardSigner.address), // temporary for preToken, init script will change it to preTokenProxy
             deployer.deploy(Rates, stabilityBoardSigner.address),
             deployer.deploy(
                 FeeAccount,
