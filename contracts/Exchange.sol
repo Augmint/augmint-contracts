@@ -65,7 +65,7 @@ contract Exchange is Restricted {
 
     /* to allow upgrade of Rates  contract */
     function setRatesContract(Rates newRatesContract)
-    external restrict("StabilityBoardSignerContract") {
+    external restrict("StabilityBoard") {
         rates = newRatesContract;
         emit RatesContractChanged(newRatesContract);
     }

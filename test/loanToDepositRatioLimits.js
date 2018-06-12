@@ -54,16 +54,16 @@ contract("Loan to Deposit ratio tests", accounts => {
         await Promise.all([
             tokenTestHelpers.interestEarnedAccount.grantPermission(
                 monetarySupervisor.address,
-                "MonetarySupervisorContract"
+                "MonetarySupervisor"
             ),
-            augmintToken.grantPermission(monetarySupervisor.address, "MonetarySupervisorContract"),
-            tokenTestHelpers.feeAccount.grantPermission(monetarySupervisor.address, "NoFeeTransferContracts"),
-            tokenTestHelpers.augmintReserves.grantPermission(monetarySupervisor.address, "MonetarySupervisorContract"),
+            augmintToken.grantPermission(monetarySupervisor.address, "MonetarySupervisor"),
+            tokenTestHelpers.feeAccount.grantPermission(monetarySupervisor.address, "NoTransferFee"),
+            tokenTestHelpers.augmintReserves.grantPermission(monetarySupervisor.address, "MonetarySupervisor"),
             locker.setMonetarySupervisor(monetarySupervisor.address),
             loanManager.setSystemContracts(rates.address, monetarySupervisor.address),
-            monetarySupervisor.grantPermission(accounts[0], "StabilityBoardSignerContract"),
-            monetarySupervisor.grantPermission(locker.address, "LockerContracts"),
-            monetarySupervisor.grantPermission(loanManager.address, "LoanManagerContracts")
+            monetarySupervisor.grantPermission(accounts[0], "StabilityBoard"),
+            monetarySupervisor.grantPermission(locker.address, "Locker"),
+            monetarySupervisor.grantPermission(loanManager.address, "LoanManager")
         ]);
 
         const [interestEarnedBalance] = await Promise.all([

@@ -1,8 +1,7 @@
-/* Authorise accounts[0] on local test deploys to execute multiSig functions.
-  NB: for rinkeby / testnet deploys process is different
+/* Authorise accounts[0] on local test deploys to execute StabilityBoard functions.
+  NB: for testnets / mainnet deploys process is different
 */
 
-const PreToken = artifacts.require("./PreToken.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
 const TokenAEur = artifacts.require("./TokenAEur.sol");
@@ -16,7 +15,6 @@ module.exports = function(deployer, network, accounts) {
     deployer.then(async () => {
         const stabilityBoardAccounts = [accounts[0]];
 
-        const preToken = PreToken.at(PreToken.address);
         const feeAccount = FeeAccount.at(FeeAccount.address);
         const augmintReserves = AugmintReserves.at(AugmintReserves.address);
         const tokenAEur = TokenAEur.at(TokenAEur.address);
@@ -27,16 +25,15 @@ module.exports = function(deployer, network, accounts) {
         const exchange = Exchange.at(Exchange.address);
 
         const grantTxs = stabilityBoardAccounts.map(acc => [
-            feeAccount.grantPermission(acc, "StabilityBoardSignerContract"),
-            augmintReserves.grantPermission(acc, "StabilityBoardSignerContract"),
-            tokenAEur.grantPermission(acc, "StabilityBoardSignerContract"),
-            interestEarnedAccount.grantPermission(acc, "StabilityBoardSignerContract"),
-            monetarySupervisor.grantPermission(acc, "StabilityBoardSignerContract"),
-            locker.grantPermission(acc, "StabilityBoardSignerContract"),
-            loanManager.grantPermission(acc, "StabilityBoardSignerContract"),
-            exchange.grantPermission(acc, "StabilityBoardSignerContract")
+            feeAccount.grantPermission(acc, "StabilityBoard"),
+            augmintReserves.grantPermission(acc, "StabilityBoard"),
+            tokenAEur.grantPermission(acc, "StabilityBoard"),
+            interestEarnedAccount.grantPermission(acc, "StabilityBoard"),
+            monetarySupervisor.grantPermission(acc, "StabilityBoard"),
+            locker.grantPermission(acc, "StabilityBoard"),
+            loanManager.grantPermission(acc, "StabilityBoard"),
+            exchange.grantPermission(acc, "StabilityBoard")
         ]);
-        grantTxs.push(preToken.grantPermission(accounts[0], "PreTokenSigner"));
 
         await Promise.all(grantTxs);
     });

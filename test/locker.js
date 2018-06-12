@@ -836,7 +836,7 @@ contract("Lock", accounts => {
 
     it("should only allow whitelisted lock contract to be used", async function() {
         const craftedLocker = await Locker.new(accounts[0], augmintToken.address, monetarySupervisor.address);
-        await craftedLocker.grantPermission(accounts[0], "StabilityBoardSignerContract");
+        await craftedLocker.grantPermission(accounts[0], "StabilityBoard");
         await craftedLocker.addLockProduct(1000000, 120, 0, true);
         const newLockProductId = (await craftedLocker.getLockProductCount()).toNumber() - 1;
         await testHelpers.expectThrow(

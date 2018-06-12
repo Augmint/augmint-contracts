@@ -1,5 +1,11 @@
 // Allows us to use ES6 in our migrations and tests.
 require("babel-register");
+require("dotenv").config();
+
+const HDWalletProvider = require("truffle-hdwallet-provider");
+
+const MNEMONIC = process.env.DEPLOYER_MNEMONIC;
+const INFURA_API_KEY = process.env.INFURA_API_KEY;
 
 module.exports = {
     /* TODO: tempfix because of issue: https://github.com/trufflesuite/truffle-migrate/issues/10
@@ -60,6 +66,15 @@ module.exports = {
             network_id: 3,
             gas: 4700000, // Gas limit used for deploys
             gasPrice: 140000000000 // 140 Gwei
+        },
+        mainnet: {
+            provider: () =>
+                new HDWalletProvider(
+                    MNEMONIC,
+                    "https://mainnet.infura.io/" + INFURA_API_KEY
+                ),
+            network_id: 1,
+            gasPrice: 6000000000 // 6 Gwei
         }
     }
 };

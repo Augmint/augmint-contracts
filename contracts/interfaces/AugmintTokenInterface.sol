@@ -25,7 +25,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     mapping(address => uint256) public balances; // Balances for each account
     mapping(address => mapping (address => uint256)) public allowed; // allowances added with approve()
 
-    address public stabilityBoardSigner;
+    address public stabilityBoardProxy;
     TransferFeeInterface public feeAccount;
     mapping(bytes32 => bool) public delegatedTxHashesUsed; // record txHashes used by delegatedTransfer
 
@@ -59,7 +59,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function increaseApproval(address spender, uint addedValue) external returns (bool);
     function decreaseApproval(address spender, uint subtractedValue) external returns (bool);
 
-    function issueTo(address to, uint amount) external; // restrict it to "MonetarySupervisorContract" in impl.;
+    function issueTo(address to, uint amount) external; // restrict it to "MonetarySupervisor" in impl.;
     function burn(uint amount) external;
 
     function transferAndNotify(TokenReceiver target, uint amount, uint data) external;

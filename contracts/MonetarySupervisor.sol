@@ -74,12 +74,12 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
     }
 
-    function issueToReserve(uint amount) external restrict("StabilityBoardSignerContract") {
+    function issueToReserve(uint amount) external restrict("StabilityBoard") {
         issuedByStabilityBoard = issuedByStabilityBoard.add(amount);
         augmintToken.issueTo(augmintReserves, amount);
     }
 
-    function burnFromReserve(uint amount) external restrict("StabilityBoardSignerContract") {
+    function burnFromReserve(uint amount) external restrict("StabilityBoard") {
         issuedByStabilityBoard = issuedByStabilityBoard.sub(amount);
         augmintReserves.burn(augmintToken, amount);
     }
@@ -87,8 +87,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     /* Locker requesting interest when locking funds. Enforcing LTD to stay within range allowed by LTD params
         NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it  */
     function requestInterest(uint amountToLock, uint interestAmount) external {
-        // only whitelisted LockerContracts
-        require(permissions[msg.sender]["LockerContracts"], "msg.sender must have LockerContracts permission");
+        // only whitelisted Locker
+        require(permissions[msg.sender]["Locker"], "msg.sender must have Locker permission");
         require(amountToLock <= getMaxLockAmountAllowedByLtd(), "amountToLock must be <= maxLockAmountAllowedByLtd");
 
         totalLockedAmount = totalLockedAmount.add(amountToLock);
@@ -100,8 +100,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     // Locker notifying when releasing funds to update KPIs
     function releaseFundsNotification(uint lockedAmount) external {
-        // only whitelisted LockerContracts
-        require(permissions[msg.sender]["LockerContracts"], "msg.sender must have LockerContracts permission");
+        // only whitelisted Locker
+        require(permissions[msg.sender]["Locker"], "msg.sender must have Locker permission");
         totalLockedAmount = totalLockedAmount.sub(lockedAmount);
     }
 
@@ -109,8 +109,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         NB: it does not know about min loan amount, it's the loan contract's responsibility to enforce it */
     function issueLoan(address borrower, uint loanAmount) external {
          // only whitelisted LoanManager contracts
-        require(permissions[msg.sender]["LoanManagerContracts"],
-            "msg.sender must have LoanManagerContracts permission");
+        require(permissions[msg.sender]["LoanManager"],
+            "msg.sender must have LoanManager permission");
         require(loanAmount <= getMaxLoanAmountAllowedByLtd(), "loanAmount must be <= maxLoanAmountAllowedByLtd");
         totalLoanAmount = totalLoanAmount.add(loanAmount);
         augmintToken.issueTo(borrower, loanAmount);
@@ -118,27 +118,27 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     function loanRepaymentNotification(uint loanAmount) external {
         // only whitelisted LoanManager contracts
-       require(permissions[msg.sender]["LoanManagerContracts"],
-           "msg.sender must have LoanManagerContracts permission");
+       require(permissions[msg.sender]["LoanManager"],
+           "msg.sender must have LoanManager permission");
         totalLoanAmount = totalLoanAmount.sub(loanAmount);
     }
 
     // NB: this is called by Lender contract with the sum of all loans collected in batch
     function loanCollectionNotification(uint totalLoanAmountCollected) external {
         // only whitelisted LoanManager contracts
-       require(permissions[msg.sender]["LoanManagerContracts"],
-           "msg.sender must have LoanManagerContracts permission");
+       require(permissions[msg.sender]["LoanManager"],
+           "msg.sender must have LoanManager permission");
         totalLoanAmount = totalLoanAmount.sub(totalLoanAmountCollected);
     }
 
     function setAcceptedLegacyAugmintToken(address legacyAugmintTokenAddress, bool newAcceptedState)
-    external restrict("StabilityBoardSignerContract") {
+    external restrict("StabilityBoard") {
         acceptedLegacyAugmintTokens[legacyAugmintTokenAddress] = newAcceptedState;
         emit AcceptedLegacyAugmintTokenChanged(legacyAugmintTokenAddress, newAcceptedState);
     }
 
     function setLtdParams(uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount)
-    external restrict("StabilityBoardSignerContract") {
+    external restrict("StabilityBoard") {
         ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
 
         emit LtdParamsChanged(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
@@ -148,7 +148,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         when it's upgraded.
         Set new monetarySupervisor contract in all locker and loanManager contracts before executing this */
     function adjustKPIs(uint totalLoanAmountAdjustment, uint totalLockedAmountAdjustment)
-    external restrict("StabilityBoardSignerContract") {
+    external restrict("StabilityBoard") {
         totalLoanAmount = totalLoanAmount.add(totalLoanAmountAdjustment);
         totalLockedAmount = totalLockedAmount.add(totalLockedAmountAdjustment);
 
@@ -157,7 +157,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     /* to allow upgrades of InterestEarnedAccount and AugmintReserves contracts. */
     function setSystemContracts(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves)
-    external restrict("StabilityBoardSignerContract") {
+    external restrict("StabilityBoard") {
         interestEarnedAccount = newInterestEarnedAccount;
         augmintReserves = newAugmintReserves;
         emit SystemContractsChanged(newInterestEarnedAccount, newAugmintReserves);

@@ -1,4 +1,4 @@
-const StabilityBoardSigner = artifacts.require("./StabilityBoardSigner.sol");
+const StabilityBoardProxy = artifacts.require("./StabilityBoardProxy.sol");
 const Rates = artifacts.require("./Rates.sol");
 const FeeAccount = artifacts.require("./FeeAccount.sol");
 const AugmintReserves = artifacts.require("./AugmintReserves.sol");
@@ -26,7 +26,7 @@ module.exports = function(deployer) {
             Exchange.address
         )
         .then(async initialSetupScript => {
-            // StabilityBoardSignerContract permissions
+            // StabilityBoard permissions
             const rates = Rates.at(Rates.address);
             const feeAccount = FeeAccount.at(FeeAccount.address);
             const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
@@ -37,21 +37,21 @@ module.exports = function(deployer) {
             const locker = Locker.at(Locker.address);
             const exchange = Exchange.at(Exchange.address);
             await Promise.all([
-                rates.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                feeAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                interestEarnedAccount.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                tokenAEur.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                augmintReserves.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                monetarySupervisor.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                loanManager.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                locker.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract"),
-                exchange.grantPermission(StabilityBoardSigner.address, "PermissionGranterContract")
+                rates.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                feeAccount.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                interestEarnedAccount.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                tokenAEur.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                augmintReserves.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                monetarySupervisor.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                loanManager.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                locker.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
+                exchange.grantPermission(StabilityBoardProxy.address, "PermissionGranter")
             ]);
 
             // run initial setup script
-            const stabilityBoardSigner = StabilityBoardSigner.at(StabilityBoardSigner.address);
-            await stabilityBoardSigner.sign(initialSetupScript.address);
-            const tx = await stabilityBoardSigner.execute(initialSetupScript.address);
+            const stabilityBoardProxy = StabilityBoardProxy.at(StabilityBoardProxy.address);
+            await stabilityBoardProxy.sign(initialSetupScript.address);
+            const tx = await stabilityBoardProxy.execute(initialSetupScript.address);
 
             if (!tx.logs[0].args.result) {
                 throw new Error(`initialSetupScript execution failed.
@@ -60,6 +60,6 @@ module.exports = function(deployer) {
             }
 
             // In non test ( non local) deployments deployer account
-            // must revoke it's own StabilityBoardSignerContract permission
+            // must revoke it's own StabilityBoard permission
         });
 };

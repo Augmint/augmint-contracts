@@ -11,6 +11,8 @@
         "LoanManager.json",
         "Locker.json",
         "Exchange.json",
-        "StabilityBoardSigner.json"
+        "StabilityBoardProxy.json",
+        "PreTokenProxy.json",
+        "PreToken.json"
     ]
 }

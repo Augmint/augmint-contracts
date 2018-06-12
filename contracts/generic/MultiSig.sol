@@ -119,6 +119,7 @@ contract MultiSig {
         require(msg.sender == address(this), "only callable via MultiSig");
         for (uint i= 0; i < signers.length; i++) {
             if (!isSigner[signers[i]]) {
+                require(signers[i] != address(0), "new signer must not be 0x0");
                 activeSignersCount++;
                 allSigners.push(signers[i]);
                 isSigner[signers[i]] = true;
@@ -132,6 +133,7 @@ contract MultiSig {
         require(msg.sender == address(this), "only callable via MultiSig");
         for (uint i= 0; i < signers.length; i++) {
             if (isSigner[signers[i]]) {
+                require(activeSignersCount > 1, "must not remove last signer");
                 activeSignersCount--;
                 isSigner[signers[i]] = false;
                 emit SignerRemoved(signers[i]);

@@ -91,7 +91,7 @@ contract AugmintToken is AugmintTokenInterface {
     //      - on new loan (by trusted Lender contracts)
     //      - when converting old tokens using MonetarySupervisor
     //      - strictly to reserve by Stability Board (via MonetarySupervisor)
-    function issueTo(address to, uint amount) external restrict("MonetarySupervisorContract") {
+    function issueTo(address to, uint amount) external restrict("MonetarySupervisor") {
         balances[to] = balances[to].add(amount);
         totalSupply = totalSupply.add(amount);
         emit Transfer(0x0, to, amount);
@@ -109,7 +109,7 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     /* to upgrade feeAccount (eg. for fee calculation changes) */
-    function setFeeAccount(TransferFeeInterface newFeeAccount) external restrict("StabilityBoardSignerContract") {
+    function setFeeAccount(TransferFeeInterface newFeeAccount) external restrict("StabilityBoard") {
         feeAccount = newFeeAccount;
         emit FeeAccountChanged(newFeeAccount);
     }
