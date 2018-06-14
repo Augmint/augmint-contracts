@@ -12,7 +12,7 @@
 
 */
 
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 import "./generic/Restricted.sol";
 import "./generic/SafeMath.sol";
@@ -67,15 +67,16 @@ contract Locker is Restricted, TokenReceiver {
     // lock ids for an account
     mapping(address => uint[]) public accountLocks;
 
-    constructor(AugmintTokenInterface _augmintToken, MonetarySupervisor _monetarySupervisor) public {
-
+    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken,
+                    MonetarySupervisor _monetarySupervisor)
+    public Restricted(permissionGranterContract) {
         augmintToken = _augmintToken;
         monetarySupervisor = _monetarySupervisor;
 
     }
 
     function addLockProduct(uint32 perTermInterest, uint32 durationInSecs, uint32 minimumLockAmount, bool isActive)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoard") {
 
         uint _newLockProductId = lockProducts.push(
                                     LockProduct(perTermInterest, durationInSecs, minimumLockAmount, isActive)) - 1;
@@ -85,7 +86,7 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
-    function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("MonetaryBoard") {
+    function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("StabilityBoard") {
         // next line would revert but require to emit reason:
         require(lockProductId < lockProducts.length, "invalid lockProductId");
 
@@ -134,7 +135,7 @@ contract Locker is Restricted, TokenReceiver {
         emit LockReleased(lock.owner, lockId);
     }
 
-    function setMonetarySupervisor(MonetarySupervisor newMonetarySupervisor) external restrict("MonetaryBoard") {
+    function setMonetarySupervisor(MonetarySupervisor newMonetarySupervisor) external restrict("StabilityBoard") {
         monetarySupervisor = newMonetarySupervisor;
         emit MonetarySupervisorChanged(newMonetarySupervisor);
     }

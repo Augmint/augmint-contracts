@@ -3,18 +3,24 @@
   For flows see: https://github.com/Augmint/augmint-contracts/blob/master/docs/exchangeFlow.png
 
     TODO:
+        - change to wihtdrawal pattern, see: https://github.com/Augmint/augmint-contracts/issues/17
         - deduct fee
         - consider take funcs (frequent rate changes with takeBuyToken? send more and send back remainder?)
+        - use Rates interface?
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 import "./generic/SafeMath.sol";
+import "./generic/Restricted.sol";
 import "./interfaces/AugmintTokenInterface.sol";
+import "./Rates.sol";
 
 
-contract Exchange {
+contract Exchange is Restricted {
     using SafeMath for uint256;
+
     AugmintTokenInterface public augmintToken;
+    Rates public rates;
 
     uint public constant CHUNK_SIZE = 100;
 
@@ -22,7 +28,8 @@ contract Exchange {
         uint64 index;
         address maker;
 
-        // tokens per ether
+        // % of published current peggedSymbol/ETH rates published by Rates contract. Stored as parts per million
+        // I.e. 1,000,000 = 100% (parity), 990,000 = 1% below parity
         uint32 price;
 
         // buy order: amount in wei
@@ -41,16 +48,26 @@ contract Exchange {
         actual is much less, just leaving enough matchMultipleOrders() to finish TODO: fine tune & test it*/
     uint32 private constant ORDER_MATCH_WORST_GAS = 100000;
 
-    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount,
-        uint weiAmount);
+    event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount, uint weiAmount);
 
     event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint64 buyTokenOrderId,
-        uint64 sellTokenOrderId, uint32 price, uint weiAmount, uint tokenAmount);
+        uint64 sellTokenOrderId, uint publishedRate, uint32 price, uint fillRate, uint weiAmount, uint tokenAmount);
 
     event CancelledOrder(uint64 indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
-    constructor(AugmintTokenInterface _augmintToken) public {
+    event RatesContractChanged(Rates newRatesContract);
+
+    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken, Rates _rates)
+    public Restricted(permissionGranterContract) {
         augmintToken = _augmintToken;
+        rates = _rates;
+    }
+
+    /* to allow upgrade of Rates  contract */
+    function setRatesContract(Rates newRatesContract)
+    external restrict("StabilityBoard") {
+        rates = newRatesContract;
+        emit RatesContractChanged(newRatesContract);
     }
 
     function placeBuyTokenOrder(uint32 price) external payable returns (uint64 orderId) {
@@ -84,6 +101,7 @@ contract Exchange {
     function cancelBuyTokenOrder(uint64 buyTokenId) external {
         Order storage order = buyTokenOrders[buyTokenId];
         require(order.maker == msg.sender, "msg.sender must be order.maker");
+        require(order.amount > 0, "buy order already removed");
 
         uint amount = order.amount;
         order.amount = 0;
@@ -97,6 +115,7 @@ contract Exchange {
     function cancelSellTokenOrder(uint64 sellTokenId) external {
         Order storage order = sellTokenOrders[sellTokenId];
         require(order.maker == msg.sender, "msg.sender must be order.maker");
+        require(order.amount > 0, "sell order already removed");
 
         uint amount = order.amount;
         order.amount = 0;
@@ -108,23 +127,26 @@ contract Exchange {
     }
 
     /* matches any two orders if the sell price >= buy price
-        trade price meets in the middle
+        trade price is the price of the maker (the order placed earlier)
         reverts if any of the orders have been removed
     */
     function matchOrders(uint64 buyTokenId, uint64 sellTokenId) external {
-        _fillOrder(buyTokenId, sellTokenId);
+        require(_fillOrder(buyTokenId, sellTokenId), "fill order failed");
     }
 
     /*  matches as many orders as possible from the passed orders
         Runs as long as gas is available for the call.
-        Stops if any match is invalid (case when any of the orders removed after client generated the match list sent)
+        Reverts if any match is invalid (e.g sell price > buy price)
+        Skips match if any of the matched orders is removed / already filled (i.e. amount = 0)
     */
     function matchMultipleOrders(uint64[] buyTokenIds, uint64[] sellTokenIds) external returns(uint matchCount) {
         uint len = buyTokenIds.length;
-        for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {
         require(len == sellTokenIds.length, "buyTokenIds and sellTokenIds lengths must be equal");
-            _fillOrder(buyTokenIds[i], sellTokenIds[i]);
-            matchCount++;
+
+        for (uint i = 0; i < len && gasleft() > ORDER_MATCH_WORST_GAS; i++) {
+            if(_fillOrder(buyTokenIds[i], sellTokenIds[i])) {
+                matchCount++;
+            }
         }
     }
 
@@ -150,16 +172,24 @@ contract Exchange {
         }
     }
 
-    function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private {
+    function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private returns(bool success) {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
+        if( buy.amount == 0 || sell.amount == 0 ) {
+            return false; // one order is already filled and removed.
+                          // we let matchMultiple continue, indivudal match will revert
+        }
 
         require(buy.price >= sell.price, "buy price must be >= sell price");
 
-        // meet in the middle
-        uint price = uint(buy.price).add(sell.price).div(2);
+        // pick maker's price (whoever placed order sooner considered as maker)
+        uint32 price = buyTokenId > sellTokenId ? sell.price : buy.price;
 
-        uint sellWei = sell.amount.mul(1 ether).roundedDiv(price);
+        uint publishedRate;
+        (publishedRate, ) = rates.rates(augmintToken.peggedSymbol());
+        uint fillRate = publishedRate.mul(price).roundedDiv(1000000);
+
+        uint sellWei = sell.amount.mul(1 ether).roundedDiv(fillRate);
 
         uint tradedWei;
         uint tradedTokens;
@@ -168,7 +198,7 @@ contract Exchange {
             tradedTokens = sell.amount;
         } else {
             tradedWei = buy.amount;
-            tradedTokens = buy.amount.mul(price).roundedDiv(1 ether);
+            tradedTokens = buy.amount.mul(fillRate).roundedDiv(1 ether);
         }
 
         buy.amount = buy.amount.sub(tradedWei);
@@ -185,7 +215,9 @@ contract Exchange {
         sell.maker.transfer(tradedWei);
 
         emit OrderFill(buy.maker, sell.maker, buyTokenId,
-            sellTokenId, uint32(price), tradedWei, tradedTokens);
+            sellTokenId, publishedRate, price, fillRate, tradedWei, tradedTokens);
+
+        return true;
     }
 
     function _placeSellTokenOrder(address maker, uint32 price, uint tokenAmount)

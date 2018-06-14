@@ -2,7 +2,7 @@
     TODO: calculateExchangeFee + Exchange params and setters
 */
 
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 import "./generic/SafeMath.sol";
 import "./generic/SystemAccount.sol";
 import "./interfaces/TransferFeeInterface.sol";
@@ -22,7 +22,8 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
 
     event TransferFeesChanged(uint transferFeePt, uint transferFeeMin, uint transferFeeMax);
 
-    constructor(uint transferFeePt, uint transferFeeMin, uint transferFeeMax) public {
+    constructor(address permissionGranterContract, uint transferFeePt, uint transferFeeMin, uint transferFeeMax)
+    public SystemAccount(permissionGranterContract) {
         transferFee = TransferFee(transferFeePt, transferFeeMin, transferFeeMax);
     }
 
@@ -31,13 +32,13 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
     }
 
     function setTransferFees(uint transferFeePt, uint transferFeeMin, uint transferFeeMax)
-    external restrict("MonetaryBoard") {
+    external restrict("StabilityBoard") {
         transferFee = TransferFee(transferFeePt, transferFeeMin, transferFeeMax);
         emit TransferFeesChanged(transferFeePt, transferFeeMin, transferFeeMax);
     }
 
     function calculateTransferFee(address from, address to, uint amount) external view returns (uint256 fee) {
-        if (!permissions[from]["NoFeeTransferContracts"] && !permissions[to]["NoFeeTransferContracts"]) {
+        if (!permissions[from]["NoTransferFee"] && !permissions[to]["NoTransferFee"]) {
             fee = amount.mul(transferFee.pt).div(1000000);
             if (fee > transferFee.max) {
                 fee = transferFee.max;

@@ -34,9 +34,11 @@ contract("Restricted.sol tests", accounts => {
     });
 
     it("should grant & revoke multiple permissions ", async function() {
-        await augmintTokenInstance.grantMultiplePermissions(accounts[0], ["perm1", "perm2"], {
+        const tx1 = await augmintTokenInstance.grantMultiplePermissions(accounts[0], ["perm1", "perm2"], {
             from: accounts[0]
         });
+        testHelpers.logGasUse(this, tx1, "grantMultiplePermissions");
+
         let perm1;
         let perm2;
         [perm1, perm2] = await Promise.all([
@@ -46,13 +48,16 @@ contract("Restricted.sol tests", accounts => {
         assert.equal(perm1, true);
         assert.equal(perm2, true);
 
-        await augmintTokenInstance.revokeMultiplePermissions(accounts[0], ["perm1", "perm2"], {
+        const tx2 = await augmintTokenInstance.revokeMultiplePermissions(accounts[0], ["perm1", "perm2"], {
             from: accounts[0]
         });
+        testHelpers.logGasUse(this, tx2, "revokeMultiplePermissions");
+
         [perm1, perm2] = await Promise.all([
             augmintTokenInstance.permissions(accounts[0], "perm1"),
             augmintTokenInstance.permissions(accounts[0], "perm2")
         ]);
+
         assert.equal(perm1, false);
         assert.equal(perm2, false);
     });

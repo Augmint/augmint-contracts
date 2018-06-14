@@ -14,10 +14,10 @@ contract("MonetarySupervisor tests", accounts => {
 
     it("should be possible to issue new tokens to reserve", async function() {
         const amount = 100000;
-        const [totalSupplyBefore, reserveBalBefore, issuedByMonetaryBoardBefore] = await Promise.all([
+        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByMonetaryBoard()
+            monetarySupervisor.issuedByStabilityBoard()
         ]);
 
         const tx = await monetarySupervisor.issueToReserve(amount);
@@ -29,10 +29,10 @@ contract("MonetarySupervisor tests", accounts => {
             amount: amount
         });
 
-        const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
+        const [totalSupply, issuedByStabilityBoard, reserveBal] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByMonetaryBoard()
+            monetarySupervisor.issuedByStabilityBoard()
         ]);
 
         assert.equal(
@@ -41,9 +41,9 @@ contract("MonetarySupervisor tests", accounts => {
             "Totalsupply should be increased with issued amount"
         );
         assert.equal(
-            issuedByMonetaryBoard.toString(),
-            issuedByMonetaryBoardBefore.add(amount).toString(),
-            "issuedByMonetaryBoard should be increased with issued amount"
+            issuedByStabilityBoard.toString(),
+            issuedByStabilityBoardBefore.add(amount).toString(),
+            "issuedByStabilityBoard should be increased with issued amount"
         );
         assert.equal(
             reserveBal.toString(),
@@ -59,10 +59,10 @@ contract("MonetarySupervisor tests", accounts => {
     it("should be possible to burn tokens from reserve", async function() {
         const amount = 9000000;
         await monetarySupervisor.issueToReserve(amount);
-        const [totalSupplyBefore, reserveBalBefore, issuedByMonetaryBoardBefore] = await Promise.all([
+        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByMonetaryBoard()
+            monetarySupervisor.issuedByStabilityBoard()
         ]);
 
         const tx = await monetarySupervisor.burnFromReserve(amount, { from: accounts[0] });
@@ -74,10 +74,10 @@ contract("MonetarySupervisor tests", accounts => {
             amount: amount
         });
 
-        const [totalSupply, issuedByMonetaryBoard, reserveBal] = await Promise.all([
+        const [totalSupply, issuedByStabilityBoard, reserveBal] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByMonetaryBoard()
+            monetarySupervisor.issuedByStabilityBoard()
         ]);
         assert.equal(
             totalSupply.toString(),
@@ -85,9 +85,9 @@ contract("MonetarySupervisor tests", accounts => {
             "Totalsupply should be decreased with burnt amount"
         );
         assert.equal(
-            issuedByMonetaryBoard.toString(),
-            issuedByMonetaryBoardBefore.sub(amount).toString(),
-            "issuedByMonetaryBoard should be decreased with burnt amount"
+            issuedByStabilityBoard.toString(),
+            issuedByStabilityBoardBefore.sub(amount).toString(),
+            "issuedByStabilityBoard should be decreased with burnt amount"
         );
         assert.equal(
             reserveBal.toString(),
@@ -155,8 +155,8 @@ contract("MonetarySupervisor tests", accounts => {
             })
         ]);
 
-        assert.equal(totalLoanAmountAfter.toNumber(), totalLockedAmountBefore.add(10));
-        assert.equal(totalLockedAmountAfter.toNumber(), totalLoanAmountBefore.add(20));
+        assert.equal(totalLoanAmountAfter.toString(), totalLoanAmountBefore.add(10).toString());
+        assert.equal(totalLockedAmountAfter.toString(), totalLockedAmountBefore.add(20).toString());
     });
 
     it("only allowed should adjust KPIs", async function() {

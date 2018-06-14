@@ -3,6 +3,7 @@ title **Augmint** - Contract dependencies
 skinparam ArrowColor #blue
 skinparam noteBackgroundColor #lightgrey
 
+artifact StabilityBoardProxy
 artifact Rates
 artifact AugmintReserves
 artifact FeeAccount
@@ -20,23 +21,35 @@ rectangle "Legend" #Beige {
     artifact contract3
 	artifact contract4
     contract1 ==>> contract2 : Dependency without setter\nChange via new deployment
-    contract3 ..>> contract4 : Amendable dependency\nChange via setter
+    contract3 ..>> contract4 : Amendable dependency\nChange via setter or Restricted.grantPermission
 }
 
 AugmintToken ..>> FeeAccount
+AugmintToken ..>> StabilityBoardProxy
 
 MonetarySupervisor ==>> AugmintToken
+MonetarySupervisor ..>> StabilityBoardProxy
 MonetarySupervisor ..>> AugmintReserves
 MonetarySupervisor ..>> InterestEarnedAccount
 
 LoanManager ==>> AugmintToken
+LoanManager ..>> StabilityBoardProxy
 LoanManager ..>> MonetarySupervisor
 LoanManager ..>> Rates
 
 Locker ==>> AugmintToken
+Locker ..>> StabilityBoardProxy
 Locker ..>> MonetarySupervisor
 
 Exchange ==>> AugmintToken
-Exchange ..>> FeeAccount : Exchange fees \nto be implemented
+Exchange ..>> StabilityBoardProxy
+Exchange ..>> Rates
+Exchange ..>> FeeAccount
+
+InterestEarnedAccount ..>> StabilityBoardProxy
+
+FeeAccount ..>> StabilityBoardProxy
+
+AugmintReserves ..>> StabilityBoardProxy
 
 @enduml

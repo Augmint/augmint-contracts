@@ -14,6 +14,8 @@ let augmintToken = null;
 let monetarySupervisor = null;
 let CHUNK_SIZE = null;
 
+const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 100000 };
+
 contract("Lock", accounts => {
     before(async function() {
         tokenHolder = accounts[1];
@@ -30,6 +32,12 @@ contract("Lock", accounts => {
         CHUNK_SIZE = CHUNK_SIZE.toNumber();
 
         await Promise.all([
+            monetarySupervisor.setLtdParams(
+                ltdParams.lockDifferenceLimit,
+                ltdParams.loanDifferenceLimit,
+                ltdParams.allowedDifferenceAmount
+            ),
+
             tokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),
             tokenTestHelpers.withdrawFromReserve(interestEarnedAddress, 10000)
         ]);
@@ -87,9 +95,10 @@ contract("Lock", accounts => {
         const tx = await lockerInstance.addLockProduct(100000, 120, 75, true);
         testHelpers.logGasUse(this, tx, "addLockProduct");
 
-        const numLocks = (await lockerInstance.getLockProductCount()).toNumber();
-
-        const products = await lockerInstance.getLockProducts(0);
+        const [numLocks, products] = await Promise.all([
+            lockerInstance.getLockProductCount().then(res => res.toNumber()),
+            lockerInstance.getLockProducts(0)
+        ]);
 
         // getLockProducts should return a 20 element array:
         assert.isArray(products);
@@ -107,7 +116,8 @@ contract("Lock", accounts => {
         assert(perTermInterest.toNumber() === 100000);
         assert(durationInSecs.toNumber() === 120);
         assert(minimumLockAmount.toNumber() === 75);
-        assert.equal(maxLockAmount.toString(), tokenTestHelpers.ltdParams.allowedDifferenceAmount.toString());
+        const expMaxLockAmount = await monetarySupervisor.getMaxLockAmount(minimumLockAmount, perTermInterest);
+        assert.equal(maxLockAmount.toString(), expMaxLockAmount.toString());
         assert(isActive.toNumber() === 1);
     });
 
@@ -137,10 +147,12 @@ contract("Lock", accounts => {
         // the products should be [ perTermInterest, durationInSecs, maxLockAmount, isActive ] all
         // represented as uints (i.e. BigNumber objects in JS land):
         const [perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive] = product;
+        const expMaxLockAmount = await monetarySupervisor.getMaxLockAmount(minimumLockAmount, perTermInterest);
+
         assert(perTermInterest.toNumber() === expectedPerTermInterest.toNumber());
         assert(durationInSecs.toNumber() === expectedDurationInSecs.toNumber());
         assert(minimumLockAmount.toNumber() === expectedMinimumLockAmount.toNumber());
-        assert.equal(maxLockAmount.toString(), tokenTestHelpers.ltdParams.allowedDifferenceAmount.toString());
+        assert.equal(maxLockAmount.toString(), expMaxLockAmount.toString());
         assert(!!isActive.toNumber() === expectedIsActive);
     });
 
@@ -195,10 +207,10 @@ contract("Lock", accounts => {
 
         const perTermInterest = product[0].toNumber();
         const durationInSecs = product[1].toNumber();
-        const interestEarned = Math.floor(amountToLock * perTermInterest / 1000000);
+        const interestEarned = Math.floor((amountToLock * perTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + durationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
@@ -354,7 +366,7 @@ contract("Lock", accounts => {
         const expectedDurationInSecs = product[1].toNumber();
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + expectedDurationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
@@ -388,10 +400,10 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
+        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + expectedDurationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
@@ -419,7 +431,10 @@ contract("Lock", accounts => {
             isActive
         ] = lock2;
         assert.equal(lockId.toNumber(), lockId2);
-        assert.equal("0x" + owner.toString(16), tokenHolder);
+        assert.equal(
+            "0x" + owner.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
+            tokenHolder
+        );
         assert.equal(amountLocked.toNumber(), amountToLock);
         assert.equal(interestEarned.toNumber(), expectedInterestEarned);
         assert.isAtLeast(lockedUntil.toNumber(), expectedLockedUntil);
@@ -446,10 +461,10 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
+        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
-        const block = await web3.eth.getBlock(lockingTransaction.receipt.blockHash);
+        const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
         const expectedLockedUntil = block.timestamp + expectedDurationInSecs;
         // sanity check:
         assert(expectedLockedUntil > Math.floor(Date.now() / 1000));
@@ -498,7 +513,7 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor(amountToLock * expectedPerTermInterest / 1000000);
+        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
 
         const expectedAccountLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)) - 1;
 
@@ -723,7 +738,7 @@ contract("Lock", accounts => {
         testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
 
         const perTermInterest = product[0];
-        const interestEarned = Math.floor(amountToLock * perTermInterest / 1000000);
+        const interestEarned = Math.floor((amountToLock * perTermInterest) / 1000000);
 
         const newestLockId = (await lockerInstance.getLockCount()) - 1;
 
@@ -820,7 +835,8 @@ contract("Lock", accounts => {
     });
 
     it("should only allow whitelisted lock contract to be used", async function() {
-        const craftedLocker = await Locker.new(augmintToken.address, monetarySupervisor.address);
+        const craftedLocker = await Locker.new(accounts[0], augmintToken.address, monetarySupervisor.address);
+        await craftedLocker.grantPermission(accounts[0], "StabilityBoard");
         await craftedLocker.addLockProduct(1000000, 120, 0, true);
         const newLockProductId = (await craftedLocker.getLockProductCount()).toNumber() - 1;
         await testHelpers.expectThrow(

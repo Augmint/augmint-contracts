@@ -151,10 +151,10 @@ contract("TransferFrom AugmintToken tests", accounts => {
         );
     });
 
-    it("should have zero fee for transferFrom if 'to' is NoFeeTransferContracts", async function() {});
+    it("should have zero fee for transferFrom if 'to' is NoTransferFee", async function() {});
 
-    it("should have zero fee for transferFrom if 'from' or 'to' is NoFeeTransferContracts ", async function() {
-        await tokenTestHelpers.feeAccount.grantPermission(accounts[0], "NoFeeTransferContracts");
+    it("should have zero fee for transferFrom if 'from' or 'to' is NoTransferFee ", async function() {
+        await tokenTestHelpers.feeAccount.grantPermission(accounts[0], "NoTransferFee");
 
         const expApprove1 = {
             owner: accounts[0],

@@ -1,12 +1,15 @@
 const BigNumber = require("bignumber.js");
 
 const Exchange = artifacts.require("./Exchange.sol");
+const Rates = artifacts.require("./Rates.sol");
 const testHelpers = new require("./testHelpers.js");
 const tokenTestHelpers = require("./tokenTestHelpers.js");
 
 const PLACE_ORDER_MAX_GAS = 200000;
 const CANCEL_SELL_MAX_GAS = 150000;
 const MATCH_ORDER_MAX_GAS = 80000;
+
+const PPM_DIV = 1000000;
 
 let CHUNK_SIZE = null;
 
@@ -30,10 +33,12 @@ module.exports = {
 
 let exchange = null;
 let augmintToken = null;
+let rates;
 
 before(async function() {
     augmintToken = tokenTestHelpers.augmintToken;
     exchange = Exchange.at(Exchange.address);
+    rates = Rates.at(Rates.address);
     CHUNK_SIZE = (await exchange.CHUNK_SIZE()).toNumber();
 });
 
@@ -209,22 +214,27 @@ async function cancelOrder(testInstance, order) {
 
 async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const stateBefore = await getState();
+
     const balancesBefore = await tokenTestHelpers.getAllBalances({
         exchange: exchange.address,
         seller: sellTokenOrder.maker,
         buyer: buyTokenOrder.maker
     });
-    //await printOrderBook();
 
-    const matchCaller = web3.eth.accounts[0];
-    const expPrice = Math.floor((sellTokenOrder.price + buyTokenOrder.price) / 2);
+    const matchCaller = global.accounts[0];
+    const currentRate = parseInt((await rates.rates("EUR"))[0]);
+
+    const expPrice = buyTokenOrder.id > sellTokenOrder.id ? sellTokenOrder.price : buyTokenOrder.price;
+    const expFillRate = Math.round(currentRate * expPrice / PPM_DIV);
+
     const sellWeiValue = sellTokenOrder.amount
         .mul(testHelpers.ONE_ETH)
-        .div(expPrice)
+        .div(expFillRate)
         .round(0, BigNumber.ROUND_HALF_UP);
-    const buyTokenValue = Math.round(buyTokenOrder.amount * expPrice / testHelpers.ONE_ETH);
-    const tradedWeiAmount = Math.min(buyTokenOrder.amount, sellWeiValue);
-    const tradedTokenAmount = Math.min(sellTokenOrder.amount, buyTokenValue);
+    const buyTokenValue = Math.round(buyTokenOrder.amount * expFillRate / testHelpers.ONE_ETH);
+
+    const tradedWeiAmount = BigNumber.min(buyTokenOrder.amount, sellWeiValue);
+    const tradedTokenAmount = BigNumber.min(sellTokenOrder.amount, buyTokenValue);
     const buyFilled = buyTokenOrder.amount.eq(tradedWeiAmount);
     const sellFilled = sellTokenOrder.amount.eq(tradedTokenAmount);
 
@@ -234,6 +244,7 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         tokenSeller: sellTokenOrder.maker,
         tokenBuyer: buyTokenOrder.maker,
         price: expPrice,
+        fillRate: expFillRate,
         weiAmount: tradedWeiAmount,
         tokenAmount: tradedTokenAmount,
         buyFilled: buyFilled,
@@ -250,7 +261,9 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         buyTokenOrderId: expMatch.buyTokenOrderId,
         tokenSeller: expMatch.tokenSeller,
         tokenBuyer: expMatch.tokenBuyer,
+        publishedRate: currentRate,
         price: expMatch.price,
+        fillRate: expMatch.fillRate,
         weiAmount: expMatch.weiAmount.toString(),
         tokenAmount: expMatch.tokenAmount.toString()
     });
@@ -344,7 +357,7 @@ function parseOrders(orderType, orders) {
         return {
             orderType: orderType,
             id: order[0].toNumber(),
-            maker: "0x" + order[1].toString(16),
+            maker: "0x" + order[1].toString(16).padStart(40, "0"), // leading 0s if address starts with 0
             price: order[2].toNumber(),
             amount: order[3]
         };
@@ -374,14 +387,14 @@ async function printOrderBook(_limit) {
     const [sellOrders, buyOrders] = await Promise.all([getActiveSellOrders(0), getActiveBuyOrders(0)]);
     sellOrders.slice(0, limit).map((order, i) => {
         console.log(
-            `${i}. SELL token: ACE/ETH: ${order.price / 10000} amount: ${order.amount.toString() / 10000} ACE` +
+            `${i}. SELL token: price: ${order.price / 10000} % amount: ${order.amount.toString() / 100} ACE` +
                 `  orderId: ${order.id} acc: ${order.maker}`
         );
     });
     buyOrders.slice(0, _limit).map((order, i) => {
         console.log(
-            `        ${i}. BUY token: ACE/EUR: ${order.price / 10000} amount: ${web3.fromWei(order.amount)} ETH` +
-                `  orderId: ${order.id} acc: ${order.maker}`
+            `        ${i}. BUY token: price: ${order.price / 10000}% amount: ${order.amount /
+                testHelpers.ONE_ETH} ETH` + `  orderId: ${order.id} acc: ${order.maker}`
         );
     });
 

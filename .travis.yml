@@ -20,7 +20,8 @@ script:
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
 after_script:
     - greenkeeper-lockfile-upload
-    - yarn coverage && cat coverage/lcov.info | coveralls
+# TODO: failing even locally: "error: cannot sign data; no private key" & "Error: sender account not recognized"
+#    - yarn coverage && cat coverage/lcov.info | coveralls
 after_success:
   - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
   - chmod +x send.sh

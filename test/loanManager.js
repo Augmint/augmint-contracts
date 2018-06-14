@@ -80,10 +80,10 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
-        assert.equal(
-            lastProduct.maxLoanAmount.toNumber(),
-            tokenTestHelpers.ltdParams.allowedDifferenceAmount.toNumber()
+        const expMaxLoanAmount = await tokenTestHelpers.monetarySupervisor.getMaxLoanAmount(
+            lastProduct.minDisbursedAmount
         );
+        assert.equal(lastProduct.maxLoanAmount.toNumber(), expMaxLoanAmount);
         assert.equal(lastProduct.isActive.toNumber(), prod.isActive ? 1 : 0);
     });
 
@@ -121,10 +121,10 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
-        assert.equal(
-            lastProduct.maxLoanAmount.toNumber(),
-            tokenTestHelpers.ltdParams.allowedDifferenceAmount.toNumber()
+        const expMaxLoanAmount = await tokenTestHelpers.monetarySupervisor.getMaxLoanAmount(
+            lastProduct.minDisbursedAmount
         );
+        assert.equal(lastProduct.maxLoanAmount.toNumber(), expMaxLoanAmount);
         assert.equal(lastProduct.isActive.toNumber(), prod.isActive ? 1 : 0);
     });
 

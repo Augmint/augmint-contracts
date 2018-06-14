@@ -1,5 +1,7 @@
 const RandomSeed = require("random-seed");
+const BigNumber = require("bignumber.js");
 
+const Rates = artifacts.require("./Rates.sol");
 const testHelpers = new require("./helpers/testHelpers.js");
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
@@ -7,14 +9,13 @@ const exchangeTestHelper = require("./helpers/exchangeTestHelpers.js");
 const TOKEN_BUY = testHelpers.TOKEN_BUY;
 const TOKEN_SELL = testHelpers.TOKEN_SELL;
 
-const ETH_ROUND = 1000000000000; // 6 decimals places max in ETH
 const ORDER_COUNT = 10;
-const MARKET_WEI_RATE = 5000000; // 1ETH = 500 EUR
-const MIN_ORDER_RATE = 9000;
-const MAX_ORDER_RATE = 11000;
+const MARKET_EURETH_RATE = 50000; // 1ETH = 500 EUR
+const MIN_ORDER_RATE = 990000; // 99% - 1% below parity
+const MAX_ORDER_RATE = 1010000; // 101% - 1 % above parity
 const MIN_TOKEN = 10000; // 100 ACE
 const MAX_TOKEN = 100000; // 1,000 ACE
-const TEST_ACCS_CT = web3.eth.accounts.length;
+const TEST_ACCS_CT = 10; // accounts.length;
 const ACC_INIT_ACE = 1000000;
 const CHUNK_SIZE = 100;
 const random = new RandomSeed("Have the same test data");
@@ -52,6 +53,7 @@ const getOrderToFill = async () => {
         const buy = buyTokenOrders[buyIdx];
         for (let sellIdx = 0; !match && sellIdx < sellTokenOrders.length; sellIdx++) {
             const sell = sellTokenOrders[sellIdx];
+
             if (sell.price <= buy.price) {
                 match = { buyTokenOrder: buy, sellTokenOrder: sell };
             }
@@ -67,13 +69,15 @@ contract("Exchange random tests", accounts => {
     before(async function() {
         exchange = exchangeTestHelper.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
+        const rates = Rates.at(Rates.address);
 
         await tokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
 
-        console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 10000} A-EURO\x1b[0m`);
-        await Promise.all(
+        console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 100} A-EURO\x1b[0m`);
+        await Promise.all([
+            rates.setRate("EUR", MARKET_EURETH_RATE),
             accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
-        );
+        ]);
     });
 
     it("place x buy / sell orders", async function() {
@@ -81,15 +85,22 @@ contract("Exchange random tests", accounts => {
         for (let i = 0; i < ORDER_COUNT; i++) {
             const tokenAmount = Math.round(random.random() * 100 * (MAX_TOKEN - MIN_TOKEN) / 100) + MIN_TOKEN;
             const price = Math.floor(random.random() * (MAX_ORDER_RATE - MIN_ORDER_RATE)) + MIN_ORDER_RATE;
-            const weiAmount =
-                Math.round(tokenAmount * price / 100 / MARKET_WEI_RATE * testHelpers.ONE_ETH / ETH_ROUND) * ETH_ROUND;
+
+            const weiAmount = new BigNumber(tokenAmount)
+                .mul(testHelpers.ONE_ETH)
+                .div(price == 0 ? MARKET_EURETH_RATE : price)
+                .round(0, BigNumber.ROUND_HALF_UP);
+
             const orderType = random.random() < 0.5 ? TOKEN_BUY : TOKEN_SELL;
+
+            const accountIdx = Math.floor(random.random() * (TEST_ACCS_CT - 1));
+            const maker = accounts[accountIdx];
 
             orders.push({
                 amount: orderType === TOKEN_BUY ? weiAmount : tokenAmount,
-                maker: accounts[Math.floor(random.random() * (TEST_ACCS_CT - 1))],
-                price: price,
-                orderType: orderType
+                maker,
+                price,
+                orderType
             });
         }
 
@@ -130,9 +141,10 @@ contract("Exchange random tests", accounts => {
         while (match) {
             ct++;
             console.log(
-                `\x1b[1A\x1b[2m\t*** Sending match #${ct} on ETH/EUR rate: ${MARKET_WEI_RATE / 10000}\t\x1b[0m`
+                `\x1b[1A\x1b[2m\t*** Sending match #${ct} on ETH/EUR rate: ${MARKET_EURETH_RATE / 100}\t\x1b[0m`
             );
             //await exchangeTestHelper.printOrderBook(10);
+
             await exchangeTestHelper.matchOrders(this, match.buyTokenOrder, match.sellTokenOrder);
 
             // save match for later use by matchMultipleOrders test (calculating matches is time consuming)

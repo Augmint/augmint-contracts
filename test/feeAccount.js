@@ -33,11 +33,16 @@ contract("FeeAccount tests", accounts => {
     });
 
     it("should be possible to withdraw from fee account", async function() {
-        const weiAmount = web3.toWei(0.2);
+        const weiAmount = global.web3v1.utils.toWei("0.2");
+
         const tokenAmount = 10000;
         const narrative = "test withdrawal";
         // top up feeAccount with  ETH
-        await web3.eth.sendTransaction({ from: accounts[0], to: feeAccountInstance.address, value: weiAmount });
+        await global.web3v1.eth.sendTransaction({
+            from: accounts[0],
+            to: feeAccountInstance.address,
+            value: weiAmount
+        });
 
         // top up feeAccount with tokens
         await tokenTestHelpers.issueToReserve(tokenAmount);
