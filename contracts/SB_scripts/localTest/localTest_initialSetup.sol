@@ -126,6 +126,7 @@ contract localTest_initialSetup {
 
         _locker.addLockProduct(3, 1 hours, 2000, true); // for testing, ~2.66% p.a.
         _locker.addLockProduct(1 , 1 minutes, 3000, true); // for testing, ~69.15% p.a.
+        _locker.addLockProduct(1 , 1 seconds, 1000, true); // for testing, ~3153.6% p.a.
 
     }
 
