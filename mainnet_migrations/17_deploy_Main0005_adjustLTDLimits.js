@@ -18,7 +18,7 @@ module.exports = function(deployer) {
 
         await waitForInfuraNonce();
 
-        console.log(" Done with migration step 16. Updating truffle Migrations step manually");
+        console.log(" Done with migration step 17. Updating truffle Migrations step manually");
         await Migrations.at("0xE7E9f87805C0BEC5108963D07f85e4cA5892D421").setCompleted(17);
     });
 };
