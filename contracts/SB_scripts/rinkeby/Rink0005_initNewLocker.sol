@@ -1,4 +1,4 @@
-/* adjust interest rates
+/* grant permissions & add lock products to new locker contract
 */
 
 pragma solidity 0.4.24;
