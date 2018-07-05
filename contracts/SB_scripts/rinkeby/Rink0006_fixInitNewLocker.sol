@@ -17,7 +17,7 @@ contract Rink0006_fixInitNewLocker {
 
     LoanManager constant loanManager = LoanManager(0x3b5DD323534659655EEccc642c3e338AAbD0B219);
     Locker constant oldLocker = Locker(0x5B94AaF241E8039ed6d3608760AE9fA7186767d7);
-    Locker constant newLocker = Locker(0xf74c0cb2713214808553cda5c78f92219478863d);
+    Locker constant newLocker = Locker(0xF74c0CB2713214808553CDA5C78f92219478863d);
     FeeAccount constant feeAccount = FeeAccount(0x0F5983a6d760BF6E385339af0e67e87420d413EC);
     MonetarySupervisor constant monetarySupervisor = MonetarySupervisor(0x01844c9bade08A8ffdB09aD9f1fecE2C83a6E6a8);
 
