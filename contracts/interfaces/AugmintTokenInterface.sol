@@ -25,7 +25,6 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     mapping(address => uint256) public balances; // Balances for each account
     mapping(address => mapping (address => uint256)) public allowed; // allowances added with approve()
 
-    address public stabilityBoardProxy;
     TransferFeeInterface public feeAccount;
     mapping(bytes32 => bool) public delegatedTxHashesUsed; // record txHashes used by delegatedTransfer
 
