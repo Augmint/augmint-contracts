@@ -154,6 +154,10 @@ contract AugmintToken is AugmintTokenInterface {
         _transferFrom(from, to, amount, narrative);
     }
 
+    function setName(string _name) external restrict("StabilityBoard") {
+        name = _name;
+    }
+
     function balanceOf(address _owner) external view returns (uint256 balance) {
         return balances[_owner];
     }
