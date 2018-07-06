@@ -17,7 +17,7 @@ contract("AugmintToken tests", accounts => {
         await testHelpers.expectThrow(
             AugmintToken.new(
                 accounts[0],
-                "Augmint Crypto Euro", // name
+                "Augmint Euro", // name
                 "AEUR", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals
@@ -43,7 +43,7 @@ contract("AugmintToken tests", accounts => {
         await testHelpers.expectThrow(
             AugmintToken.new(
                 accounts[0],
-                "Augmint Crypto Euro", // name
+                "Augmint Euro", // name
                 "", // symbol
                 "EUR", // peggedSymbol
                 2, // decimals,
