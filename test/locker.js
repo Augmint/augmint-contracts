@@ -207,7 +207,7 @@ contract("Lock", accounts => {
 
         const perTermInterest = product[0].toNumber();
         const durationInSecs = product[1].toNumber();
-        const interestEarned = Math.floor((amountToLock * perTermInterest) / 1000000);
+        const interestEarned = Math.ceil((amountToLock * perTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
         const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
@@ -296,7 +296,7 @@ contract("Lock", accounts => {
         testHelpers.logGasUse(this, addProdTx, "addLockProduct");
 
         const amountToLock = 1000;
-        const interestEarned = Math.floor(amountToLock / 10); // 10%
+        const interestEarned = Math.ceil(amountToLock / 10); // 10%
         const newLockProductId = (await lockerInstance.getLockProductCount()) - 1;
 
         const lockTx = await augmintToken.transferAndNotify(lockerInstance.address, amountToLock, newLockProductId, {
@@ -400,7 +400,7 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
+        const expectedInterestEarned = Math.ceil((amountToLock * expectedPerTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
         const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
@@ -461,7 +461,7 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
+        const expectedInterestEarned = Math.ceil((amountToLock * expectedPerTermInterest) / 1000000);
 
         // need the block to get the timestamp to check lockedUntil in NewLock event:
         const block = await global.web3v1.eth.getBlock(lockingTransaction.receipt.blockHash);
@@ -513,7 +513,7 @@ contract("Lock", accounts => {
 
         const expectedPerTermInterest = product[0].toNumber();
         const expectedDurationInSecs = product[1].toNumber();
-        const expectedInterestEarned = Math.floor((amountToLock * expectedPerTermInterest) / 1000000);
+        const expectedInterestEarned = Math.ceil((amountToLock * expectedPerTermInterest) / 1000000);
 
         const expectedAccountLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)) - 1;
 
@@ -738,7 +738,7 @@ contract("Lock", accounts => {
         testHelpers.logGasUse(this, lockFundsTx, "transferAndNotify - lockFunds");
 
         const perTermInterest = product[0];
-        const interestEarned = Math.floor((amountToLock * perTermInterest) / 1000000);
+        const interestEarned = Math.ceil((amountToLock * perTermInterest) / 1000000);
 
         const newestLockId = (await lockerInstance.getLockCount()) - 1;
 
@@ -780,7 +780,7 @@ contract("Lock", accounts => {
 
         // create lock product with 10% per term, and 1 sec lock time:
         await lockerInstance.addLockProduct(100000, 1, 0, true);
-        const interestEarned = Math.floor(amountToLock / 10); // 10%
+        const interestEarned = Math.ceil(amountToLock / 10); // 10%
 
         const newLockProductId = (await lockerInstance.getLockProductCount()) - 1;
 

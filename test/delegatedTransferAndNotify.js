@@ -31,7 +31,7 @@ const sendDelegatedTransferAndNotify = async (testInstance, clientParams, signat
     clientParams.to = clientParams.target;
     clientParams.fee = await tokenTestHelpers.getTransferFee(clientParams);
 
-    const interestEarned = Math.floor(clientParams.amount * perTermInterest / 1000000);
+    const interestEarned = Math.ceil(clientParams.amount * perTermInterest / 1000000);
 
     const balBefore = await tokenTestHelpers.getAllBalances({
         from: clientParams.from,

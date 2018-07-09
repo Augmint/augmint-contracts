@@ -211,7 +211,7 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     function calculateInterest(uint32 perTermInterest, uint amountToLock) public pure returns (uint interestEarned) {
-        interestEarned = amountToLock.mul(perTermInterest).div(1000000);
+        interestEarned = amountToLock.mul(perTermInterest).ceilDiv(1000000);
     }
 
     // Internal function. assumes amountToLock is already transferred to this Lock contract
