@@ -76,7 +76,7 @@ contract("AugmintToken tests", accounts => {
         await testHelpers.expectThrow(augmintToken.setFeeAccount(newFeeAccount, { from: accounts[1] }));
     });
 
-    it("should rename token if caller has permission", async function() {
+    it("should change token name if caller has permission", async function() {
         const oldName = await augmintToken.name();
 
         await testHelpers.expectThrow(
@@ -91,5 +91,22 @@ contract("AugmintToken tests", accounts => {
         // rename back to the original name
         await augmintToken.setName(oldName, { from: accounts[0] });
         assert.equal(await augmintToken.name(), oldName);
+    });
+
+    it("should change token symbol if caller has permission", async function() {
+        const oldSymbol = await augmintToken.symbol();
+
+        await testHelpers.expectThrow(
+            augmintToken.setSymbol("UNAUTHORIZED", { from: accounts[1] })
+        );
+        assert.equal(await augmintToken.symbol(), oldSymbol);
+
+        const newSymbol = "NEW";
+        await augmintToken.setSymbol(newSymbol, { from: accounts[0] });
+        assert.equal(await augmintToken.symbol(), newSymbol);
+
+        // set back to the original symbol
+        await augmintToken.setSymbol(oldSymbol, { from: accounts[0] });
+        assert.equal(await augmintToken.symbol(), oldSymbol);
     });
 });

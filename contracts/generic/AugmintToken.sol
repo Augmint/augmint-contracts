@@ -158,6 +158,10 @@ contract AugmintToken is AugmintTokenInterface {
         name = _name;
     }
 
+    function setSymbol(string _symbol) external restrict("StabilityBoard") {
+        symbol = _symbol;
+    }
+
     function balanceOf(address _owner) external view returns (uint256 balance) {
         return balances[_owner];
     }

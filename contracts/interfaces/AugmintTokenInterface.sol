@@ -67,6 +67,7 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
     function transferFromWithNarrative(address from, address to, uint256 amount, string narrative) external;
 
     function setName(string _name) external;
+    function setSymbol(string _symbol) external;
 
     function allowance(address owner, address spender) external view returns (uint256 remaining);
 
