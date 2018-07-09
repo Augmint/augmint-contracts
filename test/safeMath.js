@@ -32,4 +32,20 @@ contract("SafeMath", () => {
         await monetarySupervisor.issueToReserve(1);
         await testHelpers.expectThrow(monetarySupervisor.issueToReserve(MAX_UINT256.toString()));
     });
+
+    it("should round up if not exactly divisible", async function() {
+
+        assert.equal(Number(await locker.calculateInterest(1000, 1000)), 1);
+        assert.equal(Number(await locker.calculateInterest(1, 1000000)), 1);
+        assert.equal(Number(await locker.calculateInterest(1000, 1001)), 2);
+        assert.equal(Number(await locker.calculateInterest(1, 1000001)), 2);
+
+        assert.equal(Number(await locker.calculateInterest(1918, 10000)), 20);
+        assert.equal(Number(await locker.calculateInterest(3836, 10000)), 39);
+        assert.equal(Number(await locker.calculateInterest(8220, 10000)), 83);
+        assert.equal(Number(await locker.calculateInterest(17261, 10000)), 173);
+        assert.equal(Number(await locker.calculateInterest(27124, 10000)), 272);
+        assert.equal(Number(await locker.calculateInterest(56713, 10000)), 568);
+        assert.equal(Number(await locker.calculateInterest(120000, 10000)), 1200);
+    });
 });

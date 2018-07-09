@@ -41,4 +41,14 @@ library SafeMath {
         }
         return z;
     }
+
+    // Always rounds up
+    function ceilDiv(uint a, uint b) internal pure returns (uint256) {
+        require(b > 0, "div by 0"); // Solidity automatically throws for div by 0 but require to emit reason
+        uint256 z = a / b;
+        if (a % b != 0) {
+            z++;  // no need for safe add b/c it can happen only if we divided the input
+        }
+        return z;
+    }
 }
