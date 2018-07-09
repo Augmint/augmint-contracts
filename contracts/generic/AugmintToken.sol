@@ -154,6 +154,20 @@ contract AugmintToken is AugmintTokenInterface {
         _transferFrom(from, to, amount, narrative);
     }
 
+    /* Allow Stability Board to change the name when a new token contract version
+       is deployed and ready for production use. So that older token contracts
+       are identifiable in 3rd party apps. */
+    function setName(string _name) external restrict("StabilityBoard") {
+        name = _name;
+    }
+
+    /* Allow Stability Board to change the symbol when a new token contract version
+       is deployed and ready for production use. So that older token contracts
+       are identifiable in 3rd party apps. */
+    function setSymbol(string _symbol) external restrict("StabilityBoard") {
+        symbol = _symbol;
+    }
+
     function balanceOf(address _owner) external view returns (uint256 balance) {
         return balances[_owner];
     }

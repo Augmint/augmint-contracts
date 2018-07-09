@@ -15,7 +15,7 @@ Decentralised stable cryptocurrency on Ethereum
 
 Augmint provides digital tokens, value of each token pegged to a fiat currency.
 
-The first Augmint token will be A-EUR (Augmint Crypto Euro), pegged to EUR.
+The first Augmint token will be A-EUR (Augmint Euro), pegged to EUR.
 
 The value of 1 A-EUR is always closely around 1 EUR.
 
@@ -76,7 +76,7 @@ Sequence diagrams:
     *   enforces system wide limits (Loan to Deposit ratio limits)
     *   issue to & from reserve functions
 *   [TokenAEur.sol](./contracts/TokenAEur.sol)
-    *   First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Crypto Euro aka A€ )
+    *   First AugmintToken contract instance, pegged for pegged to EUR (A-EUR aka Augmint Euro aka A€ )
     *   Sets standard token parameters (name, symbol, decimals, peggedSymbol etc.)
 *   [Rates.sol](./contracts/Rates.sol)  
     A contract to return fiat/ETH exchange rates.
