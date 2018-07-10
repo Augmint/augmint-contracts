@@ -279,16 +279,16 @@ async function assertBalances(before, exp) {
 }
 
 async function transferEventAsserts(expTransfer) {
-    await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
-        from: expTransfer.from,
-        to: expTransfer.to,
-        amount: expTransfer.amount.toString(),
-        fee: expTransfer.fee.toString(),
-        narrative: expTransfer.narrative
-    });
-
     const expTransferEvents = [];
 
+    // ERC20 Transfer event for the transfer amount
+    expTransferEvents.push({
+        from: expTransfer.from,
+        to: expTransfer.to,
+        amount: expTransfer.amount.toString()
+    });
+
+    // ERC20 Transfer event for the fee amount
     if (expTransfer.fee > 0) {
         expTransferEvents.push({
             from: expTransfer.from,
@@ -297,13 +297,16 @@ async function transferEventAsserts(expTransfer) {
         });
     }
 
-    expTransferEvents.push({
+    await testHelpers.assertEvent(augmintToken, "Transfer", expTransferEvents);
+
+    // AugmintTransfer event for the whole transfer
+    await testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
         from: expTransfer.from,
         to: expTransfer.to,
-        amount: expTransfer.amount.toString()
+        amount: expTransfer.amount.toString(),
+        fee: expTransfer.fee.toString(),
+        narrative: expTransfer.narrative
     });
-
-    await testHelpers.assertEvent(augmintToken, "Transfer", expTransferEvents);
 }
 
 async function approveEventAsserts(expApprove) {

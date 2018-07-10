@@ -218,15 +218,16 @@ contract AugmintToken is AugmintTokenInterface {
         // to emit proper reason instead of failing on from.sub()
         require(balances[from] >= amountWithFee, "balance must be >= amount + transfer fee");
 
+        balances[from] = balances[from].sub(amountWithFee);
+        balances[to] = balances[to].add(transferAmount);
+
+        emit Transfer(from, to, transferAmount);
+
         if (fee > 0) {
             balances[feeAccount] = balances[feeAccount].add(fee);
             emit Transfer(from, feeAccount, fee);
         }
 
-        balances[from] = balances[from].sub(amountWithFee);
-        balances[to] = balances[to].add(transferAmount);
-
-        emit Transfer(from, to, transferAmount);
         emit AugmintTransfer(from, to, transferAmount, narrative, fee);
     }
 
