@@ -215,7 +215,7 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     // Internal function. assumes amountToLock is already transferred to this Lock contract
-    function _createLock(uint32 lockProductId, address lockOwner, uint amountToLock) internal returns(uint lockId) {
+    function _createLock(uint32 lockProductId, address lockOwner, uint amountToLock) internal {
         LockProduct storage lockProduct = lockProducts[lockProductId];
         require(lockProduct.isActive, "lockProduct must be in active state");
         require(amountToLock >= lockProduct.minimumLockAmount, "amountToLock must be >= minimumLockAmount");
@@ -225,7 +225,7 @@ contract Locker is Restricted, TokenReceiver {
         uint40 lockedUntil = uint40(expiration);
         require(lockedUntil == expiration, "lockedUntil overflow");
 
-        lockId = locks.push(Lock(amountToLock, lockOwner, lockProductId, lockedUntil, true)) - 1;
+        uint lockId = locks.push(Lock(amountToLock, lockOwner, lockProductId, lockedUntil, true)) - 1;
         accountLocks[lockOwner].push(lockId);
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
