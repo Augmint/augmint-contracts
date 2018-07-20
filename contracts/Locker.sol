@@ -104,7 +104,7 @@ contract Locker is Restricted, TokenReceiver {
     function transferNotification(address from, uint256 amountToLock, uint _lockProductId) external {
         require(msg.sender == address(augmintToken), "msg.sender must be augmintToken");
         // next line would revert but require to emit reason:
-        require(lockProductId < lockProducts.length, "invalid lockProductId");
+        require(_lockProductId < lockProducts.length, "invalid lockProductId");
         uint32 lockProductId = uint32(_lockProductId);
         require(lockProductId == _lockProductId, "lockProductId overflow");
         /* TODO: make data arg generic bytes
