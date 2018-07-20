@@ -79,4 +79,14 @@ contract("SafeMath", () => {
         assert.equal(Number(await safeMathTester.roundedDiv(MAX_UINT256, MAX_UINT256.div(2))), 2);
         assert.equal(Number(await safeMathTester.roundedDiv(MAX_UINT256, MAX_UINT256.div(3))), 3);
     });
+
+    it("should not divide by zero", async function() {
+        await testHelpers.expectThrow(safeMathTester.roundedDiv(0, 0));
+        await testHelpers.expectThrow(safeMathTester.roundedDiv(1, 0));
+        await testHelpers.expectThrow(safeMathTester.roundedDiv(MAX_UINT256, 0));
+
+        await testHelpers.expectThrow(safeMathTester.ceilDiv(0, 0));
+        await testHelpers.expectThrow(safeMathTester.ceilDiv(1, 0));
+        await testHelpers.expectThrow(safeMathTester.ceilDiv(MAX_UINT256, 0));
+    });
 });
