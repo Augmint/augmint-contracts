@@ -16,6 +16,7 @@ import "../../MonetarySupervisor.sol";
 import "../../LoanManager.sol";
 import "../../Locker.sol";
 import "../../Exchange.sol";
+import "../../test/SafeMathTester.sol";
 
 
 contract localTest_initialSetup {
@@ -29,6 +30,7 @@ contract localTest_initialSetup {
     LoanManager public loanManager;
     Locker public locker;
     Exchange public exchange;
+    SafeMathTester public safeMathTester;
 
     constructor(Rates _rates,
                 FeeAccount _feeAccount,
@@ -38,7 +40,8 @@ contract localTest_initialSetup {
                 MonetarySupervisor _monetarySupervisor,
                 LoanManager _loanManager,
                 Locker _locker,
-                Exchange _exchange ) public {
+                Exchange _exchange,
+                SafeMathTester _safeMathTester) public {
         rates = _rates;
         feeAccount = _feeAccount;
         augmintReserves = _augmintReserves;
@@ -48,6 +51,7 @@ contract localTest_initialSetup {
         loanManager = _loanManager;
         locker = _locker;
         exchange = _exchange;
+        safeMathTester = _safeMathTester;
     }
 
     function execute(localTest_initialSetup self) external {

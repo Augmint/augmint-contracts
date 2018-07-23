@@ -8,6 +8,7 @@ const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const LoanManager = artifacts.require("./LoanManager.sol");
 const Locker = artifacts.require("./Locker.sol");
 const Exchange = artifacts.require("./Exchange.sol");
+const SafeMathTester = artifacts.require("./test/SafeMathTester.sol");
 
 const localTest_initialSetup = artifacts.require("./SB_scripts/localTest/localTest_initialSetup.sol");
 
@@ -23,7 +24,8 @@ module.exports = function(deployer) {
             MonetarySupervisor.address,
             LoanManager.address,
             Locker.address,
-            Exchange.address
+            Exchange.address,
+            SafeMathTester.address
         )
         .then(async initialSetupScript => {
             // StabilityBoard permissions
