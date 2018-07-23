@@ -106,7 +106,6 @@ contract Locker is Restricted, TokenReceiver {
         // next line would revert but require to emit reason:
         require(_lockProductId < lockProducts.length, "invalid lockProductId");
         uint32 lockProductId = uint32(_lockProductId);
-        require(lockProductId == _lockProductId, "lockProductId overflow");
         /* TODO: make data arg generic bytes
             uint productId;
             assembly { // solhint-disable-line no-inline-assembly
