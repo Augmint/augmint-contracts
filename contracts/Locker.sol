@@ -146,7 +146,7 @@ contract Locker is Restricted, TokenReceiver {
 
     }
 
-    // returns 20 lock products starting from some offset
+    // returns CHUNK_SIZE lock products starting from some offset
     // lock products are encoded as [ perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive ]
     function getLockProducts(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
         for (uint8 i = 0; i < CHUNK_SIZE; i++) {
