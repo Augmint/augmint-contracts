@@ -94,7 +94,7 @@ contract MultiSig {
         script.state = ScriptState.Failed;
 
         // passing scriptAddress to allow called script access its own public fx-s if needed
-        if(scriptAddress.delegatecall(bytes4(keccak256("execute(address)")), scriptAddress)) {
+        if (scriptAddress.delegatecall(abi.encodeWithSignature("execute(address)", scriptAddress))) {
             script.state = ScriptState.Done;
             result = true;
         } else {
