@@ -86,19 +86,13 @@ contract MultiSig {
         Script storage script = scripts[scriptAddress];
         require(script.state == ScriptState.Approved, "script state must be Approved");
 
-        /* init to failed because if delegatecall rans out of gas we won't have enough left to set it.
-           NB: delegatecall leaves 63/64 part of gasLimit for the caller.
-                Therefore the execute might revert with out of gas, leaving script in Approved state
-                when execute() is called with small gas limits.
-        */
-        script.state = ScriptState.Failed;
-
         // passing scriptAddress to allow called script access its own public fx-s if needed
         if (scriptAddress.delegatecall.gas(gasleft() - 23000)
             (abi.encodeWithSignature("execute(address)", scriptAddress))) {
             script.state = ScriptState.Done;
             result = true;
         } else {
+            script.state = ScriptState.Failed;
             result = false;
         }
         emit ScriptExecuted(scriptAddress, result);
