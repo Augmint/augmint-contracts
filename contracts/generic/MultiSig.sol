@@ -94,8 +94,7 @@ contract MultiSig {
         script.state = ScriptState.Failed;
 
         // passing scriptAddress to allow called script access its own public fx-s if needed
-        // TODO: figure out exactly how much gas we want to retain from delegatecall
-        if (scriptAddress.delegatecall.gas(gasleft() - 10000)
+        if (scriptAddress.delegatecall.gas(gasleft() - 23000)
             (abi.encodeWithSignature("execute(address)", scriptAddress))) {
             script.state = ScriptState.Done;
             result = true;
