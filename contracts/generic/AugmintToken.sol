@@ -68,8 +68,10 @@ contract AugmintToken is AugmintTokenInterface {
      to use this function to avoid 2 calls (and wait until the first transaction is mined)
      Based on MonolithDAO Token.sol */
     function increaseApproval(address _spender, uint _addedValue) external {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        mapping (address => uint256) allowances = allowed[msg.sender];
+        uint newValue = allowances[_spender].add(_addedValue);
+        allowances[_spender] = newValue;
+        emit Approval(msg.sender, _spender, newValue);
     }
 
     function decreaseApproval(address _spender, uint _subtractedValue) external {
