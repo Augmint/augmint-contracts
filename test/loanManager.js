@@ -6,6 +6,8 @@ const ratesTestHelpers = require("./helpers/ratesTestHelpers.js");
 let loanManager = null;
 let loanProduct = null;
 
+let CHUNK_SIZE = 20;
+
 contract("loanManager  tests", accounts => {
     before(async function() {
         loanManager = loanTestHelpers.loanManager;
@@ -70,7 +72,7 @@ contract("loanManager  tests", accounts => {
         );
 
         prod.id = res.productId;
-        const productsInfo = await loanTestHelpers.getProductsInfo(0);
+        const productsInfo = await loanTestHelpers.getProductsInfo(0, CHUNK_SIZE);
         const productCount = (await loanManager.getProductCount()).toNumber();
         assert.equal(productsInfo.length, productCount);
         const lastProduct = productsInfo[productCount - 1];
@@ -111,7 +113,7 @@ contract("loanManager  tests", accounts => {
         const productCount = (await loanManager.getProductCount()).toNumber();
         prod.id = productCount - 1;
 
-        const productsInfo = await loanTestHelpers.getProductsInfo(productCount - 1);
+        const productsInfo = await loanTestHelpers.getProductsInfo(productCount - 1, CHUNK_SIZE);
         assert.equal(productsInfo.length, 1);
 
         const lastProduct = productsInfo[0];

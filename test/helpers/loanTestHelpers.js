@@ -11,8 +11,6 @@ const NEWLOAN_MAX_GAS = 220000;
 const REPAY_MAX_GAS = 120000;
 const COLLECT_BASE_GAS = 100000;
 
-let CHUNK_SIZE = null;
-
 let augmintToken = null;
 let monetarySupervisor = null;
 let loanManager = null;
@@ -31,15 +29,11 @@ module.exports = {
     loanAsserts,
     get loanManager() {
         return loanManager;
-    },
-    get CHUNK_SIZE() {
-        return CHUNK_SIZE;
     }
 };
 
 before(async function() {
     loanManager = LoanManager.at(LoanManager.address);
-    CHUNK_SIZE = (await loanManager.CHUNK_SIZE()).toNumber();
     augmintToken = tokenTestHelpers.augmintToken;
     monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
@@ -313,9 +307,9 @@ async function collectLoan(testInstance, loan, collector) {
     );
 }
 
-async function getProductsInfo(offset) {
-    const products = await loanManager.getProducts(offset);
-    assert.equal(products.length, CHUNK_SIZE);
+async function getProductsInfo(offset, chunkSize) {
+    const products = await loanManager.getProducts(offset, chunkSize);
+    assert.equal(products.length, chunkSize);
     const result = [];
     products.map(prod => {
         const [
@@ -347,7 +341,6 @@ async function getProductsInfo(offset) {
 
 /* parse array returned by getLoans & getLoansForAddress */
 function parseLoansInfo(loans) {
-    assert.equal(loans.length, CHUNK_SIZE);
     const result = [];
     loans.map(loan => {
         const [

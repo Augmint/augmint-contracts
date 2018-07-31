@@ -19,8 +19,6 @@ import "./MonetarySupervisor.sol";
 contract LoanManager is Restricted {
     using SafeMath for uint256;
 
-    uint16 public constant CHUNK_SIZE = 100;
-
     enum LoanState { Open, Repaid, Defaulted, Collected } // NB: Defaulted state is not stored, only getters calculate
 
     struct LoanProduct {
@@ -212,56 +210,61 @@ contract LoanManager is Restricted {
         return products.length;
     }
 
-    // returns CHUNK_SIZE loan products starting from some offset:
+    // returns <chunkSize> loan products starting from some <offset>:
     // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
-    function getProducts(uint offset) external view returns (uint[8][CHUNK_SIZE] response) {
+    function getProducts(uint offset, uint16 chunkSize)
+    external view returns (uint[8][]) {
+        uint[8][] memory response = new uint[8][](chunkSize);
 
-        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
-
+        for (uint16 i = 0; i < chunkSize; i++) {
             if (offset + i >= products.length) { break; }
 
             LoanProduct storage product = products[offset + i];
-
             response[i] = [offset + i, product.minDisbursedAmount, product.term, product.discountRate,
-                            product.collateralRatio, product.defaultingFeePt,
-                            monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0 ];
+                    product.collateralRatio, product.defaultingFeePt,
+                    monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0 ];
         }
+        return response;
     }
 
     function getLoanCount() external view returns (uint ct) {
         return loans.length;
     }
 
-    /* returns CHUNK_SIZE loans starting from some offset. Loans data encoded as:
+    /* returns <chunkSize> loans starting from some <offset>. Loans data encoded as:
         [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
                                                                                     loanAmount, interestAmount ]   */
-    function getLoans(uint offset) external view returns (uint[10][CHUNK_SIZE] response) {
+    function getLoans(uint offset, uint16 chunkSize)
+    external view returns (uint[10][]) {
+        uint[10][] memory response = new uint[10][](chunkSize);
 
-        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
-
+        for (uint16 i = 0; i < chunkSize; i++) {
             if (offset + i >= loans.length) { break; }
 
             response[i] = getLoanTuple(offset + i);
         }
+        return response;
     }
 
     function getLoanCountForAddress(address borrower) external view returns (uint) {
         return accountLoans[borrower].length;
     }
 
-    /* returns CHUNK_SIZE loans of a given account, starting from some offset. Loans data encoded as:
+    /* returns <chunkSize> loans of a given account, starting from some <offset>. Loans data encoded as:
         [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
                                                                                     loanAmount, interestAmount ] */
-    function getLoansForAddress(address borrower, uint offset) external view returns (uint[10][CHUNK_SIZE] response) {
+    function getLoansForAddress(address borrower, uint offset, uint16 chunkSize)
+    external view returns (uint[10][]) {
+        uint[10][] memory response = new uint[10][](chunkSize);
 
         uint[] storage loansForAddress = accountLoans[borrower];
 
-        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
-
+        for (uint16 i = 0; i < chunkSize; i++) {
             if (offset + i >= loansForAddress.length) { break; }
 
             response[i] = getLoanTuple(loansForAddress[offset + i]);
         }
+        return response;
     }
 
     function getLoanTuple(uint loanId) public view returns (uint[10] result) {
@@ -275,10 +278,10 @@ contract LoanManager is Restricted {
         uint disbursementTime = loan.maturity - product.term;
 
         LoanState loanState =
-                        loan.state == LoanState.Open && now >= loan.maturity ? LoanState.Defaulted : loan.state;
+                loan.state == LoanState.Open && now >= loan.maturity ? LoanState.Defaulted : loan.state;
 
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-                    loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
+                loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
     }
 
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
@@ -317,5 +320,4 @@ contract LoanManager is Restricted {
 
         emit LoanRepayed(loanId, loan.borrower);
     }
-
 }

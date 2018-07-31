@@ -14,6 +14,7 @@ let rates = null;
 const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 1000000 };
 
 let products = {};
+let CHUNK_SIZE = 10;
 
 contract("Loans tests", accounts => {
     before(async function() {
@@ -43,7 +44,7 @@ contract("Loans tests", accounts => {
         await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true); // moreCoverage
 
         const [newProducts] = await Promise.all([
-            loanTestHelpers.getProductsInfo(prodCount),
+            loanTestHelpers.getProductsInfo(prodCount, CHUNK_SIZE),
 
             tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
@@ -248,9 +249,10 @@ contract("Loans tests", accounts => {
 
         await testHelpers.waitForTimeStamp(loan2.maturity);
 
-        const loansArray = await loanManager.getLoans(loan1.id);
-        const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
+        const loansArray = await loanManager.getLoans(loan1.id, CHUNK_SIZE);
+        assert.equal(loansArray.length, CHUNK_SIZE);
 
+        const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
         assert.equal(loanInfo.length, 2); // offset was from first loan added
 
         const loan1Actual = loanInfo[0];
@@ -290,7 +292,9 @@ contract("Loans tests", accounts => {
 
         await testHelpers.waitForTimeStamp(loan2.maturity);
 
-        const loansArray = await loanManager.getLoansForAddress(borrower, accountLoanCount - 2);
+        const loansArray = await loanManager.getLoansForAddress(borrower, accountLoanCount - 2, CHUNK_SIZE);
+        assert.equal(loansArray.length, CHUNK_SIZE);
+
         const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
         assert.equal(loanInfo.length, 2); // offset was from first loan added for account
 
