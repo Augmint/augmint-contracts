@@ -208,7 +208,7 @@ contract LoanManager is Restricted {
         emit SystemContractsChanged(newRatesContract, newMonetarySupervisor);
     }
 
-    function getProductCount() external view returns (uint ct) {
+    function getProductCount() external view returns (uint) {
         return products.length;
     }
 
@@ -228,7 +228,7 @@ contract LoanManager is Restricted {
         }
     }
 
-    function getLoanCount() external view returns (uint ct) {
+    function getLoanCount() external view returns (uint) {
         return loans.length;
     }
 
