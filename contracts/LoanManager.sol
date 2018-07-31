@@ -91,7 +91,7 @@ contract LoanManager is Restricted {
     function setLoanProductActiveState(uint32 productId, bool newState)
     external restrict ("StabilityBoard") {
         require(productId < products.length, "invalid productId"); // next line would revert but require to emit reason
-        products[productId].isActive = false;
+        products[productId].isActive = newState;
         emit LoanProductActiveStateChanged(productId, newState);
     }
 
