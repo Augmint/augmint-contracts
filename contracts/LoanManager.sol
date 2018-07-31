@@ -150,7 +150,7 @@ contract LoanManager is Restricted {
         uint totalCollateralToCollect;
         uint totalDefaultingFee;
         for (uint i = 0; i < loanIds.length; i++) {
-            require(i < loans.length, "invalid loanId"); // next line would revert but require to emit reason
+            require(loanIds[i] < loans.length, "invalid loanId"); // next line would revert but require to emit reason
             LoanData storage loan = loans[loanIds[i]];
             require(loan.state == LoanState.Open, "loan state must be Open");
             require(now >= loan.maturity, "current time must be later than maturity");
