@@ -183,10 +183,6 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         emit LegacyTokenConverted(msg.sender, from, amount);
     }
 
-    function getLoanToDepositRatio() external view returns (uint loanToDepositRatio) {
-        loanToDepositRatio = totalLockedAmount == 0 ? 0 : totalLockedAmount.mul(PERCENT_100).div(totalLoanAmount);
-    }
-
     /* Helper function for UI.
         Returns max lock amount based on minLockAmount, interestPt, using LTD params & interestEarnedAccount balance */
     function getMaxLockAmount(uint minLockAmount, uint interestPt) external view returns (uint maxLock) {
