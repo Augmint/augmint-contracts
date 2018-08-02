@@ -55,8 +55,8 @@ contract AugmintTokenInterface is Restricted, ERC20Interface {
                                     uint requestedExecutorFeeInToken /* the executor can decide to request lower fee */
                                 ) external;
 
-    function increaseApproval(address spender, uint addedValue) external returns (bool);
-    function decreaseApproval(address spender, uint subtractedValue) external returns (bool);
+    function increaseApproval(address spender, uint addedValue) external;
+    function decreaseApproval(address spender, uint subtractedValue) external;
 
     function issueTo(address to, uint amount) external; // restrict it to "MonetarySupervisor" in impl.;
     function burn(uint amount) external;
