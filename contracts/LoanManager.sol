@@ -16,7 +16,7 @@ import "./interfaces/AugmintTokenInterface.sol";
 import "./MonetarySupervisor.sol";
 
 
-contract LoanManager is Restricted {
+contract LoanManager is Restricted, TokenReceiver {
     using SafeMath for uint256;
 
     uint16 public constant CHUNK_SIZE = 100;
