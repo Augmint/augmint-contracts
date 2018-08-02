@@ -67,11 +67,16 @@ contract AugmintToken is AugmintTokenInterface {
      approve should be called when allowed[_spender] == 0. To increment allowed value is better
      to use this function to avoid 2 calls (and wait until the first transaction is mined)
      Based on MonolithDAO Token.sol */
-    function increaseApproval(address _spender, uint _addedValue) external returns (bool) {
-        return _increaseApproval(msg.sender, _spender, _addedValue);
+    function increaseApproval(address _spender, uint _addedValue) external {
+        require(_spender != 0x0, "spender must be set");
+        mapping (address => uint256) allowances = allowed[msg.sender];
+        uint newValue = allowances[_spender].add(_addedValue);
+        allowances[_spender] = newValue;
+        emit Approval(msg.sender, _spender, newValue);
     }
 
-    function decreaseApproval(address _spender, uint _subtractedValue) external returns (bool) {
+    function decreaseApproval(address _spender, uint _subtractedValue) external {
+        require(_spender != 0x0, "spender must be set");
         uint oldValue = allowed[msg.sender][_spender];
         if (_subtractedValue > oldValue) {
             allowed[msg.sender][_spender] = 0;
@@ -79,7 +84,6 @@ contract AugmintToken is AugmintTokenInterface {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
         emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
     }
 
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
@@ -186,11 +190,6 @@ contract AugmintToken is AugmintTokenInterface {
         require(recovered == signer, "invalid signature");
 
         _transfer(signer, msg.sender, requestedExecutorFeeInToken, "Delegated transfer fee", 0);
-    }
-
-    function _increaseApproval(address _approver, address _spender, uint _addedValue) private returns (bool) {
-        allowed[_approver][_spender] = allowed[_approver][_spender].add(_addedValue);
-        emit Approval(_approver, _spender, allowed[_approver][_spender]);
     }
 
     function _transferFrom(address from, address to, uint256 amount, string narrative) private {
