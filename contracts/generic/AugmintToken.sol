@@ -34,6 +34,7 @@ contract AugmintToken is AugmintTokenInterface {
         feeAccount = _feeAccount;
 
     }
+
     function transfer(address to, uint256 amount) external returns (bool) {
         _transfer(msg.sender, to, amount, "");
         return true;
@@ -193,21 +194,21 @@ contract AugmintToken is AugmintTokenInterface {
     }
 
     function _transferFrom(address from, address to, uint256 amount, string narrative) private {
-        require(balances[from] >= amount, "balance must >= amount");
-        require(allowed[from][msg.sender] >= amount, "allowance must be >= amount");
-        // don't allow 0 transferFrom if no approval:
-        require(allowed[from][msg.sender] > 0, "allowance must be >= 0 even with 0 amount");
+        uint fee = feeAccount.calculateTransferFee(from, to, amount);
+        uint amountWithFee = amount.add(fee);
+
+        require(balances[from] >= amountWithFee, "balance must >= amount + fee");
+        require(allowed[from][msg.sender] >= amountWithFee, "allowance must be >= amount + fee");
 
         /* NB: fee is deducted from owner. It can result that transferFrom of amount x to fail
                 when x + fee is not availale on owner balance */
-        _transfer(from, to, amount, narrative);
+        _transfer(from, to, amount, narrative, fee);
 
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(amount);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(amountWithFee);
     }
 
     function _transfer(address from, address to, uint transferAmount, string narrative) private {
         uint fee = feeAccount.calculateTransferFee(from, to, transferAmount);
-
         _transfer(from, to, transferAmount, narrative, fee);
     }
 
@@ -229,5 +230,4 @@ contract AugmintToken is AugmintTokenInterface {
 
         emit AugmintTransfer(from, to, transferAmount, narrative, fee);
     }
-
 }
