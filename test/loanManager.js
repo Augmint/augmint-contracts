@@ -142,9 +142,12 @@ contract("loanManager  tests", accounts => {
         assert.equal(
             tx.logs[0].event,
             "LoanProductActiveStateChanged",
-            "LoanProductActiveStateChanged event should be emmitted"
+            "LoanProductActiveStateChanged event should be emitted"
         );
-        assert(!tx.logs[0].args.newState, "new state should be false");
+        assert.equal(tx.logs[0].args.newState, false, "new state should be false (event)");
+
+        const prod = await loanManager.products(loanProduct.id);
+        assert.equal(prod[5], false, "new state should be false");
     });
 
     it("Should enable loan product", async function() {
@@ -153,9 +156,12 @@ contract("loanManager  tests", accounts => {
         assert.equal(
             tx.logs[0].event,
             "LoanProductActiveStateChanged",
-            "LoanProductActiveStateChanged event should be emmitted"
+            "LoanProductActiveStateChanged event should be emitted"
         );
-        assert(tx.logs[0].args.newState, "new state should be true");
+        assert.equal(tx.logs[0].args.newState, true, "new state should be true (event)");
+
+        const prod = await loanManager.products(loanProduct.id);
+        assert.equal(prod[5], true, "new state should be true");
     });
 
     it("Only allowed should set loan product state", async function() {
