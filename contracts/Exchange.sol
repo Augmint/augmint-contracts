@@ -22,8 +22,6 @@ contract Exchange is Restricted {
     AugmintTokenInterface public augmintToken;
     Rates public rates;
 
-    uint public constant CHUNK_SIZE = 100;
-
     struct Order {
         uint64 index;
         address maker;
@@ -154,22 +152,30 @@ contract Exchange is Restricted {
         return(activeBuyOrders.length, activeSellOrders.length);
     }
 
-    // returns CHUNK_SIZE orders starting from offset
+    // returns <chunkSize> active buy orders starting from <offset>
     // orders are encoded as [id, maker, price, amount]
-    function getActiveBuyOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeBuyOrders.length; i++) {
+    function getActiveBuyOrders(uint offset, uint16 chunkSize)
+    external view returns (uint[4][]) {
+        uint[4][] memory response = new uint[4][](chunkSize);
+        for (uint16 i = 0; i < chunkSize && i + offset < activeBuyOrders.length; i++) {
             uint64 orderId = activeBuyOrders[offset + i];
             Order storage order = buyTokenOrders[orderId];
             response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
+        return response;
     }
 
-    function getActiveSellOrders(uint offset) external view returns (uint[4][CHUNK_SIZE] response) {
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < activeSellOrders.length; i++) {
+    // returns <chunkSize> active sell orders starting from <offset>
+    // orders are encoded as [id, maker, price, amount]
+    function getActiveSellOrders(uint offset, uint16 chunkSize)
+    external view returns (uint[4][]) {
+        uint[4][] memory response = new uint[4][](chunkSize);
+        for (uint16 i = 0; i < chunkSize && i + offset < activeSellOrders.length; i++) {
             uint64 orderId = activeSellOrders[offset + i];
             Order storage order = sellTokenOrders[orderId];
             response[i] = [orderId, uint(order.maker), order.price, order.amount];
         }
+        return response;
     }
 
     function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private returns(bool success) {
