@@ -197,11 +197,11 @@ contract AugmintToken is AugmintTokenInterface {
         uint fee = feeAccount.calculateTransferFee(from, to, amount);
         uint amountWithFee = amount.add(fee);
 
-        require(balances[from] >= amountWithFee, "balance must >= amount + fee");
+        /* NB: fee is deducted from owner, so transferFrom could fail
+            if amount + fee is not available on owner balance, or allowance */
+        require(balances[from] >= amountWithFee, "balance must be >= amount + fee");
         require(allowed[from][msg.sender] >= amountWithFee, "allowance must be >= amount + fee");
 
-        /* NB: fee is deducted from owner. It can result that transferFrom of amount x to fail
-                when x + fee is not availale on owner balance */
         _transfer(from, to, amount, narrative, fee);
 
         allowed[from][msg.sender] = allowed[from][msg.sender].sub(amountWithFee);
