@@ -16,7 +16,7 @@ import "./interfaces/AugmintTokenInterface.sol";
 import "./MonetarySupervisor.sol";
 
 
-contract LoanManager is Restricted {
+contract LoanManager is Restricted, TokenReceiver {
     using SafeMath for uint256;
 
     uint16 public constant CHUNK_SIZE = 100;
@@ -91,7 +91,7 @@ contract LoanManager is Restricted {
     function setLoanProductActiveState(uint32 productId, bool newState)
     external restrict ("StabilityBoard") {
         require(productId < products.length, "invalid productId"); // next line would revert but require to emit reason
-        products[productId].isActive = false;
+        products[productId].isActive = newState;
         emit LoanProductActiveStateChanged(productId, newState);
     }
 
@@ -150,7 +150,7 @@ contract LoanManager is Restricted {
         uint totalCollateralToCollect;
         uint totalDefaultingFee;
         for (uint i = 0; i < loanIds.length; i++) {
-            require(i < loans.length, "invalid loanId"); // next line would revert but require to emit reason
+            require(loanIds[i] < loans.length, "invalid loanId"); // next line would revert but require to emit reason
             LoanData storage loan = loans[loanIds[i]];
             require(loan.state == LoanState.Open, "loan state must be Open");
             require(now >= loan.maturity, "current time must be later than maturity");
@@ -208,7 +208,7 @@ contract LoanManager is Restricted {
         emit SystemContractsChanged(newRatesContract, newMonetarySupervisor);
     }
 
-    function getProductCount() external view returns (uint ct) {
+    function getProductCount() external view returns (uint) {
         return products.length;
     }
 
@@ -228,7 +228,7 @@ contract LoanManager is Restricted {
         }
     }
 
-    function getLoanCount() external view returns (uint ct) {
+    function getLoanCount() external view returns (uint) {
         return loans.length;
     }
 
