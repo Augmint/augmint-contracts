@@ -33,8 +33,6 @@ import "./generic/Restricted.sol";
 contract PreToken is Restricted {
     using SafeMath for uint256;
 
-    uint public constant CHUNK_SIZE = 100;
-
     string constant public name = "Augmint pretokens"; // solhint-disable-line const-name-snakecase
     string constant public symbol = "APRE"; // solhint-disable-line const-name-snakecase
     uint8 constant public decimals = 0; // solhint-disable-line const-name-snakecase
@@ -141,17 +139,20 @@ contract PreToken is Restricted {
         return allAgreements.length;
     }
 
-    // UI helper fx - Returns all agreements from offset as
+    // UI helper fx - Returns <chunkSize> agreements from <offset> as
     // [index in allAgreements, account address as uint, balance, agreementHash as uint,
     //          discount as uint, valuationCap as uint ]
-    function getAllAgreements(uint offset) external view returns(uint[6][CHUNK_SIZE] agreementsResult) {
+    function getAgreements(uint offset, uint16 chunkSize)
+    external view returns(uint[6][]) {
+        uint[6][] memory response = new uint[6][](chunkSize);
 
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < allAgreements.length; i++) {
+        for (uint16 i = 0; i < chunkSize && i + offset < allAgreements.length; i++) {
             bytes32 agreementHash = allAgreements[i + offset];
             Agreement storage agreement = agreements[agreementHash];
 
-            agreementsResult[i] = [ i + offset, uint(agreement.owner), agreement.balance,
+            response[i] = [i + offset, uint(agreement.owner), agreement.balance,
                 uint(agreementHash), uint(agreement.discount), uint(agreement.valuationCap)];
         }
+        return response;
     }
 }

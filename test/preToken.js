@@ -52,7 +52,7 @@ contract("PreToken", accounts => {
             preToken.getAgreementsCount().then(res => res.toNumber()),
             preToken.agreements(agreement.hash),
             preToken.agreementOwners(agreement.owner),
-            preToken.getAllAgreements(agreementsCountBefore),
+            preToken.getAgreements(agreementsCountBefore, 1),
             testHelpers.assertEvent(preToken, "NewAgreement", {
                 owner: agreement.owner,
                 agreementHash: agreement.hash,
@@ -111,7 +111,7 @@ contract("PreToken", accounts => {
         const [agreementsCountAfter, agreementsAfter] = await Promise.all([
             preToken.getAgreementsCount().then(res => res.toNumber()),
 
-            preToken.getAllAgreements(agreementsCountBefore),
+            preToken.getAgreements(agreementsCountBefore, 2),
             testHelpers.assertEvent(preToken, "NewAgreement", {
                 owner: agreement2.owner,
                 agreementHash: agreement2.hash,
