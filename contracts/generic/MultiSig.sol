@@ -18,8 +18,6 @@ import "./SafeMath.sol";
 contract MultiSig {
     using SafeMath for uint256;
 
-    uint public constant CHUNK_SIZE = 100;
-
     mapping(address => bool) public isSigner;
     address[] public allSigners; // all signers, even the disabled ones
                                 // NB: it can contain duplicates when a signer is added, removed then readded again
@@ -144,11 +142,14 @@ contract MultiSig {
     }
 
     // UI helper fx - Returns signers from offset as [signer id (index in allSigners), address as uint, isActive 0 or 1]
-    function getAllSigners(uint offset) external view returns(uint[3][CHUNK_SIZE] signersResult) {
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < allSigners.length; i++) {
+    function getSigners(uint offset, uint16 chunkSize)
+    external view returns(uint[3][]) {
+        uint[3][] memory response = new uint[3][](chunkSize);
+        for (uint16 i = 0; i < chunkSize && i + offset < allSigners.length; i++) {
             address signerAddress = allSigners[i + offset];
-            signersResult[i] = [ i + offset, uint(signerAddress), isSigner[signerAddress] ? 1 : 0 ];
+            response[i] = [i + offset, uint(signerAddress), isSigner[signerAddress] ? 1 : 0];
         }
+        return response;
     }
 
     function getScriptsCount() view external returns (uint scriptsCount) {
@@ -157,12 +158,14 @@ contract MultiSig {
 
     // UI helper fx - Returns scripts from offset as
     //  [scriptId (index in scriptAddresses[]), address as uint, state, signCount]
-    function getAllScripts(uint offset) external view returns(uint[4][CHUNK_SIZE] scriptsResult) {
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < scriptAddresses.length; i++) {
+    function getScripts(uint offset, uint16 chunkSize)
+    external view returns(uint[4][]) {
+        uint[4][] memory response = new uint[4][](chunkSize);
+        for (uint16 i = 0; i < chunkSize && i + offset < scriptAddresses.length; i++) {
             address scriptAddress = scriptAddresses[i + offset];
-            scriptsResult[i] = [ i + offset, uint(scriptAddress), uint(scripts[scriptAddress].state),
-                            scripts[scriptAddress].signCount ];
+            response[i] = [i + offset, uint(scriptAddress),
+                uint(scripts[scriptAddress].state), scripts[scriptAddress].signCount];
         }
+        return response;
     }
-
 }

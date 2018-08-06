@@ -11,12 +11,13 @@ let snapshotId;
 let stabilityBoardProxy;
 let stabilityBoardProxyWeb3Contract;
 const scriptState = { New: 0, Approved: 1, Done: 2, Cancelled: 3, Failed: 4 };
+const CHUNK_SIZE = 10;
 
 async function addSigners(newSigners) {
     // assuming allSigners are active
     const [addSignerScript, currentSigners] = await Promise.all([
         SB_addSigners.new(newSigners),
-        stabilityBoardProxy.getAllSigners(0)
+        stabilityBoardProxy.getSigners(0, CHUNK_SIZE)
     ]);
 
     const signTxs = currentSigners.filter(signerTuple => !signerTuple[1].eq(0)).map(tuple => {
@@ -97,7 +98,7 @@ contract("StabilityBoardProxy", accounts => {
         let [allSignersCountAfter, activeSignersCountAfter, signersAfter, script] = await Promise.all([
             stabilityBoardProxy.getAllSignersCount(),
             stabilityBoardProxy.activeSignersCount(),
-            stabilityBoardProxy.getAllSigners(0),
+            stabilityBoardProxy.getSigners(0, CHUNK_SIZE),
             stabilityBoardProxyWeb3Contract.methods.scripts(addSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "SignerAdded", [
                 { signer: newSigners[0] },
@@ -132,7 +133,7 @@ contract("StabilityBoardProxy", accounts => {
 
         [activeSignersCountAfter, signersAfter, script] = await Promise.all([
             stabilityBoardProxy.activeSignersCount(),
-            stabilityBoardProxy.getAllSigners(0),
+            stabilityBoardProxy.getSigners(0, CHUNK_SIZE),
             stabilityBoardProxyWeb3Contract.methods.scripts(removeSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "SignerRemoved", [
                 { signer: newSigners[0] },
@@ -189,7 +190,7 @@ contract("StabilityBoardProxy", accounts => {
         let [allSignersCountAfter, activeSignersCountAfter, signersAfter, script] = await Promise.all([
             stabilityBoardProxy.getAllSignersCount(),
             stabilityBoardProxy.activeSignersCount(),
-            stabilityBoardProxy.getAllSigners(0),
+            stabilityBoardProxy.getSigners(0, CHUNK_SIZE),
             stabilityBoardProxyWeb3Contract.methods.scripts(addSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "SignerAdded", [
                 { signer: expNewSigners[0] },
@@ -425,7 +426,7 @@ contract("StabilityBoardProxy", accounts => {
 
         const [scriptsCountAfter, scriptsArray] = await Promise.all([
             stabilityBoardProxy.getScriptsCount().then(res => res.toNumber()),
-            stabilityBoardProxy.getAllScripts(scriptCountBefore)
+            stabilityBoardProxy.getScripts(scriptCountBefore, CHUNK_SIZE)
         ]);
         const scripts = scriptsArray.filter(item => !item[1].eq(0)).map(item => {
             return {
