@@ -59,7 +59,8 @@ contract PreToken is Restricted {
 
     event NewAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap);
 
-    constructor(address permissionGranterContract) public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+    constructor(address permissionGranterContract)
+    public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
     function addAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap)
     external restrict("PreTokenSigner") {
@@ -90,9 +91,11 @@ contract PreToken is Restricted {
     function burnFrom(bytes32 agreementHash, uint amount)
     public restrict("PreTokenSigner") returns (bool) {
         Agreement storage agreement = agreements[agreementHash];
-        require(agreement.discount > 0, "agreement must exist"); // this is redundant b/c of next requires but be explicit
+        // this is redundant b/c of next requires but be explicit
+        require(agreement.discount > 0, "agreement must exist");
         require(amount > 0, "burn amount must be > 0");
-        require(agreement.balance >= amount, "must not burn more than balance"); // .sub would revert anyways but emit reason
+        // .sub would revert anyways but emit reason
+        require(agreement.balance >= amount, "must not burn more than balance");
 
         agreement.balance = agreement.balance.sub(amount);
         totalSupply = totalSupply.sub(amount);

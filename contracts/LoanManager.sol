@@ -165,7 +165,7 @@ contract LoanManager is Restricted, TokenReceiver {
             uint defaultingFeeInToken = loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000);
             uint defaultingFee = rates.convertToWei(augmintToken.peggedSymbol(), defaultingFeeInToken);
             uint targetCollection = rates.convertToWei(augmintToken.peggedSymbol(),
-                                                            loan.repaymentAmount).add(defaultingFee);
+                    loan.repaymentAmount).add(defaultingFee);
 
             uint releasedCollateral;
             if (targetCollection < loan.collateralAmount) {
@@ -183,14 +183,15 @@ contract LoanManager is Restricted, TokenReceiver {
 
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
 
-            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect.add(defaultingFee), releasedCollateral, defaultingFee);
+            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect.add(defaultingFee),
+                    releasedCollateral, defaultingFee);
         }
 
         if (totalCollateralToCollect > 0) {
             address(monetarySupervisor.augmintReserves()).transfer(totalCollateralToCollect);
         }
 
-        if (totalDefaultingFee > 0){
+        if (totalDefaultingFee > 0) {
             address(augmintToken.feeAccount()).transfer(totalDefaultingFee);
         }
 
@@ -232,8 +233,8 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     /* returns <chunkSize> loans starting from some <offset>. Loans data encoded as:
-        [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
-                                                                                    loanAmount, interestAmount ]   */
+        [loanId, collateralAmount, repaymentAmount, borrower, productId,
+              state, maturity, disbursementTime, loanAmount, interestAmount] */
     function getLoans(uint offset, uint16 chunkSize)
     external view returns (uint[10][]) {
         uint[10][] memory response = new uint[10][](chunkSize);

@@ -61,18 +61,18 @@ contract MultiSig {
                 "script state must be New or Approved");
         require(!script.signedBy[msg.sender], "script must not be signed by signer yet");
 
-        if(script.allSigners.length == 0) {
+        if (script.allSigners.length == 0) {
             // first sign of a new script
             scriptAddresses.push(scriptAddress);
         }
 
         script.allSigners.push(msg.sender);
-        script.signedBy[msg.sender] =  true;
+        script.signedBy[msg.sender] = true;
         script.signCount = script.signCount.add(1);
 
         emit ScriptSigned(scriptAddress, msg.sender);
 
-        if(checkQuorum(script.signCount)){
+        if (checkQuorum(script.signCount)) {
             script.state = ScriptState.Approved;
             emit ScriptApproved(scriptAddress);
         }
@@ -102,7 +102,7 @@ contract MultiSig {
         require(script.state == ScriptState.Approved || script.state == ScriptState.New,
                 "script state must be New or Approved");
 
-        script.state= ScriptState.Cancelled;
+        script.state = ScriptState.Cancelled;
 
         emit ScriptCancelled(scriptAddress);
     }
