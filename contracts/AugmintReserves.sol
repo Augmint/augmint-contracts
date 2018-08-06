@@ -17,7 +17,7 @@ contract AugmintReserves is SystemAccount {
     constructor(address permissionGranterContract)
     public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
-    function () public payable { // solhint-disable-line no-empty-blocks
+    function () external payable { // solhint-disable-line no-empty-blocks
         // to accept ETH sent into reserve (from defaulted loan's collateral )
     }
 
