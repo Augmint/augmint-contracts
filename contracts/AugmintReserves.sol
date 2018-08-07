@@ -14,14 +14,14 @@ import "./interfaces/AugmintTokenInterface.sol";
 
 contract AugmintReserves is SystemAccount {
 
-    function () public payable { // solhint-disable-line no-empty-blocks
+    constructor(address permissionGranterContract)
+    public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+
+    function () external payable { // solhint-disable-line no-empty-blocks
         // to accept ETH sent into reserve (from defaulted loan's collateral )
     }
-
-    constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
     function burn(AugmintTokenInterface augmintToken, uint amount) external restrict("MonetarySupervisor") {
         augmintToken.burn(amount);
     }
-
 }
