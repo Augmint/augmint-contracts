@@ -17,26 +17,33 @@ contract("TransferFrom AugmintToken tests", accounts => {
     });
 
     it("transferFrom", async function() {
-        let expApprove = {
-            owner: accounts[1],
-            spender: accounts[2],
-            value: 100000
+        const from = accounts[1];
+        const to = accounts[2];
+
+        const transfer1 = {
+            from: from,
+            to: to,
+            amount: 75000
+        };
+        const fee1 = await tokenTestHelpers.getTransferFee(transfer1);
+
+        const transfer2 = {
+            from: from,
+            to: to,
+            amount: 25000,
+            narrative: "Test with narrative"
+        };
+        const fee2 = await tokenTestHelpers.getTransferFee(transfer2);
+
+        const expApprove = {
+            owner: from,
+            spender: to,
+            value: transfer1.amount + fee1 + transfer2.amount + fee2
         };
 
         await tokenTestHelpers.approveTest(this, expApprove);
-
-        await tokenTestHelpers.transferFromTest(this, {
-            from: expApprove.owner,
-            spender: expApprove.spender,
-            amount: Math.round(expApprove.value / 2)
-        });
-
-        await tokenTestHelpers.transferFromTest(this, {
-            from: expApprove.owner,
-            spender: expApprove.spender,
-            amount: Math.round(expApprove.value / 2),
-            narrative: "Test with narrative"
-        });
+        await tokenTestHelpers.transferFromTest(this, transfer1);
+        await tokenTestHelpers.transferFromTest(this, transfer2);
     });
 
     it("transferFrom spender to send to different to than itself", async function() {
