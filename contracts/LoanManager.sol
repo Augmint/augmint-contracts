@@ -217,11 +217,10 @@ contract LoanManager is Restricted, TokenReceiver {
     external view returns (uint[8][]) {
         uint[8][] memory response = new uint[8][](chunkSize);
 
-        for (uint16 i = 0; i < chunkSize; i++) {
-            if (offset + i >= products.length) { break; }
-
-            LoanProduct storage product = products[offset + i];
-            response[i] = [offset + i, product.minDisbursedAmount, product.term, product.discountRate,
+        uint limit = SafeMath.min(offset + chunkSize, products.length);
+        for (uint i = offset; i < limit; i++) {
+            LoanProduct storage product = products[i];
+            response[i - offset] = [i, product.minDisbursedAmount, product.term, product.discountRate,
                     product.collateralRatio, product.defaultingFeePt,
                     monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0 ];
         }
@@ -239,10 +238,9 @@ contract LoanManager is Restricted, TokenReceiver {
     external view returns (uint[10][]) {
         uint[10][] memory response = new uint[10][](chunkSize);
 
-        for (uint16 i = 0; i < chunkSize; i++) {
-            if (offset + i >= loans.length) { break; }
-
-            response[i] = getLoanTuple(offset + i);
+        uint limit = SafeMath.min(offset + chunkSize, loans.length);
+        for (uint i = offset; i < limit; i++) {
+            response[i - offset] = getLoanTuple(i);
         }
         return response;
     }
@@ -260,10 +258,9 @@ contract LoanManager is Restricted, TokenReceiver {
 
         uint[] storage loansForAddress = accountLoans[borrower];
 
-        for (uint16 i = 0; i < chunkSize; i++) {
-            if (offset + i >= loansForAddress.length) { break; }
-
-            response[i] = getLoanTuple(loansForAddress[offset + i]);
+        uint limit =SafeMath.min(offset + chunkSize, loansForAddress.length);
+        for (uint i = offset; i < limit; i++) {
+            response[i - offset] = getLoanTuple(loansForAddress[i]);
         }
         return response;
     }

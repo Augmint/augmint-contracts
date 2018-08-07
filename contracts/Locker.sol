@@ -144,12 +144,10 @@ contract Locker is Restricted, TokenReceiver {
     external view returns (uint[5][]) {
         uint[5][] memory response = new uint[5][](chunkSize);
 
-        for (uint16 i = 0; i < chunkSize; i++) {
-            if (offset + i >= lockProducts.length) { break; }
-
-            LockProduct storage lockProduct = lockProducts[offset + i];
-
-            response[i] = [lockProduct.perTermInterest, lockProduct.durationInSecs, lockProduct.minimumLockAmount,
+        uint limit = SafeMath.min(offset + chunkSize, lockProducts.length);
+        for (uint i = offset; i < limit; i++) {
+            LockProduct storage lockProduct = lockProducts[i];
+            response[i - offset] = [lockProduct.perTermInterest, lockProduct.durationInSecs, lockProduct.minimumLockAmount,
                         monetarySupervisor.getMaxLockAmount(lockProduct.minimumLockAmount, lockProduct.perTermInterest),
                         lockProduct.isActive ? 1 : 0 ];
         }
@@ -172,15 +170,13 @@ contract Locker is Restricted, TokenReceiver {
     external view returns (uint[8][]) {
         uint[8][] memory response = new uint[8][](chunkSize);
 
-        for (uint16 i = 0; i < chunkSize; i++) {
-            if (offset + i >= locks.length) { break; }
-
-            Lock storage lock = locks[offset + i];
+        uint limit = SafeMath.min(offset + chunkSize, locks.length);
+        for (uint i = offset; i < limit; i++) {
+            Lock storage lock = locks[i];
             LockProduct storage lockProduct = lockProducts[lock.productId];
-
             uint interestEarned = calculateInterest(lockProduct.perTermInterest, lock.amountLocked);
 
-            response[i] = [uint(offset + i), uint(lock.owner), lock.amountLocked, interestEarned, lock.lockedUntil,
+            response[i - offset] = [uint(i), uint(lock.owner), lock.amountLocked, interestEarned, lock.lockedUntil,
                         lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0];
         }
         return response;
@@ -194,15 +190,14 @@ contract Locker is Restricted, TokenReceiver {
         uint[7][] memory response = new uint[7][](chunkSize);
         uint[] storage locksForAddress = accountLocks[lockOwner];
 
-        for (uint16 i = 0; i < chunkSize; i++) {
-            if (offset + i >= locksForAddress.length) { break; }
-
-            Lock storage lock = locks[locksForAddress[offset + i]];
+        uint limit = SafeMath.min(offset + chunkSize, locksForAddress.length);
+        for (uint i = offset; i < limit; i++) {
+            Lock storage lock = locks[locksForAddress[i]];
             LockProduct storage lockProduct = lockProducts[lock.productId];
 
             uint interestEarned = calculateInterest(lockProduct.perTermInterest, lock.amountLocked);
 
-            response[i] = [locksForAddress[offset + i], lock.amountLocked, interestEarned, lock.lockedUntil,
+            response[i - offset] = [locksForAddress[i], lock.amountLocked, interestEarned, lock.lockedUntil,
                         lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0 ];
         }
         return response;

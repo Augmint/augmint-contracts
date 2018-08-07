@@ -149,11 +149,12 @@ contract PreToken is Restricted {
     external view returns(uint[6][]) {
         uint[6][] memory response = new uint[6][](chunkSize);
 
-        for (uint16 i = 0; i < chunkSize && i + offset < allAgreements.length; i++) {
-            bytes32 agreementHash = allAgreements[i + offset];
+        uint limit = SafeMath.min(offset + chunkSize, allAgreements.length);
+        for (uint i = offset; i < limit; i++) {
+            bytes32 agreementHash = allAgreements[i];
             Agreement storage agreement = agreements[agreementHash];
 
-            response[i] = [i + offset, uint(agreement.owner), agreement.balance,
+            response[i - offset] = [i, uint(agreement.owner), agreement.balance,
                 uint(agreementHash), uint(agreement.discount), uint(agreement.valuationCap)];
         }
         return response;
