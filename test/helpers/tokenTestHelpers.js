@@ -135,6 +135,9 @@ async function transferFromTest(testInstance, expTransfer) {
     if (!expTransfer.to) {
         expTransfer.to = expTransfer.spender;
     }
+    if (!expTransfer.spender) {
+        expTransfer.spender = expTransfer.to;
+    }
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
     expTransfer.fee = typeof expTransfer.fee === "undefined" ? await getTransferFee(expTransfer) : expTransfer.fee;
 
@@ -170,9 +173,9 @@ async function transferFromTest(testInstance, expTransfer) {
 
     const allowanceAfter = await augmintToken.allowance(expTransfer.from, expTransfer.spender);
     assert.equal(
-        allowanceBefore.sub(expTransfer.amount).toString(),
+        allowanceBefore.sub(expTransfer.amount).sub(expTransfer.fee).toString(),
         allowanceAfter.toString(),
-        "allowance should be reduced with transferred amount"
+        "allowance should be reduced with transferred amount and fee"
     );
 
     await assertBalances(balBefore, {
