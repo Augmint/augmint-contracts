@@ -217,7 +217,7 @@ contract LoanManager is Restricted, TokenReceiver {
     external view returns (uint[8][]) {
         uint[8][] memory response = new uint[8][](chunkSize);
 
-        uint limit = SafeMath.min(offset + chunkSize, products.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), products.length);
         for (uint i = offset; i < limit; i++) {
             LoanProduct storage product = products[i];
             response[i - offset] = [i, product.minDisbursedAmount, product.term, product.discountRate,
@@ -238,7 +238,7 @@ contract LoanManager is Restricted, TokenReceiver {
     external view returns (uint[10][]) {
         uint[10][] memory response = new uint[10][](chunkSize);
 
-        uint limit = SafeMath.min(offset + chunkSize, loans.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), loans.length);
         for (uint i = offset; i < limit; i++) {
             response[i - offset] = getLoanTuple(i);
         }
@@ -258,7 +258,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
         uint[] storage loansForAddress = accountLoans[borrower];
 
-        uint limit =SafeMath.min(offset + chunkSize, loansForAddress.length);
+        uint limit =SafeMath.min(offset.add(chunkSize), loansForAddress.length);
         for (uint i = offset; i < limit; i++) {
             response[i - offset] = getLoanTuple(loansForAddress[i]);
         }

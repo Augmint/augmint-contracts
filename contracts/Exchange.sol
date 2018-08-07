@@ -157,7 +157,7 @@ contract Exchange is Restricted {
     function getActiveBuyOrders(uint offset, uint16 chunkSize)
     external view returns (uint[4][]) {
         uint[4][] memory response = new uint[4][](chunkSize);
-        uint limit = SafeMath.min(offset + chunkSize, activeBuyOrders.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), activeBuyOrders.length);
         for (uint i = offset; i < limit; i++) {
             uint64 orderId = activeBuyOrders[i];
             Order storage order = buyTokenOrders[orderId];
@@ -171,7 +171,7 @@ contract Exchange is Restricted {
     function getActiveSellOrders(uint offset, uint16 chunkSize)
     external view returns (uint[4][]) {
         uint[4][] memory response = new uint[4][](chunkSize);
-        uint limit = SafeMath.min(offset + chunkSize, activeSellOrders.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), activeSellOrders.length);
         for (uint i = offset; i < limit; i++) {
             uint64 orderId = activeSellOrders[i];
             Order storage order = sellTokenOrders[orderId];

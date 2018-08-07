@@ -144,7 +144,7 @@ contract Locker is Restricted, TokenReceiver {
     external view returns (uint[5][]) {
         uint[5][] memory response = new uint[5][](chunkSize);
 
-        uint limit = SafeMath.min(offset + chunkSize, lockProducts.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), lockProducts.length);
         for (uint i = offset; i < limit; i++) {
             LockProduct storage lockProduct = lockProducts[i];
             response[i - offset] = [lockProduct.perTermInterest, lockProduct.durationInSecs, lockProduct.minimumLockAmount,
@@ -170,7 +170,7 @@ contract Locker is Restricted, TokenReceiver {
     external view returns (uint[8][]) {
         uint[8][] memory response = new uint[8][](chunkSize);
 
-        uint limit = SafeMath.min(offset + chunkSize, locks.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), locks.length);
         for (uint i = offset; i < limit; i++) {
             Lock storage lock = locks[i];
             LockProduct storage lockProduct = lockProducts[lock.productId];
@@ -190,7 +190,7 @@ contract Locker is Restricted, TokenReceiver {
         uint[7][] memory response = new uint[7][](chunkSize);
         uint[] storage locksForAddress = accountLocks[lockOwner];
 
-        uint limit = SafeMath.min(offset + chunkSize, locksForAddress.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), locksForAddress.length);
         for (uint i = offset; i < limit; i++) {
             Lock storage lock = locks[locksForAddress[i]];
             LockProduct storage lockProduct = lockProducts[lock.productId];

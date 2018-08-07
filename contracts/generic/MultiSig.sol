@@ -145,7 +145,7 @@ contract MultiSig {
     function getSigners(uint offset, uint16 chunkSize)
     external view returns(uint[3][]) {
         uint[3][] memory response = new uint[3][](chunkSize);
-        uint limit = SafeMath.min(offset + chunkSize, allSigners.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), allSigners.length);
         for (uint i = offset; i < limit; i++) {
             address signerAddress = allSigners[i];
             response[i - offset] = [i, uint(signerAddress), isSigner[signerAddress] ? 1 : 0];
@@ -162,7 +162,7 @@ contract MultiSig {
     function getScripts(uint offset, uint16 chunkSize)
     external view returns(uint[4][]) {
         uint[4][] memory response = new uint[4][](chunkSize);
-        uint limit = SafeMath.min(offset + chunkSize, scriptAddresses.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), scriptAddresses.length);
         for (uint i = offset; i < limit; i++) {
             address scriptAddress = scriptAddresses[i];
             response[i - offset] = [i, uint(scriptAddress),

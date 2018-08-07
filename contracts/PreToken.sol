@@ -149,7 +149,7 @@ contract PreToken is Restricted {
     external view returns(uint[6][]) {
         uint[6][] memory response = new uint[6][](chunkSize);
 
-        uint limit = SafeMath.min(offset + chunkSize, allAgreements.length);
+        uint limit = SafeMath.min(offset.add(chunkSize), allAgreements.length);
         for (uint i = offset; i < limit; i++) {
             bytes32 agreementHash = allAgreements[i];
             Agreement storage agreement = agreements[agreementHash];
