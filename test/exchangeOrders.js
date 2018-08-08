@@ -5,6 +5,8 @@ const exchangeTestHelpers = require("./helpers/exchangeTestHelpers.js");
 const TOKEN_BUY = testHelpers.TOKEN_BUY;
 const TOKEN_SELL = testHelpers.TOKEN_SELL;
 
+const CHUNK_SIZE = 10;
+
 let makers;
 
 let snapshotId;
@@ -191,24 +193,24 @@ contract("Exchange orders tests", accounts => {
         assert(txs.length, orderCount);
 
         const orderQueries = [
-            exchangeTestHelpers.getActiveBuyOrders(0).then(res => {
+            exchangeTestHelpers.getActiveBuyOrders(0, CHUNK_SIZE).then(res => {
                 assert.equal(
                     res.length,
-                    Math.min(orderCount, exchangeTestHelpers.CHUNK_SIZE),
+                    Math.min(orderCount, CHUNK_SIZE),
                     "buy orders count when 0 offset"
                 );
             }),
-            exchangeTestHelpers.getActiveBuyOrders(1).then(res => {
+            exchangeTestHelpers.getActiveBuyOrders(1, CHUNK_SIZE).then(res => {
                 assert.equal(
                     res.length,
-                    Math.min(orderCount - 1, exchangeTestHelpers.CHUNK_SIZE),
+                    Math.min(orderCount - 1, CHUNK_SIZE),
                     "buy count when offset from 1"
                 );
             }),
-            exchangeTestHelpers.getActiveBuyOrders(orderCount - 1).then(res => {
+            exchangeTestHelpers.getActiveBuyOrders(orderCount - 1, CHUNK_SIZE).then(res => {
                 assert.equal(res.length, 1, "returned buy orders count when offset from last");
             }),
-            exchangeTestHelpers.getActiveBuyOrders(orderCount).then(res => {
+            exchangeTestHelpers.getActiveBuyOrders(orderCount, CHUNK_SIZE).then(res => {
                 assert.equal(res.length, 0, "returned buy orders count when offset > last");
             })
         ];
@@ -230,24 +232,24 @@ contract("Exchange orders tests", accounts => {
         assert(txs.length, orderCount);
 
         const orderQueries = [
-            exchangeTestHelpers.getActiveSellOrders(0).then(res => {
+            exchangeTestHelpers.getActiveSellOrders(0, CHUNK_SIZE).then(res => {
                 assert.equal(
                     res.length,
-                    Math.min(orderCount, exchangeTestHelpers.CHUNK_SIZE),
+                    Math.min(orderCount, CHUNK_SIZE),
                     "sell orders count when 0 offset"
                 );
             }),
-            exchangeTestHelpers.getActiveSellOrders(1).then(res => {
+            exchangeTestHelpers.getActiveSellOrders(1, CHUNK_SIZE).then(res => {
                 assert.equal(
                     res.length,
-                    Math.min(orderCount - 1, exchangeTestHelpers.CHUNK_SIZE),
+                    Math.min(orderCount - 1, CHUNK_SIZE),
                     "sell count when offset from 1"
                 );
             }),
-            exchangeTestHelpers.getActiveSellOrders(orderCount - 1).then(res => {
+            exchangeTestHelpers.getActiveSellOrders(orderCount - 1, CHUNK_SIZE).then(res => {
                 assert.equal(res.length, 1, "returned sell orders count when offset from last");
             }),
-            exchangeTestHelpers.getActiveSellOrders(orderCount).then(res => {
+            exchangeTestHelpers.getActiveSellOrders(orderCount, CHUNK_SIZE).then(res => {
                 assert.equal(res.length, 0, "returned sell orders count when offset > last");
             })
         ];

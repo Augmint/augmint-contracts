@@ -11,8 +11,6 @@ const MATCH_ORDER_MAX_GAS = 80000;
 
 const PPM_DIV = 1000000;
 
-let CHUNK_SIZE = null;
-
 module.exports = {
     newOrder,
     cancelOrder,
@@ -25,9 +23,6 @@ module.exports = {
     printOrderBook,
     get exchange() {
         return exchange;
-    },
-    get CHUNK_SIZE() {
-        return CHUNK_SIZE;
     }
 };
 
@@ -39,7 +34,6 @@ before(async function() {
     augmintToken = tokenTestHelpers.augmintToken;
     exchange = Exchange.at(Exchange.address);
     rates = Rates.at(Rates.address);
-    CHUNK_SIZE = (await exchange.CHUNK_SIZE()).toNumber();
 });
 
 async function newOrder(testInstance, order) {
@@ -364,17 +358,19 @@ function parseOrders(orderType, orders) {
     });
 }
 
-async function getActiveBuyOrders(offset) {
-    const result = await exchange.getActiveBuyOrders(offset);
+async function getActiveBuyOrders(offset, chunkSize) {
+    const result = await exchange.getActiveBuyOrders(offset, chunkSize);
     return parseOrders(testHelpers.TOKEN_BUY, result);
 }
 
-async function getActiveSellOrders(offset) {
-    const result = await exchange.getActiveSellOrders(offset);
+async function getActiveSellOrders(offset, chunkSize) {
+    const result = await exchange.getActiveSellOrders(offset, chunkSize);
     return parseOrders(testHelpers.TOKEN_SELL, result);
 }
 
 async function printOrderBook(_limit) {
+    const CHUNK_SIZE = 100;
+
     const state = await getState();
 
     const limit = typeof _limit === "undefined" || _limit > CHUNK_SIZE ? CHUNK_SIZE : _limit;

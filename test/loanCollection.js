@@ -35,7 +35,7 @@ contract("Loans collection tests", accounts => {
         await loanManager.addLoanProduct(1, 990000, 1200000, 2000, 50000, true); // moreCoverage
 
         const [newProducts] = await Promise.all([
-            loanTestHelpers.getProductsInfo(prodCount),
+            loanTestHelpers.getProductsInfo(prodCount, 10),
             tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
         ]);
         [
