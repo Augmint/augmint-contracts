@@ -250,7 +250,7 @@ contract("Loans tests", accounts => {
         await testHelpers.waitForTimeStamp(loan2.maturity);
 
         const loansArray = await loanManager.getLoans(loan1.id, CHUNK_SIZE);
-        assert.equal(loansArray.length, CHUNK_SIZE);
+        assert.equal(loansArray.length, 2);
 
         const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
         assert.equal(loanInfo.length, 2); // offset was from first loan added
@@ -293,7 +293,7 @@ contract("Loans tests", accounts => {
         await testHelpers.waitForTimeStamp(loan2.maturity);
 
         const loansArray = await loanManager.getLoansForAddress(borrower, accountLoanCount - 2, CHUNK_SIZE);
-        assert.equal(loansArray.length, CHUNK_SIZE);
+        assert.equal(loansArray.length, 2);
 
         const loanInfo = loanTestHelpers.parseLoansInfo(loansArray);
         assert.equal(loanInfo.length, 2); // offset was from first loan added for account

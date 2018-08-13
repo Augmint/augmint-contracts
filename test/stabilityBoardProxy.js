@@ -114,7 +114,7 @@ contract("StabilityBoardProxy", accounts => {
         assert.equal(signersAfter[0][2].toNumber(), 1, "signer 0 should be active");
         assert.equal(signersAfter[1][2].toNumber(), 1, "signer 1 should be active");
         assert.equal(signersAfter[2][2].toNumber(), 1, "signer 2 should be active");
-        assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
+        assert.equal(signersAfter[3], undefined, "signer 3 should not exist");
         assert.equal(activeSignersCountAfter.toNumber(), activeSignersCountBefore + newSigners.length);
         assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + newSigners.length);
 
@@ -149,7 +149,7 @@ contract("StabilityBoardProxy", accounts => {
         assert.equal(signersAfter[0][2].toNumber(), 1, "signer 0 should be active");
         assert.equal(signersAfter[1][2].toNumber(), 0, "signer 1 should be inactive");
         assert.equal(signersAfter[2][2].toNumber(), 0, "signer 2 should be inactive");
-        assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
+        assert.equal(signersAfter[3], undefined, "signer 3 should not exist");
         assert.equal(activeSignersCountAfter.toNumber(), activeSignersCountBefore);
         assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + newSigners.length);
 
@@ -207,7 +207,7 @@ contract("StabilityBoardProxy", accounts => {
         assert.equal(signersAfter[0][2].toNumber(), 0, "signer 0 should be inactive");
         assert.equal(signersAfter[1][2].toNumber(), 1, "signer 1 should be active");
         assert.equal(signersAfter[2][2].toNumber(), 1, "signer 2 should be active");
-        assert.equal(signersAfter[3][1].toNumber(), 0, "signer 3 should not exists  (address 0)");
+        assert.equal(signersAfter[3], undefined, "signer 3 should not exist");
         assert.equal(activeSignersCountAfter.toNumber(), activeSignersCountBefore + expNewSigners.length - 1);
         assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + expNewSigners.length);
     });

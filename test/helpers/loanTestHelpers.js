@@ -309,7 +309,7 @@ async function collectLoan(testInstance, loan, collector) {
 
 async function getProductsInfo(offset, chunkSize) {
     const products = await loanManager.getProducts(offset, chunkSize);
-    assert.equal(products.length, chunkSize);
+    assert(products.length <= chunkSize);
     const result = [];
     products.map(prod => {
         const [
@@ -322,20 +322,18 @@ async function getProductsInfo(offset, chunkSize) {
             maxLoanAmount,
             isActive
         ] = prod;
-        if (term.gt(0)) {
-            result.push({
-                id,
-                minDisbursedAmount,
-                term,
-                discountRate,
-                collateralRatio,
-                defaultingFeePt,
-                maxLoanAmount,
-                isActive
-            });
-        }
+        assert(term.gt(0));
+        result.push({
+            id,
+            minDisbursedAmount,
+            term,
+            discountRate,
+            collateralRatio,
+            defaultingFeePt,
+            maxLoanAmount,
+            isActive
+        });
     });
-
     return result;
 }
 
@@ -356,22 +354,20 @@ function parseLoansInfo(loans) {
             interestAmount
         ] = loan;
 
-        if (maturity.gt(0)) {
-            result.push({
-                id,
-                collateralAmount,
-                repaymentAmount,
-                borrower,
-                productId,
-                state,
-                maturity,
-                disbursementTime,
-                loanAmount,
-                interestAmount
-            });
-        }
+        assert(maturity.gt(0));
+        result.push({
+            id,
+            collateralAmount,
+            repaymentAmount,
+            borrower,
+            productId,
+            state,
+            maturity,
+            disbursementTime,
+            loanAmount,
+            interestAmount
+        });
     });
-
     return result;
 }
 
