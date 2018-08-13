@@ -33,8 +33,6 @@ import "./generic/Restricted.sol";
 contract PreToken is Restricted {
     using SafeMath for uint256;
 
-    uint public constant CHUNK_SIZE = 100;
-
     string constant public name = "Augmint pretokens"; // solhint-disable-line const-name-snakecase
     string constant public symbol = "APRE"; // solhint-disable-line const-name-snakecase
     uint8 constant public decimals = 0; // solhint-disable-line const-name-snakecase
@@ -61,7 +59,8 @@ contract PreToken is Restricted {
 
     event NewAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap);
 
-    constructor(address permissionGranterContract) public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+    constructor(address permissionGranterContract)
+    public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
     function addAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap)
     external restrict("PreTokenSigner") {
@@ -92,9 +91,11 @@ contract PreToken is Restricted {
     function burnFrom(bytes32 agreementHash, uint amount)
     public restrict("PreTokenSigner") returns (bool) {
         Agreement storage agreement = agreements[agreementHash];
-        require(agreement.discount > 0, "agreement must exist"); // this is redundant b/c of next requires but be explicit
+        // this is redundant b/c of next requires but be explicit
+        require(agreement.discount > 0, "agreement must exist");
         require(amount > 0, "burn amount must be > 0");
-        require(agreement.balance >= amount, "must not burn more than balance"); // .sub would revert anyways but emit reason
+        // .sub would revert anyways but emit reason
+        require(agreement.balance >= amount, "must not burn more than balance");
 
         agreement.balance = agreement.balance.sub(amount);
         totalSupply = totalSupply.sub(amount);
@@ -141,17 +142,21 @@ contract PreToken is Restricted {
         return allAgreements.length;
     }
 
-    // UI helper fx - Returns all agreements from offset as
+    // UI helper fx - Returns <chunkSize> agreements from <offset> as
     // [index in allAgreements, account address as uint, balance, agreementHash as uint,
     //          discount as uint, valuationCap as uint ]
-    function getAllAgreements(uint offset) external view returns(uint[6][CHUNK_SIZE] agreementsResult) {
+    function getAgreements(uint offset, uint16 chunkSize)
+    external view returns(uint[6][]) {
+        uint[6][] memory response = new uint[6][](chunkSize);
 
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < allAgreements.length; i++) {
-            bytes32 agreementHash = allAgreements[i + offset];
+        uint limit = SafeMath.min(offset.add(chunkSize), allAgreements.length);
+        for (uint i = offset; i < limit; i++) {
+            bytes32 agreementHash = allAgreements[i];
             Agreement storage agreement = agreements[agreementHash];
 
-            agreementsResult[i] = [ i + offset, uint(agreement.owner), agreement.balance,
+            response[i - offset] = [i, uint(agreement.owner), agreement.balance,
                 uint(agreementHash), uint(agreement.discount), uint(agreement.valuationCap)];
         }
+        return response;
     }
 }
