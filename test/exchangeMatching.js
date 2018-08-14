@@ -36,14 +36,18 @@ contract("Exchange matching tests", () => {
             price: 1010000,
             orderType: TOKEN_BUY
         };
-        const sellOrder = { amount: 95582, maker: taker, price: 990000, orderType: TOKEN_SELL };
+        const sellOrder = {
+            amount: 95582,
+            maker: taker,
+            price: 990000,
+            orderType: TOKEN_SELL
+        };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
         //await exchangeTestHelper.printOrderBook(10);
         await exchangeTestHelper.matchOrders(this, buyOrder, sellOrder);
 
-        //await exchangeTestHelper.printOrderBook(10);
         const stateAfter = await exchangeTestHelper.getState();
         assert.equal(stateAfter.sellCount, 1, "Sell token order count should be 1");
         assert.equal(stateAfter.buyCount, 0, "Buy token order count should be 0");
@@ -56,7 +60,12 @@ contract("Exchange matching tests", () => {
             price: 1010000,
             orderType: TOKEN_BUY
         };
-        const sellOrder = { amount: 56141, maker: taker, price: 990000, orderType: TOKEN_SELL };
+        const sellOrder = {
+            amount: 56141,
+            maker: taker,
+            price: 990000,
+            orderType: TOKEN_SELL
+        };
 
         await exchangeTestHelper.newOrder(this, buyOrder);
         await exchangeTestHelper.newOrder(this, sellOrder);
