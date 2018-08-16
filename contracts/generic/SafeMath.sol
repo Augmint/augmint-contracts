@@ -4,6 +4,7 @@
 
     TODO: check against ds-math: https://blog.dapphub.com/ds-math/
     TODO: move roundedDiv to a sep lib? (eg. Math.sol)
+    TODO: more unit tests!
 */
 pragma solidity 0.4.24;
 
@@ -33,22 +34,24 @@ library SafeMath {
         return c;
     }
 
-    function roundedDiv(uint a, uint b) internal pure returns (uint256) {
+    // Division, round to nearest integer, round half up
+    function roundedDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b > 0, "div by 0"); // Solidity automatically throws for div by 0 but require to emit reason
-        uint256 z = a / b;
-        if (a % b >= b / 2) {
-            z++;  // no need for safe add b/c it can happen only if we divided the input
-        }
-        return z;
+        uint256 halfB = (b % 2 == 0) ? (b / 2) : (b / 2 + 1);
+        return (a % b >= halfB) ? (a / b + 1) : (a / b);
     }
 
-    // Always rounds up
-    function ceilDiv(uint a, uint b) internal pure returns (uint256) {
+    // Division, always rounds up
+    function ceilDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b > 0, "div by 0"); // Solidity automatically throws for div by 0 but require to emit reason
-        uint256 z = a / b;
-        if (a % b != 0) {
-            z++;  // no need for safe add b/c it can happen only if we divided the input
-        }
-        return z;
+        return (a % b != 0) ? (a / b + 1) : (a / b);
     }
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? b : a;
+    }    
 }
