@@ -8,11 +8,10 @@ contract("TransferFrom AugmintToken tests", accounts => {
     before(async function() {
         augmintToken = tokenTestHelpers.augmintToken;
 
-        await tokenTestHelpers.issueToReserve(1000000000);
         [[, , maxFee], ,] = await Promise.all([
             tokenTestHelpers.feeAccount.transferFee(),
-            tokenTestHelpers.withdrawFromReserve(accounts[0], 500000000),
-            tokenTestHelpers.withdrawFromReserve(accounts[1], 500000000)
+            tokenTestHelpers.issueToken(accounts[0], accounts[0], 500000000),
+            tokenTestHelpers.issueToken(accounts[0], accounts[1], 500000000)
         ]);
     });
 

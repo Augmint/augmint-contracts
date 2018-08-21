@@ -15,10 +15,8 @@ contract("Exchange matching tests", () => {
         exchange = exchangeTestHelper.exchange;
         maker = global.accounts[1];
         taker = global.accounts[2];
-
-        await tokenTestHelpers.issueToReserve(10000000);
-        await tokenTestHelpers.withdrawFromReserve(maker, 1000000);
-        await tokenTestHelpers.withdrawFromReserve(taker, 1000000);
+        await tokenTestHelpers.issueToken(global.accounts[0], maker, 1000000);
+        await tokenTestHelpers.issueToken(global.accounts[0], taker, 1000000);
     });
 
     beforeEach(async function() {

@@ -14,7 +14,6 @@ contract("Loans collection tests", accounts => {
         rates = ratesTestHelpers.rates;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
         loanManager = loanTestHelpers.loanManager;
-        await tokenTestHelpers.issueToReserve(1000000000);
 
         const [prodCount] = await Promise.all([
             loanManager.getProductCount().then(res => res.toNumber()),
@@ -36,7 +35,7 @@ contract("Loans collection tests", accounts => {
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, 10),
-            tokenTestHelpers.withdrawFromReserve(accounts[0], 1000000000)
+            tokenTestHelpers.issueToken(accounts[0], accounts[0], 1000000000)
         ]);
         [
             products.notDue,

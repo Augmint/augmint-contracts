@@ -18,10 +18,7 @@ contract("Exchange orders tests", accounts => {
         makers = [global.accounts[1], global.accounts[2]];
         exchange = exchangeTestHelpers.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
-
-        await tokenTestHelpers.issueToReserve(10000000);
-
-        await Promise.all(makers.map(maker => tokenTestHelpers.withdrawFromReserve(maker, 1000000)));
+        await Promise.all(makers.map(maker => tokenTestHelpers.issueToken(accounts[0], maker, 1000000)));
     });
 
     beforeEach(async function() {

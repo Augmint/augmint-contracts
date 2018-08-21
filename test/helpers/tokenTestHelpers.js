@@ -10,8 +10,7 @@ const FeeAccount = artifacts.require("./FeeAccount.sol");
 const TRANSFER_MAX_GAS = 100000;
 
 module.exports = {
-    issueToReserve,
-    withdrawFromReserve,
+    issueToken,
     transferTest,
     getTransferFee,
     getAllBalances,
@@ -49,7 +48,7 @@ let augmintReserves = null;
 let monetarySupervisor = null;
 let peggedSymbol = null;
 let interestEarnedAccount = null;
-let feeAccount;
+let feeAccount = null;
 
 before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
@@ -63,12 +62,10 @@ before(async function() {
     peggedSymbol = global.web3v1.utils.toAscii(await augmintToken.peggedSymbol());
 });
 
-async function issueToReserve(amount) {
-    await monetarySupervisor.issueToReserve(amount);
-}
-
-async function withdrawFromReserve(to, amount) {
-    await augmintReserves.withdraw(augmintToken.address, to, amount, 0, "withdrawal for tests");
+async function issueToken(sender, to, amount) {
+    await augmintToken.grantPermission(sender, "MonetarySupervisor");
+    await augmintToken.issueTo(to, amount);
+    await augmintToken.revokePermission(sender, "MonetarySupervisor");
 }
 
 async function transferTest(testInstance, expTransfer) {

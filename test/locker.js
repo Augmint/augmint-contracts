@@ -28,15 +28,13 @@ contract("Lock", accounts => {
         lockerInstance = Locker.at(Locker.address);
 
         await Promise.all([
-            monetarySupervisor.issueToReserve(50000),
             monetarySupervisor.setLtdParams(
                 ltdParams.lockDifferenceLimit,
                 ltdParams.loanDifferenceLimit,
                 ltdParams.allowedDifferenceAmount
             ),
-
-            tokenTestHelpers.withdrawFromReserve(tokenHolder, 40000),
-            tokenTestHelpers.withdrawFromReserve(interestEarnedAddress, 10000)
+            tokenTestHelpers.issueToken(accounts[0], tokenHolder, 40000),
+            tokenTestHelpers.issueToken(accounts[0], interestEarnedAddress, 10000)
         ]);
     });
 
