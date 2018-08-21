@@ -12,16 +12,27 @@ import "./generic/SystemAccount.sol";
 import "./interfaces/AugmintTokenInterface.sol";
 
 
-contract AugmintReserves is SystemAccount {
+contract AugmintReserves is Restricted {
+
+    event ReserveMigration(address to, uint weiAmount);
 
     constructor(address permissionGranterContract)
-    public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+    public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
 
     function () external payable { // solhint-disable-line no-empty-blocks
         // to accept ETH sent into reserve (from defaulted loan's collateral )
     }
 
-    function burn(AugmintTokenInterface augmintToken, uint amount) external restrict("MonetarySupervisor") {
+    function burn(AugmintTokenInterface augmintToken, uint amount)
+    external restrict("MonetarySupervisor") {
         augmintToken.burn(amount);
+    }
+
+    function migrate(address to, uint weiAmount)
+    external restrict("StabilityBoard") {
+        if (weiAmount > 0) {
+            to.transfer(weiAmount);
+        }
+        emit ReserveMigration(to, weiAmount);
     }
 }
