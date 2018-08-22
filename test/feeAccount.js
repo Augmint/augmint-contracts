@@ -45,9 +45,7 @@ contract("FeeAccount tests", accounts => {
         });
 
         // top up feeAccount with tokens
-        await tokenTestHelpers.issueToReserve(tokenAmount);
-        await tokenTestHelpers.withdrawFromReserve(accounts[0], tokenAmount);
-        await augmintTokenInstance.transfer(feeAccountInstance.address, tokenAmount);
+        await tokenTestHelpers.issueToken(accounts[0], feeAccountInstance.address, tokenAmount);
 
         const balBefore = await tokenTestHelpers.getAllBalances({
             to: accounts[0],

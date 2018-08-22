@@ -68,7 +68,6 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         const [interestEarnedBalance] = await Promise.all([
             augmintToken.balanceOf(InterestEarnedAccount.address),
-            tokenTestHelpers.issueToReserve(10000000),
             // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount, defaultingFeePt, isActive
             loanManager.addLoanProduct(60, 1000000, 1000000, 500, 5000, true),
             // (perTermInterest,  durationInSecs, minimumLockAmount, isActive)
@@ -84,7 +83,7 @@ contract("Loan to Deposit ratio tests", accounts => {
             loanManager.getProductCount().then(res => res.toNumber() - 1),
             locker.getLockProductCount().then(res => res.toNumber() - 1),
             rates.rates("EUR").then(res => res[0]),
-            tokenTestHelpers.withdrawFromReserve(accounts[0], 10000000),
+            tokenTestHelpers.issueToken(accounts[0], accounts[0], 10000000),
             tokenTestHelpers.interestEarnedAccount.withdraw(
                 augmintToken.address,
                 accounts[0],

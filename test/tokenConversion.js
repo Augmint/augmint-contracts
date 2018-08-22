@@ -13,10 +13,7 @@ contract("token conversion tests", accounts => {
         augmintToken = tokenTestHelpers.augmintToken;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
 
-        [newToken] = await Promise.all([
-            AugmintToken.new(accounts[0], tokenTestHelpers.feeAccount.address),
-            tokenTestHelpers.issueToReserve(10000000)
-        ]);
+        newToken = await AugmintToken.new(accounts[0], tokenTestHelpers.feeAccount.address);
 
         newMS = await MonetarySupervisor.new(
             accounts[0],
@@ -75,7 +72,7 @@ contract("token conversion tests", accounts => {
         const account = accounts[0];
 
         await Promise.all([
-            tokenTestHelpers.withdrawFromReserve(account, amount),
+            tokenTestHelpers.issueToken(accounts[0], account, amount),
             newMS.setAcceptedLegacyAugmintToken(augmintToken.address, true)
         ]);
 
@@ -118,7 +115,7 @@ contract("token conversion tests", accounts => {
 
         await Promise.all([
             newMS.setAcceptedLegacyAugmintToken(augmintToken.address, false),
-            tokenTestHelpers.withdrawFromReserve(account, amount)
+            tokenTestHelpers.issueToken(accounts[0], account, amount)
         ]);
 
         await testHelpers.expectThrow(augmintToken.transferAndNotify(newMS.address, amount, 0, { from: account }));

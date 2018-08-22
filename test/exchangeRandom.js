@@ -71,12 +71,10 @@ contract("Exchange random tests", accounts => {
         augmintToken = tokenTestHelpers.augmintToken;
         const rates = Rates.at(Rates.address);
 
-        await tokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
-
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 100} A-EURO\x1b[0m`);
         await Promise.all([
             rates.setRate("EUR", MARKET_EURETH_RATE),
-            accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
+            accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.issueToken(accounts[0], acc, ACC_INIT_ACE))
         ]);
     });
 
