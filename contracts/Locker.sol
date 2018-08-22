@@ -142,9 +142,9 @@ contract Locker is Restricted, TokenReceiver {
     // lock products are encoded as [ perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive ]
     function getLockProducts(uint offset, uint16 chunkSize)
     external view returns (uint[5][]) {
-        uint[5][] memory response = new uint[5][](chunkSize);
-
         uint limit = SafeMath.min(offset.add(chunkSize), lockProducts.length);
+        uint[5][] memory response = new uint[5][](limit.sub(offset));
+
         for (uint i = offset; i < limit; i++) {
             LockProduct storage lockProduct = lockProducts[i];
             response[i - offset] = [lockProduct.perTermInterest, lockProduct.durationInSecs, lockProduct.minimumLockAmount,
@@ -168,9 +168,9 @@ contract Locker is Restricted, TokenReceiver {
     // NB: perTermInterest is in millionths (i.e. 1,000,000 = 100%):
     function getLocks(uint offset, uint16 chunkSize)
     external view returns (uint[8][]) {
-        uint[8][] memory response = new uint[8][](chunkSize);
-
         uint limit = SafeMath.min(offset.add(chunkSize), locks.length);
+        uint[8][] memory response = new uint[8][](limit.sub(offset));
+
         for (uint i = offset; i < limit; i++) {
             Lock storage lock = locks[i];
             LockProduct storage lockProduct = lockProducts[lock.productId];
@@ -187,10 +187,10 @@ contract Locker is Restricted, TokenReceiver {
     //             [lockId, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
     function getLocksForAddress(address lockOwner, uint offset, uint16 chunkSize)
     external view returns (uint[7][]) {
-        uint[7][] memory response = new uint[7][](chunkSize);
         uint[] storage locksForAddress = accountLocks[lockOwner];
-
         uint limit = SafeMath.min(offset.add(chunkSize), locksForAddress.length);
+        uint[7][] memory response = new uint[7][](limit.sub(offset));
+
         for (uint i = offset; i < limit; i++) {
             Lock storage lock = locks[locksForAddress[i]];
             LockProduct storage lockProduct = lockProducts[lock.productId];

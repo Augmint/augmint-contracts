@@ -215,9 +215,9 @@ contract LoanManager is Restricted, TokenReceiver {
     // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
     function getProducts(uint offset, uint16 chunkSize)
     external view returns (uint[8][]) {
-        uint[8][] memory response = new uint[8][](chunkSize);
-
         uint limit = SafeMath.min(offset.add(chunkSize), products.length);
+        uint[8][] memory response = new uint[8][](limit.sub(offset));
+
         for (uint i = offset; i < limit; i++) {
             LoanProduct storage product = products[i];
             response[i - offset] = [i, product.minDisbursedAmount, product.term, product.discountRate,
@@ -236,9 +236,9 @@ contract LoanManager is Restricted, TokenReceiver {
               state, maturity, disbursementTime, loanAmount, interestAmount] */
     function getLoans(uint offset, uint16 chunkSize)
     external view returns (uint[10][]) {
-        uint[10][] memory response = new uint[10][](chunkSize);
-
         uint limit = SafeMath.min(offset.add(chunkSize), loans.length);
+        uint[10][] memory response = new uint[10][](limit.sub(offset));
+
         for (uint i = offset; i < limit; i++) {
             response[i - offset] = getLoanTuple(i);
         }
@@ -254,11 +254,10 @@ contract LoanManager is Restricted, TokenReceiver {
                                                                                     loanAmount, interestAmount ] */
     function getLoansForAddress(address borrower, uint offset, uint16 chunkSize)
     external view returns (uint[10][]) {
-        uint[10][] memory response = new uint[10][](chunkSize);
-
         uint[] storage loansForAddress = accountLoans[borrower];
+        uint limit = SafeMath.min(offset.add(chunkSize), loansForAddress.length);
+        uint[10][] memory response = new uint[10][](limit.sub(offset));
 
-        uint limit =SafeMath.min(offset.add(chunkSize), loansForAddress.length);
         for (uint i = offset; i < limit; i++) {
             response[i - offset] = getLoanTuple(loansForAddress[i]);
         }

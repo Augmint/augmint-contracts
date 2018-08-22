@@ -121,9 +121,8 @@ contract("Lock", accounts => {
 
         const products = await lockerInstance.getLockProducts(offset, CHUNK_SIZE);
 
-        // getLockProducts should return a CHUNK_SIZE element array:
         assert.isArray(products);
-        assert(products.length === CHUNK_SIZE);
+        assert(products.length <= CHUNK_SIZE);
 
         const product = products[0];
 
@@ -411,7 +410,7 @@ contract("Lock", accounts => {
         const offset = lockCount - 2;
         const locks = await lockerInstance.getLocks(offset, CHUNK_SIZE);
 
-        assert.equal(locks.length, CHUNK_SIZE);
+        assert(locks.length <= CHUNK_SIZE);
 
         const lock2 = locks[0];
         // the locks should be [ lockId, owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
@@ -468,9 +467,8 @@ contract("Lock", accounts => {
         const expectedAccountLockIndex = (await lockerInstance.getLockCountForAddress(tokenHolder)) - 1;
         const accountLocks = await lockerInstance.getLocksForAddress(tokenHolder, expectedAccountLockIndex, CHUNK_SIZE);
 
-        // getLocksForAddress should return a CHUNK_SIZE element array:
         assert.isArray(accountLocks);
-        assert(accountLocks.length === CHUNK_SIZE);
+        assert(accountLocks.length <= CHUNK_SIZE);
 
         const newestLock = accountLocks[0];
 
@@ -514,9 +512,8 @@ contract("Lock", accounts => {
 
         const accountLocks = await lockerInstance.getLocksForAddress(tokenHolder, expectedAccountLockIndex, CHUNK_SIZE);
 
-        // getLocksForAddress should return a CHUNK_SIZE element array:
         assert.isArray(accountLocks);
-        assert(accountLocks.length === CHUNK_SIZE);
+        assert(accountLocks.length <= CHUNK_SIZE);
 
         const lock = accountLocks[0];
 

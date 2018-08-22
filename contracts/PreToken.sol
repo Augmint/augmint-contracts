@@ -147,9 +147,9 @@ contract PreToken is Restricted {
     //          discount as uint, valuationCap as uint ]
     function getAgreements(uint offset, uint16 chunkSize)
     external view returns(uint[6][]) {
-        uint[6][] memory response = new uint[6][](chunkSize);
-
         uint limit = SafeMath.min(offset.add(chunkSize), allAgreements.length);
+        uint[6][] memory response = new uint[6][](limit.sub(offset));
+
         for (uint i = offset; i < limit; i++) {
             bytes32 agreementHash = allAgreements[i];
             Agreement storage agreement = agreements[agreementHash];
