@@ -1,3 +1,5 @@
+/* the script deployed here failed to execute becuase  exchange was  deployed with incorrect
+   constructor args in previous step */
 const Migrations = artifacts.require("./Migrations.sol");
 const Main0008_initNewExchange = artifacts.require("./Main0008_initNewExchange.sol");
 

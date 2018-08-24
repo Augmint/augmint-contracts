@@ -1,3 +1,5 @@
+/* this exchange deployment is incorrect because addresses were not passed as strings which resulted
+    wrong addresses passed to constructor. A new exchange deploy will be done in upcoming migration step. */
 const Exchange = artifacts.require("./Exchange.sol");
 
 const RATES_ADDRESS = 0x4babbe57453e2b6af125b4e304256fcbdf744480;

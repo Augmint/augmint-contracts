@@ -1,4 +1,8 @@
-/* Set up new Exchange contract with required permissions*/
+/* Set up new Exchange contract with required permissions
+ This script was deployed but failed to execute. Unknow if it was because it is a library or
+ not enough gas was provided for execute.
+ Rink0008 was created as a contract, redeployed and sucessfully executed.
+*/
 
 pragma solidity 0.4.24;
 

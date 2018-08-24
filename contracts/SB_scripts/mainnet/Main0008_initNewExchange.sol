@@ -1,4 +1,11 @@
-/* Set up new Exchange contract with required permissions */
+/* Set up new Exchange contract with required permissions
+  This script was deployed (https://etherscan.io/tx/0xd30b171aa8f173917a4961674fc4381cc9746584cfaf55fa410c707a63380f1a)
+   but failed to  execute (txhash: https://etherscan.io/tx/0xab0360a669377015324c9e0ac360bd48dbaf6d3e596c5ff8bcf785aa41c2a73f )
+  because of exchange deploy script didn't pass addresses to constructor
+   as string so Exchange had incorrect initial addresses set up.
+  An identical init script will be created for a new Exchange contract deployment.
+
+*/
 
 pragma solidity 0.4.24;
 

@@ -1,3 +1,4 @@
+/* This is deploy of a fixed script (Rink0007_initNewExchange) which failed to execute */
 const Migrations = artifacts.require("./Migrations.sol");
 const Rink0008_initNewExchange2 = artifacts.require("./Rink0008_initNewExchange2.sol");
 

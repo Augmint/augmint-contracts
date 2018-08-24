@@ -1,3 +1,4 @@
+/* This migration step was ran but Rink0007_initNewExchange script failed to execute  */
 const Migrations = artifacts.require("./Migrations.sol");
 const Rink0007_initNewExchange = artifacts.require("./Rink0007_initNewExchange.sol");
 
