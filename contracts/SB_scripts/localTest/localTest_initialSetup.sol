@@ -74,7 +74,7 @@ contract localTest_initialSetup {
         _exchange.grantPermission(address(this), "StabilityBoard");
 
 
-        // RatesFeeder permissions to allow calling setRate() and initial ETH/EUR rates
+        // RatesFeeder permissions to allow calling setRate() and initial EUR/ETH rates
         _rates.grantPermission(msg.sender, "RatesFeeder");
         _rates.grantPermission(address(this), "RatesFeeder");
         _rates.setRate("EUR", 99800);

@@ -22,7 +22,7 @@ contract Rates is Restricted {
         uint lastUpdated;
     }
 
-    // mapping currency symbol => rate. all rates are stored with 4 decimals. i.e. ETH/EUR = 989.12 then rate = 989,1200
+    // mapping currency symbol => rate. all rates are stored with 2 decimals. i.e. EUR/ETH = 989.12 then rate = 98912
     mapping(bytes32 => RateInfo) public rates;
 
     event RateChanged(bytes32 symbol, uint newRate);
