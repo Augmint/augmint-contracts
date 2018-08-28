@@ -49,7 +49,7 @@ contract Exchange is Restricted {
     event NewOrder(uint64 indexed orderId, address indexed maker, uint32 price, uint tokenAmount, uint weiAmount);
 
     event OrderFill(address indexed tokenBuyer, address indexed tokenSeller, uint64 buyTokenOrderId,
-        uint64 sellTokenOrderId, uint publishedRate, uint32 price, uint fillRate, uint weiAmount, uint tokenAmount);
+        uint64 sellTokenOrderId, uint publishedRate, uint32 price, uint weiAmount, uint tokenAmount);
 
     event CancelledOrder(uint64 indexed orderId, address indexed maker, uint tokenAmount, uint weiAmount);
 
@@ -180,6 +180,8 @@ contract Exchange is Restricted {
         return response;
     }
 
+    uint private constant E12 = 1000000000000;
+
     function _fillOrder(uint64 buyTokenId, uint64 sellTokenId) private returns(bool success) {
         Order storage buy = buyTokenOrders[buyTokenId];
         Order storage sell = sellTokenOrders[sellTokenId];
@@ -195,9 +197,9 @@ contract Exchange is Restricted {
 
         uint publishedRate;
         (publishedRate, ) = rates.rates(augmintToken.peggedSymbol());
-        uint fillRate = publishedRate.mul(price).roundedDiv(1000000);
+        // fillRate = publishedRate * 1000000 / price
 
-        uint sellWei = sell.amount.mul(1 ether).roundedDiv(fillRate);
+        uint sellWei = sell.amount.mul(uint(price)).mul(E12).roundedDiv(publishedRate);
 
         uint tradedWei;
         uint tradedTokens;
@@ -206,7 +208,7 @@ contract Exchange is Restricted {
             tradedTokens = sell.amount;
         } else {
             tradedWei = buy.amount;
-            tradedTokens = buy.amount.mul(fillRate).roundedDiv(1 ether);
+            tradedTokens = buy.amount.mul(publishedRate).roundedDiv(uint(price).mul(E12));
         }
 
         buy.amount = buy.amount.sub(tradedWei);
@@ -223,7 +225,7 @@ contract Exchange is Restricted {
         sell.maker.transfer(tradedWei);
 
         emit OrderFill(buy.maker, sell.maker, buyTokenId,
-            sellTokenId, publishedRate, price, fillRate, tradedWei, tradedTokens);
+            sellTokenId, publishedRate, price, tradedWei, tradedTokens);
 
         return true;
     }

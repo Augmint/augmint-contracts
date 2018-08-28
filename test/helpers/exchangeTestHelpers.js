@@ -219,13 +219,15 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
     const currentRate = parseInt((await rates.rates("EUR"))[0]);
 
     const expPrice = buyTokenOrder.id > sellTokenOrder.id ? sellTokenOrder.price : buyTokenOrder.price;
-    const expFillRate = Math.round(currentRate * expPrice / PPM_DIV);
 
     const sellWeiValue = sellTokenOrder.amount
         .mul(testHelpers.ONE_ETH)
-        .div(expFillRate)
+        .mul(expPrice)
+        .div(currentRate)
+        .div(PPM_DIV)
         .round(0, BigNumber.ROUND_HALF_UP);
-    const buyTokenValue = Math.round(buyTokenOrder.amount * expFillRate / testHelpers.ONE_ETH);
+    const buyTokenValue =
+        Math.round(buyTokenOrder.amount * currentRate * PPM_DIV / expPrice / testHelpers.ONE_ETH);
 
     const tradedWeiAmount = BigNumber.min(buyTokenOrder.amount, sellWeiValue);
     const tradedTokenAmount = BigNumber.min(sellTokenOrder.amount, buyTokenValue);
@@ -238,7 +240,6 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         tokenSeller: sellTokenOrder.maker,
         tokenBuyer: buyTokenOrder.maker,
         price: expPrice,
-        fillRate: expFillRate,
         weiAmount: tradedWeiAmount,
         tokenAmount: tradedTokenAmount,
         buyFilled: buyFilled,
@@ -257,7 +258,6 @@ async function matchOrders(testInstance, buyTokenOrder, sellTokenOrder) {
         tokenBuyer: expMatch.tokenBuyer,
         publishedRate: currentRate,
         price: expMatch.price,
-        fillRate: expMatch.fillRate,
         weiAmount: expMatch.weiAmount.toString(),
         tokenAmount: expMatch.tokenAmount.toString()
     });
