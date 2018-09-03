@@ -166,15 +166,15 @@
       "latestDeployedAddress": "0xbbecff5db2f9cccc936895121802fc15053344c6",
       "deployments": {
         "0xbbecff5db2f9cccc936895121802fc15053344c6": {
-          "generatedAt": "2018-07-09T11:28:14.587Z",
-          "truffleContractFileUpdatedAt": "2018-07-09T11:27:55.354Z",
-          "deployTransactionHash": "0x462b6f8c5eb1d4d90be08ab412fc9222fa3028f02fe9b2652b529fb22eff0107",
+          "generatedAt": "2018-08-14T19:51:18.035Z",
+          "truffleContractFileUpdatedAt": "2018-08-14T19:50:59.284Z",
+          "deployTransactionHash": "0xd66218d77bcb39823c02c1299a914f4383ce6a124b180babb4687d579cd2d5f3",
           "compiler": {
             "name": "solc",
             "version": "0.4.24+commit.e67f0147.Emscripten.clang"
           },
-          "bytecodeHash": "8e6800c53e2e9d251711a8cc032703b5",
-          "deployedBytecodeHash": "3988ac3e6d69d0f77a1dfea521a7dd40",
+          "bytecodeHash": "fd49b2c846d91ab5e1003493be2a7915",
+          "deployedBytecodeHash": "5d570ca7b32725662d79af0d420f3a8b",
           "sourceHash": "04025a37ea64acbc6f0ea2ec8a6f3e4d",
           "source": "/* Augmint Euro token (A-EUR) implementation */\npragma solidity 0.4.24;\nimport \"./interfaces/TransferFeeInterface.sol\";\nimport \"./generic/AugmintToken.sol\";\n\n\ncontract TokenAEur is AugmintToken {\n    constructor(address _permissionGranterContract, TransferFeeInterface _feeAccount)\n    public AugmintToken(_permissionGranterContract, \"Augmint Euro\", \"AEUR\", \"EUR\", 2, _feeAccount)\n    {} // solhint-disable-line no-empty-blocks\n\n}\n"
         }
