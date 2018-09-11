@@ -13,7 +13,7 @@ let exchange = null;
 
 contract("Exchange orders tests", accounts => {
     before(async function() {
-        makers = [global.accounts[1], global.accounts[2]];
+        makers = [global.accounts[1], global.accounts[2], global.accounts[3]];
         exchange = exchangeTestHelpers.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
 
@@ -115,6 +115,82 @@ contract("Exchange orders tests", accounts => {
         await testHelpers.expectThrow(
             augmintToken.transferAndNotify(exchange.address, userBal + 1, price, { from: makers[0] })
         );
+    });
+
+    it("should remove the proper buy orders from the active list", async function() {
+        const orderA = {
+            amount: global.web3v1.utils.toWei("1"),
+            maker: makers[0],
+            price: 1100000,
+            orderType: TOKEN_BUY
+        };
+        const orderB = {
+            amount: global.web3v1.utils.toWei("2"),
+            maker: makers[1],
+            price: 1200000,
+            orderType: TOKEN_BUY
+        };
+        const orderC = {
+            amount: global.web3v1.utils.toWei("3"),
+            maker: makers[2],
+            price: 1300000,
+            orderType: TOKEN_BUY
+        };
+
+        await exchangeTestHelpers.newOrder(this, orderA);
+        await exchangeTestHelpers.newOrder(this, orderB);
+        await exchangeTestHelpers.newOrder(this, orderC);
+
+        var activeBuys = await exchangeTestHelpers.getActiveBuyOrdersNoFilter(0, 3);
+        assert.equal(activeBuys.length, 3, "length of active orders list is wrong");
+        assert.equal(activeBuys[0].id, orderA.id, "wrong ID in active orders list");
+        assert.equal(activeBuys[1].id, orderB.id, "wrong ID in active orders list");
+        assert.equal(activeBuys[2].id, orderC.id, "wrong ID in active orders list");
+
+        await exchangeTestHelpers.cancelOrder(this, orderA);
+        await exchangeTestHelpers.cancelOrder(this, orderC);
+
+        activeBuys = await exchangeTestHelpers.getActiveBuyOrdersNoFilter(0, 1);
+        assert.equal(activeBuys.length, 1, "length of active orders list is wrong");
+        assert.equal(activeBuys[0].id, orderB.id, "wrong ID in active orders list");
+    });
+
+    it("should remove the proper sell orders from the active list", async function() {
+        const orderA = {
+            amount: 1000,
+            maker: makers[0],
+            price: 1100000,
+            orderType: TOKEN_SELL
+        };
+        const orderB = {
+            amount: 2000,
+            maker: makers[1],
+            price: 1200000,
+            orderType: TOKEN_SELL
+        };
+        const orderC = {
+            amount: 3000,
+            maker: makers[2],
+            price: 1300000,
+            orderType: TOKEN_SELL
+        };
+
+        await exchangeTestHelpers.newOrder(this, orderA);
+        await exchangeTestHelpers.newOrder(this, orderB);
+        await exchangeTestHelpers.newOrder(this, orderC);
+
+        var activeSells = await exchangeTestHelpers.getActiveSellOrdersNoFilter(0, 3);
+        assert.equal(activeSells.length, 3, "length of active orders list is wrong");
+        assert.equal(activeSells[0].id, orderA.id, "wrong ID in active orders list");
+        assert.equal(activeSells[1].id, orderB.id, "wrong ID in active orders list");
+        assert.equal(activeSells[2].id, orderC.id, "wrong ID in active orders list");
+
+        await exchangeTestHelpers.cancelOrder(this, orderA);
+        await exchangeTestHelpers.cancelOrder(this, orderC);
+
+        activeSells = await exchangeTestHelpers.getActiveSellOrdersNoFilter(0, 1);
+        assert.equal(activeSells.length, 1, "length of active orders list is wrong");
+        assert.equal(activeSells[0].id, orderB.id, "wrong ID in active orders list");
     });
 
     it("should cancel a BUY token order", async function() {
