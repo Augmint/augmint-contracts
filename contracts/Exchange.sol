@@ -235,17 +235,21 @@ contract Exchange is Restricted {
     }
 
     function _removeBuyOrder(Order storage order) private {
-        if (order.index < activeBuyOrders.length - 1) {
-            activeBuyOrders[order.index] = activeBuyOrders[activeBuyOrders.length - 1];
-            buyTokenOrders[activeBuyOrders[order.index]].index = order.index;
+        uint lastIndex = activeBuyOrders.length - 1;
+        if (order.index < lastIndex) {
+            uint64 movedOrderId = activeBuyOrders[lastIndex];
+            activeBuyOrders[order.index] = movedOrderId;
+            buyTokenOrders[movedOrderId].index = order.index;
         }
         activeBuyOrders.length--;
     }
 
     function _removeSellOrder(Order storage order) private {
-        if (order.index < activeSellOrders.length - 1) {
-            activeSellOrders[order.index] = activeSellOrders[activeSellOrders.length - 1];
-            sellTokenOrders[activeSellOrders[order.index]].index = order.index;
+        uint lastIndex = activeSellOrders.length - 1;
+        if (order.index < lastIndex) {
+            uint64 movedOrderId = activeSellOrders[lastIndex];
+            activeSellOrders[order.index] = movedOrderId;
+            sellTokenOrders[movedOrderId].index = order.index;
         }
         activeSellOrders.length--;
     }
