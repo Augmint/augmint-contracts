@@ -20,8 +20,6 @@ module.exports = {
     getSellTokenOrder,
     getActiveBuyOrders,
     getActiveSellOrders,
-    getActiveBuyOrdersNoFilter,
-    getActiveSellOrdersNoFilter,
     printOrderBook,
     get exchange() {
         return exchange;
@@ -367,20 +365,10 @@ function parseOrders(orderType, orders) {
 
 async function getActiveBuyOrders(offset, chunkSize) {
     const result = await exchange.getActiveBuyOrders(offset, chunkSize);
-    return parseOrders(testHelpers.TOKEN_BUY, result.filter(order => order[3].toNumber() != 0));
-}
-
-async function getActiveSellOrders(offset, chunkSize) {
-    const result = await exchange.getActiveSellOrders(offset, chunkSize);
-    return parseOrders(testHelpers.TOKEN_SELL, result.filter(order => order[3].toNumber() != 0));
-}
-
-async function getActiveBuyOrdersNoFilter(offset, chunkSize) {
-    const result = await exchange.getActiveBuyOrders(offset, chunkSize);
     return parseOrders(testHelpers.TOKEN_BUY, result);
 }
 
-async function getActiveSellOrdersNoFilter(offset, chunkSize) {
+async function getActiveSellOrders(offset, chunkSize) {
     const result = await exchange.getActiveSellOrders(offset, chunkSize);
     return parseOrders(testHelpers.TOKEN_SELL, result);
 }

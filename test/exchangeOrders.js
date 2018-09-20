@@ -140,7 +140,7 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelpers.newOrder(this, orderB);
         await exchangeTestHelpers.newOrder(this, orderC);
 
-        var activeBuys = await exchangeTestHelpers.getActiveBuyOrdersNoFilter(0, 3);
+        var activeBuys = await exchangeTestHelpers.getActiveBuyOrders(0, 3);
         assert.equal(activeBuys.length, 3, "length of active orders list is wrong");
         assert.equal(activeBuys[0].id, orderA.id, "wrong ID in active orders list");
         assert.equal(activeBuys[1].id, orderB.id, "wrong ID in active orders list");
@@ -149,7 +149,7 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelpers.cancelOrder(this, orderA);
         await exchangeTestHelpers.cancelOrder(this, orderC);
 
-        activeBuys = await exchangeTestHelpers.getActiveBuyOrdersNoFilter(0, 1);
+        activeBuys = await exchangeTestHelpers.getActiveBuyOrders(0, 1);
         assert.equal(activeBuys.length, 1, "length of active orders list is wrong");
         assert.equal(activeBuys[0].id, orderB.id, "wrong ID in active orders list");
     });
@@ -178,7 +178,7 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelpers.newOrder(this, orderB);
         await exchangeTestHelpers.newOrder(this, orderC);
 
-        var activeSells = await exchangeTestHelpers.getActiveSellOrdersNoFilter(0, 3);
+        var activeSells = await exchangeTestHelpers.getActiveSellOrders(0, 3);
         assert.equal(activeSells.length, 3, "length of active orders list is wrong");
         assert.equal(activeSells[0].id, orderA.id, "wrong ID in active orders list");
         assert.equal(activeSells[1].id, orderB.id, "wrong ID in active orders list");
@@ -187,7 +187,7 @@ contract("Exchange orders tests", accounts => {
         await exchangeTestHelpers.cancelOrder(this, orderA);
         await exchangeTestHelpers.cancelOrder(this, orderC);
 
-        activeSells = await exchangeTestHelpers.getActiveSellOrdersNoFilter(0, 1);
+        activeSells = await exchangeTestHelpers.getActiveSellOrders(0, 1);
         assert.equal(activeSells.length, 1, "length of active orders list is wrong");
         assert.equal(activeSells[0].id, orderB.id, "wrong ID in active orders list");
     });
