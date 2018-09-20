@@ -1,4 +1,5 @@
 /* Disable all products in old locker contract
+NB: this script is incrorect (set active state to true instead of false.) Correct run in Main00011
 */
 
 pragma solidity 0.4.24;
