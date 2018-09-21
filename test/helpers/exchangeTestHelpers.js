@@ -7,7 +7,7 @@ const tokenTestHelpers = require("./tokenTestHelpers.js");
 
 const PLACE_ORDER_MAX_GAS = 200000;
 const CANCEL_SELL_MAX_GAS = 150000;
-const MATCH_ORDER_MAX_GAS = 80000;
+const MATCH_ORDER_MAX_GAS = 85000;
 
 const PPM_DIV = 1000000;
 
@@ -319,35 +319,40 @@ async function getState() {
     return ret;
 }
 
-async function getBuyTokenOrder(i) {
-    const order = parseOrder(await exchange.buyTokenOrders(i));
-    order.id = i;
+async function getBuyTokenOrder(id) {
+    const order = parseOrder(await exchange.buyTokenOrders(id));
+    order.id = id;  // ID is not filled if we got the order directly from buyTokenOrders
     order.weiAmount = order.amount;
     order.tokenAmount = 0;
     order.orderType = testHelpers.TOKEN_BUY;
     return order;
 }
 
-async function getSellTokenOrder(i) {
-    const order = parseOrder(await exchange.sellTokenOrders(i));
-    order.id = i;
+async function getSellTokenOrder(id) {
+    const order = parseOrder(await exchange.sellTokenOrders(id));
+    order.id = id;  // ID is not filled if we got the order directly from sellTokenOrders
     order.weiAmount = 0;
     order.tokenAmount = order.amount;
     order.orderType = testHelpers.TOKEN_SELL;
     return order;
 }
 
+// Note: the two below parse functions parse completely different formats!
+
+// Parse an order coming directly from buyTokenOrders/sellTokenOrders
+// has no id, maker is in string format, index (order[0] in this case) is ignored
 function parseOrder(order) {
     return {
-        index: order[0],
         maker: order[1],
         price: order[2].toNumber(),
         amount: order[3]
     };
 }
 
+// Parse an order coming from getActiveBuyOrders/getActiveSellOrders
+// has id, maker is in number format, no index at all (order[0] already contains the id)
 function parseOrders(orderType, orders) {
-    return orders.filter(order => order[3].toNumber() != 0).map(function(order) {
+    return orders.map(function(order) {
         return {
             orderType: orderType,
             id: order[0].toNumber(),
@@ -380,7 +385,7 @@ async function printOrderBook(_limit) {
     console.log(`========= Order Book  ${limitText} =========
               Sell token ct:  ${state.sellCount}    Buy token ct:  ${state.buyCount}`);
 
-    const [sellOrders, buyOrders] = await Promise.all([getActiveSellOrders(0), getActiveBuyOrders(0)]);
+    const [sellOrders, buyOrders] = await Promise.all([getActiveSellOrders(0, limit), getActiveBuyOrders(0, limit)]);
     sellOrders.slice(0, limit).map((order, i) => {
         console.log(
             `${i}. SELL token: price: ${order.price / 10000} % amount: ${order.amount.toString() / 100} ACE` +
