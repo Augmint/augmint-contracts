@@ -24,7 +24,7 @@ module.exports = function(deployer) {
     deployer.then(async () => {
 
         // ### StabilityBoardProxy ###
-        await deployer.deploy(StabilityBoardProxy, StabilityBoardProxy.address, FEE_ACCOUNT_TRANSFER_FEE_PT, FEE_ACCOUNT_TRANSFER_FEE_MIN, FEE_ACCOUNT_TRANSFER_FEE_MAX);
+        await deployer.deploy(StabilityBoardProxy);
 
         // ### FeeAccount ###
         await deployer.deploy(FeeAccount, StabilityBoardProxy.address, FEE_ACCOUNT_TRANSFER_FEE_PT, FEE_ACCOUNT_TRANSFER_FEE_MIN, FEE_ACCOUNT_TRANSFER_FEE_MAX);
