@@ -50,7 +50,11 @@ contract Rink0014_initLegacy {
     Exchange public constant OLD_EXCHANGE_8 = Exchange(0x5C35162DBf91C794F1569C5fe1649f0c5283d2f6);
     Exchange public constant OLD_EXCHANGE_9 = Exchange(0x554817688D096ae89fDacCf52E76f629B9Db8f53);
 
-    FeeAccount public constant OLD_FEE_ACCOUNT = FeeAccount(0x0F5983a6d760BF6E385339af0e67e87420d413EC);
+    FeeAccount public constant OLD_FEE_ACCOUNT_1 = FeeAccount(0xD87C5Eacfa897A1Ef04E891554B65d3f52E0B4cc);
+    FeeAccount public constant OLD_FEE_ACCOUNT_2 = FeeAccount(0xAd897F2c86D892cf221FDBD276029c3Ba732AF20);
+    FeeAccount public constant OLD_FEE_ACCOUNT_3 = FeeAccount(0xc26667132b0B798ab87864f7c29c0819c887aADB);
+    FeeAccount public constant OLD_FEE_ACCOUNT_4 = FeeAccount(0x9B26f801C6078B76690b0D954f7fD662e04BE1d1);
+    FeeAccount public constant OLD_FEE_ACCOUNT_5 = FeeAccount(0x0F5983a6d760BF6E385339af0e67e87420d413EC);
 
     // LoanManager public constant OLD_LOAN_MANAGER_1 = LoanManager(0xFb505462633aE3234760d0ee51C557199AB249dF);  // not supported by frontend
     LoanManager public constant OLD_LOAN_MANAGER_2 = LoanManager(0xEC5E35d8941386C3E08019b0Ad1D4A8C40c7BcBC);
@@ -81,7 +85,11 @@ contract Rink0014_initLegacy {
         /******************************************************************************
          * Setup permissions for legacy contracts
          ******************************************************************************/
-        OLD_FEE_ACCOUNT.grantPermission(address(MONETARY_SUPERVISOR), "NoTransferFee");
+        OLD_FEE_ACCOUNT_1.grantPermission(address(MONETARY_SUPERVISOR), "NoTransferFee");
+        OLD_FEE_ACCOUNT_2.grantPermission(address(MONETARY_SUPERVISOR), "NoTransferFee");
+        OLD_FEE_ACCOUNT_3.grantPermission(address(MONETARY_SUPERVISOR), "NoTransferFee");
+        OLD_FEE_ACCOUNT_4.grantPermission(address(MONETARY_SUPERVISOR), "NoTransferFee");
+        OLD_FEE_ACCOUNT_5.grantPermission(address(MONETARY_SUPERVISOR), "NoTransferFee");
 
         // MONETARY_SUPERVISOR.grantPermission(address(OLD_LOAN_MANAGER_1), "LoanManager");
         MONETARY_SUPERVISOR.grantPermission(address(OLD_LOAN_MANAGER_2), "LoanManager");
