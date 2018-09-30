@@ -4,6 +4,7 @@
   "deployedAbis": {
     "19ab69b650e28b2dd211d3851893f91f": {
       "latestDeployedAddress": "0xd3ef19679c2dbbf3b8e2077c61b88f5e9c6178eb",
+      "deployments": {
         "0xd3ef19679c2dbbf3b8e2077c61b88f5e9c6178eb": {
           "generatedAt": "2018-06-04T12:57:19.487Z",
           "truffleContractFileUpdatedAt": "2018-06-04T12:57:09.842Z",
