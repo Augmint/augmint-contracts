@@ -25,7 +25,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     InterestEarnedAccount public interestEarnedAccount;
     AugmintReserves public augmintReserves;
 
-    uint public issuedByStabilityBoard; // token issued  by Stability Board
+    uint public issuedByStabilityBoard; // token issued by Stability Board
+    uint public burnedByStabilityBoard; // token burned by Stability Board
 
     uint public totalLoanAmount; // total amount of all loans without interest, in token
     uint public totalLockedAmount; // total amount of all locks without premium, in token
@@ -80,7 +81,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     }
 
     function burnFromReserve(uint amount) external restrict("StabilityBoard") {
-        issuedByStabilityBoard = issuedByStabilityBoard.sub(amount);
+        burnedByStabilityBoard = burnedByStabilityBoard.add(amount);
         augmintReserves.burn(augmintToken, amount);
     }
 

@@ -14,10 +14,11 @@ contract("MonetarySupervisor tests", accounts => {
 
     it("should be possible to issue new tokens to reserve", async function() {
         const amount = 100000;
-        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore] = await Promise.all([
+        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore, burnedByStabilityBoardBefore] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByStabilityBoard()
+            monetarySupervisor.issuedByStabilityBoard(),
+            monetarySupervisor.burnedByStabilityBoard()
         ]);
 
         const tx = await monetarySupervisor.issueToReserve(amount);
@@ -29,10 +30,11 @@ contract("MonetarySupervisor tests", accounts => {
             amount: amount
         });
 
-        const [totalSupply, issuedByStabilityBoard, reserveBal] = await Promise.all([
+        const [totalSupply, reserveBal, issuedByStabilityBoard, burnedByStabilityBoard] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByStabilityBoard()
+            monetarySupervisor.issuedByStabilityBoard(),
+            monetarySupervisor.burnedByStabilityBoard()
         ]);
 
         assert.equal(
@@ -44,6 +46,11 @@ contract("MonetarySupervisor tests", accounts => {
             issuedByStabilityBoard.toString(),
             issuedByStabilityBoardBefore.add(amount).toString(),
             "issuedByStabilityBoard should be increased with issued amount"
+        );
+        assert.equal(
+            burnedByStabilityBoard.toString(),
+            burnedByStabilityBoardBefore.toString(),
+            "burnedByStabilityBoard should not change"
         );
         assert.equal(
             reserveBal.toString(),
@@ -59,10 +66,11 @@ contract("MonetarySupervisor tests", accounts => {
     it("should be possible to burn tokens from reserve", async function() {
         const amount = 9000000;
         await monetarySupervisor.issueToReserve(amount);
-        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore] = await Promise.all([
+        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore, burnedByStabilityBoardBefore] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByStabilityBoard()
+            monetarySupervisor.issuedByStabilityBoard(),
+            monetarySupervisor.burnedByStabilityBoard()
         ]);
 
         const tx = await monetarySupervisor.burnFromReserve(amount, { from: accounts[0] });
@@ -74,10 +82,11 @@ contract("MonetarySupervisor tests", accounts => {
             amount: amount
         });
 
-        const [totalSupply, issuedByStabilityBoard, reserveBal] = await Promise.all([
+        const [totalSupply, reserveBal, issuedByStabilityBoard, burnedByStabilityBoard] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
-            monetarySupervisor.issuedByStabilityBoard()
+            monetarySupervisor.issuedByStabilityBoard(),
+            monetarySupervisor.burnedByStabilityBoard()
         ]);
         assert.equal(
             totalSupply.toString(),
@@ -86,8 +95,13 @@ contract("MonetarySupervisor tests", accounts => {
         );
         assert.equal(
             issuedByStabilityBoard.toString(),
-            issuedByStabilityBoardBefore.sub(amount).toString(),
-            "issuedByStabilityBoard should be decreased with burnt amount"
+            issuedByStabilityBoardBefore.toString(),
+            "issuedByStabilityBoard should not change"
+        );
+        assert.equal(
+            burnedByStabilityBoard.toString(),
+            burnedByStabilityBoardBefore.add(amount).toString(),
+            "burnedByStabilityBoard should be increased with burnt amount"
         );
         assert.equal(
             reserveBal.toString(),
