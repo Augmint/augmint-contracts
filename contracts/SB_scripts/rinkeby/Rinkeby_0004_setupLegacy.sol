@@ -90,5 +90,31 @@ contract Rinkeby_0004_setupLegacy {
          ******************************************************************************/
         OLD_LOAN_MANAGER.setSystemContracts(NEW_RATES, NEW_MONETARY_SUPERVISOR);
 
+
+        /******************************************************************************
+         * Disable old loan products
+         ******************************************************************************/
+        OLD_LOAN_MANAGER.setLoanProductActiveState(0, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(1, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(2, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(3, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(4, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(5, false);
+
+        OLD_LOAN_MANAGER.setLoanProductActiveState(6, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(7, false);
+
+        /******************************************************************************
+         * Disable old lock products
+         ******************************************************************************/
+        OLD_LOCKER.setLockProductActiveState(0, false);
+        OLD_LOCKER.setLockProductActiveState(1, false);
+        OLD_LOCKER.setLockProductActiveState(2, false);
+        OLD_LOCKER.setLockProductActiveState(3, false);
+        OLD_LOCKER.setLockProductActiveState(4, false);
+        OLD_LOCKER.setLockProductActiveState(5, false);
+
+        OLD_LOCKER.setLockProductActiveState(6, false);
+        OLD_LOCKER.setLockProductActiveState(7, false);
     }
 }
