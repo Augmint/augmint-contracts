@@ -13,7 +13,7 @@ import "../../Rates.sol";
 import "../../TokenAEur.sol";
 import "../../StabilityBoardProxy.sol";
 
-contract Rinkeby_0004_setupLegacy {
+contract Rinkeby_0006_postDeploySetup {
 
     /******************************************************************************
      * StabilityBoardProxy
@@ -46,32 +46,54 @@ contract Rinkeby_0004_setupLegacy {
     Rates public constant OLD_RATES = Rates(0xDfA3a0aEb9645a55b684CB3aCE8C42D018405bDa);
     TokenAEur public constant OLD_TOKEN_AEUR = TokenAEur(0x0557183334Edc23a666201EDC6b0AA2787e2ad3F);
 
-    function execute(Rinkeby_0004_setupLegacy /* self, not used */) external {
+    function execute(Rinkeby_0006_postDeploySetup /* self, not used */) external {
         // called via StabilityBoardProxy
         require(address(this) == address(STABILITY_BOARD_PROXY), "only execute via StabilityBoardProxy");
 
 
         /******************************************************************************
-         * Setup permissions in new contracts for legacy contracts
+         * Migrate KPIs from old MonetarySupervisor
          ******************************************************************************/
-        NEW_MONETARY_SUPERVISOR.grantPermission(address(OLD_LOAN_MANAGER), "LoanManager");
-        NEW_MONETARY_SUPERVISOR.grantPermission(address(OLD_LOCKER), "Locker");
-
-        /******************************************************************************
-         * Accept legacy tokens
-         ******************************************************************************/
-        NEW_MONETARY_SUPERVISOR.setAcceptedLegacyAugmintToken(OLD_TOKEN_AEUR, true);
+        uint oldTotalLoan = OLD_MONETARY_SUPERVISOR.totalLoanAmount();
+        uint oldTotalLock = OLD_MONETARY_SUPERVISOR.totalLockedAmount();
+        NEW_MONETARY_SUPERVISOR.adjustKPIs(oldTotalLoan, oldTotalLock);
 
 
         /******************************************************************************
-         * Setup permissions in legacy contracts for new contracts
+         * Set new MonetarySupervisor in old Locker
          ******************************************************************************/
-        OLD_FEE_ACCOUNT.grantPermission(address(NEW_MONETARY_SUPERVISOR), "NoTransferFee");
+        OLD_LOCKER.setMonetarySupervisor(NEW_MONETARY_SUPERVISOR);
 
         /******************************************************************************
-         * Set new Rates in old Exchange
+         * Set new Rates and MonetarySupervisor in old LoanManager
          ******************************************************************************/
-        OLD_EXCHANGE.setRatesContract(NEW_RATES);
+        OLD_LOAN_MANAGER.setSystemContracts(NEW_RATES, NEW_MONETARY_SUPERVISOR);
 
+
+        /******************************************************************************
+         * Disable old loan products
+         ******************************************************************************/
+        OLD_LOAN_MANAGER.setLoanProductActiveState(0, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(1, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(2, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(3, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(4, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(5, false);
+
+        OLD_LOAN_MANAGER.setLoanProductActiveState(6, false);
+        OLD_LOAN_MANAGER.setLoanProductActiveState(7, false);
+
+        /******************************************************************************
+         * Disable old lock products
+         ******************************************************************************/
+        OLD_LOCKER.setLockProductActiveState(0, false);
+        OLD_LOCKER.setLockProductActiveState(1, false);
+        OLD_LOCKER.setLockProductActiveState(2, false);
+        OLD_LOCKER.setLockProductActiveState(3, false);
+        OLD_LOCKER.setLockProductActiveState(4, false);
+        OLD_LOCKER.setLockProductActiveState(5, false);
+
+        OLD_LOCKER.setLockProductActiveState(6, false);
+        OLD_LOCKER.setLockProductActiveState(7, false);
     }
 }
