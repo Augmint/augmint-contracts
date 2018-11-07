@@ -71,6 +71,7 @@ contract Rinkeby_0004_setupLegacy {
         /******************************************************************************
          * Set new Rates in old Exchange
          ******************************************************************************/
+         // Note: this step should have been moved to Rinkeby_0006_postDeploySetup!
         OLD_EXCHANGE.setRatesContract(NEW_RATES);
 
     }
