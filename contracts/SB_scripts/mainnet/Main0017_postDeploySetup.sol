@@ -13,7 +13,7 @@ import "../../Rates.sol";
 import "../../TokenAEur.sol";
 import "../../StabilityBoardProxy.sol";
 
-contract Main0018_postDeploySetup {
+contract Main0017_postDeploySetup {
 
     /******************************************************************************
      * StabilityBoardProxy
@@ -37,7 +37,7 @@ contract Main0018_postDeploySetup {
     Locker public constant OLD_LOCKER_2 = Locker(0x26438D7c52cE617dFc75A2F02eE816557f01e5Bb);
     MonetarySupervisor public constant OLD_MONETARY_SUPERVISOR = MonetarySupervisor(0x1ca4f9d261707af8a856020a4909b777da218868);
 
-    function execute(Main0018_postDeploySetup /* self, not used */) external {
+    function execute(Main0017_postDeploySetup /* self, not used */) external {
         // called via StabilityBoardProxy
         require(address(this) == address(STABILITY_BOARD_PROXY), "only execute via StabilityBoardProxy");
 

@@ -81,10 +81,25 @@ contract Main0014_initNewContracts {
         MONETARY_SUPERVISOR.grantPermission(address(LOCKER), "Locker");
 
 
-        //  PreToken permissions
+        //  PreToken signers and permissions
+
+        address[] memory preTokenSigners = new address[](3);
+        preTokenSigners[0] = 0xd8203A652452906586F2E6cB6e31f6f7fed094D4;  // Sz.K.
+        preTokenSigners[1] = 0xf9ea0E2857405C859bb8647ECB11f931D1259753;  // P.P.
+        PRE_TOKEN_PROXY.addSigners(preTokenSigners);
+
         PRE_TOKEN.grantPermission(address(PRE_TOKEN_PROXY), "PreTokenSigner");
         PRE_TOKEN.grantPermission(address(PRE_TOKEN_PROXY), "PermissionGranter");
         PRE_TOKEN.revokePermission(address(STABILITY_BOARD_PROXY), "PermissionGranter");
+
+
+        // StabilityBoard signers in new StabilityBoardProxy on Mainnet
+
+        address[] memory stabilityProxySigners = new address[](2);
+        stabilityProxySigners[0] = 0x53dbf6e8fe46307c7536eabb0d90cada3e732716;    // Sz.V.
+        stabilityProxySigners[1] = 0xae162e28575ba898dc08d283f2be10ae8b4114a2;    // Sz.K.
+        stabilityProxySigners[2] = 0x9de3f6e7cacbb7e1c2489dfce21abbb0ecee6213;    // P.P.
+        STABILITY_BOARD_PROXY.addSigners(stabilityProxySigners);
 
 
         /******************************************************************************
