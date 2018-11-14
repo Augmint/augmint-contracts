@@ -19,7 +19,7 @@ contract Main0015_migrateLegacyContracts {
      * StabilityBoardProxies
      ******************************************************************************/
     StabilityBoardProxy public constant OLD_STABILITY_BOARD_PROXY = StabilityBoardProxy(0x4686f017d456331ed2c1de66e134d8d05b24413d);
-    StabilityBoardProxy public constant NEW_STABILITY_BOARD_PROXY = StabilityBoardProxy();
+    StabilityBoardProxy public constant NEW_STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dcbeffdfd3c7b89fced7a9f84);
 
     /******************************************************************************
      * Legacy contracts

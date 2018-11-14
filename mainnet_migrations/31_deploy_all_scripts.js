@@ -5,7 +5,7 @@ const Main0016_setupLegacy = artifacts.require("./Main0016_setupLegacy.sol");
 const Main0017_postDeploySetup = artifacts.require("./Main0017_postDeploySetup.sol");
 
 const MIGRATION_STEP_NUMBER = 31;
-const MIGRATIONS_ADDRESS = "???";
+const MIGRATIONS_ADDRESS = "0xf01C976E9189BC9ba68Eda0f1Dc9d94b243C78dC";
 
 module.exports = function(deployer) {
     deployer.then(async () => {

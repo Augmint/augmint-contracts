@@ -18,13 +18,13 @@ contract Main0017_postDeploySetup {
     /******************************************************************************
      * StabilityBoardProxy
      ******************************************************************************/
-    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy();
+    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dcbeffdfd3c7b89fced7a9f84);
 
     /******************************************************************************
      * New contracts
      ******************************************************************************/
-    MonetarySupervisor public constant NEW_MONETARY_SUPERVISOR = MonetarySupervisor();
-    Rates public constant NEW_RATES = Rates();
+    MonetarySupervisor public constant NEW_MONETARY_SUPERVISOR = MonetarySupervisor(0x27484AFe9e6c332fB07F21Fac82d442EBe1D22c3);
+    Rates public constant NEW_RATES = Rates(0x4272dB2EB82068E898588C3D6e4B5D55c3848793);
 
     /******************************************************************************
      * Legacy contracts

@@ -18,12 +18,12 @@ contract Main0016_setupLegacy {
     /******************************************************************************
      * StabilityBoardProxy
      ******************************************************************************/
-    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy();
+    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dcbeffdfd3c7b89fced7a9f84);
 
     /******************************************************************************
      * New contracts
      ******************************************************************************/
-    MonetarySupervisor public constant NEW_MONETARY_SUPERVISOR = MonetarySupervisor();
+    MonetarySupervisor public constant NEW_MONETARY_SUPERVISOR = MonetarySupervisor(0x27484AFe9e6c332fB07F21Fac82d442EBe1D22c3);
 
     /******************************************************************************
      * Legacy contracts

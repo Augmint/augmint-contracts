@@ -20,23 +20,23 @@ contract Main0014_initNewContracts {
     /******************************************************************************
      * External dependencies
      ******************************************************************************/
-    address public constant RATES_FEEDER_ACCOUNT = ;
+    address public constant RATES_FEEDER_ACCOUNT = 0x8C58187a978979947b88824DCdA5Cb5fD4410387;
 
     /******************************************************************************
      * New contracts
      ******************************************************************************/
-    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy();
-    AugmintReserves public constant AUGMINT_RESERVES = AugmintReserves();
-    Exchange public constant EXCHANGE = Exchange();
-    FeeAccount public constant FEE_ACCOUNT = FeeAccount();
-    InterestEarnedAccount public constant INTEREST_EARNED_ACCOUNT = InterestEarnedAccount();
-    LoanManager public constant LOAN_MANAGER = LoanManager();
-    Locker public constant LOCKER = Locker();
-    MonetarySupervisor public constant MONETARY_SUPERVISOR = MonetarySupervisor();
-    Rates public constant RATES = Rates();
-    TokenAEur public constant TOKEN_AEUR = TokenAEur();
-    PreToken public constant PRE_TOKEN = PreToken();
-    PreTokenProxy public constant PRE_TOKEN_PROXY = PreTokenProxy();
+    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dcbeffdfd3c7b89fced7a9f84);
+    AugmintReserves public constant AUGMINT_RESERVES = AugmintReserves(0x65f30f8dd20c707c1938ccad7416c7381e6eb9c8);
+    Exchange public constant EXCHANGE = Exchange(0xc670ffbfa21c37481fb4ef2ea2249b9b78d2b073);
+    FeeAccount public constant FEE_ACCOUNT = FeeAccount(0xe3ed84a163b9eeaf4f69b4890ae45cc52171aa7e);
+    InterestEarnedAccount public constant INTEREST_EARNED_ACCOUNT = InterestEarnedAccount(0xf23e0af0e41341127bb4e7b203aebca0185f9ebd);
+    LoanManager public constant LOAN_MANAGER = LoanManager(0x1cabc34618ecf2949f0405a86353e7705e01c38b);
+    Locker public constant LOCKER = Locker(0x5cc161482e82f20840a4aaeb582becbcc4b539d7);
+    MonetarySupervisor public constant MONETARY_SUPERVISOR = MonetarySupervisor(0x27484AFe9e6c332fB07F21Fac82d442EBe1D22c3);
+    Rates public constant RATES = Rates(0x4272dB2EB82068E898588C3D6e4B5D55c3848793);
+    TokenAEur public constant TOKEN_AEUR = TokenAEur(0xc994a2deb02543db1f48688438b9903c4b305ce3);
+    PreToken public constant PRE_TOKEN = PreToken(0x97ea02179801fa94227db5fc1d13ac4277d40920);
+    PreTokenProxy public constant PRE_TOKEN_PROXY = PreTokenProxy(0x8a69cf9d1d85bc150f69feb80cc34c552f5fbea9);
 
     function execute(Main0014_initNewContracts /* self, not used */) external {
         // called via StabilityBoardProxy
