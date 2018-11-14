@@ -18,7 +18,7 @@ contract Main0017_postDeploySetup {
     /******************************************************************************
      * StabilityBoardProxy
      ******************************************************************************/
-    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dcbeffdfd3c7b89fced7a9f84);
+    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dCBefFdfd3C7b89fCed7A9F84);
 
     /******************************************************************************
      * New contracts
@@ -29,13 +29,13 @@ contract Main0017_postDeploySetup {
     /******************************************************************************
      * Legacy contracts
      ******************************************************************************/
-    Exchange public constant OLD_EXCHANGE_1 = Exchange(0x8b52b019d237d0bbe8baedf219132d5254e0690b);
-    Exchange public constant OLD_EXCHANGE_2 = Exchange(0xeae7d30bcd44f27d58985b56add007fcee254abd);
-    Exchange public constant OLD_EXCHANGE_3 = Exchange(0xafea54badf7a68f93c2235b5f4cc8f02a2b55edd);
-    LoanManager public constant OLD_LOAN_MANAGER = LoanManager(0xcbefaf199b800deeb9ead61f358ee46e06c54070);
-    Locker public constant OLD_LOCKER_1 = Locker(0x095c0f071fd75875a6b5a1def3f3a993f591080c);
+    Exchange public constant OLD_EXCHANGE_1 = Exchange(0x8b52b019d237d0bbe8Baedf219132D5254e0690b);
+    Exchange public constant OLD_EXCHANGE_2 = Exchange(0xEAe7D30bCD44F27d58985b56ADD007FceE254AbD);
+    Exchange public constant OLD_EXCHANGE_3 = Exchange(0xaFEA54baDf7A68F93C2235B5F4cC8F02a2b55Edd);
+    LoanManager public constant OLD_LOAN_MANAGER = LoanManager(0xCBeFaF199b800DEeB9EAd61f358EE46E06c54070);
+    Locker public constant OLD_LOCKER_1 = Locker(0x095c0F071Fd75875a6b5a1dEf3f3a993F591080c);
     Locker public constant OLD_LOCKER_2 = Locker(0x26438D7c52cE617dFc75A2F02eE816557f01e5Bb);
-    MonetarySupervisor public constant OLD_MONETARY_SUPERVISOR = MonetarySupervisor(0x1ca4f9d261707af8a856020a4909b777da218868);
+    MonetarySupervisor public constant OLD_MONETARY_SUPERVISOR = MonetarySupervisor(0x1Ca4F9d261707aF8A856020a4909B777da218868);
 
     function execute(Main0017_postDeploySetup /* self, not used */) external {
         // called via StabilityBoardProxy

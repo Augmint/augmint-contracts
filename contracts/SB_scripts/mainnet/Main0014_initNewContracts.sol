@@ -25,18 +25,18 @@ contract Main0014_initNewContracts {
     /******************************************************************************
      * New contracts
      ******************************************************************************/
-    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dcbeffdfd3c7b89fced7a9f84);
-    AugmintReserves public constant AUGMINT_RESERVES = AugmintReserves(0x65f30f8dd20c707c1938ccad7416c7381e6eb9c8);
-    Exchange public constant EXCHANGE = Exchange(0xc670ffbfa21c37481fb4ef2ea2249b9b78d2b073);
-    FeeAccount public constant FEE_ACCOUNT = FeeAccount(0xe3ed84a163b9eeaf4f69b4890ae45cc52171aa7e);
-    InterestEarnedAccount public constant INTEREST_EARNED_ACCOUNT = InterestEarnedAccount(0xf23e0af0e41341127bb4e7b203aebca0185f9ebd);
-    LoanManager public constant LOAN_MANAGER = LoanManager(0x1cabc34618ecf2949f0405a86353e7705e01c38b);
-    Locker public constant LOCKER = Locker(0x5cc161482e82f20840a4aaeb582becbcc4b539d7);
+    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dCBefFdfd3C7b89fCed7A9F84);
+    AugmintReserves public constant AUGMINT_RESERVES = AugmintReserves(0x65F30f8DD20c707C1938CcAd7416c7381E6eB9C8);
+    Exchange public constant EXCHANGE = Exchange(0xc670FFBfa21c37481FB4EF2eA2249B9B78D2B073);
+    FeeAccount public constant FEE_ACCOUNT = FeeAccount(0xE3ED84A163b9EeaF4f69B4890ae45cC52171Aa7E);
+    InterestEarnedAccount public constant INTEREST_EARNED_ACCOUNT = InterestEarnedAccount(0xf23e0AF0e41341127Bb4e7b203aebCA0185f9EbD);
+    LoanManager public constant LOAN_MANAGER = LoanManager(0x1cABc34618ecf2949F0405A86353e7705E01C38b);
+    Locker public constant LOCKER = Locker(0x5Cc161482E82f20840A4AAEB582beCBCC4b539D7);
     MonetarySupervisor public constant MONETARY_SUPERVISOR = MonetarySupervisor(0x27484AFe9e6c332fB07F21Fac82d442EBe1D22c3);
     Rates public constant RATES = Rates(0x4272dB2EB82068E898588C3D6e4B5D55c3848793);
-    TokenAEur public constant TOKEN_AEUR = TokenAEur(0xc994a2deb02543db1f48688438b9903c4b305ce3);
-    PreToken public constant PRE_TOKEN = PreToken(0x97ea02179801fa94227db5fc1d13ac4277d40920);
-    PreTokenProxy public constant PRE_TOKEN_PROXY = PreTokenProxy(0x8a69cf9d1d85bc150f69feb80cc34c552f5fbea9);
+    TokenAEur public constant TOKEN_AEUR = TokenAEur(0xc994a2dEb02543Db1f48688438b9903c4b305ce3);
+    PreToken public constant PRE_TOKEN = PreToken(0x97ea02179801FA94227DB5fC1d13Ac4277d40920);
+    PreTokenProxy public constant PRE_TOKEN_PROXY = PreTokenProxy(0x8a69cf9d1D85bC150F69FeB80cC34c552F5fbea9);
 
     function execute(Main0014_initNewContracts /* self, not used */) external {
         // called via StabilityBoardProxy
@@ -96,9 +96,9 @@ contract Main0014_initNewContracts {
         // StabilityBoard signers in new StabilityBoardProxy on Mainnet
 
         address[] memory stabilityProxySigners = new address[](2);
-        stabilityProxySigners[0] = 0x53dbf6e8fe46307c7536eabb0d90cada3e732716;    // Sz.V.
-        stabilityProxySigners[1] = 0xae162e28575ba898dc08d283f2be10ae8b4114a2;    // Sz.K.
-        stabilityProxySigners[2] = 0x9de3f6e7cacbb7e1c2489dfce21abbb0ecee6213;    // P.P.
+        stabilityProxySigners[0] = 0x53DBF6E8fe46307C7536eAbb0D90CADA3e732716;    // Sz.V.
+        stabilityProxySigners[1] = 0xAE162e28575Ba898dc08D283f2Be10AE8b4114A2;    // Sz.K.
+        stabilityProxySigners[2] = 0x9de3F6E7caCbb7e1c2489dFCe21abbB0ecEE6213;    // P.P.
         STABILITY_BOARD_PROXY.addSigners(stabilityProxySigners);
 
 

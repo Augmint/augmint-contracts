@@ -18,7 +18,7 @@ contract Main0016_setupLegacy {
     /******************************************************************************
      * StabilityBoardProxy
      ******************************************************************************/
-    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dcbeffdfd3c7b89fced7a9f84);
+    StabilityBoardProxy public constant STABILITY_BOARD_PROXY = StabilityBoardProxy(0xde36a8773531406dCBefFdfd3C7b89fCed7A9F84);
 
     /******************************************************************************
      * New contracts
@@ -28,11 +28,11 @@ contract Main0016_setupLegacy {
     /******************************************************************************
      * Legacy contracts
      ******************************************************************************/
-    FeeAccount public constant OLD_FEE_ACCOUNT = FeeAccount(0xf6b541e1b5e001dcc11827c1a16232759aea730a);
-    LoanManager public constant OLD_LOAN_MANAGER = LoanManager(0xcbefaf199b800deeb9ead61f358ee46e06c54070);
-    Locker public constant OLD_LOCKER_1 = Locker(0x095c0f071fd75875a6b5a1def3f3a993f591080c);
+    FeeAccount public constant OLD_FEE_ACCOUNT = FeeAccount(0xF6B541E1B5e001DCc11827C1A16232759aeA730a);
+    LoanManager public constant OLD_LOAN_MANAGER = LoanManager(0xCBeFaF199b800DEeB9EAd61f358EE46E06c54070);
+    Locker public constant OLD_LOCKER_1 = Locker(0x095c0F071Fd75875a6b5a1dEf3f3a993F591080c);
     Locker public constant OLD_LOCKER_2 = Locker(0x26438D7c52cE617dFc75A2F02eE816557f01e5Bb);
-    TokenAEur public constant OLD_TOKEN_AEUR = TokenAEur(0x86a635eccefffa70ff8a6db29da9c8db288e40d0);
+    TokenAEur public constant OLD_TOKEN_AEUR = TokenAEur(0x86A635EccEFFfA70Ff8A6DB29DA9C8DB288E40D0);
 
     function execute(Main0016_setupLegacy /* self, not used */) external {
         // called via StabilityBoardProxy
