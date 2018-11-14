@@ -83,14 +83,14 @@ contract Main0014_initNewContracts {
 
         //  PreToken signers and permissions
 
-        address[] memory preTokenSigners = new address[](3);
-        preTokenSigners[0] = 0xd8203A652452906586F2E6cB6e31f6f7fed094D4;  // Sz.K.
-        preTokenSigners[1] = 0xf9ea0E2857405C859bb8647ECB11f931D1259753;  // P.P.
-        PRE_TOKEN_PROXY.addSigners(preTokenSigners);
+        // address[] memory preTokenSigners = new address[](3);
+        // preTokenSigners[0] = 0xd8203A652452906586F2E6cB6e31f6f7fed094D4;  // Sz.K.
+        // preTokenSigners[1] = 0xf9ea0E2857405C859bb8647ECB11f931D1259753;  // P.P.
+        // PRE_TOKEN_PROXY.addSigners(preTokenSigners);
 
-        PRE_TOKEN.grantPermission(address(PRE_TOKEN_PROXY), "PreTokenSigner");
-        PRE_TOKEN.grantPermission(address(PRE_TOKEN_PROXY), "PermissionGranter");
-        PRE_TOKEN.revokePermission(address(STABILITY_BOARD_PROXY), "PermissionGranter");
+        // PRE_TOKEN.grantPermission(address(PRE_TOKEN_PROXY), "PreTokenSigner");
+        // PRE_TOKEN.grantPermission(address(PRE_TOKEN_PROXY), "PermissionGranter");
+        // PRE_TOKEN.revokePermission(address(STABILITY_BOARD_PROXY), "PermissionGranter");
 
 
         // StabilityBoard signers in new StabilityBoardProxy on Mainnet
