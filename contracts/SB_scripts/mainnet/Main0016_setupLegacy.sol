@@ -43,7 +43,8 @@ contract Main0016_setupLegacy {
          * Setup permissions in new contracts for legacy contracts
          ******************************************************************************/
         NEW_MONETARY_SUPERVISOR.grantPermission(address(OLD_LOAN_MANAGER), "LoanManager");
-        NEW_MONETARY_SUPERVISOR.grantPermission(address(OLD_LOCKER), "Locker");
+        NEW_MONETARY_SUPERVISOR.grantPermission(address(OLD_LOCKER_1), "Locker");
+        NEW_MONETARY_SUPERVISOR.grantPermission(address(OLD_LOCKER_2), "Locker");
 
         /******************************************************************************
          * Accept legacy tokens
