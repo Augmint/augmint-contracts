@@ -17,7 +17,7 @@ const MIN_TOKEN = 10000; // 100 ACE
 const MAX_TOKEN = 100000; // 1,000 ACE
 const TEST_ACCS_CT = 10; // accounts.length;
 const ACC_INIT_ACE = 1000000;
-const CHUNK_SIZE = 100;
+const CHUNK_SIZE = 10;
 const random = new RandomSeed("Have the same test data");
 
 let augmintToken = null;
@@ -36,14 +36,14 @@ const getOrderToFill = async () => {
     buyTokenOrders = [];
     const buyChunks = Math.ceil(state.buyCount / CHUNK_SIZE);
     for (let i = 0; i < buyChunks; i++) {
-        const buys = await exchangeTestHelper.getActiveBuyOrders(i * CHUNK_SIZE);
+        const buys = await exchangeTestHelper.getActiveBuyOrders(i * CHUNK_SIZE, CHUNK_SIZE);
         buyTokenOrders = buyTokenOrders.concat(buys);
     }
 
     sellTokenOrders = [];
     const sellChunks = Math.ceil(state.sellCount / CHUNK_SIZE);
     for (let i = 0; i < sellChunks; i++) {
-        const sells = await exchangeTestHelper.getActiveSellOrders(i * CHUNK_SIZE);
+        const sells = await exchangeTestHelper.getActiveSellOrders(i * CHUNK_SIZE, CHUNK_SIZE);
         sellTokenOrders = sellTokenOrders.concat(sells);
     }
 
@@ -71,12 +71,10 @@ contract("Exchange random tests", accounts => {
         augmintToken = tokenTestHelpers.augmintToken;
         const rates = Rates.at(Rates.address);
 
-        await tokenTestHelpers.issueToReserve(TEST_ACCS_CT * ACC_INIT_ACE);
-
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 100} A-EURO\x1b[0m`);
         await Promise.all([
             rates.setRate("EUR", MARKET_EURETH_RATE),
-            accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.withdrawFromReserve(acc, ACC_INIT_ACE))
+            accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.issueToken(accounts[0], acc, ACC_INIT_ACE))
         ]);
     });
 
@@ -191,12 +189,12 @@ contract("Exchange random tests", accounts => {
         //await exchangeTestHelper.printOrderBook(10);
         //const stateBefore = await exchangeTestHelper.getState();
 
-        const buys = await exchangeTestHelper.getActiveBuyOrders(0);
+        const buys = await exchangeTestHelper.getActiveBuyOrders(0, CHUNK_SIZE);
         for (let i = 0; i < buys.length; i++) {
             await exchangeTestHelper.cancelOrder(this, buys[i]);
         }
 
-        const sells = await exchangeTestHelper.getActiveSellOrders(0);
+        const sells = await exchangeTestHelper.getActiveSellOrders(0, CHUNK_SIZE);
         for (let i = 0; i < sells.length; i++) {
             await exchangeTestHelper.cancelOrder(this, sells[i]);
         }

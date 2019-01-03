@@ -79,15 +79,15 @@
       "latestDeployedAddress": "0x1efb52b6aacc403cc9d762282b2aec1b066931c5",
       "deployments": {
         "0x1efb52b6aacc403cc9d762282b2aec1b066931c5": {
-          "generatedAt": "2018-08-14T19:51:18.028Z",
-          "truffleContractFileUpdatedAt": "2018-08-14T19:50:56.847Z",
-          "deployTransactionHash": "0xacf14fb064dcef5fe0f0852bb245f2beadc02a91ebc33b9e9e1515c46924e77e",
+          "generatedAt": "2018-10-18T13:35:02.360Z",
+          "truffleContractFileUpdatedAt": "2018-10-18T11:36:36.821Z",
+          "deployTransactionHash": "0x5e3f2463c5ec4fcc56eb8210b534253f58e5b77d4190d013ec8a85dd662cbd4c",
           "compiler": {
             "name": "solc",
             "version": "0.4.24+commit.e67f0147.Emscripten.clang"
           },
-          "bytecodeHash": "3310d17fffd84a10e23a063d4b5b6779",
-          "deployedBytecodeHash": "7dc6ed41dd07e55de72759c380252b54",
+          "bytecodeHash": "3994e47ec4faf784d97e783d6e3de64d",
+          "deployedBytecodeHash": "9b8b05d9a455663e6bc0b4aa953ef26e",
           "sourceHash": "3ae3310cda808efba999807e54bf8c9b",
           "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity 0.4.24;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisor\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
         }

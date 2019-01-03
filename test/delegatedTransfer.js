@@ -94,8 +94,7 @@ contract("Delegated Transfers", accounts => {
         from = accounts[1];
         tokenAEur = new global.web3v1.eth.Contract(TokenAEur.abi, TokenAEur.address);
 
-        await tokenTestHelpers.issueToReserve(100000);
-        await tokenTestHelpers.withdrawFromReserve(from, 100000);
+        await tokenTestHelpers.issueToken(accounts[0], from, 10000);
     });
 
     it("should transfer when delegatedTransfer is signed", async function() {

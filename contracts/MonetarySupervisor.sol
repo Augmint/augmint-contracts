@@ -25,7 +25,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     InterestEarnedAccount public interestEarnedAccount;
     AugmintReserves public augmintReserves;
 
-    uint public issuedByStabilityBoard; // token issued  by Stability Board
+    uint public issuedByStabilityBoard; // token issued by Stability Board
+    uint public burnedByStabilityBoard; // token burned by Stability Board
 
     uint public totalLoanAmount; // total amount of all loans without interest, in token
     uint public totalLockedAmount; // total amount of all locks without premium, in token
@@ -63,8 +64,8 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     event SystemContractsChanged(InterestEarnedAccount newInterestEarnedAccount, AugmintReserves newAugmintReserves);
 
-    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken, AugmintReserves _augmintReserves,
-        InterestEarnedAccount _interestEarnedAccount,
+    constructor(address permissionGranterContract, AugmintTokenInterface _augmintToken,
+        AugmintReserves _augmintReserves, InterestEarnedAccount _interestEarnedAccount,
         uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount)
     public Restricted(permissionGranterContract) {
         augmintToken = _augmintToken;
@@ -80,7 +81,7 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     }
 
     function burnFromReserve(uint amount) external restrict("StabilityBoard") {
-        issuedByStabilityBoard = issuedByStabilityBoard.sub(amount);
+        burnedByStabilityBoard = burnedByStabilityBoard.add(amount);
         augmintReserves.burn(augmintToken, amount);
     }
 
@@ -118,16 +119,16 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
 
     function loanRepaymentNotification(uint loanAmount) external {
         // only whitelisted LoanManager contracts
-       require(permissions[msg.sender]["LoanManager"],
-           "msg.sender must have LoanManager permission");
+        require(permissions[msg.sender]["LoanManager"],
+            "msg.sender must have LoanManager permission");
         totalLoanAmount = totalLoanAmount.sub(loanAmount);
     }
 
     // NB: this is called by Lender contract with the sum of all loans collected in batch
     function loanCollectionNotification(uint totalLoanAmountCollected) external {
         // only whitelisted LoanManager contracts
-       require(permissions[msg.sender]["LoanManager"],
-           "msg.sender must have LoanManager permission");
+        require(permissions[msg.sender]["LoanManager"],
+            "msg.sender must have LoanManager permission");
         totalLoanAmount = totalLoanAmount.sub(totalLoanAmountCollected);
     }
 
@@ -140,7 +141,6 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     function setLtdParams(uint lockDifferenceLimit, uint loanDifferenceLimit, uint allowedDifferenceAmount)
     external restrict("StabilityBoard") {
         ltdParams = LtdParams(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
-
         emit LtdParamsChanged(lockDifferenceLimit, loanDifferenceLimit, allowedDifferenceAmount);
     }
 
@@ -151,7 +151,6 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
     external restrict("StabilityBoard") {
         totalLoanAmount = totalLoanAmount.add(totalLoanAmountAdjustment);
         totalLockedAmount = totalLockedAmount.add(totalLockedAmountAdjustment);
-
         emit KPIsAdjusted(totalLoanAmountAdjustment, totalLockedAmountAdjustment);
     }
 
@@ -181,10 +180,6 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         legacyToken.burn(amount);
         augmintToken.issueTo(from, amount);
         emit LegacyTokenConverted(msg.sender, from, amount);
-    }
-
-    function getLoanToDepositRatio() external view returns (uint loanToDepositRatio) {
-        loanToDepositRatio = totalLockedAmount == 0 ? 0 : totalLockedAmount.mul(PERCENT_100).div(totalLoanAmount);
     }
 
     /* Helper function for UI.
@@ -232,5 +227,4 @@ contract MonetarySupervisor is Restricted, TokenReceiver { // solhint-disable-li
         maxLoanByLtd = allowedByLtdDifferencePt > allowedByLtdDifferenceAmount ?
                                         allowedByLtdDifferencePt : allowedByLtdDifferenceAmount;
     }
-
 }

@@ -10,8 +10,7 @@ const FeeAccount = artifacts.require("./FeeAccount.sol");
 const TRANSFER_MAX_GAS = 100000;
 
 module.exports = {
-    issueToReserve,
-    withdrawFromReserve,
+    issueToken,
     transferTest,
     getTransferFee,
     getAllBalances,
@@ -49,7 +48,7 @@ let augmintReserves = null;
 let monetarySupervisor = null;
 let peggedSymbol = null;
 let interestEarnedAccount = null;
-let feeAccount;
+let feeAccount = null;
 
 before(async function() {
     augmintToken = AugmintToken.at(AugmintToken.address);
@@ -63,12 +62,10 @@ before(async function() {
     peggedSymbol = global.web3v1.utils.toAscii(await augmintToken.peggedSymbol());
 });
 
-async function issueToReserve(amount) {
-    await monetarySupervisor.issueToReserve(amount);
-}
-
-async function withdrawFromReserve(to, amount) {
-    await augmintReserves.withdraw(augmintToken.address, to, amount, 0, "withdrawal for tests");
+async function issueToken(sender, to, amount) {
+    await augmintToken.grantPermission(sender, "MonetarySupervisor");
+    await augmintToken.issueTo(to, amount);
+    await augmintToken.revokePermission(sender, "MonetarySupervisor");
 }
 
 async function transferTest(testInstance, expTransfer) {
@@ -135,6 +132,9 @@ async function transferFromTest(testInstance, expTransfer) {
     if (!expTransfer.to) {
         expTransfer.to = expTransfer.spender;
     }
+    if (!expTransfer.spender) {
+        expTransfer.spender = expTransfer.to;
+    }
     if (typeof expTransfer.narrative === "undefined") expTransfer.narrative = "";
     expTransfer.fee = typeof expTransfer.fee === "undefined" ? await getTransferFee(expTransfer) : expTransfer.fee;
 
@@ -170,9 +170,9 @@ async function transferFromTest(testInstance, expTransfer) {
 
     const allowanceAfter = await augmintToken.allowance(expTransfer.from, expTransfer.spender);
     assert.equal(
-        allowanceBefore.sub(expTransfer.amount).toString(),
+        allowanceBefore.sub(expTransfer.amount).sub(expTransfer.fee).toString(),
         allowanceAfter.toString(),
-        "allowance should be reduced with transferred amount"
+        "allowance should be reduced with transferred amount and fee"
     );
 
     await assertBalances(balBefore, {

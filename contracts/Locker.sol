@@ -25,10 +25,8 @@ contract Locker is Restricted, TokenReceiver {
 
     using SafeMath for uint256;
 
-    uint public constant CHUNK_SIZE = 100;
-
     event NewLockProduct(uint32 indexed lockProductId, uint32 perTermInterest, uint32 durationInSecs,
-                            uint32 minimumLockAmount, bool isActive);
+                    uint32 minimumLockAmount, bool isActive);
 
     event LockProductActiveChange(uint32 indexed lockProductId, bool newActiveState);
 
@@ -77,13 +75,11 @@ contract Locker is Restricted, TokenReceiver {
 
     function addLockProduct(uint32 perTermInterest, uint32 durationInSecs, uint32 minimumLockAmount, bool isActive)
     external restrict("StabilityBoard") {
-
         uint _newLockProductId = lockProducts.push(
                                     LockProduct(perTermInterest, durationInSecs, minimumLockAmount, isActive)) - 1;
         uint32 newLockProductId = uint32(_newLockProductId);
         require(newLockProductId == _newLockProductId, "lockProduct overflow");
         emit NewLockProduct(newLockProductId, perTermInterest, durationInSecs, minimumLockAmount, isActive);
-
     }
 
     function setLockProductActiveState(uint32 lockProductId, bool isActive) external restrict("StabilityBoard") {
@@ -92,7 +88,6 @@ contract Locker is Restricted, TokenReceiver {
 
         lockProducts[lockProductId].isActive = isActive;
         emit LockProductActiveChange(lockProductId, isActive);
-
     }
 
     /* lock funds, called from AugmintToken's transferAndNotify
@@ -104,9 +99,8 @@ contract Locker is Restricted, TokenReceiver {
     function transferNotification(address from, uint256 amountToLock, uint _lockProductId) external {
         require(msg.sender == address(augmintToken), "msg.sender must be augmintToken");
         // next line would revert but require to emit reason:
-        require(lockProductId < lockProducts.length, "invalid lockProductId");
+        require(_lockProductId < lockProducts.length, "invalid lockProductId");
         uint32 lockProductId = uint32(_lockProductId);
-        require(lockProductId == _lockProductId, "lockProductId overflow");
         /* TODO: make data arg generic bytes
             uint productId;
             assembly { // solhint-disable-line no-inline-assembly
@@ -141,24 +135,23 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     function getLockProductCount() external view returns (uint) {
-
         return lockProducts.length;
-
     }
 
-    // returns 20 lock products starting from some offset
+    // returns <chunkSize> lock products starting from some <offset>
     // lock products are encoded as [ perTermInterest, durationInSecs, minimumLockAmount, maxLockAmount, isActive ]
-    function getLockProducts(uint offset) external view returns (uint[5][CHUNK_SIZE] response) {
-        for (uint8 i = 0; i < CHUNK_SIZE; i++) {
+    function getLockProducts(uint offset, uint16 chunkSize)
+    external view returns (uint[5][]) {
+        uint limit = SafeMath.min(offset.add(chunkSize), lockProducts.length);
+        uint[5][] memory response = new uint[5][](limit.sub(offset));
 
-            if (offset + i >= lockProducts.length) { break; }
-
-            LockProduct storage lockProduct = lockProducts[offset + i];
-
-            response[i] = [ lockProduct.perTermInterest, lockProduct.durationInSecs, lockProduct.minimumLockAmount,
+        for (uint i = offset; i < limit; i++) {
+            LockProduct storage lockProduct = lockProducts[i];
+            response[i - offset] = [lockProduct.perTermInterest, lockProduct.durationInSecs, lockProduct.minimumLockAmount,
                         monetarySupervisor.getMaxLockAmount(lockProduct.minimumLockAmount, lockProduct.perTermInterest),
                         lockProduct.isActive ? 1 : 0 ];
         }
+        return response;
     }
 
     function getLockCount() external view returns (uint) {
@@ -169,45 +162,45 @@ contract Locker is Restricted, TokenReceiver {
         return accountLocks[lockOwner].length;
     }
 
-    // returns CHUNK_SIZE locks starting from some offset
+    // returns <chunkSize> locks starting from some <offset>
     // lock products are encoded as
     //       [lockId, owner, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
     // NB: perTermInterest is in millionths (i.e. 1,000,000 = 100%):
-    function getLocks(uint offset) external view returns (uint[8][CHUNK_SIZE] response) {
+    function getLocks(uint offset, uint16 chunkSize)
+    external view returns (uint[8][]) {
+        uint limit = SafeMath.min(offset.add(chunkSize), locks.length);
+        uint[8][] memory response = new uint[8][](limit.sub(offset));
 
-        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
-
-            if (offset + i >= locks.length) { break; }
-
-            Lock storage lock = locks[offset + i];
+        for (uint i = offset; i < limit; i++) {
+            Lock storage lock = locks[i];
             LockProduct storage lockProduct = lockProducts[lock.productId];
-
             uint interestEarned = calculateInterest(lockProduct.perTermInterest, lock.amountLocked);
 
-            response[i] = [uint(offset + i), uint(lock.owner), lock.amountLocked, interestEarned, lock.lockedUntil,
-                                lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0];
+            response[i - offset] = [uint(i), uint(lock.owner), lock.amountLocked, interestEarned, lock.lockedUntil,
+                        lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0];
         }
+        return response;
     }
 
-    // returns CHUNK_SIZE locks of a given account, starting from some offset
+    // returns <chunkSize> locks of a given account, starting from some <offset>
     // lock products are encoded as
     //             [lockId, amountLocked, interestEarned, lockedUntil, perTermInterest, durationInSecs, isActive ]
-    function getLocksForAddress(address lockOwner, uint offset) external view returns (uint[7][CHUNK_SIZE] response) {
-
+    function getLocksForAddress(address lockOwner, uint offset, uint16 chunkSize)
+    external view returns (uint[7][]) {
         uint[] storage locksForAddress = accountLocks[lockOwner];
+        uint limit = SafeMath.min(offset.add(chunkSize), locksForAddress.length);
+        uint[7][] memory response = new uint[7][](limit.sub(offset));
 
-        for (uint16 i = 0; i < CHUNK_SIZE; i++) {
-
-            if (offset + i >= locksForAddress.length) { break; }
-
-            Lock storage lock = locks[locksForAddress[offset + i]];
+        for (uint i = offset; i < limit; i++) {
+            Lock storage lock = locks[locksForAddress[i]];
             LockProduct storage lockProduct = lockProducts[lock.productId];
 
             uint interestEarned = calculateInterest(lockProduct.perTermInterest, lock.amountLocked);
 
-            response[i] = [ locksForAddress[offset + i], lock.amountLocked, interestEarned, lock.lockedUntil,
-                                lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0 ];
+            response[i - offset] = [locksForAddress[i], lock.amountLocked, interestEarned, lock.lockedUntil,
+                        lockProduct.perTermInterest, lockProduct.durationInSecs, lock.isActive ? 1 : 0 ];
         }
+        return response;
     }
 
     function calculateInterest(uint32 perTermInterest, uint amountToLock) public pure returns (uint interestEarned) {
@@ -215,7 +208,7 @@ contract Locker is Restricted, TokenReceiver {
     }
 
     // Internal function. assumes amountToLock is already transferred to this Lock contract
-    function _createLock(uint32 lockProductId, address lockOwner, uint amountToLock) internal returns(uint lockId) {
+    function _createLock(uint32 lockProductId, address lockOwner, uint amountToLock) internal {
         LockProduct storage lockProduct = lockProducts[lockProductId];
         require(lockProduct.isActive, "lockProduct must be in active state");
         require(amountToLock >= lockProduct.minimumLockAmount, "amountToLock must be >= minimumLockAmount");
@@ -225,7 +218,7 @@ contract Locker is Restricted, TokenReceiver {
         uint40 lockedUntil = uint40(expiration);
         require(lockedUntil == expiration, "lockedUntil overflow");
 
-        lockId = locks.push(Lock(amountToLock, lockOwner, lockProductId, lockedUntil, true)) - 1;
+        uint lockId = locks.push(Lock(amountToLock, lockOwner, lockProductId, lockedUntil, true)) - 1;
         accountLocks[lockOwner].push(lockId);
 
         monetarySupervisor.requestInterest(amountToLock, interestEarned); // update KPIs & transfer interest here
@@ -233,5 +226,4 @@ contract Locker is Restricted, TokenReceiver {
         emit NewLock(lockOwner, lockId, amountToLock, interestEarned, lockedUntil, lockProduct.perTermInterest,
                     lockProduct.durationInSecs);
     }
-
 }

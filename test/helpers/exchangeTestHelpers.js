@@ -11,8 +11,6 @@ const MATCH_ORDER_MAX_GAS = 85000;
 
 const PPM_DIV = 1000000;
 
-let CHUNK_SIZE = null;
-
 module.exports = {
     newOrder,
     cancelOrder,
@@ -22,14 +20,9 @@ module.exports = {
     getSellTokenOrder,
     getActiveBuyOrders,
     getActiveSellOrders,
-    getActiveBuyOrdersNoFilter,
-    getActiveSellOrdersNoFilter,
     printOrderBook,
     get exchange() {
         return exchange;
-    },
-    get CHUNK_SIZE() {
-        return CHUNK_SIZE;
     }
 };
 
@@ -41,7 +34,6 @@ before(async function() {
     augmintToken = tokenTestHelpers.augmintToken;
     exchange = Exchange.at(Exchange.address);
     rates = Rates.at(Rates.address);
-    CHUNK_SIZE = (await exchange.CHUNK_SIZE()).toNumber();
 });
 
 async function newOrder(testInstance, order) {
@@ -371,29 +363,19 @@ function parseOrders(orderType, orders) {
     });
 }
 
-async function getActiveBuyOrdersNoFilter(offset, chunkSize) {
-    const result = await exchange.getActiveBuyOrders(offset);
-    result.length = chunkSize;
+async function getActiveBuyOrders(offset, chunkSize) {
+    const result = await exchange.getActiveBuyOrders(offset, chunkSize);
     return parseOrders(testHelpers.TOKEN_BUY, result);
 }
 
-async function getActiveBuyOrders(offset) {
-    const result = await exchange.getActiveBuyOrders(offset);
-    return parseOrders(testHelpers.TOKEN_BUY, result.filter(order => order[3].toNumber() != 0));
-}
-
-async function getActiveSellOrdersNoFilter(offset, chunkSize) {
-    const result = await exchange.getActiveSellOrders(offset);
-    result.length = chunkSize;
+async function getActiveSellOrders(offset, chunkSize) {
+    const result = await exchange.getActiveSellOrders(offset, chunkSize);
     return parseOrders(testHelpers.TOKEN_SELL, result);
 }
 
-async function getActiveSellOrders(offset) {
-    const result = await exchange.getActiveSellOrders(offset);
-    return parseOrders(testHelpers.TOKEN_SELL, result.filter(order => order[3].toNumber() != 0));
-}
-
 async function printOrderBook(_limit) {
+    const CHUNK_SIZE = 100;
+
     const state = await getState();
 
     const limit = typeof _limit === "undefined" || _limit > CHUNK_SIZE ? CHUNK_SIZE : _limit;

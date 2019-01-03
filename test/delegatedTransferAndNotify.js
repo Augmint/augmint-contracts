@@ -88,10 +88,10 @@ contract("Delegated transferAndNotify", accounts => {
         tokenAEur = new global.web3v1.eth.Contract(TokenAEur.abi, TokenAEur.address);
 
         const lockerInstance = Locker.at(Locker.address);
-        const [product] = await Promise.all([lockerInstance.lockProducts(0), tokenTestHelpers.issueToReserve(100000)]);
+        const product = await lockerInstance.lockProducts(0);
         perTermInterest = product[0].toNumber();
 
-        await tokenTestHelpers.withdrawFromReserve(from, 100000);
+        await tokenTestHelpers.issueToken(accounts[0], from, 10000);
     });
 
     it("should lock with delegatedTransferAndNotify", async function() {

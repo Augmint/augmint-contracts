@@ -34,6 +34,7 @@ contract AugmintToken is AugmintTokenInterface {
         feeAccount = _feeAccount;
 
     }
+
     function transfer(address to, uint256 amount) external returns (bool) {
         _transfer(msg.sender, to, amount, "");
         return true;
@@ -67,11 +68,16 @@ contract AugmintToken is AugmintTokenInterface {
      approve should be called when allowed[_spender] == 0. To increment allowed value is better
      to use this function to avoid 2 calls (and wait until the first transaction is mined)
      Based on MonolithDAO Token.sol */
-    function increaseApproval(address _spender, uint _addedValue) external returns (bool) {
-        return _increaseApproval(msg.sender, _spender, _addedValue);
+    function increaseApproval(address _spender, uint _addedValue) external {
+        require(_spender != 0x0, "spender must be set");
+        mapping (address => uint256) allowances = allowed[msg.sender];
+        uint newValue = allowances[_spender].add(_addedValue);
+        allowances[_spender] = newValue;
+        emit Approval(msg.sender, _spender, newValue);
     }
 
-    function decreaseApproval(address _spender, uint _subtractedValue) external returns (bool) {
+    function decreaseApproval(address _spender, uint _subtractedValue) external {
+        require(_spender != 0x0, "spender must be set");
         uint oldValue = allowed[msg.sender][_spender];
         if (_subtractedValue > oldValue) {
             allowed[msg.sender][_spender] = 0;
@@ -79,7 +85,6 @@ contract AugmintToken is AugmintTokenInterface {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
         emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
     }
 
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
@@ -188,27 +193,22 @@ contract AugmintToken is AugmintTokenInterface {
         _transfer(signer, msg.sender, requestedExecutorFeeInToken, "Delegated transfer fee", 0);
     }
 
-    function _increaseApproval(address _approver, address _spender, uint _addedValue) private returns (bool) {
-        allowed[_approver][_spender] = allowed[_approver][_spender].add(_addedValue);
-        emit Approval(_approver, _spender, allowed[_approver][_spender]);
-    }
-
     function _transferFrom(address from, address to, uint256 amount, string narrative) private {
-        require(balances[from] >= amount, "balance must >= amount");
-        require(allowed[from][msg.sender] >= amount, "allowance must be >= amount");
-        // don't allow 0 transferFrom if no approval:
-        require(allowed[from][msg.sender] > 0, "allowance must be >= 0 even with 0 amount");
+        uint fee = feeAccount.calculateTransferFee(from, to, amount);
+        uint amountWithFee = amount.add(fee);
 
-        /* NB: fee is deducted from owner. It can result that transferFrom of amount x to fail
-                when x + fee is not availale on owner balance */
-        _transfer(from, to, amount, narrative);
+        /* NB: fee is deducted from owner, so transferFrom could fail
+            if amount + fee is not available on owner balance, or allowance */
+        require(balances[from] >= amountWithFee, "balance must be >= amount + fee");
+        require(allowed[from][msg.sender] >= amountWithFee, "allowance must be >= amount + fee");
 
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(amount);
+        _transfer(from, to, amount, narrative, fee);
+
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(amountWithFee);
     }
 
     function _transfer(address from, address to, uint transferAmount, string narrative) private {
         uint fee = feeAccount.calculateTransferFee(from, to, transferAmount);
-
         _transfer(from, to, transferAmount, narrative, fee);
     }
 
@@ -230,5 +230,4 @@ contract AugmintToken is AugmintTokenInterface {
 
         emit AugmintTransfer(from, to, transferAmount, narrative, fee);
     }
-
 }

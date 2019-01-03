@@ -6,6 +6,8 @@ const ratesTestHelpers = require("./helpers/ratesTestHelpers.js");
 let loanManager = null;
 let loanProduct = null;
 
+let CHUNK_SIZE = 20;
+
 contract("loanManager  tests", accounts => {
     before(async function() {
         loanManager = loanTestHelpers.loanManager;
@@ -70,7 +72,7 @@ contract("loanManager  tests", accounts => {
         );
 
         prod.id = res.productId;
-        const productsInfo = await loanTestHelpers.getProductsInfo(0);
+        const productsInfo = await loanTestHelpers.getProductsInfo(0, CHUNK_SIZE);
         const productCount = (await loanManager.getProductCount()).toNumber();
         assert.equal(productsInfo.length, productCount);
         const lastProduct = productsInfo[productCount - 1];
@@ -111,7 +113,7 @@ contract("loanManager  tests", accounts => {
         const productCount = (await loanManager.getProductCount()).toNumber();
         prod.id = productCount - 1;
 
-        const productsInfo = await loanTestHelpers.getProductsInfo(productCount - 1);
+        const productsInfo = await loanTestHelpers.getProductsInfo(productCount - 1, CHUNK_SIZE);
         assert.equal(productsInfo.length, 1);
 
         const lastProduct = productsInfo[0];
@@ -140,9 +142,12 @@ contract("loanManager  tests", accounts => {
         assert.equal(
             tx.logs[0].event,
             "LoanProductActiveStateChanged",
-            "LoanProductActiveStateChanged event should be emmitted"
+            "LoanProductActiveStateChanged event should be emitted"
         );
-        assert(!tx.logs[0].args.newState, "new state should be false");
+        assert.equal(tx.logs[0].args.newState, false, "new state should be false (event)");
+
+        const prod = await loanManager.products(loanProduct.id);
+        assert.equal(prod[5], false, "new state should be false");
     });
 
     it("Should enable loan product", async function() {
@@ -151,9 +156,12 @@ contract("loanManager  tests", accounts => {
         assert.equal(
             tx.logs[0].event,
             "LoanProductActiveStateChanged",
-            "LoanProductActiveStateChanged event should be emmitted"
+            "LoanProductActiveStateChanged event should be emitted"
         );
-        assert(tx.logs[0].args.newState, "new state should be true");
+        assert.equal(tx.logs[0].args.newState, true, "new state should be true (event)");
+
+        const prod = await loanManager.products(loanProduct.id);
+        assert.equal(prod[5], true, "new state should be true");
     });
 
     it("Only allowed should set loan product state", async function() {

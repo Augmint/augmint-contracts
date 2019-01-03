@@ -18,8 +18,6 @@ import "./SafeMath.sol";
 contract MultiSig {
     using SafeMath for uint256;
 
-    uint public constant CHUNK_SIZE = 100;
-
     mapping(address => bool) public isSigner;
     address[] public allSigners; // all signers, even the disabled ones
                                 // NB: it can contain duplicates when a signer is added, removed then readded again
@@ -63,18 +61,18 @@ contract MultiSig {
                 "script state must be New or Approved");
         require(!script.signedBy[msg.sender], "script must not be signed by signer yet");
 
-        if(script.allSigners.length == 0) {
+        if (script.allSigners.length == 0) {
             // first sign of a new script
             scriptAddresses.push(scriptAddress);
         }
 
         script.allSigners.push(msg.sender);
-        script.signedBy[msg.sender] =  true;
+        script.signedBy[msg.sender] = true;
         script.signCount = script.signCount.add(1);
 
         emit ScriptSigned(scriptAddress, msg.sender);
 
-        if(checkQuorum(script.signCount)){
+        if (checkQuorum(script.signCount)) {
             script.state = ScriptState.Approved;
             emit ScriptApproved(scriptAddress);
         }
@@ -86,18 +84,13 @@ contract MultiSig {
         Script storage script = scripts[scriptAddress];
         require(script.state == ScriptState.Approved, "script state must be Approved");
 
-        /* init to failed because if delegatecall rans out of gas we won't have enough left to set it.
-           NB: delegatecall leaves 63/64 part of gasLimit for the caller.
-                Therefore the execute might revert with out of gas, leaving script in Approved state
-                when execute() is called with small gas limits.
-        */
-        script.state = ScriptState.Failed;
-
         // passing scriptAddress to allow called script access its own public fx-s if needed
-        if(scriptAddress.delegatecall(bytes4(keccak256("execute(address)")), scriptAddress)) {
+        if (scriptAddress.delegatecall.gas(gasleft() - 23000)
+            (abi.encodeWithSignature("execute(address)", scriptAddress))) {
             script.state = ScriptState.Done;
             result = true;
         } else {
+            script.state = ScriptState.Failed;
             result = false;
         }
         emit ScriptExecuted(scriptAddress, result);
@@ -109,7 +102,7 @@ contract MultiSig {
         require(script.state == ScriptState.Approved || script.state == ScriptState.New,
                 "script state must be New or Approved");
 
-        script.state= ScriptState.Cancelled;
+        script.state = ScriptState.Cancelled;
 
         emit ScriptCancelled(scriptAddress);
     }
@@ -149,11 +142,15 @@ contract MultiSig {
     }
 
     // UI helper fx - Returns signers from offset as [signer id (index in allSigners), address as uint, isActive 0 or 1]
-    function getAllSigners(uint offset) external view returns(uint[3][CHUNK_SIZE] signersResult) {
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < allSigners.length; i++) {
-            address signerAddress = allSigners[i + offset];
-            signersResult[i] = [ i + offset, uint(signerAddress), isSigner[signerAddress] ? 1 : 0 ];
+    function getSigners(uint offset, uint16 chunkSize)
+    external view returns(uint[3][]) {
+        uint limit = SafeMath.min(offset.add(chunkSize), allSigners.length);
+        uint[3][] memory response = new uint[3][](limit.sub(offset));
+        for (uint i = offset; i < limit; i++) {
+            address signerAddress = allSigners[i];
+            response[i - offset] = [i, uint(signerAddress), isSigner[signerAddress] ? 1 : 0];
         }
+        return response;
     }
 
     function getScriptsCount() view external returns (uint scriptsCount) {
@@ -162,12 +159,15 @@ contract MultiSig {
 
     // UI helper fx - Returns scripts from offset as
     //  [scriptId (index in scriptAddresses[]), address as uint, state, signCount]
-    function getAllScripts(uint offset) external view returns(uint[4][CHUNK_SIZE] scriptsResult) {
-        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < scriptAddresses.length; i++) {
-            address scriptAddress = scriptAddresses[i + offset];
-            scriptsResult[i] = [ i + offset, uint(scriptAddress), uint(scripts[scriptAddress].state),
-                            scripts[scriptAddress].signCount ];
+    function getScripts(uint offset, uint16 chunkSize)
+    external view returns(uint[4][]) {
+        uint limit = SafeMath.min(offset.add(chunkSize), scriptAddresses.length);
+        uint[4][] memory response = new uint[4][](limit.sub(offset));
+        for (uint i = offset; i < limit; i++) {
+            address scriptAddress = scriptAddresses[i];
+            response[i - offset] = [i, uint(scriptAddress),
+                uint(scripts[scriptAddress].state), scripts[scriptAddress].signCount];
         }
+        return response;
     }
-
 }

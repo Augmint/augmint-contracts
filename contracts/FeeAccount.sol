@@ -27,7 +27,7 @@ contract FeeAccount is SystemAccount, TransferFeeInterface {
         transferFee = TransferFee(transferFeePt, transferFeeMin, transferFeeMax);
     }
 
-    function () public payable { // solhint-disable-line no-empty-blocks
+    function () external payable { // solhint-disable-line no-empty-blocks
         // to accept ETH sent into feeAccount (defaulting fee in ETH )
     }
 
