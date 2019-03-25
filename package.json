@@ -1,41 +1,42 @@
 {
-    "name": "augmint-contracts",
-    "version": "0.1.0",
-    "description": "Augmint Stable Tokens - Solidity contracts",
-    "homepage": ".",
-    "private": true,
-    "engines": {
-      "node": "10.15.3",
-      "yarn": "1.13.0"
-    },
-    "scripts": {
-        "start":
-            "./runganache.sh & $(yarn bin)/truffle migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
-        "build": "truffle compile",
-        "clean": "rm build/contracts/*",
-        "test": "truffle test",
-        "coverage": "solidity-coverage",
-        "migrate": "truffle migrate",
-        "compile": "yarn build",
-        "ganache:run": "./runganache.sh",
-        "runmigrate": "yarn start"
-    },
-    "devDependencies": {
-        "abiniser": "0.3.0",
-        "babel-register": "6.26.0",
-        "bignumber.js": "5.0.0",
-        "coveralls": "3.0.3",
-        "dotenv": "7.0.0",
-        "ganache-cli": "6.4.1",
-        "moment": "2.22.2",
-        "random-seed": "0.3.0",
-        "solidity-coverage": "0.5.11",
-        "stringifier": "2.0.0",
-        "truffle": "4.1.14",
-        "truffle-hdwallet-provider": "1.0.4",
-        "web3v1": "npm:web3@1.0.0-beta.34"
-    },
-    "greenkeeper": {
-        "ignore": ["bignumber.js"]
-    }
+  "name": "augmint-contracts",
+  "version": "0.1.0",
+  "description": "Augmint Stable Tokens - Solidity contracts",
+  "homepage": ".",
+  "private": true,
+  "engines": {
+    "node": "10.15.3",
+    "yarn": "1.13.0"
+  },
+  "scripts": {
+    "start": "./runganache.sh & $(yarn bin)/truffle migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "build": "truffle compile",
+    "clean": "rm build/contracts/*",
+    "test": "truffle test",
+    "coverage": "solidity-coverage",
+    "migrate": "truffle migrate",
+    "compile": "yarn build",
+    "ganache:run": "./runganache.sh",
+    "runmigrate": "yarn start"
+  },
+  "devDependencies": {
+    "abiniser": "0.3.0",
+    "babel-register": "6.26.0",
+    "bignumber.js": "5.0.0",
+    "coveralls": "3.0.3",
+    "dotenv": "7.0.0",
+    "ganache-cli": "6.4.1",
+    "moment": "2.22.2",
+    "random-seed": "0.3.0",
+    "solidity-coverage": "0.5.11",
+    "stringifier": "2.0.0",
+    "truffle": "4.1.14",
+    "truffle-hdwallet-provider": "1.0.4",
+    "web3v1": "npm:web3@1.0.0-beta.34"
+  },
+  "greenkeeper": {
+    "ignore": [
+      "bignumber.js"
+    ]
+  }
 }
