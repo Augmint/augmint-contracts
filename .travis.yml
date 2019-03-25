@@ -4,23 +4,23 @@ cache:
   directories:
     - "node_modules"
 before_install:
-    - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
-    - yarn global add greenkeeper-lockfile@1
+  - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+  - yarn global add greenkeeper-lockfile@1
 install:
-    - |
-      if [[ $BRANCH == "greenkeeper/"* ]]; then
-        echo Greenkeeper build using .yarnrc.greenkeeper; cp .yarnrc.greenkeeper .yarnrc; yarn install;
-      else
-        echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
-      fi
+  - |
+    if [[ $BRANCH == "greenkeeper/"* ]]; then
+      echo Greenkeeper build using .yarnrc.greenkeeper; cp .yarnrc.greenkeeper .yarnrc; yarn install;
+    else
+      echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
+    fi
 before_script:
-    - greenkeeper-lockfile-update
-    - yarn ganache:run > ganache.out &
+  - greenkeeper-lockfile-update
+  - yarn ganache:run > ganache.out &
 script:
-    - yarn test
+  - yarn test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
 after_script:
-    - greenkeeper-lockfile-upload
+  - greenkeeper-lockfile-upload
 # TODO: failing even locally: "error: cannot sign data; no private key" & "Error: sender account not recognized"
 #    - yarn coverage && cat coverage/lcov.info | coveralls
 after_success:
