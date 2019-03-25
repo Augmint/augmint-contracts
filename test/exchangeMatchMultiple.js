@@ -27,7 +27,7 @@ contract("Exchange Multiple Matching tests", () => {
         await testHelpers.revertSnapshot(snapshotId);
     });
 
-    it.only("should match multiple sell orders", async function() {
+    it("should match multiple sell orders", async function() {
         const makerPrice = 1010000;
         const tokenAmount = 10000;
 
@@ -107,7 +107,7 @@ contract("Exchange Multiple Matching tests", () => {
     });
 
     // ensure edge cases of passing the same order twice
-    it.only("matchMultipleOrders should match as many orders as fits into gas provided", async function() {
+    it("matchMultipleOrders should match as many orders as fits into gas provided", async function() {
         const makerPrice = 1010000;
         const tokenAmount = 10000;
         const buyOrder = {
@@ -183,7 +183,7 @@ contract("Exchange Multiple Matching tests", () => {
         assert.equal(stateAfter.buyCount, 1, "Buy token order count should be 1");
     });
 
-    it.only("matchMultipleOrders should carry on if one is duplicate, non-matching or removed", async function() {
+    it("matchMultipleOrders should carry on if one is duplicate, non-matching or removed", async function() {
         const makerPrice = 1010000;
         const tokenAmount = 10000;
         const buyOrder = {
