@@ -91,8 +91,8 @@ contract Main0023_interestRates {
     }
 
     function disableAllLockProducts(Locker target) internal {
-        uint16 productCount = uint16(target.getLockProductCount());
-        for (uint16 i = 0; i < productCount; i++) {
+        uint32 productCount = uint32(target.getLockProductCount());
+        for (uint32 i = 0; i < productCount; i++) {
             uint32 perTermInterest;
             uint32 durationInSecs;
             uint32 minimumLockAmount;
@@ -105,8 +105,8 @@ contract Main0023_interestRates {
     }
 
     function disableAllLoanProducts(LoanManager target) internal {
-        uint16 productCount = uint16(target.getProductCount());
-        for (uint16 i = 0; i < productCount; i++) {
+        uint32 productCount = uint32(target.getProductCount());
+        for (uint32 i = 0; i < productCount; i++) {
             uint minDisbursedAmount;
             uint32 term;
             uint32 discountRate;
