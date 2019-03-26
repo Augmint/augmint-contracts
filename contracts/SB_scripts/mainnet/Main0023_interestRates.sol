@@ -39,8 +39,14 @@ contract Main0023_interestRates {
         // [985222, 992658, 996315, 998769, 999425, 999713]
 
 
+        LOAN_MANAGER.setLoanProductActiveState(0, false);
+        LOAN_MANAGER.setLoanProductActiveState(1, false);
+        LOAN_MANAGER.setLoanProductActiveState(2, false);
+        LOAN_MANAGER.setLoanProductActiveState(3, false);
+        LOAN_MANAGER.setLoanProductActiveState(4, false);
+        LOAN_MANAGER.setLoanProductActiveState(5, false);
+
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
-        disableAllLoanProducts(LOAN_MANAGER);
         LOAN_MANAGER.addLoanProduct(365 days, 985222, 600000, 800, 100000, true); // 1.5% p.a.
         LOAN_MANAGER.addLoanProduct(180 days, 992658, 600000, 800, 100000, true); // 1.5% p.a.
         LOAN_MANAGER.addLoanProduct(90 days, 996315, 600000, 800, 100000, true); // 1.5% p.a.
@@ -67,8 +73,14 @@ contract Main0023_interestRates {
         // [14000, 6905, 3453, 1151, 537, 269]
 
 
+        LOCKER.setLockProductActiveState(0, false);
+        LOCKER.setLockProductActiveState(1, false);
+        LOCKER.setLockProductActiveState(2, false);
+        LOCKER.setLockProductActiveState(3, false);
+        LOCKER.setLockProductActiveState(4, false);
+        LOCKER.setLockProductActiveState(5, false);
+
         // (perTermInterest, durationInSecs, minimumLockAmount, isActive)
-        disableAllLockProducts(LOCKER);
         LOCKER.addLockProduct(14000, 365 days, 1000, true); // 1.4% p.a.
         LOCKER.addLockProduct(6905, 180 days, 1000, true); // 1.4% p.a.
         LOCKER.addLockProduct(3453, 90 days, 1000, true); // 1.4% p.a.
@@ -89,25 +101,4 @@ contract Main0023_interestRates {
         MONETARY_SUPERVISOR.setLtdParams(200000, 200000, 20000000);
 
     }
-
-    function disableAllLockProducts(Locker target) internal {
-        uint16 productCount = uint16(target.getLockProductCount());
-        uint[5][] memory products = target.getLockProducts(0, productCount);
-        for (uint16 i = 0; i < productCount; i++) {
-            if (products[i][4] == 1) {
-                target.setLockProductActiveState(i, false);
-            }
-        }
-    }
-
-    function disableAllLoanProducts(LoanManager target) internal {
-        uint16 productCount = uint16(target.getProductCount());
-        uint[8][] memory products = target.getProducts(0, productCount);
-        for (uint16 i = 0; i < productCount; i++) {
-            if (products[i][7] == 1) {
-                target.setLoanProductActiveState(i, false);
-            }
-        }
-    }
-
 }
