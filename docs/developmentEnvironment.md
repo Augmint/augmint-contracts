@@ -2,18 +2,18 @@
 
 <!-- MDTOC maxdepth:2 firsth1:2 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
 
-*   [Install](#Install)
-    *   [OSX](#OSX)
-    *   [Windows](#Windows)
-*   [Launch](#Launch)
-    *   [1. Update to latest augmint-contracts](#1-Update-to-latest-augmint-contracts)
-    *   [2. Deploy to network](#2-Deploy-to-network)
-*   [Tests](#Tests)
-*   [Sequence diagrams](#Sequence-diagrams)
-*   [Non ganache launches/deploys](#Non-ganache-launchesdeploys)
-    *   [Private chain](#Private-chain)
-    *   [Rinkeby & main networks](#Rinkeby-main-networks)
-    *   [WIP (ignore it) alternative ganache launches](#WIP-ignore-it-alternative-ganache-launches)
+- [Install](#Install)
+  - [OSX](#OSX)
+  - [Windows](#Windows)
+- [Launch](#Launch)
+  - [1. Update to latest augmint-contracts](#1-Update-to-latest-augmint-contracts)
+  - [2. Deploy to network](#2-Deploy-to-network)
+- [Tests](#Tests)
+- [Sequence diagrams](#Sequence-diagrams)
+- [Non ganache launches/deploys](#Non-ganache-launchesdeploys)
+  - [Private chain](#Private-chain)
+  - [Rinkeby & main networks](#Rinkeby-main-networks)
+  - [WIP (ignore it) alternative ganache launches](#WIP-ignore-it-alternative-ganache-launches)
 
 <!-- /MDTOC -->
 
@@ -27,7 +27,7 @@ _NB: these steps are likely to work on linux too but it's not tested yet_
 
 1.  [Git](https://git-scm.com/download)
 1.  [Ethereum CLI](https://www.ethereum.org/cli)
-1.  [nodejs](https://nodejs.org/en/download/) - _tested with v8.15.1_
+1.  [nodejs](https://nodejs.org/en/download/) - _tested with v10.15.3_
 1.  Install yarn if you don't have it: `npm install -g yarn`
 1.  ```
     git clone https://github.com/Augmint/augmint-contracts.git
@@ -42,14 +42,14 @@ _NB: windows install was not tested since a while, update on it is welcome_
 1.  [Git Bash](https://git-for-windows.github.io/) (required for truffle & yarn start)
 1.  [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
 1.  [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
-1.  Install latest stable Nodejs - _tested with 8.15.1_
+1.  Install latest stable Nodejs
 
     or
     use [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases):
 
     ```
-    nvm install 8.15.1
-    nvm use 8.15.1
+    nvm install 10.15.3
+    nvm use 10.15.3
     ```
 
 1.  in Git bash:
@@ -76,11 +76,11 @@ yarn install # if there were any node package changes in packages.json
 
 or
 
-*   `yarn ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
-*   in separate console:  
-    `yarn migrate`  
-    or to overwrite existing migration:  
-    `yarn migrate --reset`
+- `yarn ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
+- in separate console:  
+  `yarn migrate`  
+  or to overwrite existing migration:  
+  `yarn migrate --reset`
 
 NB: if you get this error from migration:
 
@@ -144,9 +144,9 @@ For new deploys on rinkeby and main net see [migration instructions](migrations.
 
 If you use [ganache UI](http://truffleframework.com/ganache/) then
 
-*   set the port to 8545
-*   For running UI tests set mnemonic:  
-    `hello build tongue rack parade express shine salute glare rate spice stock`
+- set the port to 8545
+- For running UI tests set mnemonic:  
+  `hello build tongue rack parade express shine salute glare rate spice stock`
 
 #### Alternatively: truffle develop
 
