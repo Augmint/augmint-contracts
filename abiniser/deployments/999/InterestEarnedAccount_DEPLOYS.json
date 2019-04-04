@@ -14,8 +14,7 @@
           },
           "bytecodeHash": "10f2c7bcc89c991f8036cd653a9c9254",
           "deployedBytecodeHash": "6d1f7692b0b3214dce6de23ef79d0567",
-          "sourceHash": "a08b32cfe73754d798c1e9a2f2d69bcb",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity 0.4.19;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisorContract\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "a08b32cfe73754d798c1e9a2f2d69bcb"
         },
         "0xbbecff5db2f9cccc936895121802fc15053344c6": {
           "generatedAt": "2018-04-25T12:30:49.115Z",
@@ -26,8 +25,7 @@
           },
           "bytecodeHash": "fa7e41b12921f5486139b113e27d9f42",
           "deployedBytecodeHash": "3b0ffecb49e2308162baea06ab012022",
-          "sourceHash": "a08b32cfe73754d798c1e9a2f2d69bcb",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity 0.4.19;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisorContract\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "a08b32cfe73754d798c1e9a2f2d69bcb"
         }
       }
     },
@@ -44,8 +42,7 @@
           },
           "bytecodeHash": "5c959e1fbd244532a0db3a14f46aa086",
           "deployedBytecodeHash": "d1c4729a444bfc4abb71e5af98bb6ed2",
-          "sourceHash": "080bdccd163b74b49fb908b443c45199",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity ^0.4.23;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisorContract\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "080bdccd163b74b49fb908b443c45199"
         },
         "0x1b9441428f9e682bab4f9cc70fdf50adcc3411f4": {
           "generatedAt": "2018-05-12T00:22:15.155Z",
@@ -57,8 +54,7 @@
           },
           "bytecodeHash": "435a1a8da265b92f0ae3fd4eb5089baa",
           "deployedBytecodeHash": "f7581b87c6854d5aec16c65f738876d8",
-          "sourceHash": "080bdccd163b74b49fb908b443c45199",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity ^0.4.23;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisorContract\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "080bdccd163b74b49fb908b443c45199"
         },
         "0xc3f2a0508dbacc3ffd9846a166dcb257029b59a0": {
           "generatedAt": "2018-05-31T23:56:48.479Z",
@@ -70,8 +66,7 @@
           },
           "bytecodeHash": "b1f4223998740495884af010a7935166",
           "deployedBytecodeHash": "056bca4e150103c5c45b9eff68e5f952",
-          "sourceHash": "9a624a36ae15529e7434fd305f347c8b",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity 0.4.24;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisorContract\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "9a624a36ae15529e7434fd305f347c8b"
         }
       }
     },
@@ -88,8 +83,7 @@
           },
           "bytecodeHash": "3994e47ec4faf784d97e783d6e3de64d",
           "deployedBytecodeHash": "9b8b05d9a455663e6bc0b4aa953ef26e",
-          "sourceHash": "3ae3310cda808efba999807e54bf8c9b",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity 0.4.24;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisor\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "3ae3310cda808efba999807e54bf8c9b"
         }
       }
     }

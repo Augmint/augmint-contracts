@@ -15,8 +15,7 @@
           },
           "bytecodeHash": "956ad89450cdb2da8fa7fd2c4173eb96",
           "deployedBytecodeHash": "89743a0395b3528cf96780a1751106f4",
-          "sourceHash": "4d60c55b8e4009873db939b37558d9dc",
-          "source": "/* allows tx to execute if 50% +1 vote of active signers signed */\npragma solidity 0.4.24;\nimport \"./generic/MultiSig.sol\";\n\n\ncontract StabilityBoardProxy is MultiSig {\n\n    function checkQuorum(uint signersCount) internal view returns(bool isQuorum) {\n        isQuorum = signersCount > activeSignersCount / 2 ;\n    }\n}\n"
+          "sourceHash": "4d60c55b8e4009873db939b37558d9dc"
         }
       }
     },
@@ -33,8 +32,7 @@
           },
           "bytecodeHash": "4f899546765577ad2e325da53c3e7179",
           "deployedBytecodeHash": "a5f3dd7878e556db538c1206827e5959",
-          "sourceHash": "4d60c55b8e4009873db939b37558d9dc",
-          "source": "/* allows tx to execute if 50% +1 vote of active signers signed */\npragma solidity 0.4.24;\nimport \"./generic/MultiSig.sol\";\n\n\ncontract StabilityBoardProxy is MultiSig {\n\n    function checkQuorum(uint signersCount) internal view returns(bool isQuorum) {\n        isQuorum = signersCount > activeSignersCount / 2 ;\n    }\n}\n"
+          "sourceHash": "4d60c55b8e4009873db939b37558d9dc"
         }
       }
     }
