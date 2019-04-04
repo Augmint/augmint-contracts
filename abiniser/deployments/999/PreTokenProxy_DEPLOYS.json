@@ -2,23 +2,6 @@
   "contractName": "PreTokenProxy",
   "latestAbiHash": "dd40c0d39ea8bad8a388522667a84687",
   "deployedAbis": {
-    "19ab69b650e28b2dd211d3851893f91f": {
-      "latestDeployedAddress": "0x8b639dc72f3e640c0d6bc19497fbc7b5160d0463",
-      "deployments": {
-        "0x8b639dc72f3e640c0d6bc19497fbc7b5160d0463": {
-          "generatedAt": "2018-08-14T19:51:18.249Z",
-          "truffleContractFileUpdatedAt": "2018-08-14T19:50:46.737Z",
-          "deployTransactionHash": "0xb6d3bbc7f8b5d233923e24afcdf977acd4d2b40fcc36301e9eabe47d6bf71b24",
-          "compiler": {
-            "name": "solc",
-            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
-          },
-          "bytecodeHash": "9c5756eba5d12433f15b0ba1c6e78424",
-          "deployedBytecodeHash": "41bc836f0fad20e8f9a4afdd4d4725f3",
-          "sourceHash": "2d172fe41d2b97c827d6dca816138047"
-        }
-      }
-    },
     "dd40c0d39ea8bad8a388522667a84687": {
       "latestDeployedAddress": "0x8b639dc72f3e640c0d6bc19497fbc7b5160d0463",
       "deployments": {

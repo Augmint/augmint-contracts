@@ -16,18 +16,6 @@
           "bytecodeHash": "f0557c3c790f279d198ef1d54ea5f550",
           "deployedBytecodeHash": "1c74c56a535b7d558a79121649239bdf",
           "sourceHash": "16ee1835a27505e14d1b6990cdfa8c2c"
-        },
-        "0x78ca328135c3eed65d66ef6e611ec8ed166fa5b2": {
-          "generatedAt": "2018-05-31T23:56:48.426Z",
-          "truffleContractFileUpdatedAt": "2018-05-31T23:54:54.559Z",
-          "deployTransactionHash": "0x3a2e51f26281565889c279bf31056ebce10d193d157dc91ebe8a24ac63ae9b7f",
-          "compiler": {
-            "name": "solc",
-            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
-          },
-          "bytecodeHash": "f0557c3c790f279d198ef1d54ea5f550",
-          "deployedBytecodeHash": "1c74c56a535b7d558a79121649239bdf",
-          "sourceHash": "16ee1835a27505e14d1b6990cdfa8c2c"
         }
       }
     }

@@ -2,63 +2,6 @@
   "contractName": "Rates",
   "latestAbiHash": "73a17ebb0acc71773371c6a8e1c8e6ce",
   "deployedAbis": {
-    "aad689098442fe73d35b427a36786f06": {
-      "latestDeployedAddress": "0x8b639dc72f3e640c0d6bc19497fbc7b5160d0463",
-      "deployments": {
-        "0x8b639dc72f3e640c0d6bc19497fbc7b5160d0463": {
-          "generatedAt": "2018-04-25T12:30:49.023Z",
-          "truffleContractFileUpdatedAt": "2018-02-27T07:31:58.107Z",
-          "compiler": {
-            "name": "solc",
-            "version": "0.4.19+commit.c4cbbb05.Emscripten.clang"
-          },
-          "bytecodeHash": "b072f2ac9f39bd4e54ec18306443b251",
-          "deployedBytecodeHash": "94217efb3293a39e7ccfaf54347d3bfe",
-          "sourceHash": "6aba5d7c578a7c3d328066fa72de1429"
-        }
-      }
-    },
-    "cc8bc64cd780f047eca819e6cd3b8af9": {
-      "latestDeployedAddress": "0xa47b07db70126f0095b09c846d0d7e2d965eae6b",
-      "deployments": {
-        "0x8b639dc72f3e640c0d6bc19497fbc7b5160d0463": {
-          "generatedAt": "2018-04-25T12:31:28.978Z",
-          "truffleContractFileUpdatedAt": "2018-04-20T18:21:38.645Z",
-          "deployTransactionHash": "0x2406592c676468988c721d4051e727eb5659016c6560234ea53a2e65775978c8",
-          "compiler": {
-            "name": "solc",
-            "version": "0.4.23+commit.124ca40d.Emscripten.clang"
-          },
-          "bytecodeHash": "7b3cb84bdbfbe54d0c253744ccc86bd9",
-          "deployedBytecodeHash": "36714b840505a1bedac90a82a36e514c",
-          "sourceHash": "e9dda67ca678fd3a4700e8970b50acd3"
-        },
-        "0xd3ef19679c2dbbf3b8e2077c61b88f5e9c6178eb": {
-          "generatedAt": "2018-05-09T12:19:24.837Z",
-          "truffleContractFileUpdatedAt": "2018-05-09T12:19:15.658Z",
-          "deployTransactionHash": "0xf54d0cd33fc046bdca1066c84c2c1af0a3064d14b41d820a952d6739e015de6b",
-          "compiler": {
-            "name": "solc",
-            "version": "0.4.23+commit.124ca40d.Emscripten.clang"
-          },
-          "bytecodeHash": "7b3cb84bdbfbe54d0c253744ccc86bd9",
-          "deployedBytecodeHash": "36714b840505a1bedac90a82a36e514c",
-          "sourceHash": "e9dda67ca678fd3a4700e8970b50acd3"
-        },
-        "0xa47b07db70126f0095b09c846d0d7e2d965eae6b": {
-          "generatedAt": "2018-05-31T23:56:48.438Z",
-          "truffleContractFileUpdatedAt": "2018-05-31T23:54:54.495Z",
-          "deployTransactionHash": "0x00b941f25c54731b9920198c6d89223ffe7e50dd06ed65b820b51190ffd8fb07",
-          "compiler": {
-            "name": "solc",
-            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
-          },
-          "bytecodeHash": "3b2f1c4e52d682390b3e3f52bfb7149e",
-          "deployedBytecodeHash": "ba3833719d4aefe680165cbe9faa139f",
-          "sourceHash": "0c937a45e5ca30ca3cc1314b3cc1fd39"
-        }
-      }
-    },
     "73a17ebb0acc71773371c6a8e1c8e6ce": {
       "latestDeployedAddress": "0xb0a2a8e846b66c7384f52635cecef5280f766c8b",
       "deployments": {
