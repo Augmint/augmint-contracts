@@ -12,10 +12,10 @@ abbrev@1.0.x:
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.0.9.tgz#91b4792588a7738c25f35dd6f63752a2f8776135"
   integrity sha1-kbR5JYinc4wl813W9jdSovh3YTU=
 
-abiniser@0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/abiniser/-/abiniser-0.5.0.tgz#f1e6be0bbceeaaa04fc734d61276fbfa69f96bb8"
-  integrity sha512-J3gjd1n3BUcFaJhO/2htkBTq2PJ9BDiD1ejssxwVTogVb2MRkeq58nG2sPokqcy/jOIlOE/wyfz/irZswuPqXA==
+abiniser@0.5.1:
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/abiniser/-/abiniser-0.5.1.tgz#d17c0852d0ddea8aa9959661423b4f3e6805bb6e"
+  integrity sha512-VBDIuH2aoca+tL0gw1h/Oixx4vNmyRGsVXebgy5K76p/6uDEAMxagDsRnVhZLknnKgLYwdL7OojVBIUvcIG9sQ==
   dependencies:
     commander "2.20.0"
     json-stable-stringify "1.0.1"
