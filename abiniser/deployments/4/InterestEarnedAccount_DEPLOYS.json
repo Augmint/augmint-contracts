@@ -15,8 +15,7 @@
           },
           "bytecodeHash": "3994e47ec4faf784d97e783d6e3de64d",
           "deployedBytecodeHash": "9b8b05d9a455663e6bc0b4aa953ef26e",
-          "sourceHash": "3ae3310cda808efba999807e54bf8c9b",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity 0.4.24;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisor\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "3ae3310cda808efba999807e54bf8c9b"
         },
         "0xdd96979697b76787b5062084eea60bf929ddd844": {
           "generatedAt": "2018-10-29T15:52:43.264Z",
@@ -28,8 +27,7 @@
           },
           "bytecodeHash": "3994e47ec4faf784d97e783d6e3de64d",
           "deployedBytecodeHash": "9b8b05d9a455663e6bc0b4aa953ef26e",
-          "sourceHash": "3ae3310cda808efba999807e54bf8c9b",
-          "source": "/* Contract to hold earned interest from loans repaid\n   premiums for locks are being accrued (i.e. transferred) to Locker */\n\npragma solidity 0.4.24;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract InterestEarnedAccount is SystemAccount {\n\n    constructor(address permissionGranterContract) public SystemAccount(permissionGranterContract) {} // solhint-disable-line no-empty-blocks\n\n    function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)\n    external restrict(\"MonetarySupervisor\") {\n        augmintToken.transfer(locker, interestAmount);\n    }\n\n}\n"
+          "sourceHash": "3ae3310cda808efba999807e54bf8c9b"
         }
       }
     }

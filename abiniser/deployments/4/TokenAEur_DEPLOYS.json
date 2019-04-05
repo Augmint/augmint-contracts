@@ -15,8 +15,7 @@
           },
           "bytecodeHash": "0398a39cdab3b394103910ea6b28eef7",
           "deployedBytecodeHash": "2916088286d725e884630bc95fc19dbf",
-          "sourceHash": "04025a37ea64acbc6f0ea2ec8a6f3e4d",
-          "source": "/* Augmint Euro token (A-EUR) implementation */\npragma solidity 0.4.24;\nimport \"./interfaces/TransferFeeInterface.sol\";\nimport \"./generic/AugmintToken.sol\";\n\n\ncontract TokenAEur is AugmintToken {\n    constructor(address _permissionGranterContract, TransferFeeInterface _feeAccount)\n    public AugmintToken(_permissionGranterContract, \"Augmint Euro\", \"AEUR\", \"EUR\", 2, _feeAccount)\n    {} // solhint-disable-line no-empty-blocks\n\n}\n"
+          "sourceHash": "04025a37ea64acbc6f0ea2ec8a6f3e4d"
         },
         "0x79065a165ec09e6a89d584a14872802717fe12a3": {
           "generatedAt": "2018-10-29T15:52:43.268Z",
@@ -28,8 +27,7 @@
           },
           "bytecodeHash": "0398a39cdab3b394103910ea6b28eef7",
           "deployedBytecodeHash": "2916088286d725e884630bc95fc19dbf",
-          "sourceHash": "04025a37ea64acbc6f0ea2ec8a6f3e4d",
-          "source": "/* Augmint Euro token (A-EUR) implementation */\npragma solidity 0.4.24;\nimport \"./interfaces/TransferFeeInterface.sol\";\nimport \"./generic/AugmintToken.sol\";\n\n\ncontract TokenAEur is AugmintToken {\n    constructor(address _permissionGranterContract, TransferFeeInterface _feeAccount)\n    public AugmintToken(_permissionGranterContract, \"Augmint Euro\", \"AEUR\", \"EUR\", 2, _feeAccount)\n    {} // solhint-disable-line no-empty-blocks\n\n}\n"
+          "sourceHash": "04025a37ea64acbc6f0ea2ec8a6f3e4d"
         }
       }
     }

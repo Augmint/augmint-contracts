@@ -15,8 +15,7 @@
           },
           "bytecodeHash": "4f899546765577ad2e325da53c3e7179",
           "deployedBytecodeHash": "a5f3dd7878e556db538c1206827e5959",
-          "sourceHash": "4d60c55b8e4009873db939b37558d9dc",
-          "source": "/* allows tx to execute if 50% +1 vote of active signers signed */\npragma solidity 0.4.24;\nimport \"./generic/MultiSig.sol\";\n\n\ncontract StabilityBoardProxy is MultiSig {\n\n    function checkQuorum(uint signersCount) internal view returns(bool isQuorum) {\n        isQuorum = signersCount > activeSignersCount / 2 ;\n    }\n}\n"
+          "sourceHash": "4d60c55b8e4009873db939b37558d9dc"
         },
         "0xa612de13b629a1ff790c1f4e41d0422d2bb50a30": {
           "generatedAt": "2018-10-29T15:52:43.339Z",
@@ -28,8 +27,7 @@
           },
           "bytecodeHash": "4f899546765577ad2e325da53c3e7179",
           "deployedBytecodeHash": "a5f3dd7878e556db538c1206827e5959",
-          "sourceHash": "4d60c55b8e4009873db939b37558d9dc",
-          "source": "/* allows tx to execute if 50% +1 vote of active signers signed */\npragma solidity 0.4.24;\nimport \"./generic/MultiSig.sol\";\n\n\ncontract StabilityBoardProxy is MultiSig {\n\n    function checkQuorum(uint signersCount) internal view returns(bool isQuorum) {\n        isQuorum = signersCount > activeSignersCount / 2 ;\n    }\n}\n"
+          "sourceHash": "4d60c55b8e4009873db939b37558d9dc"
         }
       }
     }
