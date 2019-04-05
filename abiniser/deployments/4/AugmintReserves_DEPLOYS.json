@@ -15,8 +15,7 @@
           },
           "bytecodeHash": "5bf4ede2aaad5b0b112f7b1ebf420fd2",
           "deployedBytecodeHash": "3720667df6506876043fba53c540acb6",
-          "sourceHash": "b9d84f5f6153164ba581845190291c88",
-          "source": "/* Contract to hold Augmint reserves (ETH & Token)\n    - ETH as regular ETH balance of the contract\n    - ERC20 token reserve (stored as regular Token balance under the contract address)\n\nNB: reserves are held under the contract address, therefore any transaction on the reserve is limited to the\n    tx-s defined here (i.e. transfer is not allowed even by the contract owner or StabilityBoard or MonetarySupervisor)\n\n */\n\npragma solidity 0.4.24;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract AugmintReserves is Restricted {\n\n    event ReserveMigration(address to, uint weiAmount);\n\n    constructor(address permissionGranterContract)\n    public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks\n\n    function () external payable { // solhint-disable-line no-empty-blocks\n        // to accept ETH sent into reserve (from defaulted loan's collateral )\n    }\n\n    function burn(AugmintTokenInterface augmintToken, uint amount)\n    external restrict(\"MonetarySupervisor\") {\n        augmintToken.burn(amount);\n    }\n\n    function migrate(address to, uint weiAmount)\n    external restrict(\"StabilityBoard\") {\n        if (weiAmount > 0) {\n            to.transfer(weiAmount);\n        }\n        emit ReserveMigration(to, weiAmount);\n    }\n}\n"
+          "sourceHash": "b9d84f5f6153164ba581845190291c88"
         },
         "0x33bec125657470e53887400666bdeed360b2168a": {
           "generatedAt": "2018-10-29T15:52:43.253Z",
@@ -28,8 +27,7 @@
           },
           "bytecodeHash": "5bf4ede2aaad5b0b112f7b1ebf420fd2",
           "deployedBytecodeHash": "3720667df6506876043fba53c540acb6",
-          "sourceHash": "b9d84f5f6153164ba581845190291c88",
-          "source": "/* Contract to hold Augmint reserves (ETH & Token)\n    - ETH as regular ETH balance of the contract\n    - ERC20 token reserve (stored as regular Token balance under the contract address)\n\nNB: reserves are held under the contract address, therefore any transaction on the reserve is limited to the\n    tx-s defined here (i.e. transfer is not allowed even by the contract owner or StabilityBoard or MonetarySupervisor)\n\n */\n\npragma solidity 0.4.24;\nimport \"./generic/SystemAccount.sol\";\nimport \"./interfaces/AugmintTokenInterface.sol\";\n\n\ncontract AugmintReserves is Restricted {\n\n    event ReserveMigration(address to, uint weiAmount);\n\n    constructor(address permissionGranterContract)\n    public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks\n\n    function () external payable { // solhint-disable-line no-empty-blocks\n        // to accept ETH sent into reserve (from defaulted loan's collateral )\n    }\n\n    function burn(AugmintTokenInterface augmintToken, uint amount)\n    external restrict(\"MonetarySupervisor\") {\n        augmintToken.burn(amount);\n    }\n\n    function migrate(address to, uint weiAmount)\n    external restrict(\"StabilityBoard\") {\n        if (weiAmount > 0) {\n            to.transfer(weiAmount);\n        }\n        emit ReserveMigration(to, weiAmount);\n    }\n}\n"
+          "sourceHash": "b9d84f5f6153164ba581845190291c88"
         }
       }
     }
