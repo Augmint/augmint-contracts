@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 geth --testnet \
 --networkid 3 \
 --cache=1024 \

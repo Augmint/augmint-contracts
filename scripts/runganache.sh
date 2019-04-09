@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo "launching ganache-cli (aka testrpc) with deterministic addresses" $(yarn bin)
 yarn ganache-cli \
 --gasLimit 0x47D5DE \
