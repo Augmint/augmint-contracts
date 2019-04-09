@@ -1,23 +1,41 @@
 {
   "name": "augmint-contracts",
-  "version": "0.1.0",
+  "version": "1.0.4",
   "description": "Augmint Stable Tokens - Solidity contracts",
-  "homepage": ".",
-  "private": true,
+  "author": "“Augmint”",
+  "homepage": "https://github.com/Augmint/augmint-contracts#readme",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Augmint/augmint-contracts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Augmint/augmint-contracts/issues"
+  },
+  "keywords": [
+    "ethereum",
+    "solidity",
+    "augmint",
+    "stablecoin",
+    "aeur"
+  ],
   "engines": {
     "node": "10.15.3",
     "yarn": "1.13.0"
   },
+  "bin": {
+    "augmint-contracts": "./scripts/augmint-contracts.sh"
+  },
   "scripts": {
-    "start": "./runganache.sh & $(yarn bin)/truffle migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "start": "yarn runmigrate",
     "build": "truffle compile",
     "clean": "rm build/contracts/*",
     "test": "truffle test",
     "coverage": "solidity-coverage",
     "migrate": "truffle migrate",
     "compile": "yarn build",
-    "ganache:run": "./runganache.sh",
-    "runmigrate": "yarn start"
+    "ganache:run": "./scripts/augmint-contracts.sh runganache",
+    "runmigrate": "./scripts/augmint-contracts.sh runmigrate & wait"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
@@ -25,6 +43,7 @@
     "bignumber.js": "5.0.0",
     "coveralls": "3.0.3",
     "dotenv": "7.0.0",
+    "eslint": "5.16.0",
     "ganache-cli": "6.4.2",
     "moment": "2.22.2",
     "random-seed": "0.3.0",

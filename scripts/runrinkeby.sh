@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 geth \
 --networkid=4 \
 --syncmode=full \
