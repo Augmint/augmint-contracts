@@ -1,21 +1,10 @@
 # Augmint Contracts - development environment
 
-<!-- MDTOC maxdepth:2 firsth1:2 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
-
-- [Install](#Install)
-  - [OSX](#OSX)
-  - [Windows](#Windows)
-- [Launch](#Launch)
-  - [1. Update to latest augmint-contracts](#1-Update-to-latest-augmint-contracts)
-  - [2. Deploy to network](#2-Deploy-to-network)
-- [Tests](#Tests)
-- [Sequence diagrams](#Sequence-diagrams)
-- [Non ganache launches/deploys](#Non-ganache-launchesdeploys)
-  - [Private chain](#Private-chain)
-  - [Rinkeby & main networks](#Rinkeby-main-networks)
-  - [WIP (ignore it) alternative ganache launches](#WIP-ignore-it-alternative-ganache-launches)
-
-<!-- /MDTOC -->
+-   [Install](#Install)
+-   [Launch](#Launch)
+-   [Tests](#Tests)
+-   [Sequence diagrams](#Sequence-diagrams)
+-   [Non ganache launches/deploys](#Non-ganache-launchesdeploys) -
 
 ## Install
 
@@ -28,7 +17,7 @@ _NB: these steps are likely to work on linux too but it's not tested yet_
 1.  [Git](https://git-scm.com/download)
 1.  [Ethereum CLI](https://www.ethereum.org/cli)
 1.  [nodejs](https://nodejs.org/en/download/) - _tested with v10.15.3_
-1.  Install yarn if you don't have it: `npm install -g yarn`
+1.  Install yarn if you don't have it: `npm install -g yarn` NB: check current yarn version requirement in packages.json
 1.  ```
     git clone https://github.com/Augmint/augmint-contracts.git
     cd augmint-contracts
@@ -76,11 +65,11 @@ yarn install # if there were any node package changes in packages.json
 
 or
 
-- `yarn ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
-- in separate console:  
-  `yarn migrate`  
-  or to overwrite existing migration:  
-  `yarn migrate --reset`
+-   `yarn ganache:run` or `./scripts/runganache.sh`
+-   in separate console:  
+    `yarn migrate`  
+    or to overwrite existing migration:  
+    `yarn migrate --reset`
 
 NB: if you get this error from migration:
 
@@ -138,15 +127,15 @@ cp ./build/contracts/\* ./src/contractsBuild
 
 For new deploys on rinkeby and main net see [migration instructions](migrations.md)
 
-### WIP (ignore it) alternative ganache launches
+### Alternative ganache launches
 
 #### Alternatively: Ganache UI
 
 If you use [ganache UI](http://truffleframework.com/ganache/) then
 
-- set the port to 8545
-- For running UI tests set mnemonic:  
-  `hello build tongue rack parade express shine salute glare rate spice stock`
+-   set the port to 8545
+-   For running UI tests set mnemonic:  
+    `hello build tongue rack parade express shine salute glare rate spice stock`
 
 #### Alternatively: truffle develop
 
