@@ -91,6 +91,17 @@ yarn test
 
 A docker image with an initial state of the contracts in ganache is published for development of dependent packes: [hub.docker.com/r/augmint/contracts](https://hub.docker.com/r/augmint/contracts)
 
+## Running docker image
+
+```
+docker run --name ganache -p 8545:8545 augmint/contracts:latest --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m "hello build tongue rack parade express shine salute glare rate spice stock"
+```
+
+then
+`docker stop ganache` and `docker start ganache`
+
+## Building docker images
+
 -   `localchaindb:builddocker` : deletes local chain data folder (`./localchaindb`), launches ganache, migrates contracts and builds a docker image with `localdockerimage` name
 -   `docker:run` : removes previous `ganache` container and runs a new from the docker image labeled `localdockerimage`
 -   `docker:start` & `docker:stop`: start / stop `ganache` container
