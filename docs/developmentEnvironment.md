@@ -3,6 +3,7 @@
 -   [Install](#Install)
 -   [Launch](#Launch)
 -   [Tests](#Tests)
+-   [Docker Image](#Docker-Image)
 -   [Sequence diagrams](#Sequence-diagrams)
 -   [Non ganache launches/deploys](#Non-ganache-launchesdeploys) -
 
@@ -85,6 +86,19 @@ then you either need to do a `yarn clean` before `yarn migrate` or run migration
 yarn start
 yarn test
 ```
+
+## Docker Image
+
+A docker image with an initial state of the contracts in ganache is published for development of dependent packes: [hub.docker.com/r/augmint/contracts](https://hub.docker.com/r/augmint/contracts)
+
+-   `localchaindb:builddocker` : deletes local chain data folder (`./localchaindb`), launches ganache, migrates contracts and builds a docker image with `localdockerimage` name
+-   `docker:run` : removes previous `ganache` container and runs a new from the docker image labeled `localdockerimage`
+-   `docker:start` & `docker:stop`: start / stop `ganache` container
+-   publish: manual at the moment, an automated workflow is being setup.  
+    `docker tag localdockerimage augmint/contracts:<versions>`  
+    `docker tag augmint/contracts:v1.x.x augmint/contracts:latest`  
+    `docker login`  
+    `docker push augmint/contracts`
 
 ## Sequence diagrams
 

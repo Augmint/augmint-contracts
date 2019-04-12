@@ -1,5 +1,7 @@
 .node-xmlhttprequest-sync-*
 
+localchaindb/
+
 # we are using yarn.lock
 package-lock.json
 
