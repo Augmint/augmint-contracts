@@ -23,9 +23,6 @@
     "node": "10.15.3",
     "yarn": "^1.15.2"
   },
-  "bin": {
-    "augmint-contracts": "./scripts/augmint-contracts.sh"
-  },
   "scripts": {
     "start": "yarn runmigrate",
     "build": "truffle compile",
@@ -34,8 +31,8 @@
     "coverage": "solidity-coverage",
     "migrate": "truffle migrate",
     "compile": "yarn build",
-    "ganache:run": "./scripts/augmint-contracts.sh runganache",
-    "runmigrate": "./scripts/augmint-contracts.sh runmigrate & wait"
+    "ganache:run": "./scripts/runganache.sh",
+    "runmigrate": "./scripts/runganache.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
   },
   "devDependencies": {
     "abiniser": "0.5.1",
