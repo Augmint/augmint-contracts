@@ -11,14 +11,27 @@
 
 These instructions are about the dev environment for contract development. For UI development see [augmint-web repo](https://github.com/Augmint/augmint-web)
 
-### OSX
-
-_NB: these steps are likely to work on linux too but it's not tested yet_
+### OSX / Linux
 
 1.  [Git](https://git-scm.com/download)
+
 1.  [Ethereum CLI](https://www.ethereum.org/cli)
-1.  [nodejs](https://nodejs.org/en/download/) - _tested with v10.15.3_
-1.  Install yarn if you don't have it: `npm install -g yarn` NB: check current yarn version requirement in packages.json
+
+1.  [nodejs](https://nodejs.org/en/download/)  
+    NB: check supported node version in [package.json](../package.json)
+
+    Installing nodejs with [n node version manager](https://github.com/tj/n):
+
+    ```
+    npm install -g n
+    n <node version, eg: 10.15.3>
+    ```
+
+1.  Yarn: `npm install -g yarn@<yarn version, e.g. 1.15.2>`  
+    NB: check required yarn version in [package.json](../package.json)
+
+1.  [Docker cli](https://hub.docker.com/search/?type=edition&offering=community)
+
 1.  ```
     git clone https://github.com/Augmint/augmint-contracts.git
     cd augmint-contracts
@@ -30,15 +43,18 @@ _NB: these steps are likely to work on linux too but it's not tested yet_
 _NB: windows install was not tested since a while, update on it is welcome_
 
 1.  [Git Bash](https://git-for-windows.github.io/) (required for truffle & yarn start)
-1.  [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
-1.  [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
-1.  Install latest stable Nodejs
 
-    or
-    use [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases):
+1.  [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
+
+1.  [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
+
+1.  [nodejs](https://nodejs.org/en/download/)  
+    NB: check supported node version in [package.json](../package.json)
+
+    Installing nodejs with [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases):
 
     ```
-    nvm install 10.15.3
+    nvm install <node version number, eg: 10.15.3>
     nvm use 10.15.3
     ```
 
@@ -94,11 +110,12 @@ A docker image with an initial state of the contracts in ganache is published fo
 ## Running docker image
 
 ```
-docker run --name ganache -p 8545:8545 augmint/contracts:latest --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m "hello build tongue rack parade express shine salute glare rate spice stock"
+yarn docker:start
 ```
 
-then
-`docker stop ganache` and `docker start ganache`
+```
+yarnd docker:stop
+```
 
 ## Building docker images
 
