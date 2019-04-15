@@ -1,40 +1,58 @@
 dist: xenial # https://docs.travis-ci.com/user/reference/xenial/
 language: node_js
-cache:
-  directories:
-    - "node_modules"
+cache: yarn
 before_install:
-  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.15.2
-  - export PATH="$HOME/.yarn/bin:$PATH"
-  - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
-  - yarn global add greenkeeper-lockfile@1
+    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.15.2
+    - export PATH="$HOME/.yarn/bin:$PATH"
+    - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+    - yarn global add greenkeeper-lockfile@1
 install:
-  - |
-    if [[ $BRANCH == "greenkeeper/"* ]]; then
-      echo Greenkeeper build using .yarnrc.greenkeeper; cp .yarnrc.greenkeeper .yarnrc; yarn install;
-    else
-      echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
-    fi
+    - |
+        if [[ $BRANCH == "greenkeeper/"* ]]; then
+          echo Greenkeeper build using .yarnrc.greenkeeper; cp .yarnrc.greenkeeper .yarnrc; yarn install;
+        else
+          echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
+        fi
 before_script:
-  - greenkeeper-lockfile-update
-  - yarn ganache:run > ganache.out &
+    - greenkeeper-lockfile-update
+    - yarn localchaindb:builddocker > /dev/null
+    - yarn ganache:start > /dev/null &
+    - yarn wait-on tcp:localhost:8545 # ganache
 script:
-  - yarn test
+    - yarn test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
 after_script:
-  - greenkeeper-lockfile-upload
+    - greenkeeper-lockfile-upload
 # TODO: failing even locally: "error: cannot sign data; no private key" & "Error: sender account not recognized"
 #    - yarn coverage && cat coverage/lcov.info | coveralls
 after_success:
-  - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
-  - chmod +x send.sh
-  - ./send.sh success $DISCORD_WEBHOOK_URL
+    - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - ./send.sh success $DISCORD_WEBHOOK_URL
+
+    - echo after_succes TRAVIS_BRANCH build npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
+    - if [[ "$TRAVIS_BRANCH" == "master"  ]]; then
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+      yarn docker:tag ;
+      yarn docker:tag:latest ;
+      docker push augmint/contracts ;
+      fi
+
+    - if [[ "$TRAVIS_BRANCH" == "staging"  ]]; then
+      echo npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+      yarn docker:tag ;
+      yarn docker:tag:nextver ;
+      docker push augmint/contracts ;
+      fi
 after_failure:
-  - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
-  - chmod +x send.sh
-  - ./send.sh failure $DISCORD_WEBHOOK_URL
+    - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - ./send.sh failure $DISCORD_WEBHOOK_URL
 env:
-  global:
-    - secure: ifOO8zrXayJi5oJmCvlRXtRFx+2bi5BQuBbEo1ouFCidJD1O5u5J2CaV5klpefvm0VRte5HtNEvoYRLAVVK1RFY60TXWMp0TlqjLPdnS9knagHxR7/VqBXNeXTovUL1dXwC9OzH2UbQmLDc8oyB9vz/nx7mmUmk+RqyUKP3uP/ZVjmpKy/t+VMsp8Qzu/sk2dLZnEhUh270tpGtn+cELGzGMzWhvCoSPwVQvjl1ZbfCfZIoFUuc06bk0CObqStu6AjguvQ+Xvzju6qGNe5lqTr3cMtfmOapMSIGbHsJXIpTW6eAqlu//VQS3q4Ny73Nq15bFE+n76XGLB+1DeQBLD0auIH3vY0s/h3cM+VVteS9erMxN7kp2HUXtLGATnqbQeO+JYEdm0apGLQT3InG3yydS816hDXn4DRw1zTQcllHPdsLFjTu82Pvu83vl3rl96ZNEeHiGCVKnX/Jk4mRCizlgvDyYh5cFgPD6CVnjFhO0scvTvJ+hDgkI7bxojtV8UVHOF1PTsm3ujrB9bfpSj3cYWbeP6XyVcZYaqWtnaM7WgaYJSYN1fRQD7Cunepn9iLXFVzFm36HKpdh/TDh1jZca4GRZmURFz+RwUvwZt7YG0Gxzgqu8RAQQxOtDQ+O/kQC4CxL/zwr/Kh0xlIo1IV1xRn0Ds4ZSDDPQRqOhP6I=
-    # DISCORD_WEBHOOK_URL:
-    - secure: r3Xui3th+xz3Jhu2SrPK7erDAqdZO7Kb8GCXb1kQ+2cSBWIDh4HsZRXUPaC/bFLSMNfTiWqbi9E45pceNCtmWfQDc2IXEmJPHuOQaJNITV4+JLgxrgtFRsM+wtJ5ch99mhHcWYYw00P6R8iHTtlp4ETqxy9omZj/42oJiZI2VAnBroS7hfkZbSgJzwqqqstImxKUBPvZ6LJrw6eMtZyA5guI5WVXETzeM691htD/9rlXA7WE3TO5c8KVJ6cKTQ76RDxSkXBY/91rMCsKzvx4F/Csr0aw16gpd9lO7HmbcZgO93WHt9ciVUvuVVCsMC6mcUdsofwAFtNWqH32GCGYv6lun5kLb2e7XmvYI629VBUw/Zrb2ja0xQvvrMEFmVfL/Opfm1888X8wTCVF7GIucpXgM9pZLDmt8S3LJeLRtTob2C3xN/N8Vl2sIHSkJLrTM8FzpxV5lnASpnkgIqh7eQOptluk31xg5447fKG5MU8qsDzDyOgl27/Llvp81+Y/QgIEovcLLe0RWMggXE9lIVegjYgnjTRTc3NaQ3KAAErBX5INvZZ0DfHam4gW9i08D0bWs5frcFV6yGJZ9EycFMalKiNH2y1SlfB5shPXxzpao7jLgROwnzKUeyNpBsi7M2TYk+lqfdM/Whyh8GKSoN4nVC3c8WxwWvOf+TYOR8k=
+    global:
+        - secure: ifOO8zrXayJi5oJmCvlRXtRFx+2bi5BQuBbEo1ouFCidJD1O5u5J2CaV5klpefvm0VRte5HtNEvoYRLAVVK1RFY60TXWMp0TlqjLPdnS9knagHxR7/VqBXNeXTovUL1dXwC9OzH2UbQmLDc8oyB9vz/nx7mmUmk+RqyUKP3uP/ZVjmpKy/t+VMsp8Qzu/sk2dLZnEhUh270tpGtn+cELGzGMzWhvCoSPwVQvjl1ZbfCfZIoFUuc06bk0CObqStu6AjguvQ+Xvzju6qGNe5lqTr3cMtfmOapMSIGbHsJXIpTW6eAqlu//VQS3q4Ny73Nq15bFE+n76XGLB+1DeQBLD0auIH3vY0s/h3cM+VVteS9erMxN7kp2HUXtLGATnqbQeO+JYEdm0apGLQT3InG3yydS816hDXn4DRw1zTQcllHPdsLFjTu82Pvu83vl3rl96ZNEeHiGCVKnX/Jk4mRCizlgvDyYh5cFgPD6CVnjFhO0scvTvJ+hDgkI7bxojtV8UVHOF1PTsm3ujrB9bfpSj3cYWbeP6XyVcZYaqWtnaM7WgaYJSYN1fRQD7Cunepn9iLXFVzFm36HKpdh/TDh1jZca4GRZmURFz+RwUvwZt7YG0Gxzgqu8RAQQxOtDQ+O/kQC4CxL/zwr/Kh0xlIo1IV1xRn0Ds4ZSDDPQRqOhP6I=
+        # DISCORD_WEBHOOK_URL:
+        - secure: r3Xui3th+xz3Jhu2SrPK7erDAqdZO7Kb8GCXb1kQ+2cSBWIDh4HsZRXUPaC/bFLSMNfTiWqbi9E45pceNCtmWfQDc2IXEmJPHuOQaJNITV4+JLgxrgtFRsM+wtJ5ch99mhHcWYYw00P6R8iHTtlp4ETqxy9omZj/42oJiZI2VAnBroS7hfkZbSgJzwqqqstImxKUBPvZ6LJrw6eMtZyA5guI5WVXETzeM691htD/9rlXA7WE3TO5c8KVJ6cKTQ76RDxSkXBY/91rMCsKzvx4F/Csr0aw16gpd9lO7HmbcZgO93WHt9ciVUvuVVCsMC6mcUdsofwAFtNWqH32GCGYv6lun5kLb2e7XmvYI629VBUw/Zrb2ja0xQvvrMEFmVfL/Opfm1888X8wTCVF7GIucpXgM9pZLDmt8S3LJeLRtTob2C3xN/N8Vl2sIHSkJLrTM8FzpxV5lnASpnkgIqh7eQOptluk31xg5447fKG5MU8qsDzDyOgl27/Llvp81+Y/QgIEovcLLe0RWMggXE9lIVegjYgnjTRTc3NaQ3KAAErBX5INvZZ0DfHam4gW9i08D0bWs5frcFV6yGJZ9EycFMalKiNH2y1SlfB5shPXxzpao7jLgROwnzKUeyNpBsi7M2TYk+lqfdM/Whyh8GKSoN4nVC3c8WxwWvOf+TYOR8k=
+        # DOCKER_PASSWORD:
+        - secure: "wn72SxvXjU7V6N1gIW7Tlb0VEL79blpVF0pFd0x9AYQhVlWvvO0hioQGXXPVx1xR8tC+6mH6QjNrceDtJaMMIP43NjIoIiwfAwkmzVuJ4zXpqfZJlpuYYDYLW7gYtYCNhHwRWWzxe8Yyy+GpNnVwX36MHvS8wWKZLGs3pLHPet85+WGzeYHqVx+nCDq1iVWIHoq5DxNUWUVtKMRc60CYbRVpKrRLKcE2SnzDzRndoJzWDFR3c8aA/a5LLVO8VsOzo6tVziZffOVVsff/wz1IrLe6fkw8GEWBfIaqE+T3zdgnyZF5mjXZFWHHya09NwKSHC/ecSIBA99uUKh2rR0o0H/HZ/Qs+U0p2p7MTTOAdNSK/+pLn291ih44GNM/UxBJRnC5//p0HmjBqnPjWJamJw3x2YB6s+dOVs4g3UqBUZJY/2Y8+KICL7HJlv0vsO9RCnm1V4LbWRrv3qgmOzoobYJgCTfECeGF7kRIzAGWfpSXh9tSR2K4fjHvP9g23ydxK4+NZsxzwYbrMjMNJBgZW7lsAGZlJU6D9F8eSUvZkO8FjAmDCK5tXSlNX1vlodFH5URaNVXziyzH9fLv56IIts9qBleFwbPSbv8GSZ7baxZYUb/BzvHygTBFn3x3p6rIoceJuUeQuiRhxkL8BnAPrl56sIiQtnHdR1t4gerec4U="
