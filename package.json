@@ -27,7 +27,7 @@
     "start": "yarn runmigrate",
     "build": "truffle compile",
     "clean": "rm build/contracts/*",
-    "test": "truffle test",
+    "test": "truffle test --migrations_directory migrations_null",
     "coverage": "solidity-coverage",
     "migrate": "truffle migrate",
     "compile": "yarn build",
