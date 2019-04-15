@@ -117,16 +117,27 @@ yarn docker:start
 yarnd docker:stop
 ```
 
-## Building docker images
+## Docker image
+
+Docker images are used by dependent projects to quickly launch local ganache with all augmint contracts for testing Augmint.
+The image is published to [augmint/contracts dockerhub repo](https://hub.docker.com/r/augmint/contracts).
+NB: `augmint-contracts`' own tests are also running on this container at Travis,
+
+### Build docker image
 
 -   `localchaindb:builddocker` : deletes local chain data folder (`./localchaindb`), launches ganache, migrates contracts and builds a docker image with `localdockerimage` name
 -   `docker:run` : removes previous `ganache` container and runs a new from the docker image labeled `localdockerimage`
 -   `docker:start` & `docker:stop`: start / stop `ganache` container
--   publish: manual at the moment, an automated workflow is being setup.  
-    `docker tag localdockerimage augmint/contracts:<versions>`  
-    `docker tag augmint/contracts:v1.x.x augmint/contracts:latest`  
-    `docker login`  
-    `docker push augmint/contracts`
+
+### Publish docker image
+
+Travis set to generate a docker image for master and staging branch builds. See [.travis.yml](../.travis.yml)
+
+**Tags**
+
+-   `yarn docker:tag`: every published image tagged with `commit-xxxxx` and `build-travisbuildnumber`
+-   `yarn docker:tag:nextver` : on staging branch image tagged with `nextver`
+-   `yarn docker:tag:latest` : on master branch image tagged with `latest` and `vx.x.x` tags (from package.json version)
 
 ## Sequence diagrams
 
