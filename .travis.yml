@@ -15,7 +15,9 @@ install:
         fi
 before_script:
     - greenkeeper-lockfile-update
-    - yarn ganache:run > ganache.out &
+    - yarn docker:build
+    - yarn ganache:start > /dev/null &
+    - yarn wait-on tcp:localhost:8545 # ganache
 script:
     - yarn test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
