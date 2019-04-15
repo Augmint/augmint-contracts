@@ -15,7 +15,7 @@ install:
         fi
 before_script:
     - greenkeeper-lockfile-update
-    - yarn docker:build
+    - yarn localchaindb:builddocker
     - yarn ganache:start > /dev/null &
     - yarn wait-on tcp:localhost:8545 # ganache
 script:
