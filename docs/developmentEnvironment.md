@@ -1,34 +1,37 @@
 # Augmint Contracts - development environment
 
-<!-- MDTOC maxdepth:2 firsth1:2 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
-
-- [Install](#Install)
-  - [OSX](#OSX)
-  - [Windows](#Windows)
-- [Launch](#Launch)
-  - [1. Update to latest augmint-contracts](#1-Update-to-latest-augmint-contracts)
-  - [2. Deploy to network](#2-Deploy-to-network)
-- [Tests](#Tests)
-- [Sequence diagrams](#Sequence-diagrams)
-- [Non ganache launches/deploys](#Non-ganache-launchesdeploys)
-  - [Private chain](#Private-chain)
-  - [Rinkeby & main networks](#Rinkeby-main-networks)
-  - [WIP (ignore it) alternative ganache launches](#WIP-ignore-it-alternative-ganache-launches)
-
-<!-- /MDTOC -->
+-   [Install](#Install)
+-   [Launch](#Launch)
+-   [Tests](#Tests)
+-   [Docker Image](#Docker-Image)
+-   [Sequence diagrams](#Sequence-diagrams)
+-   [Non ganache launches/deploys](#Non-ganache-launchesdeploys) -
 
 ## Install
 
 These instructions are about the dev environment for contract development. For UI development see [augmint-web repo](https://github.com/Augmint/augmint-web)
 
-### OSX
-
-_NB: these steps are likely to work on linux too but it's not tested yet_
+### OSX / Linux
 
 1.  [Git](https://git-scm.com/download)
+
 1.  [Ethereum CLI](https://www.ethereum.org/cli)
-1.  [nodejs](https://nodejs.org/en/download/) - _tested with v10.15.3_
-1.  Install yarn if you don't have it: `npm install -g yarn`
+
+1.  [nodejs](https://nodejs.org/en/download/)  
+    NB: check supported node version in [package.json](../package.json)
+
+    Installing nodejs with [n node version manager](https://github.com/tj/n):
+
+    ```
+    npm install -g n
+    n <node version, eg: 10.15.3>
+    ```
+
+1.  Yarn: `npm install -g yarn@<yarn version, e.g. 1.15.2>`  
+    NB: check required yarn version in [package.json](../package.json)
+
+1.  [Docker cli](https://hub.docker.com/search/?type=edition&offering=community)
+
 1.  ```
     git clone https://github.com/Augmint/augmint-contracts.git
     cd augmint-contracts
@@ -40,15 +43,18 @@ _NB: these steps are likely to work on linux too but it's not tested yet_
 _NB: windows install was not tested since a while, update on it is welcome_
 
 1.  [Git Bash](https://git-for-windows.github.io/) (required for truffle & yarn start)
-1.  [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
-1.  [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
-1.  Install latest stable Nodejs
 
-    or
-    use [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases):
+1.  [Git](https://git-scm.com/download) (if you haven't installed it as part of Git Bash in previous step)
+
+1.  [Ethereum CLI](https://www.ethereum.org/cli) - including development tools
+
+1.  [nodejs](https://nodejs.org/en/download/)  
+    NB: check supported node version in [package.json](../package.json)
+
+    Installing nodejs with [Node Version Manager(NVM)](https://github.com/coreybutler/nvm-windows/releases):
 
     ```
-    nvm install 10.15.3
+    nvm install <node version number, eg: 10.15.3>
     nvm use 10.15.3
     ```
 
@@ -76,11 +82,11 @@ yarn install # if there were any node package changes in packages.json
 
 or
 
-- `yarn ganache:run` or `./runganache.sh` (windows: `./runganache.bat`)
-- in separate console:  
-  `yarn migrate`  
-  or to overwrite existing migration:  
-  `yarn migrate --reset`
+-   `yarn ganache:run` or `./scripts/runganache.sh`
+-   in separate console:  
+    `yarn migrate`  
+    or to overwrite existing migration:  
+    `yarn migrate --reset`
 
 NB: if you get this error from migration:
 
@@ -96,6 +102,31 @@ then you either need to do a `yarn clean` before `yarn migrate` or run migration
 yarn start
 yarn test
 ```
+
+## Docker Image
+
+A docker image with an initial state of the contracts in ganache is published for development of dependent packes: [hub.docker.com/r/augmint/contracts](https://hub.docker.com/r/augmint/contracts)
+
+## Running docker image
+
+```
+yarn docker:start
+```
+
+```
+yarnd docker:stop
+```
+
+## Building docker images
+
+-   `localchaindb:builddocker` : deletes local chain data folder (`./localchaindb`), launches ganache, migrates contracts and builds a docker image with `localdockerimage` name
+-   `docker:run` : removes previous `ganache` container and runs a new from the docker image labeled `localdockerimage`
+-   `docker:start` & `docker:stop`: start / stop `ganache` container
+-   publish: manual at the moment, an automated workflow is being setup.  
+    `docker tag localdockerimage augmint/contracts:<versions>`  
+    `docker tag augmint/contracts:v1.x.x augmint/contracts:latest`  
+    `docker login`  
+    `docker push augmint/contracts`
 
 ## Sequence diagrams
 
@@ -138,15 +169,15 @@ cp ./build/contracts/\* ./src/contractsBuild
 
 For new deploys on rinkeby and main net see [migration instructions](migrations.md)
 
-### WIP (ignore it) alternative ganache launches
+### Alternative ganache launches
 
 #### Alternatively: Ganache UI
 
 If you use [ganache UI](http://truffleframework.com/ganache/) then
 
-- set the port to 8545
-- For running UI tests set mnemonic:  
-  `hello build tongue rack parade express shine salute glare rate spice stock`
+-   set the port to 8545
+-   For running UI tests set mnemonic:  
+    `hello build tongue rack parade express shine salute glare rate spice stock`
 
 #### Alternatively: truffle develop
 

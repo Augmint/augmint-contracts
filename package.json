@@ -23,9 +23,6 @@
     "node": "10.15.3",
     "yarn": "1.15.2"
   },
-  "bin": {
-    "augmint-contracts": "./scripts/augmint-contracts.sh"
-  },
   "scripts": {
     "start": "yarn runmigrate",
     "build": "truffle compile",
@@ -34,8 +31,16 @@
     "coverage": "solidity-coverage",
     "migrate": "truffle migrate",
     "compile": "yarn build",
-    "ganache:run": "./scripts/augmint-contracts.sh runganache",
-    "runmigrate": "./scripts/augmint-contracts.sh runmigrate & wait"
+    "ganache:run": "./scripts/runganache.sh",
+    "ganache:stop": "echo TODO",
+    "runmigrate": "./scripts/runganache.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "localchaindb:clean": "rm -rf localchaindb && mkdir localchaindb",
+    "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate && echo 'Migration done. Ganache db in ./localchaindb folder.'",
+    "localchaindb:builddocker": "yarn localchaindb:build && yarn docker:build",
+    "docker:build": "docker build . -t localdockerimage",
+    "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
+    "docker:start": "docker start ganache || yarn docker:run",
+    "docker:stop": "docker stop ganache"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
