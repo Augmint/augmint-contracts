@@ -53,7 +53,7 @@
     "cross-conf-env": "1.1.2",
     "dotenv": "7.0.0",
     "eslint": "5.16.0",
-    "ganache-cli": "6.4.2",
+    "ganache-cli": "6.4.3",
     "moment": "2.22.2",
     "random-seed": "0.3.0",
     "solidity-coverage": "0.5.11",
