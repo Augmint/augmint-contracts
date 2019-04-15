@@ -15,7 +15,7 @@ install:
         fi
 before_script:
     - greenkeeper-lockfile-update
-    - yarn localchaindb:builddocker > /dev/null 
+    - yarn localchaindb:builddocker > /dev/null
     - yarn ganache:start > /dev/null &
     - yarn wait-on tcp:localhost:8545 # ganache
 script:
@@ -29,17 +29,17 @@ after_success:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
     - ./send.sh success $DISCORD_WEBHOOK_URL
-  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD 
-  - echo npm_package_version: $npm_package_version TRAVIS_BUILD_NUMBER: $TRAVIS_BUILD_NUMBER TRAVIS_COMMIT: $TRAVIS_COMMIT
-  - yarn docker:tag
-  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then      
-      yarn docker:tag:latest
-    fi
-  - if [[ "$TRAVIS_BRANCH" == "staging" ]]; then     
-      yarn docker:tag:nextver
-    fi
-  
-  - docker push augmint/contracts  # pushing everything while testing workflow
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - echo npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT
+    - yarn docker:tag
+    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+      yarn docker:tag:latest ;
+      fi
+    - if [[ "$TRAVIS_BRANCH" == "staging" ]]; then
+      yarn docker:tag:nextver ;
+      fi
+
+    - docker push augmint/contracts # pushing everything while testing workflow
 after_failure:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
