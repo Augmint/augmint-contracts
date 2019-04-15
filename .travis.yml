@@ -29,18 +29,15 @@ after_success:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
     - ./send.sh success $DISCORD_WEBHOOK_URL
-
-    - echo after_succes TRAVIS_BRANCH build npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
-    - if [[ "$TRAVIS_BRANCH" == "master"  ]]; then
-      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+    - echo after_succes TRAVIS_BRANCH=$TRAVIS_BRANCH TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
+    - if [ $TRAVIS_BRANCH == "master" ] && [ $TRAVIS_PULL_REQUEST == "false" ]; then
+      echo $DOCKER_PASSWORD | docker login --username foo --password-stdin ;
       yarn docker:tag ;
       yarn docker:tag:latest ;
       docker push augmint/contracts ;
       fi
-
-    - if [[ "$TRAVIS_BRANCH" == "staging"  ]]; then
-      echo npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
-      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+    - if [ "$TRAVIS_BRANCH" == "staging" ] && [ $TRAVIS_PULL_REQUEST == "false" ]; then
+      echo $DOCKER_PASSWORD | docker login --username foo --password-stdin ;
       yarn docker:tag ;
       yarn docker:tag:nextver ;
       docker push augmint/contracts ;
