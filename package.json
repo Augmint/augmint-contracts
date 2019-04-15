@@ -47,6 +47,7 @@
     "babel-register": "6.26.0",
     "bignumber.js": "5.0.0",
     "coveralls": "3.0.3",
+    "cross-conf-env": "1.1.2",
     "dotenv": "7.0.0",
     "eslint": "5.16.0",
     "ganache-cli": "6.4.2",
