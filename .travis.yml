@@ -29,17 +29,22 @@ after_success:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
     - ./send.sh success $DISCORD_WEBHOOK_URL
-    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    - echo npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT
-    - yarn docker:tag
-    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+
+    - echo after_succes TRAVIS_BRANCH build npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
+    - if [[ "$TRAVIS_BRANCH" == "master"  ]]; then
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+      yarn docker:tag ;
       yarn docker:tag:latest ;
-      fi
-    - if [[ "$TRAVIS_BRANCH" == "staging" ]]; then
-      yarn docker:tag:nextver ;
+      docker push augmint/contracts ;
       fi
 
-    - docker push augmint/contracts # pushing everything while testing workflow
+    - if [[ "$TRAVIS_BRANCH" == "staging"  ]]; then
+      echo npm_package_version=$npm_package_version TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+      yarn docker:tag ;
+      yarn docker:tag:nextver ;
+      docker push augmint/contracts ;
+      fi
 after_failure:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
