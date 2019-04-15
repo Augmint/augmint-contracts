@@ -29,6 +29,17 @@ after_success:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
     - ./send.sh success $DISCORD_WEBHOOK_URL
+  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD 
+  - echo npm_package_version: $npm_package_version TRAVIS_BUILD_NUMBER: $TRAVIS_BUILD_NUMBER TRAVIS_COMMIT: $TRAVIS_COMMIT
+  - yarn docker:tag
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then      
+      yarn docker:tag:latest
+    fi
+  - if [[ "$TRAVIS_BRANCH" == "staging" ]]; then     
+      yarn docker:tag:nextver
+    fi
+  
+  - docker push augmint/contracts  # pushing everything while testing workflow
 after_failure:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
@@ -38,3 +49,5 @@ env:
         - secure: ifOO8zrXayJi5oJmCvlRXtRFx+2bi5BQuBbEo1ouFCidJD1O5u5J2CaV5klpefvm0VRte5HtNEvoYRLAVVK1RFY60TXWMp0TlqjLPdnS9knagHxR7/VqBXNeXTovUL1dXwC9OzH2UbQmLDc8oyB9vz/nx7mmUmk+RqyUKP3uP/ZVjmpKy/t+VMsp8Qzu/sk2dLZnEhUh270tpGtn+cELGzGMzWhvCoSPwVQvjl1ZbfCfZIoFUuc06bk0CObqStu6AjguvQ+Xvzju6qGNe5lqTr3cMtfmOapMSIGbHsJXIpTW6eAqlu//VQS3q4Ny73Nq15bFE+n76XGLB+1DeQBLD0auIH3vY0s/h3cM+VVteS9erMxN7kp2HUXtLGATnqbQeO+JYEdm0apGLQT3InG3yydS816hDXn4DRw1zTQcllHPdsLFjTu82Pvu83vl3rl96ZNEeHiGCVKnX/Jk4mRCizlgvDyYh5cFgPD6CVnjFhO0scvTvJ+hDgkI7bxojtV8UVHOF1PTsm3ujrB9bfpSj3cYWbeP6XyVcZYaqWtnaM7WgaYJSYN1fRQD7Cunepn9iLXFVzFm36HKpdh/TDh1jZca4GRZmURFz+RwUvwZt7YG0Gxzgqu8RAQQxOtDQ+O/kQC4CxL/zwr/Kh0xlIo1IV1xRn0Ds4ZSDDPQRqOhP6I=
         # DISCORD_WEBHOOK_URL:
         - secure: r3Xui3th+xz3Jhu2SrPK7erDAqdZO7Kb8GCXb1kQ+2cSBWIDh4HsZRXUPaC/bFLSMNfTiWqbi9E45pceNCtmWfQDc2IXEmJPHuOQaJNITV4+JLgxrgtFRsM+wtJ5ch99mhHcWYYw00P6R8iHTtlp4ETqxy9omZj/42oJiZI2VAnBroS7hfkZbSgJzwqqqstImxKUBPvZ6LJrw6eMtZyA5guI5WVXETzeM691htD/9rlXA7WE3TO5c8KVJ6cKTQ76RDxSkXBY/91rMCsKzvx4F/Csr0aw16gpd9lO7HmbcZgO93WHt9ciVUvuVVCsMC6mcUdsofwAFtNWqH32GCGYv6lun5kLb2e7XmvYI629VBUw/Zrb2ja0xQvvrMEFmVfL/Opfm1888X8wTCVF7GIucpXgM9pZLDmt8S3LJeLRtTob2C3xN/N8Vl2sIHSkJLrTM8FzpxV5lnASpnkgIqh7eQOptluk31xg5447fKG5MU8qsDzDyOgl27/Llvp81+Y/QgIEovcLLe0RWMggXE9lIVegjYgnjTRTc3NaQ3KAAErBX5INvZZ0DfHam4gW9i08D0bWs5frcFV6yGJZ9EycFMalKiNH2y1SlfB5shPXxzpao7jLgROwnzKUeyNpBsi7M2TYk+lqfdM/Whyh8GKSoN4nVC3c8WxwWvOf+TYOR8k=
+        # DOCKER_PASSWORD:
+        - secure: "TV3mBu46yWoDy2Z6ln0wZWE63746eyyd/4Vgo3OC69HY+AYQlUTFRKl+8kvCEH/vcghTVKNsFATuqQDPsox9+eIbHf+NAYu7/Zr1mdBzTm9qQmYPBzqeqzWufgpd4kcQg2/g4G8uw9L27qY7VzndLBezrDw+lFi2MVTDtCKqU7BYkcgkKno6+/cuWgjhZ6QVaTf4iDsv/hzvHXCx0XPu8b1wMGA/bdbycLxYPa6Brb1LrLNSvLyP2l15uirqWXOl1CvuKZhxdVKDYE0x28Ct33PY0ekk+mjtt1jl6zCUSnTaPV+DoFGmcpeoP1BMYm6yhLOot23BKHHcwQU7i9bTFlkmTgJcTNFS5XRkWE5ZyRT9nUkfH7wVJrYm/Unu1Z0o2G/kbYuwFTUnI0lnBFx59vWjoWOAWftnYKPtX017H3JImQwjI8QbBN0EUMuxNr3rPkfSH41cSi/J7dO7chdwi0CADSBMGDntDOsKSr7Jd936LV2Nyr1gn+a9BKzYL0S5ULJMUHp9yQVPDZxQlvnhcE6XtsgolpnYmcAD3GYmdrdN7IeCHx2U0MXinm+6Jq/d5nu+7OSEtVSI5OCk7Z4nsBCvUVHEftW2oGC9cxzqiAcZHdZmSdqPrs2o5tc39yUk78PTraLkw6BzRGZp2rx4QoEmeMTexLppIEgAOpcoISw="
