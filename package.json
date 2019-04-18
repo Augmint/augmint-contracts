@@ -42,8 +42,8 @@
     "docker:start": "docker start ganache || yarn docker:run",
     "docker:stop": "docker stop ganache",
     "docker:tag": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
-    "docker:tag:nextver": "docker tag localdockerimage augmint/contracts:nextver;",
-    "docker:tag:master": "docker tag localdockerimage augmint/contracts:latest; yarn cross-conf-env docker tag localdockerimage augmint/contracts:v$npm_package_version"
+    "docker:tag:staging": "docker tag localdockerimage augmint/contracts:staging;",
+    "docker:tag:latest": "docker tag localdockerimage augmint/contracts:latest; yarn cross-conf-env docker tag localdockerimage augmint/contracts:v$npm_package_version"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
