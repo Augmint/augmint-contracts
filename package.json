@@ -21,36 +21,46 @@
   ],
   "engines": {
     "node": "10.15.3",
-    "yarn": "^1.15.2"
-  },
-  "bin": {
-    "augmint-contracts": "./scripts/augmint-contracts.sh"
+    "yarn": "1.15.2"
   },
   "scripts": {
     "start": "yarn runmigrate",
     "build": "truffle compile",
     "clean": "rm build/contracts/*",
-    "test": "truffle test",
+    "test": "truffle test --migrations_directory migrations_null",
     "coverage": "solidity-coverage",
     "migrate": "truffle migrate",
     "compile": "yarn build",
-    "ganache:run": "./scripts/augmint-contracts.sh runganache",
-    "runmigrate": "./scripts/augmint-contracts.sh runmigrate & wait"
+    "ganache:run": "./scripts/runganache.sh",
+    "ganache:stop": "echo TODO",
+    "runmigrate": "./scripts/runganache.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "localchaindb:clean": "rm -rf localchaindb && mkdir localchaindb",
+    "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate && echo 'Migration done. Ganache db in ./localchaindb folder.'",
+    "localchaindb:builddocker": "yarn localchaindb:build && yarn docker:build",
+    "docker:build": "docker build . -t localdockerimage",
+    "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
+    "docker:start": "docker start ganache || yarn docker:run",
+    "docker:stop": "docker stop ganache",
+    "docker:tag": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
+    "docker:tag:nextver": "docker tag localdockerimage augmint/contracts:nextver;",
+    "docker:tag:master": "docker tag localdockerimage augmint/contracts:latest; yarn cross-conf-env docker tag localdockerimage augmint/contracts:v$npm_package_version"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
     "babel-register": "6.26.0",
     "bignumber.js": "5.0.0",
     "coveralls": "3.0.3",
+    "cross-conf-env": "1.1.2",
     "dotenv": "7.0.0",
     "eslint": "5.16.0",
-    "ganache-cli": "6.4.2",
+    "ganache-cli": "6.4.3",
     "moment": "2.22.2",
     "random-seed": "0.3.0",
     "solidity-coverage": "0.5.11",
     "stringifier": "2.0.0",
     "truffle": "4.1.14",
-    "truffle-hdwallet-provider": "1.0.6",
+    "truffle-hdwallet-provider": "1.0.7",
+    "wait-on": "3.2.0",
     "web3v1": "npm:web3@1.0.0-beta.34"
   },
   "greenkeeper": {
