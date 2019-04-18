@@ -36,7 +36,7 @@ after_success:
     - echo after_success TRAVIS_BRANCH=$TRAVIS_BRANCH BRANCH_OF_TAG=$BRANCH_OF_TAG TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST TRAVIS_TAG=$TRAVIS_TAG TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
     - |
         if [ $TRAVIS_PULL_REQUEST == "false" ]; then
-        if [ $TRAVIS_BRANCH == "master"] || [ $BRANCH_OF_TAG == "master"]; then
+        if [ $TRAVIS_BRANCH == "master" ] || [ $BRANCH_OF_TAG == "master" ]; then
         echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin ;
         yarn docker:tag:build ;
         if [ ! -z "$VERSION_TAG" ]; then
