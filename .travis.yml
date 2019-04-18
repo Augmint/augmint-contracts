@@ -33,25 +33,26 @@ after_success:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
     - ./send.sh success $DISCORD_WEBHOOK_URL
-    - echo after_succes TRAVIS_BRANCH=$TRAVIS_BRANCH BRANCH_OF_TAG=$BRANCH_OF_TAG TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST TRAVIS_TAG=$TRAVIS_TAG TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
-    - if [ $TRAVIS_PULL_REQUEST == "false" ]; then
-      if [ $TRAVIS_BRANCH == "master"] || [ $BRANCH_OF_TAG == "master"]; then
-      echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin ;
-      yarn docker:tag:build ;
-      if [ ! -z "$VERSION_TAG" ]; then
-      yarn docker:tag:version $TRAVIS_TAG;
-      fi      
-      yarn docker:tag:latest; # NB: it will tag old version with latest if you tag an old commit on master
-      docker push augmint/contracts ;
-      fi
-      fi
-
-    - if [ "$TRAVIS_BRANCH" == "staging" ] && [ $TRAVIS_PULL_REQUEST == "false" ]; then
-      echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin ;
-      yarn docker:tag:build ;
-      yarn docker:tag:staging ;
-      docker push augmint/contracts ;
-      fi
+    - echo after_success TRAVIS_BRANCH=$TRAVIS_BRANCH BRANCH_OF_TAG=$BRANCH_OF_TAG TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST TRAVIS_TAG=$TRAVIS_TAG TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
+    - |
+        if [ $TRAVIS_PULL_REQUEST == "false" ]; then
+        if [ $TRAVIS_BRANCH == "master"] || [ $BRANCH_OF_TAG == "master"]; then
+        echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin ;
+        yarn docker:tag:build ;
+        if [ ! -z "$VERSION_TAG" ]; then
+        yarn docker:tag:version $TRAVIS_TAG;
+        fi
+        yarn docker:tag:latest; # NB: it will tag old version with latest if you tag an old commit on master
+        docker push augmint/contracts ;
+        fi
+        fi
+    - |
+        if [ "$TRAVIS_BRANCH" == "staging" ] && [ $TRAVIS_PULL_REQUEST == "false" ]; then
+        echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin ;
+        yarn docker:tag:build ;
+        yarn docker:tag:staging ;
+        docker push augmint/contracts ;
+        fi
 after_failure:
     - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
     - chmod +x send.sh
