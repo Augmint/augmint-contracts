@@ -41,16 +41,16 @@
     "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
     "docker:start": "docker start ganache || yarn docker:run",
     "docker:stop": "docker stop ganache",
-    "docker:tag": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
+    "docker:tag:build": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
     "docker:tag:staging": "docker tag localdockerimage augmint/contracts:staging;",
-    "docker:tag:latest": "docker tag localdockerimage augmint/contracts:latest; yarn cross-conf-env docker tag localdockerimage augmint/contracts:v$npm_package_version"
+    "docker:tag:latest": "docker tag localdockerimage augmint/contracts:latest",
+    "docker:tag:version": "docker tag localdockerimage augmint/contracts:$1"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
     "babel-register": "6.26.0",
     "bignumber.js": "5.0.0",
     "coveralls": "3.0.3",
-    "cross-conf-env": "1.1.2",
     "dotenv": "7.0.0",
     "eslint": "5.16.0",
     "ganache-cli": "6.4.3",
