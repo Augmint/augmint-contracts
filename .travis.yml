@@ -39,7 +39,7 @@ after_success:
     - if [ "$TRAVIS_BRANCH" == "staging" ] && [ $TRAVIS_PULL_REQUEST == "false" ]; then
       echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin ;
       yarn docker:tag ;
-      yarn docker:tag:nextver ;
+      yarn docker:tag:staging ;
       docker push augmint/contracts ;
       fi
 after_failure:
