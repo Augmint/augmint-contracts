@@ -38,7 +38,9 @@ after_success:
                 if [ ! -z $TRAVIS_TAG ]; then
                     yarn docker:tag:version $TRAVIS_TAG;
                 fi
-                yarn docker:tag:latest; # NB: it will tag old version with latest if you tag an old commit on master
+                if [ $TRAVIS_BRANCH == "master" ]; then
+                    yarn docker:tag:latest;
+                fi
                 docker push augmint/contracts ;
             fi
         fi
