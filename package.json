@@ -44,7 +44,7 @@
     "docker:tag:build": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
     "docker:tag:staging": "docker tag localdockerimage augmint/contracts:staging;",
     "docker:tag:latest": "docker tag localdockerimage augmint/contracts:latest",
-    "docker:tag:version": "docker tag localdockerimage augmint/contracts:$1"
+    "docker:tag:version": "func () { docker tag localdockerimage augmint/contracts:${1}; }; func"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
