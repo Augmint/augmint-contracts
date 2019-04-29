@@ -1,0 +1,23 @@
+{
+  "contractName": "MonetarySupervisor",
+  "latestAbiHash": "7f500b43397413e97de925528187f9cd",
+  "deployedAbis": {
+    "7f500b43397413e97de925528187f9cd": {
+      "latestDeployedAddress": "0xb8eb943621eeb2fdcb6c70ef66734f5c76195548",
+      "deployments": {
+        "0xb8eb943621eeb2fdcb6c70ef66734f5c76195548": {
+          "generatedAt": "2019-04-29T21:25:43.666Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:36.131Z",
+          "deployTransactionHash": "0x2dbade2676432cac9845cccf65a1e33e2f978b5eb2919b43c6b0631225c1cf78",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "4dd4a655427a8bb37d65c47c52b1d113",
+          "deployedBytecodeHash": "3e0602af1f64f7818b2e25889ef0808c",
+          "sourceHash": "62748c793556775f9ac607b991886bfb"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "contractName": "LoanManager",
+  "latestAbiHash": "fdf5fde95aa940c6dbfb8353c572c5fb",
+  "deployedAbis": {
+    "fdf5fde95aa940c6dbfb8353c572c5fb": {
+      "latestDeployedAddress": "0x3eda25ee9ea63ddb7d478f4d5e40142123fa25c6",
+      "deployments": {
+        "0x3eda25ee9ea63ddb7d478f4d5e40142123fa25c6": {
+          "generatedAt": "2019-04-29T21:25:43.695Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:36.212Z",
+          "deployTransactionHash": "0x6266d0ad195b3e004c5e41364a548fc55e5eea88c894087665759bdae9b39f92",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "4f80cc451be48e4d62a17dbc3895a91d",
+          "deployedBytecodeHash": "bc0eea72e35030fc44549a2a0064bf73",
+          "sourceHash": "234fd5848af85ca2444c888fd6ba61aa"
+        }
+      }
+    }
+  }
+}

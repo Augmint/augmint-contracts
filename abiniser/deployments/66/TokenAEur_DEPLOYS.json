@@ -1,0 +1,23 @@
+{
+  "contractName": "TokenAEur",
+  "latestAbiHash": "2ea91d34a7bfefc8f38ef0e8a5ae24a5",
+  "deployedAbis": {
+    "2ea91d34a7bfefc8f38ef0e8a5ae24a5": {
+      "latestDeployedAddress": "0x7c27f30a7f51932cdcf7ac8593eeb7571141f220",
+      "deployments": {
+        "0x7c27f30a7f51932cdcf7ac8593eeb7571141f220": {
+          "generatedAt": "2019-04-29T21:25:43.649Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:36.086Z",
+          "deployTransactionHash": "0xbef6b0c30f301e61ece2e6c711ecd88ccf43d1b6c1e9c2e6873da85d6b91986a",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "ed40773118be68131fcf5abcf36d21c7",
+          "deployedBytecodeHash": "604fd8ddaf6012bd2f2f2e5b8ebf76c8",
+          "sourceHash": "04025a37ea64acbc6f0ea2ec8a6f3e4d"
+        }
+      }
+    }
+  }
+}

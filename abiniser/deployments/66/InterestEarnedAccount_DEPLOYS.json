@@ -1,0 +1,23 @@
+{
+  "contractName": "InterestEarnedAccount",
+  "latestAbiHash": "11b039ce783db308e1a9b5f46f05824f",
+  "deployedAbis": {
+    "11b039ce783db308e1a9b5f46f05824f": {
+      "latestDeployedAddress": "0xba89ed2dd93a63e75fa9e426ad59e3bc6e36eb8d",
+      "deployments": {
+        "0xba89ed2dd93a63e75fa9e426ad59e3bc6e36eb8d": {
+          "generatedAt": "2019-04-29T21:25:43.641Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:24.282Z",
+          "deployTransactionHash": "0xc29f5ea774bf1c5ad626b75a2d0b48ee6d3a3309ec5488b4ece2c334f0ef35cf",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "d221c12f6c9c52243e489a002b9279e3",
+          "deployedBytecodeHash": "3d78c2162360c1e031d795839f7ce883",
+          "sourceHash": "3ae3310cda808efba999807e54bf8c9b"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "contractName": "AugmintReserves",
+  "latestAbiHash": "024b81d1a1f75241167a8a0f6e62326f",
+  "deployedAbis": {
+    "024b81d1a1f75241167a8a0f6e62326f": {
+      "latestDeployedAddress": "0x516f51bcc8f5b5fa692830998100beb55e2035e2",
+      "deployments": {
+        "0x516f51bcc8f5b5fa692830998100beb55e2035e2": {
+          "generatedAt": "2019-04-29T21:25:43.626Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:24.285Z",
+          "deployTransactionHash": "0xaf7d2b43c90c8540dd51b15abbfbeba823793a5497b57c45446440add8400630",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "44afc3f34fb8b7fea2a6743cbc8c6999",
+          "deployedBytecodeHash": "c561e2e5715162ea6d788141c14bbb76",
+          "sourceHash": "b9d84f5f6153164ba581845190291c88"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "contractName": "Exchange",
+  "latestAbiHash": "d3e7f8a261b756f9c40da097608b21cd",
+  "deployedAbis": {
+    "d3e7f8a261b756f9c40da097608b21cd": {
+      "latestDeployedAddress": "0x806c018c14f3446717c5f380e5a1a3e530e45d45",
+      "deployments": {
+        "0x806c018c14f3446717c5f380e5a1a3e530e45d45": {
+          "generatedAt": "2019-04-29T21:25:43.729Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:36.186Z",
+          "deployTransactionHash": "0x344355e361fe66f34aae4890c355f9cb8d72fcb8fa4a67de0cbcf8470e50883f",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "4947ce8b998f71a612b657747a3ba83e",
+          "deployedBytecodeHash": "92c3e1905f3cf3fb824b4648a048905d",
+          "sourceHash": "d6ff57acb1b45199b5dd08357978d8c2"
+        }
+      }
+    }
+  }
+}

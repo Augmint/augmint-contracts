@@ -1,0 +1,23 @@
+{
+  "contractName": "Locker",
+  "latestAbiHash": "f59526398823aef0f0c1454d0b6b4eac",
+  "deployedAbis": {
+    "f59526398823aef0f0c1454d0b6b4eac": {
+      "latestDeployedAddress": "0xad25d5a2e0882536ea34e3349c7019c205708c8b",
+      "deployments": {
+        "0xad25d5a2e0882536ea34e3349c7019c205708c8b": {
+          "generatedAt": "2019-04-29T21:25:43.709Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:36.160Z",
+          "deployTransactionHash": "0x9c26f354fc3dec8922f1b2116b6ef104ef47ce59b9da89fac81dfe918491a0e3",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "0e7939b3e41166c23c6ec93d178ecbc4",
+          "deployedBytecodeHash": "2af90203e1dd333de5a21f16c893b946",
+          "sourceHash": "5fb19771489eecebfa02e95214887146"
+        }
+      }
+    }
+  }
+}

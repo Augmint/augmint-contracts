@@ -1,0 +1,23 @@
+{
+  "contractName": "Migrations",
+  "latestAbiHash": "78141a323f4a8416891b06a0a2b90065",
+  "deployedAbis": {
+    "78141a323f4a8416891b06a0a2b90065": {
+      "latestDeployedAddress": "0x179fd00c328d4ecdb5043c8686d377a24ede9d11",
+      "deployments": {
+        "0x179fd00c328d4ecdb5043c8686d377a24ede9d11": {
+          "generatedAt": "2019-04-29T21:25:43.601Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:37.884Z",
+          "deployTransactionHash": "0x6d45f738de696456f4f7282cbd6e50a0a8ee2d370e417d97994bb97a21613071",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "f0557c3c790f279d198ef1d54ea5f550",
+          "deployedBytecodeHash": "1c74c56a535b7d558a79121649239bdf",
+          "sourceHash": "16ee1835a27505e14d1b6990cdfa8c2c"
+        }
+      }
+    }
+  }
+}

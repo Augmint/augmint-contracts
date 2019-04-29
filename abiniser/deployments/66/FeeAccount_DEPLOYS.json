@@ -1,0 +1,23 @@
+{
+  "contractName": "FeeAccount",
+  "latestAbiHash": "67db260db12738df3cced3511d34c65c",
+  "deployedAbis": {
+    "67db260db12738df3cced3511d34c65c": {
+      "latestDeployedAddress": "0xc1bac9d86545eef06ed8d68c62e4638304596b61",
+      "deployments": {
+        "0xc1bac9d86545eef06ed8d68c62e4638304596b61": {
+          "generatedAt": "2019-04-29T21:25:43.633Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:36.093Z",
+          "deployTransactionHash": "0xeb8a2b555d3ca4c4d234a5ea51966d528a1424fbc5f24aee6bbc58b3547b38b2",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "427fbf39b30f9c3c587ac747529382d6",
+          "deployedBytecodeHash": "7d629ef363997f2b4c6b0491a0b1a1d7",
+          "sourceHash": "d8975a5e1941ad79313f4b7bb0be9f95"
+        }
+      }
+    }
+  }
+}

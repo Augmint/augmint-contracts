@@ -15,6 +15,13 @@ module.exports = {
     //working_directory: './contracts',
     //migrations_directory: './migrations',
     networks: {
+        hydro: {
+            host: "localhost",
+            port: 8545,
+            network_id: "66",
+            gas: 4707806,
+            gasPrice: 1000000000 // 1 GWEI
+        },
         development: {
             host: "localhost",
             port: 8545,
@@ -68,11 +75,7 @@ module.exports = {
             gasPrice: 140000000000 // 140 Gwei
         },
         mainnet: {
-            provider: () =>
-                new HDWalletProvider(
-                    MNEMONIC,
-                    "https://mainnet.infura.io/" + INFURA_API_KEY
-                ),
+            provider: () => new HDWalletProvider(MNEMONIC, "https://mainnet.infura.io/" + INFURA_API_KEY),
             network_id: 1,
             gasPrice: 6000000000 // 6 Gwei
         }

@@ -1,0 +1,23 @@
+{
+  "contractName": "Rates",
+  "latestAbiHash": "73a17ebb0acc71773371c6a8e1c8e6ce",
+  "deployedAbis": {
+    "73a17ebb0acc71773371c6a8e1c8e6ce": {
+      "latestDeployedAddress": "0xe05615f3b4cac6b1928b2a0ff31c0705e424a4bb",
+      "deployments": {
+        "0xe05615f3b4cac6b1928b2a0ff31c0705e424a4bb": {
+          "generatedAt": "2019-04-29T21:25:43.613Z",
+          "truffleContractFileUpdatedAt": "2019-04-29T21:25:36.098Z",
+          "deployTransactionHash": "0xa1c30082f5d3c284b54ab8c9a5f46948fb0405bfb034fce619517f0e22fe3b90",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "8011848257747927edacd218482fa1e9",
+          "deployedBytecodeHash": "b8350cabc582acfc901c4d39ebe766a9",
+          "sourceHash": "c65f6945fead6118910fccc8bca7494c"
+        }
+      }
+    }
+  }
+}
