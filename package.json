@@ -1,5 +1,5 @@
 {
-  "name": "augmint-contracts",
+  "name": "@augmint/contracts",
   "version": "1.0.9",
   "description": "Augmint Stable Tokens - Solidity contracts",
   "author": "“Augmint”",
@@ -67,5 +67,6 @@
     "ignore": [
       "bignumber.js"
     ]
-  }
+  },
+  "files": ["abiniser"]
 }
