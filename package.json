@@ -1,7 +1,7 @@
 {
-  "name": "augmint-contracts",
-  "version": "1.0.9",
-  "description": "Augmint Stable Tokens - Solidity contracts",
+  "name": "@augmint/contracts",
+  "version": "1.0.10",
+  "description": "Augmint Stable Tokens - Solidity contract's abi and deployment descriptors",
   "author": "“Augmint”",
   "homepage": "https://github.com/Augmint/augmint-contracts#readme",
   "license": "AGPL-3.0-only",
@@ -51,7 +51,7 @@
     "babel-register": "6.26.0",
     "bignumber.js": "5.0.0",
     "coveralls": "3.0.3",
-    "dotenv": "7.0.0",
+    "dotenv": "8.0.0",
     "eslint": "5.16.0",
     "ganache-cli": "6.4.3",
     "moment": "2.22.2",
@@ -59,7 +59,7 @@
     "solidity-coverage": "0.5.11",
     "stringifier": "2.0.0",
     "truffle": "4.1.14",
-    "truffle-hdwallet-provider": "1.0.7",
+    "truffle-hdwallet-provider": "1.0.8",
     "wait-on": "3.2.0",
     "web3v1": "npm:web3@1.0.0-beta.34"
   },
@@ -67,5 +67,6 @@
     "ignore": [
       "bignumber.js"
     ]
-  }
+  },
+  "files": ["abiniser"]
 }

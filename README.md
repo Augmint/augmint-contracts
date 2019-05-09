@@ -99,6 +99,12 @@ We are seeking for great minds to extend our core team. Contribution in any area
 
 **[Development environment setup](docs/developmentEnvironment.md)**
 
+## Publish NPM package
+
+When the abiniser directory changed:
+- bump the version property in the package.json
+- `npm publish --access public` 
+
 ## Get in touch
 
 Drop us an email: hello@augmint.cc  
