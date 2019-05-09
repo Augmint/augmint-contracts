@@ -3,9 +3,10 @@
 -   [Install](#Install)
 -   [Launch](#Launch)
 -   [Tests](#Tests)
+-   [Publish NPM package](#Publish-NPM-package)
 -   [Docker Image](#Docker-Image)
 -   [Sequence diagrams](#Sequence-diagrams)
--   [Non ganache launches/deploys](#Non-ganache-launchesdeploys) -
+-   [Non ganache launches/deploys](#Non-ganache-launchesdeploys)
 
 ## Install
 
@@ -103,9 +104,21 @@ yarn start
 yarn test
 ```
 
+## Publish NPM package
+
+When the abiniser directory changed:
+
+-   bump the version property in the package.json
+-   release a new version as usual (staging -> master, git tag & github release)
+-   `npm publish` from master branch. test it with `--dry-run`
+
 ## Docker Image
 
-A docker image with an initial state of the contracts in ganache is published for development of dependent packes: [hub.docker.com/r/augmint/contracts](https://hub.docker.com/r/augmint/contracts)
+A docker image with an initial state of the contracts in ganache is published for development of dependent packes.
+
+The image is published to [augmint/contracts dockerhub repo](https://hub.docker.com/r/augmint/contracts).
+
+NB: `augmint-contracts`' own tests are also running on this container at Travis
 
 ## Running docker image
 
@@ -116,12 +129,6 @@ yarn docker:start
 ```
 yarnd docker:stop
 ```
-
-## Docker image
-
-Docker images are used by dependent projects to quickly launch local ganache with all augmint contracts for testing Augmint.
-The image is published to [augmint/contracts dockerhub repo](https://hub.docker.com/r/augmint/contracts).
-NB: `augmint-contracts`' own tests are also running on this container at Travis,
 
 ### Build docker image
 
@@ -135,9 +142,10 @@ Travis set to generate a docker image for master and staging branch builds. See 
 
 **Tags**
 
--   `yarn docker:tag`: every published image tagged with `commit-xxxxx` and `build-travisbuildnumber`
--   `yarn docker:tag:nextver` : on staging branch image tagged with `nextver`
--   `yarn docker:tag:latest` : on master branch image tagged with `latest` and `vx.x.x` tags (from package.json version)
+-   `yarn docker:tag:build`: every published image tagged with `build-travisbuildnumber` and `commit-xxxxx`
+-   `yarn docker:tag:staging` : on staging branch image tagged with `staging`
+-   `yarn docker:tag:latest` : on master branch image tagged with `latest`
+-   `yarn docker:tag:version` : on master branch image tagged with `vx.x.x` tags (from git tag if it's in semver format)
 
 ## Sequence diagrams
 
