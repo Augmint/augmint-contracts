@@ -1,7 +1,7 @@
 {
-  "name": "augmint-contracts",
-  "version": "1.0.9",
-  "description": "Augmint Stable Tokens - Solidity contracts",
+  "name": "@augmint/contracts",
+  "version": "1.0.10",
+  "description": "Augmint Stable Tokens - Solidity contract's abi and deployment descriptors",
   "author": "“Augmint”",
   "homepage": "https://github.com/Augmint/augmint-contracts#readme",
   "license": "AGPL-3.0-only",
@@ -67,5 +67,6 @@
     "ignore": [
       "bignumber.js"
     ]
-  }
+  },
+  "files": ["abiniser"]
 }
