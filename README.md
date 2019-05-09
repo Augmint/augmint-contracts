@@ -94,11 +94,11 @@ Try it: **[https://www.augmint.org](http://www.augmint.org)**
     -   Token funds locking and releasing
     -   Holds locked tokens (with interest)
 
-## Contribution
+## Contributions
 
 Augmint is an open and transparent project.
 
-We are seeking for great minds to extend our core team. Contribution in any area is much appreciated: development, testing, UX&UI design, legal, marketing, spreading the word etc.
+We are looking for great minds to extend our core team. Contributions in any area is much appreciated: development, testing, UX&UI design, legal, marketing, spreading the word etc.
 
 [Code of Conduct](CODE_OF_CONDUCT.md)
 
