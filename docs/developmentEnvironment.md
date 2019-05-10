@@ -114,7 +114,7 @@ When the abiniser directory changed:
 
 ## Docker Image
 
-A docker image with an initial state of the contracts in ganache is published for development of dependent packes.
+A docker image with an initial state of the contracts in ganache is published for development of dependent packages.
 
 The image is published to [augmint/contracts dockerhub repo](https://hub.docker.com/r/augmint/contracts).
 
