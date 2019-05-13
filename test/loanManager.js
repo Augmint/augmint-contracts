@@ -37,6 +37,27 @@ contract("loanManager  tests", accounts => {
         loanProduct.id = res.productId;
     });
 
+    it("Verifies default test loanproducts", async function() {
+        // correlates with loan products set up in localTest_initialSetup.sol
+
+        // IRPA: Interest Rate Per Annum : the percentage value on the UI
+        // LPDR: Loan Product Discount Rate : uint32 discountRate constructor parameter
+
+        // IRPA = (1_000_000 / LPDR - 1) * (365 / termInDays)
+        // LPDR = 1_000_000 / (IRPA * termInDays / 365 + 1)
+
+        const toLdpr = (irpa, termInDays) => Math.ceil(1000000 / (irpa * termInDays / 365 + 1))
+
+        const p = await loanTestHelpers.getProductsInfo(0, CHUNK_SIZE);
+        assert.equal(p[0].discountRate.toNumber(), toLdpr(0.17, 365))
+        assert.equal(p[1].discountRate.toNumber(), toLdpr(0.165, 180))
+        assert.equal(p[2].discountRate.toNumber(), toLdpr(0.16, 90))
+        assert.equal(p[3].discountRate.toNumber(), toLdpr(0.155, 60))
+        assert.equal(p[4].discountRate.toNumber(), toLdpr(0.15, 30))
+        assert.equal(p[5].discountRate.toNumber(), toLdpr(0.15, 14))
+        assert.equal(p[6].discountRate.toNumber(), toLdpr(0.15, 7))
+    });
+
     it("Should add new product allow listing from offset 0", async function() {
         const prod = {
             // assuming prod attributes are same order as array returned
