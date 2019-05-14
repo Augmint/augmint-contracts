@@ -105,13 +105,13 @@ contract localTest_initialSetup {
 
         // add test loan Products
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
-        _loanManager.addLoanProduct(365 days, 854700, 550000, 1000, 50000, true); //  17% p.a.
-        _loanManager.addLoanProduct(180 days, 924752, 550000, 1000, 50000, true); // 16.5% p.a.
+        _loanManager.addLoanProduct(365 days, 854701, 550000, 1000, 50000, true); //  17% p.a.
+        _loanManager.addLoanProduct(180 days, 924753, 550000, 1000, 50000, true); // 16.5% p.a.
 
-        _loanManager.addLoanProduct(90 days, 962045, 600000, 1000, 50000, true); // 16%. p.a.
-        _loanManager.addLoanProduct(60 days, 975153, 600000, 1000, 50000, true); //  15.5% p.a.
-        _loanManager.addLoanProduct(30 days, 987821, 600000, 1000, 50000, true); //  15% p.a.
-        _loanManager.addLoanProduct(14 days, 994279, 600000, 1000, 50000, true); // 15% p.a.
+        _loanManager.addLoanProduct(90 days, 962046, 600000, 1000, 50000, true); // 16%. p.a.
+        _loanManager.addLoanProduct(60 days, 975154, 600000, 1000, 50000, true); //  15.5% p.a.
+        _loanManager.addLoanProduct(30 days, 987822, 600000, 1000, 50000, true); //  15% p.a.
+        _loanManager.addLoanProduct(14 days, 994280, 600000, 1000, 50000, true); // 15% p.a.
         _loanManager.addLoanProduct(7 days, 997132, 600000, 1000, 50000, true); // 15% p.a.
 
         _loanManager.addLoanProduct(1 hours, 999998, 980000, 2000, 50000, true); // due in 1hr for testing repayments ? p.a.
