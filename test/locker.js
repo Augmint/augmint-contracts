@@ -38,6 +38,27 @@ contract("Lock", accounts => {
         ]);
     });
 
+    it("Verifies default test lockproduct interest rates", async function() {
+        // correlates with lock products set up in localTest_initialSetup.sol
+
+        // IRPA: Interest Rate Per Annum : the percentage value on the UI
+        // PTI: Per Term Interest : uint32 perTermInterest constructor parameter
+
+        // IRPA = (PTI / 1_000_000) * (365 / termInDays)
+        // PTI = (IRPA * 1_000_000) * (termInDays / 365)
+
+        const toPti = (irpa, termInDays) => Math.ceil((irpa * 1000000) * (termInDays / 365))
+
+        const p = await lockerInstance.getLockProducts(0, CHUNK_SIZE);
+        assert.equal(p[0][0].toNumber(), toPti(0.12, 365))
+        assert.equal(p[1][0].toNumber(), toPti(0.115, 180))
+        assert.equal(p[2][0].toNumber(), toPti(0.11, 90))
+        assert.equal(p[3][0].toNumber(), toPti(0.105, 60))
+        assert.equal(p[4][0].toNumber(), toPti(0.10, 30))
+        assert.equal(p[5][0].toNumber(), toPti(0.10, 14))
+        assert.equal(p[6][0].toNumber(), toPti(0.10, 7))
+    });
+
     it("should allow lock products to be created", async function() {
         // create lock product with 5% per term, and 60 sec lock time:
         const tx = await lockerInstance.addLockProduct(50000, 60, 100, true);
