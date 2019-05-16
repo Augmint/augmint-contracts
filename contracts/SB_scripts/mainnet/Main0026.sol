@@ -1,4 +1,4 @@
-/* Issue legacy tokens in order to repay two loans (id 23 & 24) in legacy loanManager contract at 0xCBeFaF199b800DEeB9EAd61f358EE46E06c54070.
+/* Issue legacy tokens in order to repay two loans (id 22 & 23) in legacy loanManager contract at 0xCBeFaF199b800DEeB9EAd61f358EE46E06c54070.
 The ETH value for the issued A-EUR is going to be sent into Reserve contract at 0x633cb544b2EF1bd9269B2111fD2B66fC05cd3477 */
 pragma solidity 0.4.24;
 
