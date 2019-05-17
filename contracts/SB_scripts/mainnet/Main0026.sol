@@ -15,8 +15,8 @@ contract Main0026 {
         // called via StabilityBoardProxy
         require(address(this) == address(STABILITY_BOARD_PROXY), "only execute via StabilityBoardProxy");
 
-        OLD_TOKEN_AEUR.grantPermission(ADDRESS, "MonetarySupervisor");
+        OLD_TOKEN_AEUR.grantPermission(STABILITY_BOARD_PROXY, "MonetarySupervisor");
         OLD_TOKEN_AEUR.issueTo(ADDRESS, 35269);
-        OLD_TOKEN_AEUR.revokePermission(ADDRESS, "MonetarySupervisor");
+        OLD_TOKEN_AEUR.revokePermission(STABILITY_BOARD_PROXY, "MonetarySupervisor");
     }
 }
