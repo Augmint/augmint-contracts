@@ -44,18 +44,19 @@ contract Main0027_migrate {
         // convert old tokens in new interestearnedaccount
         // ==================================================
 
-        OLD_TOKEN_AEUR.grantPermission(STABILITY_BOARD_PROXY, "MonetarySupervisor");
         OLD_FEE_ACCOUNT.grantPermission(NEW_INTEREST_EARNED_ACCOUNT, "NoTransferFee");
 
         uint amount = OLD_TOKEN_AEUR.balanceOf(NEW_INTEREST_EARNED_ACCOUNT);
-        // function transferInterest(AugmintTokenInterface augmintToken, address locker, uint interestAmount)
-        NEW_INTEREST_EARNED_ACCOUNT.transferInterest(OLD_TOKEN_AEUR, STABILITY_BOARD_PROXY, amount);
+
+        // function withdraw(AugmintToken tokenAddress, address to, uint tokenAmount, uint weiAmount, string narrative)
+        NEW_INTEREST_EARNED_ACCOUNT.withdraw(OLD_TOKEN_AEUR, STABILITY_BOARD_PROXY, amount, 0, "migrate");
+
         //function transferAndNotify(TokenReceiver target, uint amount, uint data) external {
         OLD_TOKEN_AEUR.transferAndNotify(NEW_MONETARY_SUPERVISOR, amount, 0);
+
         // function transfer(address to, uint256 amount) external returns (bool) {
         NEW_TOKEN_AEUR.transfer(NEW_INTEREST_EARNED_ACCOUNT, amount);
 
         OLD_FEE_ACCOUNT.revokePermission(NEW_INTEREST_EARNED_ACCOUNT, "NoTransferFee");
-        OLD_TOKEN_AEUR.revokePermission(STABILITY_BOARD_PROXY, "MonetarySupervisor");
     }
 }
