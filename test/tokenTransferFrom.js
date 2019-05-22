@@ -3,6 +3,7 @@ const testHelpers = new require("./helpers/testHelpers.js");
 
 let augmintToken = null;
 let maxFee = null;
+let snapshotId;
 
 contract("TransferFrom AugmintToken tests", accounts => {
     before(async function() {
@@ -13,6 +14,14 @@ contract("TransferFrom AugmintToken tests", accounts => {
             tokenTestHelpers.issueToken(accounts[0], accounts[0], 500000000),
             tokenTestHelpers.issueToken(accounts[0], accounts[1], 500000000)
         ]);
+    });
+
+    beforeEach(async function() {
+        snapshotId = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("transferFrom", async function() {
