@@ -3,6 +3,7 @@ const tokenTestHelpers = new require("./helpers/tokenTestHelpers.js");
 
 let augmintToken = null;
 let minFee, maxFee, feePt, minFeeAmount, maxFeeAmount;
+let snapshotId;
 
 contract("Transfer Augmint tokens tests", accounts => {
     before(async function() {
@@ -14,6 +15,14 @@ contract("Transfer Augmint tokens tests", accounts => {
         [feePt, minFee, maxFee] = await tokenTestHelpers.feeAccount.transferFee();
         minFeeAmount = minFee.div(feePt).mul(1000000);
         maxFeeAmount = maxFee.div(feePt).mul(1000000);
+    });
+
+    beforeEach(async function() {
+        snapshotId = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("Should be able to transfer tokens between accounts (without narrative, min fee)", async function() {

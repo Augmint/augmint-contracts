@@ -9,8 +9,13 @@ let rates = null;
 const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 100000 };
 let products = {};
 
+let snapshotIdSingleTest;
+let snapshotIdAllTests;
+
 contract("Loans collection tests", accounts => {
     before(async function() {
+        snapshotIdAllTests = await testHelpers.takeSnapshot();
+
         rates = ratesTestHelpers.rates;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
         loanManager = loanTestHelpers.loanManager;
@@ -46,6 +51,18 @@ contract("Loans collection tests", accounts => {
             products.fullCoverage,
             products.moreCoverage
         ] = newProducts;
+    });
+
+    after(async () => {
+        await testHelpers.revertSnapshot(snapshotIdAllTests);
+    });
+
+    beforeEach(async function() {
+        snapshotIdSingleTest = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotIdSingleTest);
     });
 
     it("Should collect a defaulted A-EUR loan and send back leftover collateral ", async function() {
