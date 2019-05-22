@@ -95,10 +95,11 @@ contract("Loan to Deposit ratio tests", accounts => {
     });
 
     beforeEach(async function() {
-        if (snapshotId) {
-            await testHelpers.revertSnapshot(snapshotId);
-        }
         snapshotId = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("LTD when both totalLock and totalLoan 0", async function() {
