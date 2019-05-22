@@ -7,6 +7,7 @@ let loanManager = null;
 let loanProduct = null;
 
 let CHUNK_SIZE = 20;
+let snapshotId;
 
 contract("loanManager  tests", accounts => {
     before(async function() {
@@ -35,6 +36,14 @@ contract("loanManager  tests", accounts => {
             productId: x => x
         });
         loanProduct.id = res.productId;
+    });
+
+    beforeEach(async function() {
+        snapshotId = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("Verifies default test loanproduct discount rates", async function() {
