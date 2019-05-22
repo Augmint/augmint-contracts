@@ -2,10 +2,19 @@ const ratesTestHelpers = require("./helpers/ratesTestHelpers");
 const testHelpers = require("./helpers/testHelpers.js");
 
 let rates = null;
+let snapshotId;
 
 contract("Rates tests", accounts => {
     before(async function() {
         rates = ratesTestHelpers.rates;
+    });
+
+    beforeEach(async function() {
+        snapshotId = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotId);
     });
 
     it("should be possible to set 1 rate", async function() {
