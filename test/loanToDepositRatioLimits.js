@@ -14,8 +14,10 @@ let loanManager;
 let locker;
 let loanProductId;
 let lockProductId;
-let snapshotId;
 let rate;
+
+let snapshotIdSingleTest;
+let snapshotIdAllTests;
 
 const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, allowedDifferenceAmount: 100000 };
 
@@ -34,6 +36,8 @@ const getLtdLimits = async () => {
 
 contract("Loan to Deposit ratio tests", accounts => {
     before(async () => {
+        snapshotIdAllTests = await testHelpers.takeSnapshot();
+
         augmintToken = tokenTestHelpers.augmintToken;
         loanManager = loanTestHelpers.loanManager;
         locker = Locker.at(Locker.address);
@@ -94,12 +98,16 @@ contract("Loan to Deposit ratio tests", accounts => {
         ]);
     });
 
+    after(async () => {
+        await testHelpers.revertSnapshot(snapshotIdAllTests);
+    });
+
     beforeEach(async function() {
-        snapshotId = await testHelpers.takeSnapshot();
+        snapshotIdSingleTest = await testHelpers.takeSnapshot();
     });
 
     afterEach(async function() {
-        await testHelpers.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotIdSingleTest);
     });
 
     it("LTD when both totalLock and totalLoan 0", async function() {

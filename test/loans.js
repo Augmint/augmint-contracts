@@ -15,10 +15,14 @@ const ltdParams = { lockDifferenceLimit: 300000, loanDifferenceLimit: 200000, al
 
 let products = {};
 let CHUNK_SIZE = 10;
-let snapshotId;
+
+let snapshotIdSingleTest;
+let snapshotIdAllTests;
 
 contract("Loans tests", accounts => {
     before(async function() {
+        snapshotIdAllTests = await testHelpers.takeSnapshot();
+
         rates = ratesTestHelpers.rates;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
         augmintToken = tokenTestHelpers.augmintToken;
@@ -59,12 +63,16 @@ contract("Loans tests", accounts => {
         ] = newProducts;
     });
 
+    after(async () => {
+        await testHelpers.revertSnapshot(snapshotIdAllTests);
+    });
+
     beforeEach(async function() {
-        snapshotId = await testHelpers.takeSnapshot();
+        snapshotIdSingleTest = await testHelpers.takeSnapshot();
     });
 
     afterEach(async function() {
-        await testHelpers.revertSnapshot(snapshotId);
+        await testHelpers.revertSnapshot(snapshotIdSingleTest);
     });
 
     it("Should get an A-EUR loan", async function() {
