@@ -17,8 +17,7 @@ contract Rates is Restricted {
     using SafeMath for uint256;
 
     struct RateInfo {
-        uint rate; // how much 1 WEI worth 1 unit , i.e. symbol/ETH rate
-                    // 0 rate means no rate info available
+        uint rate; // how much ETH is worth 1 token, i.e. token/ETH rate, 0 rate means no rate info available
         uint lastUpdated;
     }
 

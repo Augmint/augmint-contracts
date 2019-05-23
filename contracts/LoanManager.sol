@@ -22,13 +22,12 @@ contract LoanManager is Restricted, TokenReceiver {
     enum LoanState { Open, Repaid, Defaulted, Collected } // NB: Defaulted state is not stored, only getters calculate
 
     struct LoanProduct {
-        uint minDisbursedAmount; // 0: with decimals set in AugmintToken.decimals
-        uint32 term;            // 1
-        uint32 discountRate;    // 2: discountRate in parts per million , ie. 10,000 = 1%
-        uint32 collateralRatio; // 3: loan token amount / colleteral pegged ccy value
-                                //      in parts per million , ie. 10,000 = 1%
-        uint32 defaultingFeePt; // 4: % of collateral in parts per million , ie. 50,000 = 5%
-        bool isActive;          // 5
+        uint minDisbursedAmount;    // 0: minimum loanAmount, with decimals set in AugmintToken.decimals (i.e. token amount)
+        uint32 term;                // 1: term length (in seconds)
+        uint32 discountRate;        // 2: discountRate (in parts per million, i.e. 10,000 = 1%)
+        uint32 collateralRatio;     // 3: repayment (token amount) / collateral (token amount), (in parts per million, i.e. 10,000 = 1%)
+        uint32 defaultingFeePt;     // 4: % of repaymentAmount (in parts per million, i.e. 50,000 = 5%)
+        bool isActive;              // 5: flag to enable/disable product
     }
 
     /* NB: we don't need to store loan parameters because loan products can't be altered (only disabled/enabled) */
