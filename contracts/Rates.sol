@@ -2,6 +2,7 @@
  Generic token / ETH rates contract.
  only callable by trusted price oracles.
  Being regularly called by a price oracle
+ Note: symbol is always the "pegged symbol" not the token's own symbol!
     TODO: trustless/decentralized price Oracle
     TODO: shall we use blockNumber instead of now for lastUpdated?
     TODO: consider if we need storing rates with variable decimals instead of fixed 2
@@ -25,7 +26,7 @@ contract Rates is Restricted {
         uint lastUpdated;
     }
 
-    // mapping currency symbol => rate.
+    // mapping pegged currency symbol => rate.
     // all rates are stored as token amounts (with 2 decimals for EUR, i.e. if EUR/ETH = 989.12 then rate = 98912)
     mapping(bytes32 => RateInfo) public rates;
 
