@@ -1,10 +1,10 @@
 /*
- Generic symbol / WEI rates contract.
+ Generic token / ETH rates contract.
  only callable by trusted price oracles.
  Being regularly called by a price oracle
-    TODO: trustless/decentrilezed price Oracle
+    TODO: trustless/decentralized price Oracle
     TODO: shall we use blockNumber instead of now for lastUpdated?
-    TODO: consider if we need storing rates with variable decimals instead of fixed 4
+    TODO: consider if we need storing rates with variable decimals instead of fixed 2
     TODO: could we emit 1 RateChanged event from setMultipleRates (symbols and newrates arrays)?
 */
 pragma solidity 0.4.24;
@@ -17,11 +17,12 @@ contract Rates is Restricted {
     using SafeMath for uint256;
 
     struct RateInfo {
-        uint rate; // how much ETH is worth 1 token, i.e. token/ETH rate, 0 rate means no rate info available
+        uint rate; // how much token is worth 1 ETH, i.e. token/ETH rate, 0 rate means no rate info available
         uint lastUpdated;
     }
 
-    // mapping currency symbol => rate. all rates are stored with 2 decimals. i.e. EUR/ETH = 989.12 then rate = 98912
+    // mapping currency symbol => rate.
+    // all rates are stored as token amounts (with 2 decimals for EUR, i.e. if EUR/ETH = 989.12 then rate = 98912)
     mapping(bytes32 => RateInfo) public rates;
 
     event RateChanged(bytes32 symbol, uint newRate);
@@ -34,7 +35,7 @@ contract Rates is Restricted {
     }
 
     function setMultipleRates(bytes32[] symbols, uint[] newRates) external restrict("RatesFeeder") {
-        require(symbols.length == newRates.length, "symobls and newRates lengths must be equal");
+        require(symbols.length == newRates.length, "symbols and newRates lengths must be equal");
         for (uint256 i = 0; i < symbols.length; i++) {
             rates[symbols[i]] = RateInfo(newRates[i], now);
             emit RateChanged(symbols[i], newRates[i]);
