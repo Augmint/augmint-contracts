@@ -28,6 +28,7 @@ contract LoanManager is Restricted, TokenReceiver {
         uint32 collateralRatio;     // 3: repayment (token amount) / collateral (token amount), (in parts per million, i.e. 10,000 = 1%)
         uint32 defaultingFeePt;     // 4: % of repaymentAmount (in parts per million, i.e. 50,000 = 5%)
         bool isActive;              // 5: flag to enable/disable product
+        uint32 marginRatio;         // 6: ... (in ppm), zero means no margin
     }
 
     /* NB: we don't need to store loan parameters because loan products can't be altered (only disabled/enabled) */
@@ -38,6 +39,7 @@ contract LoanManager is Restricted, TokenReceiver {
         uint32 productId; // 3
         LoanState state; // 4
         uint40 maturity; // 5
+        uint marginRate; // 6
     }
 
     LoanProduct[] public products;
@@ -45,7 +47,7 @@ contract LoanManager is Restricted, TokenReceiver {
     LoanData[] public loans;
     mapping(address => uint[]) public accountLoans;  // owner account address =>  array of loan Ids
 
-    Rates public rates; // instance of ETH/pegged currency rate provider contract
+    Rates public rates; // instance of token/ETH rate provider contract
     AugmintTokenInterface public augmintToken; // instance of token contract
     MonetarySupervisor public monetarySupervisor;
 
@@ -71,12 +73,26 @@ contract LoanManager is Restricted, TokenReceiver {
         rates = _rates;
     }
 
+    /* @Deprecated: For compatibility with previous versions (without the margin parameter), e.g. old SB scripts */
     function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
                                 uint32 defaultingFeePt, bool isActive)
     external restrict("StabilityBoard") {
+        _addLoanProduct(term, discountRate, collateralRatio, minDisbursedAmount, defaultingFeePt, isActive, 0);
+    }
 
+    /* New version, with the margin parameter */
+    function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
+                                uint32 defaultingFeePt, bool isActive, uint32 marginRatio)
+    external restrict("StabilityBoard") {
+        _addLoanProduct(term, discountRate, collateralRatio, minDisbursedAmount, defaultingFeePt, isActive, marginRatio);
+    }
+
+    /* Internal function for both addLoanProduct-s */
+    function _addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
+                                uint32 defaultingFeePt, bool isActive, uint32 marginRatio)
+    internal restrict("StabilityBoard") {
         uint _newProductId = products.push(
-            LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive)
+            LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive, marginRatio)
         ) - 1;
 
         uint32 newProductId = uint32(_newProductId);
@@ -111,9 +127,15 @@ contract LoanManager is Restricted, TokenReceiver {
         uint40 maturity = uint40(expiration);
         require(maturity == expiration, "maturity overflow");
 
+        uint marginRate = 0;
+        if (product.marginRatio > 0) {
+            marginRate = calculateMarginRate(product.marginRatio, repaymentAmount, msg.value);
+        }
+
         // Create new loan
-        uint loanId = loans.push(LoanData(msg.value, repaymentAmount, msg.sender,
-                                            productId, LoanState.Open, maturity)) - 1;
+        uint loanId = loans.push(
+            LoanData(msg.value, repaymentAmount, msg.sender, productId, LoanState.Open, maturity, marginRate)
+        ) - 1;
 
         // Store ref to new loan
         accountLoans[msg.sender].push(loanId);
@@ -150,7 +172,8 @@ contract LoanManager is Restricted, TokenReceiver {
             require(loanIds[i] < loans.length, "invalid loanId"); // next line would revert but require to emit reason
             LoanData storage loan = loans[loanIds[i]];
             require(loan.state == LoanState.Open, "loan state must be Open");
-            require(now >= loan.maturity, "current time must be later than maturity");
+            require(now >= loan.maturity || isUnderMargin(loan), "Not collectable");
+
             LoanProduct storage product = products[loan.productId];
 
             uint loanAmount;
@@ -285,6 +308,25 @@ contract LoanManager is Restricted, TokenReceiver {
         // calculate loan values based on repayment amount
         loanAmount = repaymentAmount.mul(product.discountRate).div(1000000);
         interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
+    }
+
+    function calculateMarginRate(uint32 marginRatio, uint repaymentAmount, uint collateralAmount)
+    internal pure returns (uint) {
+        // TODO: think about proper div rounding to use here
+        return uint(marginRatio).mul(repaymentAmount).div(collateralAmount.mul(1000000));
+    }
+
+    function isUnderMargin(LoanData storage loan)
+    internal view returns (bool) {
+        if (loan.marginRate == 0) {
+            // not a "margin" type loan
+            return false;
+        }
+        uint currentRate;
+        (currentRate, ) = rates.rates(augmintToken.peggedSymbol());
+        require(currentRate > 0, "No current rate available");
+        // TODO: think about < vs <=
+        return currentRate < loan.marginRate;
     }
 
     /* internal function, assuming repayment amount already transfered  */
