@@ -203,17 +203,18 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     // returns <chunkSize> loan products starting from some <offset>:
-    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
+    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, marginRatio ]
     function getProducts(uint offset, uint16 chunkSize)
-    external view returns (uint[8][]) {
+    external view returns (uint[9][]) {
         uint limit = SafeMath.min(offset.add(chunkSize), products.length);
-        uint[8][] memory response = new uint[8][](limit.sub(offset));
+        uint[9][] memory response = new uint[9][](limit.sub(offset));
 
         for (uint i = offset; i < limit; i++) {
             LoanProduct storage product = products[i];
             response[i - offset] = [i, product.minDisbursedAmount, product.term, product.discountRate,
                     product.collateralRatio, product.defaultingFeePt,
-                    monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0 ];
+                    monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0,
+                    product.marginRatio];
         }
         return response;
     }
@@ -224,11 +225,11 @@ contract LoanManager is Restricted, TokenReceiver {
 
     /* returns <chunkSize> loans starting from some <offset>. Loans data encoded as:
         [loanId, collateralAmount, repaymentAmount, borrower, productId,
-              state, maturity, disbursementTime, loanAmount, interestAmount] */
+              state, maturity, disbursementTime, loanAmount, interestAmount, marginCallRate] */
     function getLoans(uint offset, uint16 chunkSize)
-    external view returns (uint[10][]) {
+    external view returns (uint[11][]) {
         uint limit = SafeMath.min(offset.add(chunkSize), loans.length);
-        uint[10][] memory response = new uint[10][](limit.sub(offset));
+        uint[11][] memory response = new uint[11][](limit.sub(offset));
 
         for (uint i = offset; i < limit; i++) {
             response[i - offset] = getLoanTuple(i);
@@ -242,12 +243,12 @@ contract LoanManager is Restricted, TokenReceiver {
 
     /* returns <chunkSize> loans of a given account, starting from some <offset>. Loans data encoded as:
         [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
-                                                                                    loanAmount, interestAmount ] */
+                                                            loanAmount, interestAmount, marginCallRate] */
     function getLoansForAddress(address borrower, uint offset, uint16 chunkSize)
-    external view returns (uint[10][]) {
+    external view returns (uint[11][]) {
         uint[] storage loansForAddress = accountLoans[borrower];
         uint limit = SafeMath.min(offset.add(chunkSize), loansForAddress.length);
-        uint[10][] memory response = new uint[10][](limit.sub(offset));
+        uint[11][] memory response = new uint[11][](limit.sub(offset));
 
         for (uint i = offset; i < limit; i++) {
             response[i - offset] = getLoanTuple(loansForAddress[i]);
@@ -255,7 +256,7 @@ contract LoanManager is Restricted, TokenReceiver {
         return response;
     }
 
-    function getLoanTuple(uint loanId) public view returns (uint[10] result) {
+    function getLoanTuple(uint loanId) public view returns (uint[11] result) {
         require(loanId < loans.length, "invalid loanId"); // next line would revert but require to emit reason
         LoanData storage loan = loans[loanId];
         LoanProduct storage product = products[loan.productId];
@@ -269,7 +270,7 @@ contract LoanManager is Restricted, TokenReceiver {
                 loan.state == LoanState.Open && now >= loan.maturity ? LoanState.Defaulted : loan.state;
 
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-                loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount];
+            loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount, loan.marginCallRate];
     }
 
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
