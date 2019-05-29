@@ -3,14 +3,6 @@
  only callable by trusted price oracles.
  Being regularly called by a price oracle
  Note: symbol is always the "pegged symbol" not the token's own symbol!
-    TODO: trustless/decentralized price Oracle
-    TODO: shall we use blockNumber instead of now for lastUpdated?
-    TODO: consider if we need storing rates with variable decimals instead of fixed 2
-        well, no. Rates contract uses pure token amounts everywhere,
-        doesn't care how many decimals it takes to convert token amounts to symbol amounts.
-        (the above 'fixed 2' is not used anywhere in this contract)
-        The only assumption this contract makes is that 1 ETH = 10^18 wei, which is unlikely to change anytime soon :)
-    TODO: could we emit 1 RateChanged event from setMultipleRates (symbols and newrates arrays)?
 */
 pragma solidity 0.4.24;
 
