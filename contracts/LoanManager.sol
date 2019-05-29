@@ -160,8 +160,8 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     function collect(uint[] loanIds) external {
-        (uint rate, ) = rates.rates(augmintToken.peggedSymbol());
-        require(rate > 0, "rate must be > 0");
+        (uint currentRate, ) = rates.rates(augmintToken.peggedSymbol());
+        require(currentRate > 0, "No current rate available");
 
         /* when there are a lots of loans to be collected then
              the client need to call it in batches to make sure tx won't exceed block gas limit.
@@ -172,7 +172,7 @@ contract LoanManager is Restricted, TokenReceiver {
         uint totalCollateralToCollect;
         uint totalDefaultingFee;
         for (uint i = 0; i < loanIds.length; i++) {
-            (uint loanAmount, uint defaultingFee, uint collateralToCollect) = _collectLoan(loanIds[i], rate);
+            (uint loanAmount, uint defaultingFee, uint collateralToCollect) = _collectLoan(loanIds[i], currentRate);
             totalLoanAmountCollected = totalLoanAmountCollected.add(loanAmount);
             totalDefaultingFee = totalDefaultingFee.add(defaultingFee);
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
@@ -285,17 +285,9 @@ contract LoanManager is Restricted, TokenReceiver {
         return uint(marginRatio).mul(repaymentAmount).div(collateralAmount.mul(1000000));
     }
 
-    function isUnderMargin(LoanData storage loan)
+    function isUnderMargin(LoanData storage loan, uint currentRate)
     internal view returns (bool) {
-        if (loan.marginCallRate == 0) {
-            // not a "margin" type loan
-            return false;
-        }
-        uint currentRate;
-        (currentRate, ) = rates.rates(augmintToken.peggedSymbol());
-        require(currentRate > 0, "No current rate available");
-        // TODO: think about < vs <=
-        return currentRate < loan.marginCallRate;
+        return loan.marginCallRate > 0 && currentRate < loan.marginCallRate;
     }
 
     /* internal function, assuming repayment amount already transfered  */
@@ -328,10 +320,10 @@ contract LoanManager is Restricted, TokenReceiver {
         emit LoanRepayed(loanId, loan.borrower);
     }
 
-    function _collectLoan(uint loanId, uint rate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {
+    function _collectLoan(uint loanId, uint currentRate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {
         LoanData storage loan = loans[loanId];
         require(loan.state == LoanState.Open, "loan state must be Open");
-        require(now >= loan.maturity, "current time must be later than maturity");
+        require(now >= loan.maturity || isUnderMargin(loan, currentRate), "Not collectable");
         LoanProduct storage product = products[loan.productId];
 
         (loanAmount, ) = calculateLoanValues(product, loan.repaymentAmount);
@@ -340,8 +332,8 @@ contract LoanManager is Restricted, TokenReceiver {
 
         // send ETH collateral to augmintToken reserve
         // uint defaultingFeeInToken = loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000);
-        defaultingFee = _convertToWei(rate, loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000));
-        uint targetCollection = _convertToWei(rate, loan.repaymentAmount).add(defaultingFee);
+        defaultingFee = _convertToWei(currentRate, loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000));
+        uint targetCollection = _convertToWei(currentRate, loan.repaymentAmount).add(defaultingFee);
 
         uint releasedCollateral;
         if (targetCollection < loan.collateralAmount) {
