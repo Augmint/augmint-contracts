@@ -39,7 +39,7 @@ contract LoanManager is Restricted, TokenReceiver {
         uint32 productId; // 3
         LoanState state; // 4
         uint40 maturity; // 5
-        uint marginRate; // 6
+        uint marginCallRate; // 6: the token/ETH rate of the margin for this loan, under which it can be "margin called" (collected)
     }
 
     LoanProduct[] public products;
@@ -287,7 +287,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
     function isUnderMargin(LoanData storage loan)
     internal view returns (bool) {
-        if (loan.marginRate == 0) {
+        if (loan.marginCallRate == 0) {
             // not a "margin" type loan
             return false;
         }
@@ -295,7 +295,7 @@ contract LoanManager is Restricted, TokenReceiver {
         (currentRate, ) = rates.rates(augmintToken.peggedSymbol());
         require(currentRate > 0, "No current rate available");
         // TODO: think about < vs <=
-        return currentRate < loan.marginRate;
+        return currentRate < loan.marginCallRate;
     }
 
     /* internal function, assuming repayment amount already transfered  */
