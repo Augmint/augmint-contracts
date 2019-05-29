@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 echo "launching ganache-cli (aka testrpc) with deterministic addresses"
 yarn ganache-cli \
---gasLimit 0xFFFFFF \
+--gasLimit 0x694920 \
 --gasPrice 1000000000 \
 --networkId 999 \
 -m "hello build tongue rack parade express shine salute glare rate spice stock" \
