@@ -160,6 +160,9 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     function collect(uint[] loanIds) external {
+        (uint rate, ) = rates.rates(augmintToken.peggedSymbol());
+        require(rate > 0, "rate must be > 0");
+
         /* when there are a lots of loans to be collected then
              the client need to call it in batches to make sure tx won't exceed block gas limit.
          Anyone can call it - can't cause harm as it only allows to collect loans which they are defaulted
@@ -169,44 +172,10 @@ contract LoanManager is Restricted, TokenReceiver {
         uint totalCollateralToCollect;
         uint totalDefaultingFee;
         for (uint i = 0; i < loanIds.length; i++) {
-            require(loanIds[i] < loans.length, "invalid loanId"); // next line would revert but require to emit reason
-            LoanData storage loan = loans[loanIds[i]];
-            require(loan.state == LoanState.Open, "loan state must be Open");
-            require(now >= loan.maturity || isUnderMargin(loan), "Not collectable");
-
-            LoanProduct storage product = products[loan.productId];
-
-            uint loanAmount;
-            (loanAmount, ) = calculateLoanValues(product, loan.repaymentAmount);
-
+            (uint loanAmount, uint defaultingFee, uint collateralToCollect) = _collectLoan(loanIds[i], rate);
             totalLoanAmountCollected = totalLoanAmountCollected.add(loanAmount);
-
-            loan.state = LoanState.Collected;
-
-            // send ETH collateral to augmintToken reserve
-            uint defaultingFeeInToken = loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000);
-            uint defaultingFee = rates.convertToWei(augmintToken.peggedSymbol(), defaultingFeeInToken);
-            uint targetCollection = rates.convertToWei(augmintToken.peggedSymbol(),
-                    loan.repaymentAmount).add(defaultingFee);
-
-            uint releasedCollateral;
-            if (targetCollection < loan.collateralAmount) {
-                releasedCollateral = loan.collateralAmount.sub(targetCollection);
-                loan.borrower.transfer(releasedCollateral);
-            }
-            uint collateralToCollect = loan.collateralAmount.sub(releasedCollateral);
-            if (defaultingFee >= collateralToCollect) {
-                defaultingFee = collateralToCollect;
-                collateralToCollect = 0;
-            } else {
-                collateralToCollect = collateralToCollect.sub(defaultingFee);
-            }
             totalDefaultingFee = totalDefaultingFee.add(defaultingFee);
-
             totalCollateralToCollect = totalCollateralToCollect.add(collateralToCollect);
-
-            emit LoanCollected(loanIds[i], loan.borrower, collateralToCollect.add(defaultingFee),
-                    releasedCollateral, defaultingFee);
         }
 
         if (totalCollateralToCollect > 0) {
@@ -358,4 +327,41 @@ contract LoanManager is Restricted, TokenReceiver {
 
         emit LoanRepayed(loanId, loan.borrower);
     }
+
+    function _collectLoan(uint loanId, uint rate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {
+        LoanData storage loan = loans[loanId];
+        require(loan.state == LoanState.Open, "loan state must be Open");
+        require(now >= loan.maturity, "current time must be later than maturity");
+        LoanProduct storage product = products[loan.productId];
+
+        (loanAmount, ) = calculateLoanValues(product, loan.repaymentAmount);
+
+        loan.state = LoanState.Collected;
+
+        // send ETH collateral to augmintToken reserve
+        // uint defaultingFeeInToken = loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000);
+        defaultingFee = _convertToWei(rate, loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000));
+        uint targetCollection = _convertToWei(rate, loan.repaymentAmount).add(defaultingFee);
+
+        uint releasedCollateral;
+        if (targetCollection < loan.collateralAmount) {
+            releasedCollateral = loan.collateralAmount.sub(targetCollection);
+            loan.borrower.transfer(releasedCollateral);
+        }
+        collateralToCollect = loan.collateralAmount.sub(releasedCollateral);
+        if (defaultingFee >= collateralToCollect) {
+            defaultingFee = collateralToCollect;
+            collateralToCollect = 0;
+        } else {
+            collateralToCollect = collateralToCollect.sub(defaultingFee);
+        }
+
+        emit LoanCollected(loanId, loan.borrower, collateralToCollect.add(defaultingFee),
+                releasedCollateral, defaultingFee);
+    }
+
+    function _convertToWei(uint rate, uint value) private pure returns(uint weiValue) {
+        return value.mul(1000000000000000000).roundedDiv(rate);
+    }
+
 }
