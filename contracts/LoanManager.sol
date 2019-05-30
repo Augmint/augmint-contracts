@@ -39,7 +39,6 @@ contract LoanManager is Restricted, TokenReceiver {
         uint32 productId;           // 3: id of the product from which this loan was created
         LoanState state;            // 4: current status of the loan (Open/Repaid/Collected)
         uint40 maturity;            // 5: expiration date (in epoch seconds)
-        uint marginCallRate;        // 6: the token/ETH rate of the margin for this loan, under which it can be "margin called" (collected)
     }
 
     LoanProduct[] public products;
@@ -127,14 +126,9 @@ contract LoanManager is Restricted, TokenReceiver {
         uint40 maturity = uint40(expiration);
         require(maturity == expiration, "maturity overflow");
 
-        uint marginRate = 0;
-        if (product.marginRatio > 0) {
-            marginRate = calculateMarginRate(product.marginRatio, repaymentAmount, msg.value);
-        }
-
         // Create new loan
         uint loanId = loans.push(
-            LoanData(msg.value, repaymentAmount, msg.sender, productId, LoanState.Open, maturity, marginRate)
+            LoanData(msg.value, repaymentAmount, msg.sender, productId, LoanState.Open, maturity)
         ) - 1;
 
         // Store ref to new loan
@@ -154,7 +148,6 @@ contract LoanManager is Restricted, TokenReceiver {
         require(product.marginRatio > 0, "not a margin type loan");
 
         loan.collateralAmount = loan.collateralAmount.add(msg.value);
-        loan.marginCallRate = calculateMarginRate(product.marginRatio, loan.repaymentAmount, loan.collateralAmount);
     }
 
     /* repay loan, called from AugmintToken's transferAndNotify
@@ -277,8 +270,12 @@ contract LoanManager is Restricted, TokenReceiver {
         (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
         uint disbursementTime = loan.maturity - product.term;
 
+        // TODO: add extra data: marginCallRate, defaulted status
+        uint marginCallRate = 0;
+        bool defaulted = false;
+
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-            loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount, loan.marginCallRate];
+            loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount, marginCallRate];
     }
 
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
@@ -288,7 +285,8 @@ contract LoanManager is Restricted, TokenReceiver {
         interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
     }
 
-    function calculateMarginRate(uint32 marginRatio, uint repaymentAmount, uint collateralAmount)
+    // the token/ETH rate of the margin, under which the loan can be "margin called" (collected)
+    function calculateMarginCallRate(uint32 marginRatio, uint repaymentAmount, uint collateralAmount)
     internal pure returns (uint) {
         // TODO: think about proper div rounding to use here
         return uint(marginRatio).mul(repaymentAmount).div(collateralAmount.mul(1000000));
@@ -296,7 +294,9 @@ contract LoanManager is Restricted, TokenReceiver {
 
     function isUnderMargin(LoanData storage loan, uint currentRate)
     internal view returns (bool) {
-        return loan.marginCallRate > 0 && currentRate < loan.marginCallRate;
+        uint32 marginRatio = products[loan.productId].marginRatio;
+        uint marginCallRate = calculateMarginCallRate(marginRatio, loan.repaymentAmount, loan.collateralAmount);
+        return marginRatio > 0 && marginCallRate > 0 && currentRate < marginCallRate;
     }
 
     /* internal function, assuming repayment amount already transfered  */
