@@ -25,10 +25,10 @@ contract LoanManager is Restricted, TokenReceiver {
         uint minDisbursedAmount;    // 0: minimum loanAmount, with decimals set in AugmintToken.decimals (i.e. token amount)
         uint32 term;                // 1: term length (in seconds)
         uint32 discountRate;        // 2: discountRate (in parts per million, i.e. 10,000 = 1%)
-        uint32 collateralRatio;     // 3: repayment (token amount) / collateral (token amount), (in parts per million, i.e. 10,000 = 1%)
+        uint32 collateralRatio;     // 3: inverse of collateral ratio: [repayment value (in token) / collateral value (in token)] (in ppm). Note: this is actually the inverse of the commonly used "collateral ratio"! TODO: fix it
         uint32 defaultingFeePt;     // 4: % of repaymentAmount (in parts per million, i.e. 50,000 = 5%)
         bool isActive;              // 5: flag to enable/disable product
-        uint32 marginRatio;         // 6: ... (in ppm), zero means no margin
+        uint32 minCollateralRatio;  // 6: minimum collateral ratio: [collateral value (in token) / repayment value (in token)] (in ppm), defines the margin, zero means no margin. Note: this is _not_ an inverse like the above "collateralRatio", it is already stored properly!
     }
 
     /* NB: we don't need to store loan parameters because loan products can't be altered (only disabled/enabled) */
@@ -81,17 +81,17 @@ contract LoanManager is Restricted, TokenReceiver {
 
     /* New version, with the margin parameter */
     function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
-                                uint32 defaultingFeePt, bool isActive, uint32 marginRatio)
+                                uint32 defaultingFeePt, bool isActive, uint32 minCollateralRatio)
     external restrict("StabilityBoard") {
-        _addLoanProduct(term, discountRate, collateralRatio, minDisbursedAmount, defaultingFeePt, isActive, marginRatio);
+        _addLoanProduct(term, discountRate, collateralRatio, minDisbursedAmount, defaultingFeePt, isActive, minCollateralRatio);
     }
 
     /* Internal function for both addLoanProduct-s */
     function _addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
-                                uint32 defaultingFeePt, bool isActive, uint32 marginRatio)
+                                uint32 defaultingFeePt, bool isActive, uint32 minCollateralRatio)
     internal restrict("StabilityBoard") {
         uint _newProductId = products.push(
-            LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive, marginRatio)
+            LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive, minCollateralRatio)
         ) - 1;
 
         uint32 newProductId = uint32(_newProductId);
@@ -145,7 +145,7 @@ contract LoanManager is Restricted, TokenReceiver {
         LoanData storage loan = loans[loanId];
         require(loan.state == LoanState.Open, "loan state must be Open");
         LoanProduct storage product = products[loan.productId];
-        require(product.marginRatio > 0, "not a margin type loan");
+        require(product.minCollateralRatio > 0, "not a margin type loan");
 
         loan.collateralAmount = loan.collateralAmount.add(msg.value);
     }
@@ -206,7 +206,7 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     // returns <chunkSize> loan products starting from some <offset>:
-    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, marginRatio ]
+    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
     function getProducts(uint offset, uint16 chunkSize)
     external view returns (uint[9][]) {
         uint limit = SafeMath.min(offset.add(chunkSize), products.length);
@@ -217,7 +217,7 @@ contract LoanManager is Restricted, TokenReceiver {
             response[i - offset] = [i, product.minDisbursedAmount, product.term, product.discountRate,
                     product.collateralRatio, product.defaultingFeePt,
                     monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0,
-                    product.marginRatio];
+                    product.minCollateralRatio];
         }
         return response;
     }
@@ -276,7 +276,7 @@ contract LoanManager is Restricted, TokenReceiver {
         uint disbursementTime = loan.maturity - product.term;
 
         // Add extra calculated data for convenience: marginCallRate, isDefaulted
-        uint marginCallRate = calculateMarginCallRate(product.marginRatio, loan.repaymentAmount, loan.collateralAmount);
+        uint marginCallRate = calculateMarginCallRate(product.minCollateralRatio, loan.repaymentAmount, loan.collateralAmount);
 
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
             loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount,
@@ -291,17 +291,17 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     // the token/ETH rate of the margin, under which the loan can be "margin called" (collected)
-    function calculateMarginCallRate(uint32 marginRatio, uint repaymentAmount, uint collateralAmount)
+    function calculateMarginCallRate(uint32 minCollateralRatio, uint repaymentAmount, uint collateralAmount)
     internal pure returns (uint) {
         // TODO: think about proper div rounding to use here
-        return uint(marginRatio).mul(repaymentAmount).div(collateralAmount.mul(1000000));
+        return uint(minCollateralRatio).mul(repaymentAmount).div(collateralAmount.mul(1000000));
     }
 
     function isUnderMargin(LoanData storage loan, uint currentRate)
     internal view returns (bool) {
-        uint32 marginRatio = products[loan.productId].marginRatio;
-        uint marginCallRate = calculateMarginCallRate(marginRatio, loan.repaymentAmount, loan.collateralAmount);
-        return marginRatio > 0 && marginCallRate > 0 && currentRate < marginCallRate;
+        uint32 minCollateralRatio = products[loan.productId].minCollateralRatio;
+        uint marginCallRate = calculateMarginCallRate(minCollateralRatio, loan.repaymentAmount, loan.collateralAmount);
+        return minCollateralRatio > 0 && marginCallRate > 0 && currentRate < marginCallRate;
     }
 
     function isDefaulted(LoanData storage loan, uint currentRate)

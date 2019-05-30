@@ -320,7 +320,8 @@ async function getProductsInfo(offset, chunkSize) {
             collateralRatio,
             defaultingFeePt,
             maxLoanAmount,
-            isActive
+            isActive,
+            minCollateralRatio
         ] = prod;
         assert(term.gt(0));
         result.push({
@@ -331,7 +332,8 @@ async function getProductsInfo(offset, chunkSize) {
             collateralRatio,
             defaultingFeePt,
             maxLoanAmount,
-            isActive
+            isActive,
+            minCollateralRatio
         });
     });
     return result;
