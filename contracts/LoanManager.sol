@@ -236,7 +236,7 @@ contract LoanManager is Restricted, TokenReceiver {
         uint currentRate = getCurrentRate();
 
         for (uint i = offset; i < limit; i++) {
-            response[i - offset] = getLoanTuple(i, currentRate);
+            response[i - offset] = _getLoanTuple(i, currentRate);
         }
         return response;
     }
@@ -256,12 +256,16 @@ contract LoanManager is Restricted, TokenReceiver {
         uint currentRate = getCurrentRate();
 
         for (uint i = offset; i < limit; i++) {
-            response[i - offset] = getLoanTuple(loansForAddress[i], currentRate);
+            response[i - offset] = _getLoanTuple(loansForAddress[i], currentRate);
         }
         return response;
     }
 
-    function getLoanTuple(uint loanId, uint currentRate) public view returns (uint[12] result) {
+    function getLoanTuple(uint loanId) public view returns (uint[12] result) {
+        return _getLoanTuple(loanId, getCurrentRate());
+    }
+
+    function _getLoanTuple(uint loanId, uint currentRate) internal view returns (uint[12] result) {
         require(loanId < loans.length, "invalid loanId"); // next line would revert but require to emit reason
         LoanData storage loan = loans[loanId];
         LoanProduct storage product = products[loan.productId];
