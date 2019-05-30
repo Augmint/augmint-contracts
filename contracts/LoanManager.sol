@@ -19,7 +19,7 @@ import "./MonetarySupervisor.sol";
 contract LoanManager is Restricted, TokenReceiver {
     using SafeMath for uint256;
 
-    enum LoanState { Open, Repaid, Defaulted, Collected } // NB: Defaulted state is not stored, only getters calculate
+    enum LoanState { Open, Repaid, DoNotUse, Collected } // NB: DoNotUse state is kept for backwards compatibility only (so the ordinal of 'Collected' does not shift), as the name states: do not use it.
 
     struct LoanProduct {
         uint minDisbursedAmount;    // 0: minimum loanAmount, with decimals set in AugmintToken.decimals (i.e. token amount)
@@ -277,11 +277,8 @@ contract LoanManager is Restricted, TokenReceiver {
         (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
         uint disbursementTime = loan.maturity - product.term;
 
-        LoanState loanState =
-                loan.state == LoanState.Open && now >= loan.maturity ? LoanState.Defaulted : loan.state;
-
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-            loan.productId, uint(loanState), loan.maturity, disbursementTime, loanAmount, interestAmount, loan.marginCallRate];
+            loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount, loan.marginCallRate];
     }
 
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)

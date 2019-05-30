@@ -293,7 +293,7 @@ contract("Loans tests", accounts => {
             "0x" + loan2Actual.borrower.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
             loan2.borrower
         );
-        assert.equal(loan2Actual.state.toNumber(), 2); // Defaulted (not collected)
+        assert.equal(loan2Actual.state.toNumber(), 0); // Open (defaulted but not yet collected)
     });
 
     it("Should list loans for one account from offset", async function() {
@@ -331,7 +331,7 @@ contract("Loans tests", accounts => {
 
         const loan2Actual = loanInfo[1];
         assert.equal(loan2Actual.id.toNumber(), loan2.id);
-        assert.equal(loan2Actual.state.toNumber(), 2); // Defaulted (not collected)
+        assert.equal(loan2Actual.state.toNumber(), 0); // Open (defaulted but not yet collected)
     });
 
     it("should only allow whitelisted loan contract to be used", async function() {
