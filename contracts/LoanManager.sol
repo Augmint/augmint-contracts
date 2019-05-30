@@ -33,13 +33,13 @@ contract LoanManager is Restricted, TokenReceiver {
 
     /* NB: we don't need to store loan parameters because loan products can't be altered (only disabled/enabled) */
     struct LoanData {
-        uint collateralAmount; // 0
-        uint repaymentAmount; // 1
-        address borrower; // 2
-        uint32 productId; // 3
-        LoanState state; // 4
-        uint40 maturity; // 5
-        uint marginCallRate; // 6: the token/ETH rate of the margin for this loan, under which it can be "margin called" (collected)
+        uint collateralAmount;      // 0: collateral amount (in wei)
+        uint repaymentAmount;       // 1: repayment amount (in token)
+        address borrower;           // 2: address of the owner of this loan
+        uint32 productId;           // 3: id of the product from which this loan was created
+        LoanState state;            // 4: current status of the loan (Open/Repaid/Collected)
+        uint40 maturity;            // 5: expiration date (in epoch seconds)
+        uint marginCallRate;        // 6: the token/ETH rate of the margin for this loan, under which it can be "margin called" (collected)
     }
 
     LoanProduct[] public products;
@@ -144,6 +144,17 @@ contract LoanManager is Restricted, TokenReceiver {
         monetarySupervisor.issueLoan(msg.sender, loanAmount);
 
         emit NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
+    }
+
+    function addExtraCollateral(uint loanId) external payable {
+        require(loanId < loans.length, "invalid loanId");
+        LoanData storage loan = loans[loanId];
+        require(loan.state == LoanState.Open, "loan state must be Open");
+        LoanProduct storage product = products[loan.productId];
+        require(product.marginRatio > 0, "not a margin type loan");
+
+        loan.collateralAmount = loan.collateralAmount.add(msg.value);
+        loan.marginCallRate = calculateMarginRate(product.marginRatio, loan.repaymentAmount, loan.collateralAmount);
     }
 
     /* repay loan, called from AugmintToken's transferAndNotify
