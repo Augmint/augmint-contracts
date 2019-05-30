@@ -351,7 +351,9 @@ function parseLoansInfo(loans) {
             maturity,
             disbursementTime,
             loanAmount,
-            interestAmount
+            interestAmount,
+            marginCallRate,
+            isDefaulted
         ] = loan;
 
         assert(maturity.gt(0));
@@ -365,7 +367,9 @@ function parseLoansInfo(loans) {
             maturity,
             disbursementTime,
             loanAmount,
-            interestAmount
+            interestAmount,
+            marginCallRate,
+            isDefaulted
         });
     });
     return result;

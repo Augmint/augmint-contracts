@@ -164,8 +164,7 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     function collect(uint[] loanIds) external {
-        (uint currentRate, ) = rates.rates(augmintToken.peggedSymbol());
-        require(currentRate > 0, "No current rate available");
+        uint currentRate = getCurrentRate();
 
         /* when there are a lots of loans to be collected then
              the client need to call it in batches to make sure tx won't exceed block gas limit.
@@ -231,12 +230,13 @@ contract LoanManager is Restricted, TokenReceiver {
         [loanId, collateralAmount, repaymentAmount, borrower, productId,
               state, maturity, disbursementTime, loanAmount, interestAmount, marginCallRate] */
     function getLoans(uint offset, uint16 chunkSize)
-    external view returns (uint[11][]) {
+    external view returns (uint[12][]) {
         uint limit = SafeMath.min(offset.add(chunkSize), loans.length);
-        uint[11][] memory response = new uint[11][](limit.sub(offset));
+        uint[12][] memory response = new uint[12][](limit.sub(offset));
+        uint currentRate = getCurrentRate();
 
         for (uint i = offset; i < limit; i++) {
-            response[i - offset] = getLoanTuple(i);
+            response[i - offset] = getLoanTuple(i, currentRate);
         }
         return response;
     }
@@ -247,20 +247,21 @@ contract LoanManager is Restricted, TokenReceiver {
 
     /* returns <chunkSize> loans of a given account, starting from some <offset>. Loans data encoded as:
         [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
-                                                            loanAmount, interestAmount, marginCallRate] */
+                                            loanAmount, interestAmount, marginCallRate, isDefaulted] */
     function getLoansForAddress(address borrower, uint offset, uint16 chunkSize)
-    external view returns (uint[11][]) {
+    external view returns (uint[12][]) {
         uint[] storage loansForAddress = accountLoans[borrower];
         uint limit = SafeMath.min(offset.add(chunkSize), loansForAddress.length);
-        uint[11][] memory response = new uint[11][](limit.sub(offset));
+        uint[12][] memory response = new uint[12][](limit.sub(offset));
+        uint currentRate = getCurrentRate();
 
         for (uint i = offset; i < limit; i++) {
-            response[i - offset] = getLoanTuple(loansForAddress[i]);
+            response[i - offset] = getLoanTuple(loansForAddress[i], currentRate);
         }
         return response;
     }
 
-    function getLoanTuple(uint loanId) public view returns (uint[11] result) {
+    function getLoanTuple(uint loanId, uint currentRate) public view returns (uint[12] result) {
         require(loanId < loans.length, "invalid loanId"); // next line would revert but require to emit reason
         LoanData storage loan = loans[loanId];
         LoanProduct storage product = products[loan.productId];
@@ -270,12 +271,12 @@ contract LoanManager is Restricted, TokenReceiver {
         (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
         uint disbursementTime = loan.maturity - product.term;
 
-        // TODO: add extra data: marginCallRate, defaulted status
-        uint marginCallRate = 0;
-        bool defaulted = false;
+        // Add extra calculated data for convenience: marginCallRate, isDefaulted
+        uint marginCallRate = calculateMarginCallRate(product.marginRatio, loan.repaymentAmount, loan.collateralAmount);
 
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
-            loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount, marginCallRate];
+            loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount,
+            marginCallRate, isDefaulted(loan, currentRate) ? 1 : 0];
     }
 
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
@@ -297,6 +298,19 @@ contract LoanManager is Restricted, TokenReceiver {
         uint32 marginRatio = products[loan.productId].marginRatio;
         uint marginCallRate = calculateMarginCallRate(marginRatio, loan.repaymentAmount, loan.collateralAmount);
         return marginRatio > 0 && marginCallRate > 0 && currentRate < marginCallRate;
+    }
+
+    function isDefaulted(LoanData storage loan, uint currentRate)
+    internal view returns (bool) {
+        return now >= loan.maturity || isUnderMargin(loan, currentRate);
+    }
+
+    // Returns the current token/ETH rate
+    function getCurrentRate()
+    internal view returns (uint) {
+        (uint currentRate, ) = rates.rates(augmintToken.peggedSymbol());
+        require(currentRate > 0, "No current rate available");
+        return currentRate;
     }
 
     /* internal function, assuming repayment amount already transfered  */
@@ -332,7 +346,7 @@ contract LoanManager is Restricted, TokenReceiver {
     function _collectLoan(uint loanId, uint currentRate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {
         LoanData storage loan = loans[loanId];
         require(loan.state == LoanState.Open, "loan state must be Open");
-        require(now >= loan.maturity || isUnderMargin(loan, currentRate), "Not collectable");
+        require(isDefaulted(loan, currentRate), "Not collectable");
         LoanProduct storage product = products[loan.productId];
 
         (loanAmount, ) = calculateLoanValues(product, loan.repaymentAmount);
