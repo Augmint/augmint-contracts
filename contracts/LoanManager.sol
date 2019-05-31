@@ -306,7 +306,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
     function isCollectable(LoanData storage loan, uint currentRate)
     internal view returns (bool) {
-        return now >= loan.maturity || isUnderMargin(loan, currentRate);
+        return loan.state == LoanState.Open && (now >= loan.maturity || isUnderMargin(loan, currentRate));
     }
 
     // Returns the current token/ETH rate
@@ -349,7 +349,6 @@ contract LoanManager is Restricted, TokenReceiver {
 
     function _collectLoan(uint loanId, uint currentRate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {
         LoanData storage loan = loans[loanId];
-        require(loan.state == LoanState.Open, "loan state must be Open");
         require(isCollectable(loan, currentRate), "Not collectable");
         LoanProduct storage product = products[loan.productId];
 
