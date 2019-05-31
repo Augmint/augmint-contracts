@@ -281,7 +281,7 @@ contract("Loans tests", accounts => {
         );
         assert.equal(loan1Actual.productId.toNumber(), product.id);
         assert.equal(loan1Actual.state.toNumber(), loan1.state);
-        assert.equal(loan1Actual.isDefaulted.toNumber(), 0);
+        assert.equal(loan1Actual.isCollectable.toNumber(), 0);
         assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);
         assert.equal(loan1Actual.disbursementTime.toNumber(), loan1.maturity - product.term);
         assert.equal(loan1Actual.loanAmount.toNumber(), loan1.loanAmount);
@@ -295,7 +295,7 @@ contract("Loans tests", accounts => {
             loan2.borrower
         );
         assert.equal(loan2Actual.state.toNumber(), 0); // Open (defaulted but not yet collected)
-        assert.equal(loan2Actual.isDefaulted.toNumber(), 1);
+        assert.equal(loan2Actual.isCollectable.toNumber(), 1);
     });
 
     it("Should list loans for one account from offset", async function() {
@@ -326,7 +326,7 @@ contract("Loans tests", accounts => {
         );
         assert.equal(loan1Actual.productId.toNumber(), product1.id);
         assert.equal(loan1Actual.state.toNumber(), loan1.state);
-        assert.equal(loan1Actual.isDefaulted.toNumber(), 0);
+        assert.equal(loan1Actual.isCollectable.toNumber(), 0);
         assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);
         assert.equal(loan1Actual.disbursementTime.toNumber(), loan1.maturity - product1.term);
         assert.equal(loan1Actual.loanAmount.toNumber(), loan1.loanAmount);
@@ -335,7 +335,7 @@ contract("Loans tests", accounts => {
         const loan2Actual = loanInfo[1];
         assert.equal(loan2Actual.id.toNumber(), loan2.id);
         assert.equal(loan2Actual.state.toNumber(), 0); // Open (defaulted but not yet collected)
-        assert.equal(loan2Actual.isDefaulted.toNumber(), 1);
+        assert.equal(loan2Actual.isCollectable.toNumber(), 1);
     });
 
     it("should only allow whitelisted loan contract to be used", async function() {

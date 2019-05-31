@@ -355,7 +355,7 @@ function parseLoansInfo(loans) {
             loanAmount,
             interestAmount,
             marginCallRate,
-            isDefaulted
+            isCollectable
         ] = loan;
 
         assert(maturity.gt(0));
@@ -371,7 +371,7 @@ function parseLoansInfo(loans) {
             loanAmount,
             interestAmount,
             marginCallRate,
-            isDefaulted
+            isCollectable
         });
     });
     return result;

@@ -247,7 +247,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
     /* returns <chunkSize> loans of a given account, starting from some <offset>. Loans data encoded as:
         [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime,
-                                            loanAmount, interestAmount, marginCallRate, isDefaulted] */
+                                            loanAmount, interestAmount, marginCallRate, isCollectable] */
     function getLoansForAddress(address borrower, uint offset, uint16 chunkSize)
     external view returns (uint[12][]) {
         uint[] storage loansForAddress = accountLoans[borrower];
@@ -275,12 +275,12 @@ contract LoanManager is Restricted, TokenReceiver {
         (loanAmount, interestAmount) = calculateLoanValues(product, loan.repaymentAmount);
         uint disbursementTime = loan.maturity - product.term;
 
-        // Add extra calculated data for convenience: marginCallRate, isDefaulted
+        // Add extra calculated data for convenience: marginCallRate, isCollectable
         uint marginCallRate = calculateMarginCallRate(product.minCollateralRatio, loan.repaymentAmount, loan.collateralAmount);
 
         result = [loanId, loan.collateralAmount, loan.repaymentAmount, uint(loan.borrower),
             loan.productId, uint(loan.state), loan.maturity, disbursementTime, loanAmount, interestAmount,
-            marginCallRate, isDefaulted(loan, currentRate) ? 1 : 0];
+            marginCallRate, isCollectable(loan, currentRate) ? 1 : 0];
     }
 
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
@@ -304,7 +304,7 @@ contract LoanManager is Restricted, TokenReceiver {
         return minCollateralRatio > 0 && marginCallRate > 0 && currentRate < marginCallRate;
     }
 
-    function isDefaulted(LoanData storage loan, uint currentRate)
+    function isCollectable(LoanData storage loan, uint currentRate)
     internal view returns (bool) {
         return now >= loan.maturity || isUnderMargin(loan, currentRate);
     }
@@ -350,7 +350,7 @@ contract LoanManager is Restricted, TokenReceiver {
     function _collectLoan(uint loanId, uint currentRate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {
         LoanData storage loan = loans[loanId];
         require(loan.state == LoanState.Open, "loan state must be Open");
-        require(isDefaulted(loan, currentRate), "Not collectable");
+        require(isCollectable(loan, currentRate), "Not collectable");
         LoanProduct storage product = products[loan.productId];
 
         (loanAmount, ) = calculateLoanValues(product, loan.repaymentAmount);
