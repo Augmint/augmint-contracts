@@ -93,8 +93,11 @@ contract Rinkeby_0007_interestRates {
     function disableAllLockProducts(Locker target) internal {
         uint32 productCount = uint32(target.getLockProductCount());
         for (uint32 i = 0; i < productCount; i++) {
+            uint32 perTermInterest;
+            uint32 durationInSecs;
+            uint32 minimumLockAmount;
             bool isActive;
-            (, , , isActive) = target.lockProducts(i);
+            (perTermInterest, durationInSecs, minimumLockAmount, isActive) = target.lockProducts(i);
             if (isActive) {
                 target.setLockProductActiveState(i, false);
             }
@@ -104,8 +107,13 @@ contract Rinkeby_0007_interestRates {
     function disableAllLoanProducts(LoanManager target) internal {
         uint32 productCount = uint32(target.getProductCount());
         for (uint32 i = 0; i < productCount; i++) {
+            uint minDisbursedAmount;
+            uint32 term;
+            uint32 discountRate;
+            uint32 collateralRatio;
+            uint32 defaultingFeePt;
             bool isActive;
-            (, , , , , isActive, ) = target.products(i);
+            (minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive) = target.products(i);
             if (isActive) {
                 target.setLoanProductActiveState(i, false);
             }
