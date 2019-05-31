@@ -279,7 +279,7 @@ contract LoanManager is Restricted, TokenReceiver {
     function calculateMarginCallRate(uint32 minCollateralRatio, uint repaymentAmount, uint collateralAmount)
     internal pure returns (uint) {
         // TODO: think about proper div rounding to use here
-        return uint(minCollateralRatio).mul(repaymentAmount).div(collateralAmount.mul(1000000));
+        return uint(minCollateralRatio).mul(repaymentAmount).mul(1000000000000).div(collateralAmount);
     }
 
     function isUnderMargin(LoanData storage loan, uint currentRate)
