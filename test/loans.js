@@ -38,14 +38,14 @@ contract("Loans tests", accounts => {
         ]);
         // These neeed to be sequantial b/c product order assumed when retreving via getProducts
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive
-        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // notDue
-        await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true); // repaying
-        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true); // defaulting
-        await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false); // disabledProduct
-        await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true); // zeroInterest
-        await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true); // negativeInterest
-        await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true); // fullCoverage
-        await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
+        await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true, 0); // repaying
+        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
+        await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false, 0); // disabledProduct
+        await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true, 0); // zeroInterest
+        await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
+        await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
+        await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, CHUNK_SIZE),
@@ -349,7 +349,7 @@ contract("Loans tests", accounts => {
             await rates.setRate("EUR", 99800),
             await craftedLender.grantPermission(accounts[0], "StabilityBoard")
         ]);
-        await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true);
+        await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true, 0);
 
         // testing Lender not having "LoanManager" permission on monetarySupervisor:
         await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") }));

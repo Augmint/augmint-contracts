@@ -24,7 +24,8 @@ contract("loanManager  tests", accounts => {
             discountRate: 970000,
             collateralRatio: 850000,
             defaultingFeePt: 50000,
-            isActive: true
+            isActive: true,
+            minCollateralRatio: 0
         };
         await loanManager.addLoanProduct(
             loanProduct.term,
@@ -33,6 +34,7 @@ contract("loanManager  tests", accounts => {
             loanProduct.minDisbursedAmount,
             loanProduct.defaultingFeePt,
             loanProduct.isActive,
+            loanProduct.minCollateralRatio,
             { from: accounts[0] }
         );
 
@@ -83,7 +85,8 @@ contract("loanManager  tests", accounts => {
             discountRate: 970000,
             collateralRatio: 850000,
             defaultingFeePt: 50000,
-            isActive: true
+            isActive: true,
+            minCollateralRatio: 0
         };
         const tx = await loanManager.addLoanProduct(
             prod.term,
@@ -92,6 +95,7 @@ contract("loanManager  tests", accounts => {
             prod.minDisbursedAmount,
             prod.defaultingFeePt,
             prod.isActive,
+            prod.minCollateralRatio,
             { from: accounts[0] }
         );
         testHelpers.logGasUse(this, tx, "addLoanProduct");
@@ -135,7 +139,8 @@ contract("loanManager  tests", accounts => {
             discountRate: 970000,
             collateralRatio: 850000,
             defaultingFeePt: 50000,
-            isActive: true
+            isActive: true,
+            minCollateralRatio: 0
         };
         const tx = await loanManager.addLoanProduct(
             prod.term,
@@ -144,6 +149,7 @@ contract("loanManager  tests", accounts => {
             prod.minDisbursedAmount,
             prod.defaultingFeePt,
             prod.isActive,
+            prod.minCollateralRatio,
             { from: accounts[0] }
         );
         testHelpers.logGasUse(this, tx, "addLoanProduct");
@@ -170,7 +176,7 @@ contract("loanManager  tests", accounts => {
 
     it("Only allowed should add new product", async function() {
         await testHelpers.expectThrow(
-            loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, { from: accounts[1] })
+            loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0, { from: accounts[1] })
         );
     });
 

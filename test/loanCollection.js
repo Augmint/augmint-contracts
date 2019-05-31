@@ -28,15 +28,15 @@ contract("Loans collection tests", accounts => {
                 ltdParams.allowedDifferenceAmount
             )
         ]);
-        // These neeed to be sequantial b/c product order assumed when retreving via getProducts
+        // These neeed to be sequential b/c product order assumed when retrieving via getProducts
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive
-        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // notDue
-        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true); // defaulting
-        await loanManager.addLoanProduct(1, 900000, 900000, 1000, 100000, true); // defaultingNoLeftOver
-        await loanManager.addLoanProduct(1, 1000000, 900000, 2000, 50000, true); // zeroInterest
-        await loanManager.addLoanProduct(1, 1100000, 900000, 2000, 50000, true); // negativeInterest
-        await loanManager.addLoanProduct(1, 990000, 1000000, 2000, 50000, true); // fullCoverage
-        await loanManager.addLoanProduct(1, 990000, 1200000, 2000, 50000, true); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
+        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
+        await loanManager.addLoanProduct(1, 900000, 900000, 1000, 100000, true, 0); // defaultingNoLeftOver
+        await loanManager.addLoanProduct(1, 1000000, 900000, 2000, 50000, true, 0); // zeroInterest
+        await loanManager.addLoanProduct(1, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
+        await loanManager.addLoanProduct(1, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
+        await loanManager.addLoanProduct(1, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, 10),

@@ -105,17 +105,17 @@ contract localTest_initialSetup {
 
         // add test loan Products
         // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
-        _loanManager.addLoanProduct(365 days, 854701, 550000, 1000, 50000, true); //  17% p.a.
-        _loanManager.addLoanProduct(180 days, 924753, 550000, 1000, 50000, true); // 16.5% p.a.
+        _loanManager.addLoanProduct(365 days, 854701, 550000, 1000, 50000, true, 0); //  17% p.a.
+        _loanManager.addLoanProduct(180 days, 924753, 550000, 1000, 50000, true, 0); // 16.5% p.a.
 
-        _loanManager.addLoanProduct(90 days, 962046, 600000, 1000, 50000, true); // 16%. p.a.
-        _loanManager.addLoanProduct(60 days, 975154, 600000, 1000, 50000, true); //  15.5% p.a.
-        _loanManager.addLoanProduct(30 days, 987822, 600000, 1000, 50000, true); //  15% p.a.
-        _loanManager.addLoanProduct(14 days, 994280, 600000, 1000, 50000, true); // 15% p.a.
-        _loanManager.addLoanProduct(7 days, 997132, 600000, 1000, 50000, true); // 15% p.a.
+        _loanManager.addLoanProduct(90 days, 962046, 600000, 1000, 50000, true, 0); // 16%. p.a.
+        _loanManager.addLoanProduct(60 days, 975154, 600000, 1000, 50000, true, 0); //  15.5% p.a.
+        _loanManager.addLoanProduct(30 days, 987822, 600000, 1000, 50000, true, 0); //  15% p.a.
+        _loanManager.addLoanProduct(14 days, 994280, 600000, 1000, 50000, true, 0); // 15% p.a.
+        _loanManager.addLoanProduct(7 days, 997132, 600000, 1000, 50000, true, 0); // 15% p.a.
 
-        _loanManager.addLoanProduct(1 hours, 999998, 980000, 2000, 50000, true); // due in 1hr for testing repayments ? p.a.
-        _loanManager.addLoanProduct(1 seconds, 999999, 990000, 3000, 50000, true); // defaults in 1 secs for testing ? p.a.
+        _loanManager.addLoanProduct(1 hours, 999998, 980000, 2000, 50000, true, 0); // due in 1hr for testing repayments ? p.a.
+        _loanManager.addLoanProduct(1 seconds, 999999, 990000, 3000, 50000, true, 0); // defaults in 1 secs for testing ? p.a.
 
         // add test lock products
         // (perTermInterest, durationInSecs, minimumLockAmount, isActive)

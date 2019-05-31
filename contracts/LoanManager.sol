@@ -72,24 +72,9 @@ contract LoanManager is Restricted, TokenReceiver {
         rates = _rates;
     }
 
-    /* @Deprecated: For compatibility with previous versions (without the margin parameter), e.g. old SB scripts */
-    function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
-                                uint32 defaultingFeePt, bool isActive)
-    external restrict("StabilityBoard") {
-        _addLoanProduct(term, discountRate, collateralRatio, minDisbursedAmount, defaultingFeePt, isActive, 0);
-    }
-
-    /* New version, with the margin parameter */
     function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
                                 uint32 defaultingFeePt, bool isActive, uint32 minCollateralRatio)
     external restrict("StabilityBoard") {
-        _addLoanProduct(term, discountRate, collateralRatio, minDisbursedAmount, defaultingFeePt, isActive, minCollateralRatio);
-    }
-
-    /* Internal function for both addLoanProduct-s */
-    function _addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
-                                uint32 defaultingFeePt, bool isActive, uint32 minCollateralRatio)
-    internal restrict("StabilityBoard") {
         uint _newProductId = products.push(
             LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive, minCollateralRatio)
         ) - 1;
