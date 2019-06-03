@@ -36,8 +36,8 @@ contract("Loans tests", accounts => {
                 ltdParams.allowedDifferenceAmount
             )
         ]);
-        // These neeed to be sequantial b/c product order assumed when retreving via getProducts
-        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive
+        // These neeed to be sequential b/c product order assumed when retrieving via getProducts
+        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
         await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
         await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true, 0); // repaying
         await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
@@ -46,6 +46,7 @@ contract("Loans tests", accounts => {
         await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
         await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
         await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 625000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%) (1/1.6 = 0.625)
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, CHUNK_SIZE),
@@ -59,7 +60,8 @@ contract("Loans tests", accounts => {
             products.zeroInterest,
             products.negativeInterest,
             products.fullCoverage,
-            products.moreCoverage
+            products.moreCoverage,
+            products.margin
         ] = newProducts;
     });
 
@@ -377,5 +379,54 @@ contract("Loans tests", accounts => {
 
     it("only allowed contract should call MonetarySupervisor.loanRepaymentNotification", async function() {
         await testHelpers.expectThrow(monetarySupervisor.loanRepaymentNotification(0, { from: accounts[0] }));
+    });
+
+    // Margin tests:
+    // ==============
+    // initial rate = 99800 (token/eth)
+    // collateral = 0.05 (eth)
+    // collateral ratio: initial = 160%, minimum = 120% (1/1.6 = 0.625)
+    //
+    // 100% => 3118.75 (token)  => @ 62375 (token/eth)
+    // 120% => 3742.5 (token)   => @ 74850 (token/eth)  => marginCallRate: 74832 (due to internal rounding in contract)
+    // 160% => 4990 (token)     => @ 99800 (token/eth)
+
+    it("tests loan margin numbers", async function() {
+        await rates.setRate("EUR", 99800);
+        const loan = await loanTestHelpers.createLoan(
+            this,
+            products.margin,
+            accounts[1],
+            global.web3v1.utils.toWei("0.05")
+        );
+
+        // assert event has proper numbers
+        assert(loan.collateralAmount.toNumber() === 5e16);
+        assert(loan.tokenValue.toNumber() === 4990);
+        assert(loan.repaymentAmount.toNumber() === 3118);
+        assert(loan.loanAmount.toNumber() === 3024);
+        assert(loan.interestAmount.toNumber() === 94);
+        assert(loan.state === 0);
+
+        // assert LoanData has proper numbers stored
+        const loanInfo = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
+        assert(loanInfo[0].collateralAmount.toNumber() === 5e16);
+        assert(loanInfo[0].repaymentAmount.toNumber() === 3118);
+        assert(loanInfo[0].state.toNumber() === 0);
+        assert(loanInfo[0].loanAmount.toNumber() === 3024);
+        assert(loanInfo[0].interestAmount.toNumber() === 94);
+        assert(loanInfo[0].marginCallRate.toNumber() === 74832);
+        assert(loanInfo[0].isCollectable.toNumber() === 0);
+
+        // every number stays the same below margin, only isCollectable will be true
+        await rates.setRate("EUR", 72000);
+        const loanInfo2 = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
+        assert(loanInfo2[0].collateralAmount.toNumber() === 5e16);
+        assert(loanInfo2[0].repaymentAmount.toNumber() === 3118);
+        assert(loanInfo2[0].state.toNumber() === 0);
+        assert(loanInfo2[0].loanAmount.toNumber() === 3024);
+        assert(loanInfo2[0].interestAmount.toNumber() === 94);
+        assert(loanInfo2[0].marginCallRate.toNumber() === 74832);
+        assert(loanInfo2[0].isCollectable.toNumber() === 1);
     });
 });
