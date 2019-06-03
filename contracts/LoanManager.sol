@@ -100,7 +100,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
         // calculate loan values based on ETH sent in with Tx
         uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
-        uint repaymentAmount = tokenValue.mul(product.collateralRatio).div(1000000);
+        uint repaymentAmount = tokenValue.mul(product.collateralRatio).div(1e6);
 
         uint loanAmount;
         (loanAmount, ) = calculateLoanValues(product, repaymentAmount);
@@ -271,15 +271,14 @@ contract LoanManager is Restricted, TokenReceiver {
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
     internal view returns (uint loanAmount, uint interestAmount) {
         // calculate loan values based on repayment amount
-        loanAmount = repaymentAmount.mul(product.discountRate).div(1000000);
+        loanAmount = repaymentAmount.mul(product.discountRate).div(1e6);
         interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
     }
 
     // the token/ETH rate of the margin, under which the loan can be "margin called" (collected)
     function calculateMarginCallRate(uint32 minCollateralRatio, uint repaymentAmount, uint collateralAmount)
     internal pure returns (uint) {
-        // TODO: think about proper div rounding to use here
-        return uint(minCollateralRatio).mul(repaymentAmount).mul(1000000000000).div(collateralAmount);
+        return uint(minCollateralRatio).mul(repaymentAmount).mul(1e12).div(collateralAmount);
     }
 
     function isUnderMargin(LoanData storage loan, uint currentRate)
@@ -343,7 +342,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
         // send ETH collateral to augmintToken reserve
         // uint defaultingFeeInToken = loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000);
-        defaultingFee = _convertToWei(currentRate, loan.repaymentAmount.mul(product.defaultingFeePt).div(1000000));
+        defaultingFee = _convertToWei(currentRate, loan.repaymentAmount.mul(product.defaultingFeePt).div(1e6));
         uint targetCollection = _convertToWei(currentRate, loan.repaymentAmount).add(defaultingFee);
 
         uint releasedCollateral;
@@ -364,7 +363,7 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     function _convertToWei(uint rate, uint value) private pure returns(uint weiValue) {
-        return value.mul(1000000000000000000).roundedDiv(rate);
+        return value.mul(1e18).roundedDiv(rate);
     }
 
 }
