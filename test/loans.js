@@ -428,5 +428,22 @@ contract("Loans tests", accounts => {
         assert(loanInfo2[0].interestAmount.toNumber() === 94);
         assert(loanInfo2[0].marginCallRate.toNumber() === 74832);
         assert(loanInfo2[0].isCollectable.toNumber() === 1);
+
+        // add extra collateral to get above margin
+        const tx = await loanManager.addExtraCollateral(loan.id, {
+            from: accounts[1],
+            value: global.web3v1.utils.toWei("0.05")
+        });
+        testHelpers.logGasUse(this, tx, "addExtraCollateral");
+
+        // collateralAmount should double up, marginCallRate get halved
+        const loanInfo3 = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
+        assert(loanInfo3[0].collateralAmount.toNumber() === 2 * 5e16);
+        assert(loanInfo3[0].repaymentAmount.toNumber() === 3118);
+        assert(loanInfo3[0].state.toNumber() === 0);
+        assert(loanInfo3[0].loanAmount.toNumber() === 3024);
+        assert(loanInfo3[0].interestAmount.toNumber() === 94);
+        assert(loanInfo3[0].marginCallRate.toNumber() === 74832 / 2);
+        assert(loanInfo3[0].isCollectable.toNumber() === 0);
     });
 });
