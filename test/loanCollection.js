@@ -267,6 +267,7 @@ contract("Loans collection tests", accounts => {
             global.web3v1.utils.toWei("0.05")
         );
         await rates.setRate("EUR", 74830);
+        assert(await isCollectable(loan.id) === 1);
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
@@ -279,6 +280,36 @@ contract("Loans collection tests", accounts => {
             global.web3v1.utils.toWei("0.05")
         );
         await rates.setRate("EUR", 74840);
+        assert(await isCollectable(loan.id) === 0);
         await testHelpers.expectThrow(loanManager.collect([loan.id]));
     });
+
+    it("Should not collect a loan if enough extra collateral was added", async function() {
+        await rates.setRate("EUR", 99800);
+        const loan = await loanTestHelpers.createLoan(
+            this,
+            products.margin,
+            accounts[1],
+            global.web3v1.utils.toWei("0.05")
+        );
+        assert(await isCollectable(loan.id) === 0);
+
+        // set rate below margin
+        await rates.setRate("EUR", 72000);
+        assert(await isCollectable(loan.id) === 1);
+
+        // add extra collateral to get above margin
+        const tx = await loanManager.addExtraCollateral(loan.id, {
+            from: accounts[1],
+            value: global.web3v1.utils.toWei("0.05")
+        });
+        testHelpers.logGasUse(this, tx, "addExtraCollateral");
+
+        // should not be collectable
+        assert(await isCollectable(loan.id) === 0);
+        await testHelpers.expectThrow(loanManager.collect([loan.id]));
+    });
+
+    const isCollectable = async loanId =>
+        loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loanId, 1))[0].isCollectable.toNumber();
 });
