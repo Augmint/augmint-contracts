@@ -255,7 +255,7 @@ contract("Loans collection tests", accounts => {
     // collateral = 0.05 (eth)
     //
     // 100% => 3118.75 (token)  => @ 62375 (token/eth)
-    // 120% => 3742.5 (token)   => @ 74850 (token/eth)  => marginCallRate: 74832 due to internal rounding in contract
+    // 120% => 3742.5 (token)   => @ 74850 (token/eth)  => marginCallRate: 74832 (due to internal rounding in contract)
     // 160% => 4990 (token)     => @ 99800 (token/eth)
 
     it("Should collect a loan if under margin", async function() {
@@ -266,15 +266,7 @@ contract("Loans collection tests", accounts => {
             accounts[1],
             global.web3v1.utils.toWei("0.05")
         );
-        // console.log("loan=")
-        // console.log(JSON.stringify(loan));
-        // const loanInfo = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
-        // console.log("loanInfo=")
-        // console.log(JSON.stringify(loanInfo));
-        await rates.setRate("EUR", 74820);
-        // const loanInfo2 = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
-        // console.log("loanInfo2=")
-        // console.log(JSON.stringify(loanInfo2));
+        await rates.setRate("EUR", 74830);
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
@@ -286,7 +278,7 @@ contract("Loans collection tests", accounts => {
             accounts[1],
             global.web3v1.utils.toWei("0.05")
         );
-        await rates.setRate("EUR", 74860);
+        await rates.setRate("EUR", 74840);
         await testHelpers.expectThrow(loanManager.collect([loan.id]));
     });
 });
