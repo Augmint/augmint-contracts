@@ -103,8 +103,8 @@ contract LoanManager is Restricted, TokenReceiver {
 
 
         // calculate loan values based on ETH sent in with Tx
-        uint tokenValue = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
-        uint repaymentAmount = tokenValue.mul(product.collateralRatio).div(PPM_FACTOR);
+        uint collateralValueInToken = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
+        uint repaymentAmount = collateralValueInToken.mul(product.collateralRatio).div(PPM_FACTOR);
 
         uint loanAmount;
         (loanAmount, ) = calculateLoanValues(product, repaymentAmount);
