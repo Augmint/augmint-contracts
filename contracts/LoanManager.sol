@@ -275,7 +275,7 @@ contract LoanManager is Restricted, TokenReceiver {
     function calculateLoanValues(LoanProduct storage product, uint repaymentAmount)
     internal view returns (uint loanAmount, uint interestAmount) {
         // calculate loan values based on repayment amount
-        loanAmount = repaymentAmount.mul(product.discountRate).div(PPM_FACTOR);
+        loanAmount = repaymentAmount.mul(product.discountRate).ceilDiv(PPM_FACTOR);
         interestAmount = loanAmount > repaymentAmount ? 0 : repaymentAmount.sub(loanAmount);
     }
 

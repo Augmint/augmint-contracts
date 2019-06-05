@@ -87,11 +87,11 @@ contract("Loans tests", accounts => {
             .sub(1)
             .div(prod.discountRate)
             .mul(1000000)
-            .round(0, BigNumber.ROUND_UP);
+            .round(0, BigNumber.ROUND_DOWN);
         const weiAmount = (await rates.convertToWei(tokenTestHelpers.peggedSymbol, loanAmount))
             .div(prod.collateralRatio)
             .mul(1000000)
-            .round(0, BigNumber.ROUND_UP);
+            .round(0, BigNumber.ROUND_DOWN);
 
         await testHelpers.expectThrow(loanManager.newEthBackedLoan(prod.id, { from: accounts[0], value: weiAmount }));
     });
@@ -403,9 +403,9 @@ contract("Loans tests", accounts => {
         // assert event has proper numbers
         assert.equal(loan.collateralAmount.toNumber(), 5e16);      // = 0.05 (eth)
         assert.equal(loan.tokenValue.toNumber(), 4990);            // = 99800 * 0.05 (token)
-        assert.equal(loan.repaymentAmount.toNumber(), 3118);       // = 4990 / 1.6 (token)
-        assert.equal(loan.loanAmount.toNumber(), 3024);            // = 3118 * 0.97 (token)
-        assert.equal(loan.interestAmount.toNumber(), 94);          // = 3118 - 3024 (token)
+        assert.equal(loan.repaymentAmount.toNumber(), 3118);       // = 4990 / 1.6, round down (token)
+        assert.equal(loan.loanAmount.toNumber(), 3025);            // = 3118 * 0.97, round up (token)
+        assert.equal(loan.interestAmount.toNumber(), 93);          // = 3118 - 3025 (token)
         assert.equal(loan.state, 0);                               // = "Open"
 
         // assert LoanData has proper numbers stored
@@ -413,8 +413,8 @@ contract("Loans tests", accounts => {
         assert.equal(loanInfo[0].collateralAmount.toNumber(), 5e16);
         assert.equal(loanInfo[0].repaymentAmount.toNumber(), 3118);
         assert.equal(loanInfo[0].state.toNumber(), 0);
-        assert.equal(loanInfo[0].loanAmount.toNumber(), 3024);
-        assert.equal(loanInfo[0].interestAmount.toNumber(), 94);
+        assert.equal(loanInfo[0].loanAmount.toNumber(), 3025);
+        assert.equal(loanInfo[0].interestAmount.toNumber(), 93);
         assert.equal(loanInfo[0].marginCallRate.toNumber(), 74832);    // = 3118 * 1.2 / 0.05 (token/eth)
         assert.equal(loanInfo[0].isCollectable.toNumber(), 0);         // = false
 
@@ -424,8 +424,8 @@ contract("Loans tests", accounts => {
         assert.equal(loanInfo2[0].collateralAmount.toNumber(), 5e16);
         assert.equal(loanInfo2[0].repaymentAmount.toNumber(), 3118);
         assert.equal(loanInfo2[0].state.toNumber(), 0);
-        assert.equal(loanInfo2[0].loanAmount.toNumber(), 3024);
-        assert.equal(loanInfo2[0].interestAmount.toNumber(), 94);
+        assert.equal(loanInfo2[0].loanAmount.toNumber(), 3025);
+        assert.equal(loanInfo2[0].interestAmount.toNumber(), 93);
         assert.equal(loanInfo2[0].marginCallRate.toNumber(), 74832);
         assert.equal(loanInfo2[0].isCollectable.toNumber(), 1);        // = true
 
@@ -441,8 +441,8 @@ contract("Loans tests", accounts => {
         assert.equal(loanInfo3[0].collateralAmount.toNumber(), 2 * 5e16);
         assert.equal(loanInfo3[0].repaymentAmount.toNumber(), 3118);
         assert.equal(loanInfo3[0].state.toNumber(), 0);
-        assert.equal(loanInfo3[0].loanAmount.toNumber(), 3024);
-        assert.equal(loanInfo3[0].interestAmount.toNumber(), 94);
+        assert.equal(loanInfo3[0].loanAmount.toNumber(), 3025);
+        assert.equal(loanInfo3[0].interestAmount.toNumber(), 93);
         assert.equal(loanInfo3[0].marginCallRate.toNumber(), 74832 / 2);
         assert.equal(loanInfo3[0].isCollectable.toNumber(), 0);
     });
