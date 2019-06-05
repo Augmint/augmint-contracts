@@ -401,12 +401,12 @@ contract("Loans tests", accounts => {
         );
 
         // assert event has proper numbers
-        assert(loan.collateralAmount.toNumber() === 5e16);
-        assert(loan.tokenValue.toNumber() === 4990);
-        assert(loan.repaymentAmount.toNumber() === 3118);
-        assert(loan.loanAmount.toNumber() === 3024);
-        assert(loan.interestAmount.toNumber() === 94);
-        assert(loan.state === 0);
+        assert(loan.collateralAmount.toNumber() === 5e16);      // = 0.05 (eth)
+        assert(loan.tokenValue.toNumber() === 4990);            // = 99800 * 0.05 (token)
+        assert(loan.repaymentAmount.toNumber() === 3118);       // = 4990 / 1.6 (token)
+        assert(loan.loanAmount.toNumber() === 3024);            // = 3118 * 0.97 (token)
+        assert(loan.interestAmount.toNumber() === 94);          // = 3118 - 3024 (token)
+        assert(loan.state === 0);                               // = "Open"
 
         // assert LoanData has proper numbers stored
         const loanInfo = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
@@ -415,8 +415,8 @@ contract("Loans tests", accounts => {
         assert(loanInfo[0].state.toNumber() === 0);
         assert(loanInfo[0].loanAmount.toNumber() === 3024);
         assert(loanInfo[0].interestAmount.toNumber() === 94);
-        assert(loanInfo[0].marginCallRate.toNumber() === 74832);
-        assert(loanInfo[0].isCollectable.toNumber() === 0);
+        assert(loanInfo[0].marginCallRate.toNumber() === 74832);    // = 3118 * 1.2 / 0.05 (token/eth)
+        assert(loanInfo[0].isCollectable.toNumber() === 0);         // = false
 
         // every number stays the same below margin, only isCollectable will be true
         await rates.setRate("EUR", 72000);
@@ -427,7 +427,7 @@ contract("Loans tests", accounts => {
         assert(loanInfo2[0].loanAmount.toNumber() === 3024);
         assert(loanInfo2[0].interestAmount.toNumber() === 94);
         assert(loanInfo2[0].marginCallRate.toNumber() === 74832);
-        assert(loanInfo2[0].isCollectable.toNumber() === 1);
+        assert(loanInfo2[0].isCollectable.toNumber() === 1);        // = true
 
         // add extra collateral to get above margin
         const tx = await loanManager.addExtraCollateral(loan.id, {
