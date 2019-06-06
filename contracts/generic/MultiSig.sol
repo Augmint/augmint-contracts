@@ -84,16 +84,16 @@ contract MultiSig {
         Script storage script = scripts[scriptAddress];
         require(script.state == ScriptState.Approved, "script state must be Approved");
 
-        // passing scriptAddress to allow called script access its own public fx-s if needed
-        if (scriptAddress.delegatecall.gas(gasleft() - 23000)
-            (abi.encodeWithSignature("execute(address)", scriptAddress))) {
-            script.state = ScriptState.Done;
-            result = true;
+        result = _execute(scriptAddress);
+    }
+
+    function dryExecute(address scriptAddress) public returns (bool result) {
+        result = _execute(scriptAddress);
+        if (result) {
+            revert("dryExecute success");
         } else {
-            script.state = ScriptState.Failed;
-            result = false;
+            revert("dryExecute fail");
         }
-        emit ScriptExecuted(scriptAddress, result);
     }
 
     function cancelScript(address scriptAddress) public {
@@ -169,5 +169,19 @@ contract MultiSig {
                 uint(scripts[scriptAddress].state), scripts[scriptAddress].signCount];
         }
         return response;
+    }
+
+    function _execute(address scriptAddress) private returns (bool result) {
+        Script storage script = scripts[scriptAddress];
+        // passing scriptAddress to allow called script access its own public fx-s if needed
+        if (scriptAddress.delegatecall.gas(gasleft() - 23000)
+            (abi.encodeWithSignature("execute(address)", scriptAddress))) {
+            script.state = ScriptState.Done;
+            result = true;
+        } else {
+            script.state = ScriptState.Failed;
+            result = false;
+        }
+        emit ScriptExecuted(scriptAddress, result);
     }
 }
