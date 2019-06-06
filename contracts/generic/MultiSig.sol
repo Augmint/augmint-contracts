@@ -110,7 +110,7 @@ contract MultiSig {
     /* requires quorum so it's callable only via a script executed by this contract */
     function addSigners(address[] signers) public {
         require(msg.sender == address(this), "only callable via MultiSig");
-        for (uint i= 0; i < signers.length; i++) {
+        for (uint i = 0; i < signers.length; i++) {
             if (!isSigner[signers[i]]) {
                 require(signers[i] != address(0), "new signer must not be 0x0");
                 activeSignersCount++;
@@ -124,7 +124,7 @@ contract MultiSig {
     /* requires quorum so it's callable only via a script executed by this contract */
     function removeSigners(address[] signers) public {
         require(msg.sender == address(this), "only callable via MultiSig");
-        for (uint i= 0; i < signers.length; i++) {
+        for (uint i = 0; i < signers.length; i++) {
             if (isSigner[signers[i]]) {
                 require(activeSignersCount > 1, "must not remove last signer");
                 activeSignersCount--;
@@ -137,7 +137,7 @@ contract MultiSig {
     /* implement it in derived contract */
     function checkQuorum(uint signersCount) internal view returns(bool isQuorum);
 
-    function getAllSignersCount() view external returns (uint allSignersCount) {
+    function getAllSignersCount() external view returns (uint allSignersCount) {
         return allSigners.length;
     }
 
@@ -153,7 +153,7 @@ contract MultiSig {
         return response;
     }
 
-    function getScriptsCount() view external returns (uint scriptsCount) {
+    function getScriptsCount() external view returns (uint scriptsCount) {
         return scriptAddresses.length;
     }
 
