@@ -171,9 +171,11 @@ contract("Loans tests", accounts => {
             from: accounts[0]
         });
 
+        const currentRate = (await rates.rates("EUR"))[0].toNumber();
         await testHelpers.assertEvent(loanManager, "LoanRepayed", {
             loanId: loan.id,
-            borrower: loan.borrower
+            borrower: loan.borrower,
+            currentRate: currentRate
         });
     });
 
@@ -407,6 +409,7 @@ contract("Loans tests", accounts => {
         assert.equal(loan.loanAmount.toNumber(), 3025);            // = 3118 * 0.97, round up (token)
         assert.equal(loan.interestAmount.toNumber(), 93);          // = 3118 - 3025 (token)
         assert.equal(loan.state, 0);                               // = "Open"
+        assert.equal(loan.currentRate, 99800);
 
         // assert LoanData has proper numbers stored
         const loanInfo = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));

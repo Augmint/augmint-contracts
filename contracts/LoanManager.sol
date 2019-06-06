@@ -55,16 +55,16 @@ contract LoanManager is Restricted, TokenReceiver {
     MonetarySupervisor public monetarySupervisor;
 
     event NewLoan(uint32 productId, uint loanId, address indexed borrower, uint collateralAmount, uint loanAmount,
-        uint repaymentAmount, uint40 maturity);
+        uint repaymentAmount, uint40 maturity, uint currentRate);
 
     event LoanProductActiveStateChanged(uint32 productId, bool newState);
 
     event LoanProductAdded(uint32 productId);
 
-    event LoanRepayed(uint loanId, address borrower);
+    event LoanRepayed(uint loanId, address borrower, uint currentRate);
 
     event LoanCollected(uint loanId, address indexed borrower, uint collectedCollateral,
-        uint releasedCollateral, uint defaultingFee);
+        uint releasedCollateral, uint defaultingFee, uint currentRate);
 
     event SystemContractsChanged(Rates newRatesContract, MonetarySupervisor newMonetarySupervisor);
 
@@ -101,9 +101,10 @@ contract LoanManager is Restricted, TokenReceiver {
         LoanProduct storage product = products[productId];
         require(product.isActive, "product must be in active state"); // valid product
 
+        uint currentRate = getCurrentRate();
 
         // calculate loan values based on ETH sent in with Tx
-        uint collateralValueInToken = rates.convertFromWei(augmintToken.peggedSymbol(), msg.value);
+        uint collateralValueInToken = _convertFromWei(currentRate, msg.value);
         uint repaymentAmount = collateralValueInToken.mul(product.collateralRatio).div(PPM_FACTOR);
 
         uint loanAmount;
@@ -126,7 +127,7 @@ contract LoanManager is Restricted, TokenReceiver {
         // Issue tokens and send to borrower
         monetarySupervisor.issueLoan(msg.sender, loanAmount);
 
-        emit NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity);
+        emit NewLoan(productId, loanId, msg.sender, msg.value, loanAmount, repaymentAmount, maturity, currentRate);
     }
 
     function addExtraCollateral(uint loanId) external payable {
@@ -332,7 +333,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
         loan.borrower.transfer(loan.collateralAmount); // send back ETH collateral
 
-        emit LoanRepayed(loanId, loan.borrower);
+        emit LoanRepayed(loanId, loan.borrower, getCurrentRate());
     }
 
     function _collectLoan(uint loanId, uint currentRate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {
@@ -363,11 +364,14 @@ contract LoanManager is Restricted, TokenReceiver {
         }
 
         emit LoanCollected(loanId, loan.borrower, collateralToCollect.add(defaultingFee),
-                releasedCollateral, defaultingFee);
+                releasedCollateral, defaultingFee, currentRate);
     }
 
-    function _convertToWei(uint rate, uint value) private pure returns(uint weiValue) {
-        return value.mul(WEI_FACTOR).roundedDiv(rate);
+    function _convertToWei(uint rate, uint tokenAmount) private pure returns(uint weiAmount) {
+        return tokenAmount.mul(WEI_FACTOR).roundedDiv(rate);
     }
 
+    function _convertFromWei(uint rate, uint weiAmount) private pure returns(uint tokenAmount) {
+        return weiAmount.mul(rate).roundedDiv(WEI_FACTOR);
+    }
 }

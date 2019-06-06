@@ -74,7 +74,8 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             collateralAmount: loan.collateralAmount.toString(),
             loanAmount: loan.loanAmount.toString(),
             repaymentAmount: loan.repaymentAmount.toString(),
-            maturity: x => x
+            maturity: x => x,
+            currentRate: x => x
         }),
 
         testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
@@ -95,6 +96,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
 
     loan.id = newLoanEvenResult.loanId.toNumber();
     loan.maturity = newLoanEvenResult.maturity.toNumber();
+    loan.currentRate = newLoanEvenResult.currentRate.toNumber();
 
     const [totalSupplyAfter, totalLoanAmountAfter, ,] = await Promise.all([
         augmintToken.totalSupply(),
@@ -153,7 +155,8 @@ async function repayLoan(testInstance, loan) {
 
         testHelpers.assertEvent(loanManager, "LoanRepayed", {
             loanId: loan.id,
-            borrower: loan.borrower
+            borrower: loan.borrower,
+            currentRate: x => x
         }),
 
         /* TODO: these are emmited  but why not picked up by assertEvent? */
@@ -269,7 +272,8 @@ async function collectLoan(testInstance, loan, collector) {
             borrower: loan.borrower,
             collectedCollateral: collectedCollateral.toString(),
             releasedCollateral: releasedCollateral.toString(),
-            defaultingFee: defaultingFee.toString()
+            defaultingFee: defaultingFee.toString(),
+            currentRate: x => x
         }),
 
         loanAsserts(loan),
