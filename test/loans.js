@@ -36,16 +36,17 @@ contract("Loans tests", accounts => {
                 ltdParams.allowedDifferenceAmount
             )
         ]);
-        // These neeed to be sequantial b/c product order assumed when retreving via getProducts
-        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive
-        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // notDue
-        await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true); // repaying
-        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true); // defaulting
-        await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false); // disabledProduct
-        await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true); // zeroInterest
-        await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true); // negativeInterest
-        await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true); // fullCoverage
-        await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true); // moreCoverage
+        // These neeed to be sequential b/c product order assumed when retrieving via getProducts
+        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
+        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
+        await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true, 0); // repaying
+        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
+        await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false, 0); // disabledProduct
+        await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true, 0); // zeroInterest
+        await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
+        await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
+        await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 625000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%) (1/1.6 = 0.625)
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, CHUNK_SIZE),
@@ -59,7 +60,8 @@ contract("Loans tests", accounts => {
             products.zeroInterest,
             products.negativeInterest,
             products.fullCoverage,
-            products.moreCoverage
+            products.moreCoverage,
+            products.margin
         ] = newProducts;
     });
 
@@ -85,11 +87,11 @@ contract("Loans tests", accounts => {
             .sub(1)
             .div(prod.discountRate)
             .mul(1000000)
-            .round(0, BigNumber.ROUND_UP);
+            .round(0, BigNumber.ROUND_DOWN);
         const weiAmount = (await rates.convertToWei(tokenTestHelpers.peggedSymbol, loanAmount))
             .div(prod.collateralRatio)
             .mul(1000000)
-            .round(0, BigNumber.ROUND_UP);
+            .round(0, BigNumber.ROUND_DOWN);
 
         await testHelpers.expectThrow(loanManager.newEthBackedLoan(prod.id, { from: accounts[0], value: weiAmount }));
     });
@@ -281,6 +283,7 @@ contract("Loans tests", accounts => {
         );
         assert.equal(loan1Actual.productId.toNumber(), product.id);
         assert.equal(loan1Actual.state.toNumber(), loan1.state);
+        assert.equal(loan1Actual.isCollectable.toNumber(), 0);
         assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);
         assert.equal(loan1Actual.disbursementTime.toNumber(), loan1.maturity - product.term);
         assert.equal(loan1Actual.loanAmount.toNumber(), loan1.loanAmount);
@@ -293,7 +296,8 @@ contract("Loans tests", accounts => {
             "0x" + loan2Actual.borrower.toString(16).padStart(40, "0"), // leading 0s if address starts with 0
             loan2.borrower
         );
-        assert.equal(loan2Actual.state.toNumber(), 2); // Defaulted (not collected)
+        assert.equal(loan2Actual.state.toNumber(), 0); // Open (defaulted but not yet collected)
+        assert.equal(loan2Actual.isCollectable.toNumber(), 1);
     });
 
     it("Should list loans for one account from offset", async function() {
@@ -324,6 +328,7 @@ contract("Loans tests", accounts => {
         );
         assert.equal(loan1Actual.productId.toNumber(), product1.id);
         assert.equal(loan1Actual.state.toNumber(), loan1.state);
+        assert.equal(loan1Actual.isCollectable.toNumber(), 0);
         assert.equal(loan1Actual.maturity.toNumber(), loan1.maturity);
         assert.equal(loan1Actual.disbursementTime.toNumber(), loan1.maturity - product1.term);
         assert.equal(loan1Actual.loanAmount.toNumber(), loan1.loanAmount);
@@ -331,7 +336,8 @@ contract("Loans tests", accounts => {
 
         const loan2Actual = loanInfo[1];
         assert.equal(loan2Actual.id.toNumber(), loan2.id);
-        assert.equal(loan2Actual.state.toNumber(), 2); // Defaulted (not collected)
+        assert.equal(loan2Actual.state.toNumber(), 0); // Open (defaulted but not yet collected)
+        assert.equal(loan2Actual.isCollectable.toNumber(), 1);
     });
 
     it("should only allow whitelisted loan contract to be used", async function() {
@@ -345,7 +351,7 @@ contract("Loans tests", accounts => {
             await rates.setRate("EUR", 99800),
             await craftedLender.grantPermission(accounts[0], "StabilityBoard")
         ]);
-        await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true);
+        await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true, 0);
 
         // testing Lender not having "LoanManager" permission on monetarySupervisor:
         await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") }));
@@ -373,5 +379,71 @@ contract("Loans tests", accounts => {
 
     it("only allowed contract should call MonetarySupervisor.loanRepaymentNotification", async function() {
         await testHelpers.expectThrow(monetarySupervisor.loanRepaymentNotification(0, { from: accounts[0] }));
+    });
+
+    // Margin tests:
+    // ==============
+    // initial rate = 99800 (token/eth)
+    // collateral = 0.05 (eth)
+    // collateral ratio: initial = 160%, minimum = 120% (1/1.6 = 0.625)
+    //
+    // 100% => 3118.75 (token)  => @ 62375 (token/eth)
+    // 120% => 3742.5 (token)   => @ 74850 (token/eth)  => marginCallRate: 74832 (due to internal rounding in contract)
+    // 160% => 4990 (token)     => @ 99800 (token/eth)
+
+    it("tests loan margin numbers", async function() {
+        await rates.setRate("EUR", 99800);
+        const loan = await loanTestHelpers.createLoan(
+            this,
+            products.margin,
+            accounts[1],
+            global.web3v1.utils.toWei("0.05")
+        );
+
+        // assert event has proper numbers
+        assert.equal(loan.collateralAmount.toNumber(), 5e16);      // = 0.05 (eth)
+        assert.equal(loan.tokenValue.toNumber(), 4990);            // = 99800 * 0.05 (token)
+        assert.equal(loan.repaymentAmount.toNumber(), 3118);       // = 4990 / 1.6, round down (token)
+        assert.equal(loan.loanAmount.toNumber(), 3025);            // = 3118 * 0.97, round up (token)
+        assert.equal(loan.interestAmount.toNumber(), 93);          // = 3118 - 3025 (token)
+        assert.equal(loan.state, 0);                               // = "Open"
+
+        // assert LoanData has proper numbers stored
+        const loanInfo = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
+        assert.equal(loanInfo[0].collateralAmount.toNumber(), 5e16);
+        assert.equal(loanInfo[0].repaymentAmount.toNumber(), 3118);
+        assert.equal(loanInfo[0].state.toNumber(), 0);
+        assert.equal(loanInfo[0].loanAmount.toNumber(), 3025);
+        assert.equal(loanInfo[0].interestAmount.toNumber(), 93);
+        assert.equal(loanInfo[0].marginCallRate.toNumber(), 74832);    // = 3118 * 1.2 / 0.05 (token/eth)
+        assert.equal(loanInfo[0].isCollectable.toNumber(), 0);         // = false
+
+        // every number stays the same below margin, only isCollectable will be true
+        await rates.setRate("EUR", 72000);
+        const loanInfo2 = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
+        assert.equal(loanInfo2[0].collateralAmount.toNumber(), 5e16);
+        assert.equal(loanInfo2[0].repaymentAmount.toNumber(), 3118);
+        assert.equal(loanInfo2[0].state.toNumber(), 0);
+        assert.equal(loanInfo2[0].loanAmount.toNumber(), 3025);
+        assert.equal(loanInfo2[0].interestAmount.toNumber(), 93);
+        assert.equal(loanInfo2[0].marginCallRate.toNumber(), 74832);
+        assert.equal(loanInfo2[0].isCollectable.toNumber(), 1);        // = true
+
+        // add extra collateral to get above margin
+        const tx = await loanManager.addExtraCollateral(loan.id, {
+            from: accounts[1],
+            value: global.web3v1.utils.toWei("0.05")
+        });
+        testHelpers.logGasUse(this, tx, "addExtraCollateral");
+
+        // collateralAmount should double up, marginCallRate get halved
+        const loanInfo3 = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
+        assert.equal(loanInfo3[0].collateralAmount.toNumber(), 2 * 5e16);
+        assert.equal(loanInfo3[0].repaymentAmount.toNumber(), 3118);
+        assert.equal(loanInfo3[0].state.toNumber(), 0);
+        assert.equal(loanInfo3[0].loanAmount.toNumber(), 3025);
+        assert.equal(loanInfo3[0].interestAmount.toNumber(), 93);
+        assert.equal(loanInfo3[0].marginCallRate.toNumber(), 74832 / 2);
+        assert.equal(loanInfo3[0].isCollectable.toNumber(), 0);
     });
 });

@@ -320,7 +320,8 @@ async function getProductsInfo(offset, chunkSize) {
             collateralRatio,
             defaultingFeePt,
             maxLoanAmount,
-            isActive
+            isActive,
+            minCollateralRatio
         ] = prod;
         assert(term.gt(0));
         result.push({
@@ -331,7 +332,8 @@ async function getProductsInfo(offset, chunkSize) {
             collateralRatio,
             defaultingFeePt,
             maxLoanAmount,
-            isActive
+            isActive,
+            minCollateralRatio
         });
     });
     return result;
@@ -351,7 +353,9 @@ function parseLoansInfo(loans) {
             maturity,
             disbursementTime,
             loanAmount,
-            interestAmount
+            interestAmount,
+            marginCallRate,
+            isCollectable
         ] = loan;
 
         assert(maturity.gt(0));
@@ -365,7 +369,9 @@ function parseLoansInfo(loans) {
             maturity,
             disbursementTime,
             loanAmount,
-            interestAmount
+            interestAmount,
+            marginCallRate,
+            isCollectable
         });
     });
     return result;
@@ -386,7 +392,7 @@ async function calcLoanValues(rates, product, collateralWei) {
     ret.loanAmount = ret.repaymentAmount
         .mul(product.discountRate)
         .div(ppmDiv)
-        .round(0, BigNumber.ROUND_DOWN);
+        .round(0, BigNumber.ROUND_UP);
 
     ret.interestAmount = ret.repaymentAmount.gt(ret.loanAmount)
         ? ret.repaymentAmount.minus(ret.loanAmount)
