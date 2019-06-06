@@ -28,15 +28,16 @@ contract("Loans collection tests", accounts => {
                 ltdParams.allowedDifferenceAmount
             )
         ]);
-        // These neeed to be sequantial b/c product order assumed when retreving via getProducts
-        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive
-        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true); // notDue
-        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true); // defaulting
-        await loanManager.addLoanProduct(1, 900000, 900000, 1000, 100000, true); // defaultingNoLeftOver
-        await loanManager.addLoanProduct(1, 1000000, 900000, 2000, 50000, true); // zeroInterest
-        await loanManager.addLoanProduct(1, 1100000, 900000, 2000, 50000, true); // negativeInterest
-        await loanManager.addLoanProduct(1, 990000, 1000000, 2000, 50000, true); // fullCoverage
-        await loanManager.addLoanProduct(1, 990000, 1200000, 2000, 50000, true); // moreCoverage
+        // These neeed to be sequential b/c product order assumed when retrieving via getProducts
+        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
+        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
+        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
+        await loanManager.addLoanProduct(1, 900000, 900000, 1000, 100000, true, 0); // defaultingNoLeftOver
+        await loanManager.addLoanProduct(1, 1000000, 900000, 2000, 50000, true, 0); // zeroInterest
+        await loanManager.addLoanProduct(1, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
+        await loanManager.addLoanProduct(1, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
+        await loanManager.addLoanProduct(1, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 625000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%) (1/1.6 = 0.625)
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, 10),
@@ -49,7 +50,8 @@ contract("Loans collection tests", accounts => {
             products.zeroInterest,
             products.negativeInterest,
             products.fullCoverage,
-            products.moreCoverage
+            products.moreCoverage,
+            products.margin
         ] = newProducts;
     });
 
@@ -246,4 +248,68 @@ contract("Loans collection tests", accounts => {
     it("only allowed contract should call MonetarySupervisor.loanCollectionNotification", async function() {
         await testHelpers.expectThrow(monetarySupervisor.loanCollectionNotification(0, { from: accounts[0] }));
     });
+
+    // Margin tests:
+    // ==============
+    // initial rate = 99800 (token/eth)
+    // collateral = 0.05 (eth)
+    //
+    // 100% => 3118.75 (token)  => @ 62375 (token/eth)
+    // 120% => 3742.5 (token)   => @ 74850 (token/eth)  => marginCallRate: 74832 (due to internal rounding in contract)
+    // 160% => 4990 (token)     => @ 99800 (token/eth)
+
+    it("Should collect a loan if under margin", async function() {
+        await rates.setRate("EUR", 99800);
+        const loan = await loanTestHelpers.createLoan(
+            this,
+            products.margin,
+            accounts[1],
+            global.web3v1.utils.toWei("0.05")
+        );
+        await rates.setRate("EUR", 74830);
+        assert(await isCollectable(loan.id) === 1);
+        await loanTestHelpers.collectLoan(this, loan, accounts[2]);
+    });
+
+    it("Should not collect a loan if above margin", async function() {
+        await rates.setRate("EUR", 99800);
+        const loan = await loanTestHelpers.createLoan(
+            this,
+            products.margin,
+            accounts[1],
+            global.web3v1.utils.toWei("0.05")
+        );
+        await rates.setRate("EUR", 74840);
+        assert(await isCollectable(loan.id) === 0);
+        await testHelpers.expectThrow(loanManager.collect([loan.id]));
+    });
+
+    it("Should not collect a loan if enough extra collateral was added", async function() {
+        await rates.setRate("EUR", 99800);
+        const loan = await loanTestHelpers.createLoan(
+            this,
+            products.margin,
+            accounts[1],
+            global.web3v1.utils.toWei("0.05")
+        );
+        assert(await isCollectable(loan.id) === 0);
+
+        // set rate below margin
+        await rates.setRate("EUR", 72000);
+        assert(await isCollectable(loan.id) === 1);
+
+        // add extra collateral to get above margin
+        const tx = await loanManager.addExtraCollateral(loan.id, {
+            from: accounts[1],
+            value: global.web3v1.utils.toWei("0.05")
+        });
+        testHelpers.logGasUse(this, tx, "addExtraCollateral");
+
+        // should not be collectable
+        assert(await isCollectable(loan.id) === 0);
+        await testHelpers.expectThrow(loanManager.collect([loan.id]));
+    });
+
+    const isCollectable = async loanId =>
+        loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loanId, 1))[0].isCollectable.toNumber();
 });
