@@ -19,7 +19,6 @@ module.exports = {
             host: "localhost",
             port: 8545,
             network_id: "999",
-            gas: 4707806,
             gasPrice: 1000000000 // 1 GWEI
         },
         coverage: {

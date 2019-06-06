@@ -6,15 +6,15 @@
       "latestDeployedAddress": "0xbed57eb0b4232da0cddd3c9c27490fc0759e0a01",
       "deployments": {
         "0xbed57eb0b4232da0cddd3c9c27490fc0759e0a01": {
-          "generatedAt": "2019-04-04T18:31:39.131Z",
-          "truffleContractFileUpdatedAt": "2019-04-04T18:20:18.473Z",
-          "deployTransactionHash": "0xf52599927d8c2dd84673a8cda2ee731d38dd99b7b8310973b0765ca378e37d3b",
+          "generatedAt": "2019-06-06T11:06:21.155Z",
+          "truffleContractFileUpdatedAt": "2019-06-06T10:59:24.276Z",
+          "deployTransactionHash": "0x953e3cd21273b8a598e537aa7559ce2088ca469137f3bf04f3dc97ccf0614b0e",
           "compiler": {
             "name": "solc",
             "version": "0.4.24+commit.e67f0147.Emscripten.clang"
           },
-          "bytecodeHash": "8346a3e5436e002c8b4ad913358d9d66",
-          "deployedBytecodeHash": "e53b4725904de117332adfa1a0d75bc5",
+          "bytecodeHash": "8d7e449258facd1c6fab22b402de6aee",
+          "deployedBytecodeHash": "bf64976158eb4f8696efd994652e7f49",
           "sourceHash": "6cace117c42478e4f5c8cf116bec9a62"
         }
       }
