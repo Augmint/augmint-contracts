@@ -46,9 +46,9 @@ module.exports = async function(deployer, network, accounts) {
             /* LoanManager permissions & products */
             monetarySupervisor.grantPermission(oldLoanManager.address, "LoanManager"),
             feeAccount.grantPermission(oldLoanManager.address, "NoTransferFee"),
-            oldLoanManager.addLoanProduct(1, 999999, 990000, 1000, 50000, true), // defaults in 1 secs for testing ? p.a.
-            oldLoanManager.addLoanProduct(3600, 999989, 980000, 1000, 50000, true), // due in 1hr for testing repayments ? p.a.
-            oldLoanManager.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true), // 365d, 14% p.a.
+            oldLoanManager.addLoanProduct(1, 999999, 990000, 1000, 50000, true, 0), // defaults in 1 secs for testing ? p.a.
+            oldLoanManager.addLoanProduct(3600, 999989, 980000, 1000, 50000, true, 0), // due in 1hr for testing repayments ? p.a.
+            oldLoanManager.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true, 0), // 365d, 14% p.a.
 
             /* Exchange permissions */
             feeAccount.grantPermission(oldExchange.address, "NoTransferFee")

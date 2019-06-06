@@ -21,7 +21,7 @@
   ],
   "engines": {
     "node": "10.15.3",
-    "yarn": "1.15.2"
+    "yarn": ">=1.15.2"
   },
   "scripts": {
     "start": "yarn runmigrate",
@@ -38,7 +38,7 @@
     "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate && echo 'Migration done. Ganache db in ./localchaindb folder.'",
     "localchaindb:builddocker": "yarn localchaindb:build && yarn docker:build",
     "docker:build": "docker build . -t localdockerimage",
-    "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
+    "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x694920 --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
     "docker:start": "docker start ganache || yarn docker:run",
     "docker:stop": "docker stop ganache",
     "docker:tag:build": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
