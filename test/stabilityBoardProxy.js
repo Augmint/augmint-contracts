@@ -501,7 +501,10 @@ contract("StabilityBoardProxy", accounts => {
             await stabilityBoardProxy.dryExecute(revertingScript.address);
             assert.fail("Should be rejected");
         } catch (error) {
-            assert.include(error.message, "VM Exception while processing transaction: revert dryExecute fail");
+            assert.include(
+                error.message,
+                "VM Exception while processing transaction: revert intentional revert for test"
+            );
         }
 
         let [script] = await Promise.all([

@@ -89,11 +89,19 @@ contract MultiSig {
 
     function dryExecute(address scriptAddress) public returns (bool result) {
         result = _execute(scriptAddress);
-        if (result) {
-            revert("dryExecute success");
-        } else {
-            revert("dryExecute fail");
+
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            let ptr := mload(0x40)
+            returndatacopy(ptr, 0, returndatasize)
+
+            if eq(result, 0) {
+                // if delegatecall failed then revert with the revert returndata
+                revert(ptr, returndatasize)
+            }
         }
+
+        revert("dryExecute success");
     }
 
     function cancelScript(address scriptAddress) public {
