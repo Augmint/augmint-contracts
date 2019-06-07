@@ -44,7 +44,7 @@ before(async function() {
     rates = Rates.at(Rates.address);
 });
 
-async function createLoan(testInstance, product, borrower, collateralWei) {
+async function createLoan(testInstance, product, borrower, collateralWei, minRate = 0) {
     const loan = await calcLoanValues(rates, product, collateralWei);
     loan.state = 0;
     loan.borrower = borrower;
@@ -60,7 +60,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         })
     ]);
 
-    const tx = await loanManager.newEthBackedLoan(loan.product.id, {
+    const tx = await loanManager.newEthBackedLoan(loan.product.id, minRate, {
         from: loan.borrower,
         value: loan.collateralAmount
     });

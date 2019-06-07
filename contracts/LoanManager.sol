@@ -96,12 +96,13 @@ contract LoanManager is Restricted, TokenReceiver {
         emit LoanProductActiveStateChanged(productId, newState);
     }
 
-    function newEthBackedLoan(uint32 productId) external payable {
+    function newEthBackedLoan(uint32 productId, uint minRate) external payable {
         require(productId < products.length, "invalid productId"); // next line would revert but require to emit reason
         LoanProduct storage product = products[productId];
         require(product.isActive, "product must be in active state"); // valid product
 
         uint currentRate = getCurrentRate();
+        require(currentRate >= minRate, "current rate is below minimum");
 
         // calculate loan values based on ETH sent in with Tx
         uint collateralValueInToken = _convertFromWei(currentRate, msg.value);

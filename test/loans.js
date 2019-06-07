@@ -81,6 +81,18 @@ contract("Loans tests", accounts => {
         await loanTestHelpers.createLoan(this, products.repaying, accounts[0], global.web3v1.utils.toWei("0.5"));
     });
 
+    it("Should get an A-EUR loan if current rate is not below minRate", async function() {
+        const minRate = 22020;
+        await rates.setRate("EUR", minRate);
+        await loanTestHelpers.createLoan(this, products.repaying, accounts[1], global.web3v1.utils.toWei("0.5"), minRate);
+    });
+
+    it("Should NOT get an A-EUR loan if current rate is below minRate", async function() {
+        const minRate = 22020;
+        await rates.setRate("EUR", minRate - 1);
+        await testHelpers.expectThrow(loanManager.newEthBackedLoan(products.repaying.id, minRate, { from: accounts[1], value: global.web3v1.utils.toWei("0.5") }));
+    });
+
     it("Should NOT get a loan less than minDisbursedAmount", async function() {
         const prod = products.repaying;
         const loanAmount = prod.minDisbursedAmount
@@ -93,12 +105,12 @@ contract("Loans tests", accounts => {
             .mul(1000000)
             .round(0, BigNumber.ROUND_DOWN);
 
-        await testHelpers.expectThrow(loanManager.newEthBackedLoan(prod.id, { from: accounts[0], value: weiAmount }));
+        await testHelpers.expectThrow(loanManager.newEthBackedLoan(prod.id, 0, { from: accounts[0], value: weiAmount }));
     });
 
     it("Shouldn't get a loan for a disabled product", async function() {
         await testHelpers.expectThrow(
-            loanManager.newEthBackedLoan(products.disabledProduct.id, {
+            loanManager.newEthBackedLoan(products.disabledProduct.id, 0, {
                 from: accounts[0],
                 value: global.web3v1.utils.toWei("0.05")
             })
@@ -251,7 +263,7 @@ contract("Loans tests", accounts => {
     it("Should not get a loan when rates = 0", async function() {
         await rates.setRate("EUR", 0);
         await testHelpers.expectThrow(
-            loanManager.newEthBackedLoan(products.repaying.id, {
+            loanManager.newEthBackedLoan(products.repaying.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.1")
             })
@@ -356,11 +368,11 @@ contract("Loans tests", accounts => {
         await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true, 0);
 
         // testing Lender not having "LoanManager" permission on monetarySupervisor:
-        await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") }));
+        await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, 0, { value: global.web3v1.utils.toWei("0.05") }));
 
         // grant permission to create new loan
         await monetarySupervisor.grantPermission(craftedLender.address, "LoanManager");
-        await craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") });
+        await craftedLender.newEthBackedLoan(0, 0, { value: global.web3v1.utils.toWei("0.05") });
 
         // revoke permission and try to repay
         await monetarySupervisor.revokePermission(craftedLender.address, "LoanManager"),

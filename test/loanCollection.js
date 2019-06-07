@@ -169,15 +169,15 @@ contract("Loans collection tests", accounts => {
     it("Should collect multiple defaulted loans", async function() {
         const loanCount = (await loanManager.getLoanCount()).toNumber();
         await Promise.all([
-            loanManager.newEthBackedLoan(products.zeroInterest.id, {
+            loanManager.newEthBackedLoan(products.zeroInterest.id, 0 ,{
                 from: accounts[0],
                 value: global.web3v1.utils.toWei("0.05")
             }),
-            loanManager.newEthBackedLoan(products.fullCoverage.id, {
+            loanManager.newEthBackedLoan(products.fullCoverage.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.05")
             }),
-            loanManager.newEthBackedLoan(products.negativeInterest.id, {
+            loanManager.newEthBackedLoan(products.negativeInterest.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.05")
             })
@@ -192,11 +192,11 @@ contract("Loans collection tests", accounts => {
     it("Should NOT collect multiple loans if one is not due", async function() {
         const loanCount = (await loanManager.getLoanCount()).toNumber();
         await Promise.all([
-            loanManager.newEthBackedLoan(products.notDue.id, {
+            loanManager.newEthBackedLoan(products.notDue.id, 0, {
                 from: accounts[0],
                 value: global.web3v1.utils.toWei("0.05")
             }),
-            loanManager.newEthBackedLoan(products.defaulting.id, {
+            loanManager.newEthBackedLoan(products.defaulting.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.05")
             })
