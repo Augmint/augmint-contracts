@@ -321,7 +321,7 @@ async function getProductsInfo(offset, chunkSize) {
             minDisbursedAmount,
             term,
             discountRate,
-            collateralRatio,
+            initialCollateralRatio,
             defaultingFeePt,
             maxLoanAmount,
             isActive,
@@ -333,7 +333,7 @@ async function getProductsInfo(offset, chunkSize) {
             minDisbursedAmount,
             term,
             discountRate,
-            collateralRatio,
+            initialCollateralRatio,
             defaultingFeePt,
             maxLoanAmount,
             isActive,
@@ -389,8 +389,8 @@ async function calcLoanValues(rates, product, collateralWei) {
     ret.tokenValue = await rates.convertFromWei(peggedSymbol, collateralWei);
 
     ret.repaymentAmount = ret.tokenValue
-        .mul(product.collateralRatio)
-        .div(ppmDiv)
+        .mul(ppmDiv)
+        .div(product.initialCollateralRatio)
         .round(0, BigNumber.ROUND_DOWN);
 
     ret.loanAmount = ret.repaymentAmount

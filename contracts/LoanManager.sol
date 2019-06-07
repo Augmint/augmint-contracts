@@ -26,13 +26,13 @@ contract LoanManager is Restricted, TokenReceiver {
     enum LoanState { Open, Repaid, DoNotUse, Collected } // NB: DoNotUse state is kept for backwards compatibility only (so the ordinal of 'Collected' does not shift), as the name states: do not use it.
 
     struct LoanProduct {
-        uint minDisbursedAmount;    // 0: minimum loanAmount, with decimals set in AugmintToken.decimals (i.e. token amount)
-        uint32 term;                // 1: term length (in seconds)
-        uint32 discountRate;        // 2: discountRate (in parts per million, i.e. 10,000 = 1%)
-        uint32 collateralRatio;     // 3: inverse of collateral ratio: [repayment value (in token) / collateral value (in token)] (in ppm). Note: this is actually the inverse of the commonly used "collateral ratio"! TODO: fix it
-        uint32 defaultingFeePt;     // 4: % of repaymentAmount (in parts per million, i.e. 50,000 = 5%)
-        bool isActive;              // 5: flag to enable/disable product
-        uint32 minCollateralRatio;  // 6: minimum collateral ratio: [collateral value (in token) / repayment value (in token)] (in ppm), defines the margin, zero means no margin. Note: this is _not_ an inverse like the above "collateralRatio", it is already stored properly!
+        uint minDisbursedAmount;        // 0: minimum loanAmount, with decimals set in AugmintToken.decimals (i.e. token amount)
+        uint32 term;                    // 1: term length (in seconds)
+        uint32 discountRate;            // 2: discountRate (in parts per million, i.e. 10,000 = 1%)
+        uint32 initialCollateralRatio;  // 3: initial collateral ratio: [collateral value (in token) / repayment value (in token)] (in ppm).
+        uint32 defaultingFeePt;         // 4: % of repaymentAmount (in parts per million, i.e. 50,000 = 5%)
+        bool isActive;                  // 5: flag to enable/disable product
+        uint32 minCollateralRatio;      // 6: minimum collateral ratio: [collateral value (in token) / repayment value (in token)] (in ppm), defines the margin, zero means no margin.
     }
 
     /* NB: we don't need to store loan parameters because loan products can't be altered (only disabled/enabled) */
@@ -76,11 +76,11 @@ contract LoanManager is Restricted, TokenReceiver {
         rates = _rates;
     }
 
-    function addLoanProduct(uint32 term, uint32 discountRate, uint32 collateralRatio, uint minDisbursedAmount,
+    function addLoanProduct(uint32 term, uint32 discountRate, uint32 initialCollateralRatio, uint minDisbursedAmount,
                                 uint32 defaultingFeePt, bool isActive, uint32 minCollateralRatio)
     external restrict("StabilityBoard") {
         uint _newProductId = products.push(
-            LoanProduct(minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, isActive, minCollateralRatio)
+            LoanProduct(minDisbursedAmount, term, discountRate, initialCollateralRatio, defaultingFeePt, isActive, minCollateralRatio)
         ) - 1;
 
         uint32 newProductId = uint32(_newProductId);
@@ -105,7 +105,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
         // calculate loan values based on ETH sent in with Tx
         uint collateralValueInToken = _convertFromWei(currentRate, msg.value);
-        uint repaymentAmount = collateralValueInToken.mul(product.collateralRatio).div(PPM_FACTOR);
+        uint repaymentAmount = collateralValueInToken.mul(PPM_FACTOR).div(product.initialCollateralRatio);
 
         uint loanAmount;
         (loanAmount, ) = calculateLoanValues(product, repaymentAmount);
@@ -196,7 +196,7 @@ contract LoanManager is Restricted, TokenReceiver {
     }
 
     // returns <chunkSize> loan products starting from some <offset>:
-    // [ productId, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
+    // [ productId, minDisbursedAmount, term, discountRate, initialCollateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
     function getProducts(uint offset, uint16 chunkSize)
     external view returns (uint[9][]) {
         uint limit = SafeMath.min(offset.add(chunkSize), products.length);
@@ -205,7 +205,7 @@ contract LoanManager is Restricted, TokenReceiver {
         for (uint i = offset; i < limit; i++) {
             LoanProduct storage product = products[i];
             response[i - offset] = [i, product.minDisbursedAmount, product.term, product.discountRate,
-                    product.collateralRatio, product.defaultingFeePt,
+                    product.initialCollateralRatio, product.defaultingFeePt,
                     monetarySupervisor.getMaxLoanAmount(product.minDisbursedAmount), product.isActive ? 1 : 0,
                     product.minCollateralRatio];
         }

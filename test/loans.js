@@ -37,16 +37,16 @@ contract("Loans tests", accounts => {
             )
         ]);
         // These neeed to be sequential b/c product order assumed when retrieving via getProducts
-        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
-        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
-        await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true, 0); // repaying
-        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
-        await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false, 0); // disabledProduct
-        await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true, 0); // zeroInterest
-        await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
+        // term (in sec), discountRate, initialCollateralRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
+        await loanManager.addLoanProduct(86400, 970000, 1176471, 3000, 50000, true, 0); // notDue
+        await loanManager.addLoanProduct(60, 985000, 1111111, 2000, 50000, true, 0); // repaying
+        await loanManager.addLoanProduct(1, 970000, 1176471, 1000, 50000, true, 0); // defaulting
+        await loanManager.addLoanProduct(1, 990000, 1010101, 1000, 50000, false, 0); // disabledProduct
+        await loanManager.addLoanProduct(60, 1000000, 1111111, 2000, 50000, true, 0); // zeroInterest
+        await loanManager.addLoanProduct(60, 1100000, 1111111, 2000, 50000, true, 0); // negativeInterest
         await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
-        await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
-        await loanManager.addLoanProduct(86400, 970000, 625000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%) (1/1.6 = 0.625)
+        await loanManager.addLoanProduct(60, 990000, 833333, 2000, 50000, true, 0); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 1600000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%)
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, CHUNK_SIZE),
@@ -89,7 +89,7 @@ contract("Loans tests", accounts => {
             .mul(1000000)
             .round(0, BigNumber.ROUND_DOWN);
         const weiAmount = (await rates.convertToWei(tokenTestHelpers.peggedSymbol, loanAmount))
-            .div(prod.collateralRatio)
+            .div(prod.initialCollateralRatio)
             .mul(1000000)
             .round(0, BigNumber.ROUND_DOWN);
 
