@@ -86,18 +86,19 @@ contract MultiSig {
 
         result = _execute(scriptAddress);
     }
-
-    function dryExecute(address scriptAddress) public returns (bool result) {
-        result = _execute(scriptAddress);
+    /* Function to test scripts without signatures - always reverts.
+        It's even possible to test scripts without deployment if script deployed and dry run on a ganache */
+    function dryExecute(address scriptAddress) public {
+        bool result = _execute(scriptAddress);
 
         // solium-disable-next-line security/no-inline-assembly
         assembly {
-            let ptr := mload(0x40)
-            returndatacopy(ptr, 0, returndatasize)
+            let ptr := mload(0x40) // starts from the "free memory pointer"
 
             if eq(result, 0) {
                 // if delegatecall failed then revert with the revert returndata
-                revert(ptr, returndatasize)
+                returndatacopy(ptr, 0, returndatasize) // retreive delegatecall revert reason message
+                revert(ptr, returndatasize)  // revert with the reason message from delegeatecall
             }
         }
 
