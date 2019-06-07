@@ -57,11 +57,14 @@ contract LoanManager is Restricted, TokenReceiver {
     event NewLoan(uint32 productId, uint loanId, address indexed borrower, uint collateralAmount, uint loanAmount,
         uint repaymentAmount, uint40 maturity, uint currentRate);
 
+    event LoanChanged(uint loanId, address indexed borrower, uint collateralAmount,
+        uint repaymentAmount, uint currentRate);
+
     event LoanProductActiveStateChanged(uint32 productId, bool newState);
 
     event LoanProductAdded(uint32 productId);
 
-    event LoanRepayed(uint loanId, address borrower, uint currentRate);
+    event LoanRepayed(uint loanId, address indexed borrower, uint currentRate);
 
     event LoanCollected(uint loanId, address indexed borrower, uint collectedCollateral,
         uint releasedCollateral, uint defaultingFee, uint currentRate);
@@ -139,6 +142,8 @@ contract LoanManager is Restricted, TokenReceiver {
         require(product.minCollateralRatio > 0, "not a margin type loan");
 
         loan.collateralAmount = loan.collateralAmount.add(msg.value);
+
+        emit LoanChanged(loanId, loan.borrower, loan.collateralAmount, loan.repaymentAmount, getCurrentRate());
     }
 
     /* repay loan, called from AugmintToken's transferAndNotify

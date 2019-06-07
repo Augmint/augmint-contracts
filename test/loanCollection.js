@@ -305,6 +305,14 @@ contract("Loans collection tests", accounts => {
         });
         testHelpers.logGasUse(this, tx, "addExtraCollateral");
 
+        testHelpers.assertEvent(loanManager, "LoanChanged", {
+            loanId: loan.id,
+            borrower: loan.borrower,
+            collateralAmount: global.web3v1.utils.toWei("0.1").toString(),
+            repaymentAmount: loan.repaymentAmount.toString(),
+            currentRate: (await rates.rates("EUR"))[0].toString()
+        });
+
         // should not be collectable
         assert(await isCollectable(loan.id) === 0);
         await testHelpers.expectThrow(loanManager.collect([loan.id]));

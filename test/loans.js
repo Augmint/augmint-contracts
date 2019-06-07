@@ -451,6 +451,14 @@ contract("Loans tests", accounts => {
         });
         testHelpers.logGasUse(this, tx, "addExtraCollateral");
 
+        testHelpers.assertEvent(loanManager, "LoanChanged", {
+            loanId: loan.id,
+            borrower: loan.borrower,
+            collateralAmount: global.web3v1.utils.toWei("0.1").toString(),
+            repaymentAmount: loan.repaymentAmount.toString(),
+            currentRate: (await rates.rates("EUR"))[0].toString()
+        });
+
         // collateralAmount should double up, marginCallRate get halved
         const loanInfo3 = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
         assert.equal(loanInfo3[0].collateralAmount.toNumber(), 2 * 5e16);
