@@ -3,6 +3,7 @@ const SB_addSigners = artifacts.require("scriptTests/SB_addSigners.sol");
 const SB_addAndRemoveSigners = artifacts.require("scriptTests/SB_addAndRemoveSigners.sol");
 const SB_removeSigners = artifacts.require("scriptTests/SB_removeSigners.sol");
 const SB_revertingScript = artifacts.require("scriptTests/SB_revertingScript.sol");
+const SB_revertingNoReasonScript = artifacts.require("scriptTests/SB_revertingNoReasonScript.sol");
 const SB_outOfGasScript = artifacts.require("scriptTests/SB_outOfGasScript.sol");
 const SB_cancelScript = artifacts.require("scriptTests/SB_cancelScript.sol");
 const testHelpers = require("./helpers/testHelpers.js");
@@ -20,10 +21,12 @@ async function addSigners(newSigners) {
         stabilityBoardProxy.getSigners(0, CHUNK_SIZE)
     ]);
 
-    const signTxs = currentSigners.filter(signerTuple => !signerTuple[1].eq(0)).map(tuple => {
-        const signerAddress = "0x" + tuple[1].toString(16).padStart(40, "0");
-        return stabilityBoardProxy.sign(addSignerScript.address, { from: signerAddress });
-    });
+    const signTxs = currentSigners
+        .filter(signerTuple => !signerTuple[1].eq(0))
+        .map(tuple => {
+            const signerAddress = "0x" + tuple[1].toString(16).padStart(40, "0");
+            return stabilityBoardProxy.sign(addSignerScript.address, { from: signerAddress });
+        });
 
     const signCount = Math.floor(signTxs.length / 2) + 1;
     await Promise.all(signTxs.slice(0, signCount));
@@ -295,9 +298,7 @@ contract("StabilityBoardProxy", accounts => {
         // create , sign & execute a script to cancel our removeSignerScript
         const cancelScript = await SB_cancelScript.new(removeSignerScript.address);
         await Promise.all(
-            [...newSigners, accounts[0]].map(signer =>
-                stabilityBoardProxy.sign(cancelScript.address, { from: signer })
-            )
+            [...newSigners, accounts[0]].map(signer => stabilityBoardProxy.sign(cancelScript.address, { from: signer }))
         );
 
         const cancelTx = await stabilityBoardProxy.execute(cancelScript.address, { from: accounts[0] });
@@ -428,14 +429,16 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxy.getScriptsCount().then(res => res.toNumber()),
             stabilityBoardProxy.getScripts(scriptCountBefore, CHUNK_SIZE)
         ]);
-        const scripts = scriptsArray.filter(item => !item[1].eq(0)).map(item => {
-            return {
-                index: item[0].toNumber(),
-                address: "0x" + item[1].toString(16).padStart(40, "0"),
-                state: item[2].toNumber(),
-                signCount: item[3].toNumber()
-            };
-        });
+        const scripts = scriptsArray
+            .filter(item => !item[1].eq(0))
+            .map(item => {
+                return {
+                    index: item[0].toNumber(),
+                    address: "0x" + item[1].toString(16).padStart(40, "0"),
+                    state: item[2].toNumber(),
+                    signCount: item[3].toNumber()
+                };
+            });
 
         assert.equal(scripts.length, 3);
         assert.equal(scriptsCountAfter, scriptCountBefore + 3);
@@ -470,5 +473,82 @@ contract("StabilityBoardProxy", accounts => {
 
     it("should not call removeSigners directly", async function() {
         testHelpers.expectThrow(stabilityBoardProxy.removeSigners([accounts[0]]));
+    });
+
+    it("should dryExecute a script (success)", async function() {
+        const addSignerScript = await SB_addAndRemoveSigners.new();
+
+        try {
+            await stabilityBoardProxy.dryExecute(addSignerScript.address);
+            assert.fail("Should be rejected");
+        } catch (error) {
+            assert.include(error.message, "VM Exception while processing transaction: revert dryExecute success");
+        }
+
+        let [allSignersCountAfter, script] = await Promise.all([
+            stabilityBoardProxy.getAllSignersCount(),
+            stabilityBoardProxyWeb3Contract.methods.scripts(addSignerScript.address).call(),
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+        ]);
+
+        assert.equal(script.state, scriptState.New);
+        assert.equal(allSignersCountAfter.toNumber(), 1);
+    });
+
+    it("should dryExecute a script (revert with reason)", async function() {
+        const revertingScript = await SB_revertingScript.new();
+
+        try {
+            await stabilityBoardProxy.dryExecute(revertingScript.address);
+            assert.fail("Should be rejected");
+        } catch (error) {
+            assert.include(
+                error.message,
+                "VM Exception while processing transaction: revert intentional revert for test"
+            );
+        }
+
+        let [script] = await Promise.all([
+            stabilityBoardProxyWeb3Contract.methods.scripts(revertingScript.address).call(),
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+        ]);
+
+        assert.equal(script.state, scriptState.New);
+    });
+
+    it("should dryExecute a script (revert no reason)", async function() {
+        const revertingNoReasonScript = await SB_revertingNoReasonScript.new();
+
+        try {
+            await stabilityBoardProxy.dryExecute(revertingNoReasonScript.address, { gas: 200000 });
+            assert.fail("Should be rejected");
+        } catch (error) {
+            assert.equal(error.message, "VM Exception while processing transaction: revert");
+        }
+
+        let [script] = await Promise.all([
+            stabilityBoardProxyWeb3Contract.methods.scripts(revertingNoReasonScript.address).call(),
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+        ]);
+
+        assert.equal(script.state, scriptState.New);
+    });
+
+    it("should dryExecute a script (out of gas)", async function() {
+        const outOfGasScript = await SB_outOfGasScript.new();
+
+        try {
+            await stabilityBoardProxy.dryExecute(outOfGasScript.address, { gas: 200000 });
+            assert.fail("Should be rejected");
+        } catch (error) {
+            assert.equal(error.message, "VM Exception while processing transaction: revert");
+        }
+
+        let [script] = await Promise.all([
+            stabilityBoardProxyWeb3Contract.methods.scripts(outOfGasScript.address).call(),
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+        ]);
+
+        assert.equal(script.state, scriptState.New);
     });
 });
