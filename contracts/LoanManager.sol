@@ -64,7 +64,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
     event LoanProductAdded(uint32 productId);
 
-    event LoanRepayed(uint loanId, address indexed borrower, uint currentRate);
+    event LoanRepaid(uint loanId, address indexed borrower, uint currentRate);
 
     event LoanCollected(uint loanId, address indexed borrower, uint collectedCollateral,
         uint releasedCollateral, uint defaultingFee, uint currentRate);
@@ -339,7 +339,7 @@ contract LoanManager is Restricted, TokenReceiver {
 
         loan.borrower.transfer(loan.collateralAmount); // send back ETH collateral
 
-        emit LoanRepayed(loanId, loan.borrower, getCurrentRate());
+        emit LoanRepaid(loanId, loan.borrower, getCurrentRate());
     }
 
     function _collectLoan(uint loanId, uint currentRate) private returns(uint loanAmount, uint defaultingFee, uint collateralToCollect) {

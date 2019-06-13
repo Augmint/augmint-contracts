@@ -184,7 +184,7 @@ contract("Loans tests", accounts => {
         });
 
         const currentRate = (await rates.rates("EUR"))[0].toNumber();
-        await testHelpers.assertEvent(loanManager, "LoanRepayed", {
+        await testHelpers.assertEvent(loanManager, "LoanRepaid", {
             loanId: loan.id,
             borrower: loan.borrower,
             currentRate: currentRate

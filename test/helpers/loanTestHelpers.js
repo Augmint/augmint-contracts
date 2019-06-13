@@ -153,7 +153,7 @@ async function repayLoan(testInstance, loan) {
         augmintToken.totalSupply(),
         monetarySupervisor.totalLoanAmount(),
 
-        testHelpers.assertEvent(loanManager, "LoanRepayed", {
+        testHelpers.assertEvent(loanManager, "LoanRepaid", {
             loanId: loan.id,
             borrower: loan.borrower,
             currentRate: x => x
