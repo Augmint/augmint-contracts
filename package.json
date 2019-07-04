@@ -52,7 +52,7 @@
     "bignumber.js": "5.0.0",
     "coveralls": "3.0.4",
     "dotenv": "8.0.0",
-    "eslint": "5.16.0",
+    "eslint": "6.0.0",
     "ganache-cli": "6.4.4",
     "moment": "2.22.2",
     "random-seed": "0.3.0",
