@@ -1,6 +1,6 @@
 {
   "name": "@augmint/contracts",
-  "version": "1.1.0-pre3",
+  "version": "1.1.0-pre4",
   "description": "Augmint Stable Tokens - Solidity contract's abi and deployment descriptors",
   "author": "“Augmint”",
   "homepage": "https://github.com/Augmint/augmint-contracts#readme",

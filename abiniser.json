@@ -1,6 +1,5 @@
 {
     "truffleContractFiles": [
-        "SafeMath.json",
         "Migrations.json",
         "Rates.json",
         "AugmintReserves.json",
