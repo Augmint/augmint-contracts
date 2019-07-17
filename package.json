@@ -25,6 +25,7 @@
   },
   "scripts": {
     "start": "yarn runmigrate",
+    "start_comp": "yarn runmigrate_comp",
     "build": "truffle compile",
     "clean": "rm build/contracts/*",
     "test": "truffle test --migrations_directory migrations_null",
@@ -34,6 +35,7 @@
     "ganache:run": "./scripts/runganache.sh",
     "ganache:stop": "echo TODO",
     "runmigrate": "./scripts/runganache.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "runmigrate_comp": "./scripts/runganache_comp.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
     "localchaindb:clean": "rm -rf localchaindb && mkdir localchaindb",
     "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate && echo 'Migration done. Ganache db in ./localchaindb folder.'",
     "localchaindb:builddocker": "yarn localchaindb:build && yarn docker:build",
