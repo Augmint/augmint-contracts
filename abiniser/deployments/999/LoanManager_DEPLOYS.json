@@ -3,9 +3,9 @@
   "latestAbiHash": "753a73f4b2140507197a8f80bff47b40",
   "deployedAbis": {
     "fdf5fde95aa940c6dbfb8353c572c5fb": {
-      "latestDeployedAddress": "0xf7b8384c392fc333d3858a506c4f1506af44d53c",
+      "latestDeployedAddress": "0xF7B8384c392fc333d3858a506c4F1506af44D53c",
       "deployments": {
-        "0xf7b8384c392fc333d3858a506c4f1506af44d53c": {
+        "0xF7B8384c392fc333d3858a506c4F1506af44D53c": {
           "generatedAt": "2019-04-04T18:31:39.018Z",
           "truffleContractFileUpdatedAt": "2019-04-04T18:20:16.642Z",
           "deployTransactionHash": "0x23d5906de7ecfe9595bb8cfd7080a0e06eccee34ef92f017a3b4b657855e3619",
@@ -20,9 +20,9 @@
       }
     },
     "753a73f4b2140507197a8f80bff47b40": {
-      "latestDeployedAddress": "0x213135c85437c23bc529a2ee9c2980646c332fcb",
+      "latestDeployedAddress": "0x213135c85437C23bC529A2eE9c2980646c332fCB",
       "deployments": {
-        "0x213135c85437c23bc529a2ee9c2980646c332fcb": {
+        "0x213135c85437C23bC529A2eE9c2980646c332fCB": {
           "generatedAt": "2019-07-02T09:59:47.885Z",
           "truffleContractFileUpdatedAt": "2019-07-02T09:59:42.024Z",
           "deployTransactionHash": "0x6e09b864f8d42ac28128e3c1af6b8f2aa43f5007bbc91f5f655dc6840883224e",
