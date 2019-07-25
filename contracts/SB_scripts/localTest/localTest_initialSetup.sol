@@ -105,17 +105,17 @@ contract localTest_initialSetup {
 
         // add test loan Products
         // term (in sec), discountRate, initialCollateralRatio (ppm), minDisbursedAmount (token), defaultingFeePt (ppm), isActive, minCollateralRatio (ppm)
-        _loanManager.addLoanProduct(365 days, 854701, 1818182, 1000, 50000, true, 1500000); //  17% p.a., (collateral ratio: initial = ~181%, minimum = 150%)
-        _loanManager.addLoanProduct(180 days, 924753, 1818182, 1000, 50000, true, 1500000); // 16.5% p.a., (collateral ratio: initial = ~181%, minimum = 150%)
+        _loanManager.addLoanProduct(365 days, 854701, 1850000, 1000, 50000, true, 1500000); //  17% p.a., (collateral ratio: initial = 185%, minimum = 150%)
+        _loanManager.addLoanProduct(180 days, 924753, 1850000, 1000, 50000, true, 1500000); // 16.5% p.a., (collateral ratio: initial = 185%, minimum = 150%)
 
-        _loanManager.addLoanProduct(90 days, 962046, 1666667, 1000, 50000, true, 1200000); // 16%. p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-        _loanManager.addLoanProduct(60 days, 975154, 1666667, 1000, 50000, true, 1200000); //  15.5% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-        _loanManager.addLoanProduct(30 days, 987822, 1666667, 1000, 50000, true, 1200000); //  15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-        _loanManager.addLoanProduct(14 days, 994280, 1666667, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-        _loanManager.addLoanProduct(7 days, 997132, 1666667, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
+        _loanManager.addLoanProduct(90 days, 962046, 1600000, 1000, 50000, true, 1200000); // 16%. p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(60 days, 975154, 1600000, 1000, 50000, true, 1200000); //  15.5% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(30 days, 987822, 1600000, 1000, 50000, true, 1200000); //  15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(14 days, 994280, 1600000, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(7 days, 997132, 1600000, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
 
-        _loanManager.addLoanProduct(1 hours, 999998, 1020408, 2000, 50000, true, 1010000); // due in 1hr for testing repayments ~1.75% p.a., (collateral ratio: initial = ~102%, minimum = 101%)
-        _loanManager.addLoanProduct(1 seconds, 999999, 1010101, 3000, 50000, true, 1010000); // defaults in 1 secs for testing ~3153.6% p.a., (collateral ratio: initial = ~101.01%, minimum = 101%)
+        _loanManager.addLoanProduct(1 hours, 999000, 1230000, 2000, 50000, true, 1050000); // due in 1hr for testing repayments ~877% p.a., (collateral ratio: initial = 123%, minimum = 105%)
+        _loanManager.addLoanProduct(1 seconds, 999000, 1110000, 3000, 50000, true, 1020000); // defaults in 1 secs for testing ~3156757% p.a., (collateral ratio: initial = 111%, minimum = 102%)
 
         // add test lock products
         // (perTermInterest, durationInSecs, minimumLockAmount, isActive)
