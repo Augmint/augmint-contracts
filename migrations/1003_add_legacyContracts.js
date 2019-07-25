@@ -60,8 +60,7 @@ module.exports = async function(deployer, network, accounts) {
             oldToken.transferAndNotify(oldLocker.address, 1600, 1),
 
             oldLoanManager.newEthBackedLoan(0, { value: web3.toWei(0.1) }),
-            oldLoanManager.newEthBackedLoan(1, { value: web3.toWei(0.11) }),
-            oldLoanManager.newEthBackedLoan(2, { value: web3.toWei(0.12) }),
+            oldLoanManager.newEthBackedLoan(2, { value: web3.toWei(0.2) }),
             oldToken.transferAndNotify(oldExchange.address, 2000, 1010000),
             oldToken.transferAndNotify(oldExchange.address, 1100, 980000),
             oldExchange.placeBuyTokenOrder(990000, { value: web3.toWei(0.01) }),
