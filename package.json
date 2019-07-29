@@ -34,10 +34,10 @@
     "compile": "yarn build",
     "ganache:run": "./scripts/runganache.sh",
     "ganache:stop": "echo TODO",
-    "runmigrate": "./scripts/runganache.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
-    "runmigrate_comp": "./scripts/runganache_comp.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "runmigrate": "./scripts/runganache.sh & yarn migrate --reset --to 2000 && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "runmigrate_comp": "./scripts/runganache_comp.sh & yarn migrate --reset --to 2000 && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
     "localchaindb:clean": "rm -rf localchaindb && mkdir localchaindb",
-    "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate && echo 'Migration done. Ganache db in ./localchaindb folder.'",
+    "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate --to 2000 && echo 'Migration done. Ganache db in ./localchaindb folder.'",
     "localchaindb:builddocker": "yarn localchaindb:build && yarn docker:build",
     "docker:build": "docker build . -t localdockerimage",
     "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x694920 --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
@@ -46,7 +46,10 @@
     "docker:tag:build": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
     "docker:tag:staging": "docker tag localdockerimage augmint/contracts:staging;",
     "docker:tag:latest": "docker tag localdockerimage augmint/contracts:latest",
-    "docker:tag:version": "func () { docker tag localdockerimage augmint/contracts:${1}; }; func"
+    "docker:tag:version": "func () { docker tag localdockerimage augmint/contracts:${1}; }; func",
+    "setrate:default": "truffle migrate -f 2000 --to 2000",
+    "setrate:low": "truffle migrate -f 2001 --to 2001",
+    "setrate:high": "truffle migrate -f 2002 --to 2002"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
