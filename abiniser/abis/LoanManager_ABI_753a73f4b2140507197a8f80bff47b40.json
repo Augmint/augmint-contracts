@@ -1,7 +1,7 @@
 {
   "contractName": "LoanManager",
-  "abiHash": "1a18d349e2ea55585c57e2125d99dad9",
-  "generatedAt": "2019-06-06T11:06:21.107Z",
+  "abiHash": "753a73f4b2140507197a8f80bff47b40",
+  "generatedAt": "2019-07-02T09:59:47.884Z",
   "abi": [
     {
       "constant": true,
@@ -118,7 +118,7 @@
           "type": "uint32"
         },
         {
-          "name": "collateralRatio",
+          "name": "initialCollateralRatio",
           "type": "uint32"
         },
         {
@@ -305,9 +305,46 @@
           "indexed": false,
           "name": "maturity",
           "type": "uint40"
+        },
+        {
+          "indexed": false,
+          "name": "currentRate",
+          "type": "uint256"
         }
       ],
       "name": "NewLoan",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "loanId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "name": "borrower",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "collateralAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "repaymentAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "currentRate",
+          "type": "uint256"
+        }
+      ],
+      "name": "LoanChanged",
       "type": "event"
     },
     {
@@ -348,12 +385,17 @@
           "type": "uint256"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "name": "borrower",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "currentRate",
+          "type": "uint256"
         }
       ],
-      "name": "LoanRepayed",
+      "name": "LoanRepaid",
       "type": "event"
     },
     {
@@ -382,6 +424,11 @@
         {
           "indexed": false,
           "name": "defaultingFee",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "currentRate",
           "type": "uint256"
         }
       ],
@@ -451,7 +498,7 @@
           "type": "uint32"
         },
         {
-          "name": "collateralRatio",
+          "name": "initialCollateralRatio",
           "type": "uint32"
         },
         {
@@ -501,6 +548,10 @@
         {
           "name": "productId",
           "type": "uint32"
+        },
+        {
+          "name": "minRate",
+          "type": "uint256"
         }
       ],
       "name": "newEthBackedLoan",

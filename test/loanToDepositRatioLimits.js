@@ -169,7 +169,7 @@ contract("Loan to Deposit ratio tests", accounts => {
     it("LTD when totalLock = 0 and totalLoan > 0 and allowed difference amount is in effect", async function() {
         // get a loan
         const collateralAmount = global.web3v1.utils.toWei((3000 / rate).toString());
-        await loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount });
+        await loanManager.newEthBackedLoan(loanProductId, 0, { value: collateralAmount });
 
         // Earned interest 0
         let limits = await getLtdLimits();
@@ -198,7 +198,7 @@ contract("Loan to Deposit ratio tests", accounts => {
     it("LTD when totalLock = totalLoan and allowed difference amount is in effect", async function() {
         // get a loan
         const collateralAmount = global.web3v1.utils.toWei((3000 / rate).toString());
-        await loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount });
+        await loanManager.newEthBackedLoan(loanProductId, 0, { value: collateralAmount });
 
         // lock the same amount
         const amountToLock = 3000;
@@ -236,7 +236,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // get a loan
         const collateralAmount = global.web3v1.utils.toWei((640000 / rate).toString());
-        await loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount });
+        await loanManager.newEthBackedLoan(loanProductId, 0, { value: collateralAmount });
 
         // lock less than the loan
         const amountToLock = 600000;
@@ -281,7 +281,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // get a loan
         const collateralAmount = global.web3v1.utils.toWei((640000 / rate).toString());
-        await loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount });
+        await loanManager.newEthBackedLoan(loanProductId, 0, { value: collateralAmount });
 
         // lock less than the loan
         const amountToLock = 600000;
@@ -322,7 +322,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // get a loan
         const collateralAmount = global.web3v1.utils.toWei((600000 / rate).toString());
-        await loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount });
+        await loanManager.newEthBackedLoan(loanProductId, 0, { value: collateralAmount });
 
         // lock more than the loan
         const amountToLock = 640000;
@@ -367,7 +367,7 @@ contract("Loan to Deposit ratio tests", accounts => {
 
         // get a loan
         const collateralAmount = global.web3v1.utils.toWei((359974 / rate).toString());
-        await loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount });
+        await loanManager.newEthBackedLoan(loanProductId, 0, { value: collateralAmount });
 
         // lock more than the loan
         const amountToLock = 410000;
@@ -420,6 +420,6 @@ contract("Loan to Deposit ratio tests", accounts => {
 
     it("should NOT allow to borrow more than maxLoanAmountAllowedByLtd ", async function() {
         const collateralAmount = global.web3v1.utils.toWei(((ltdParams.allowedDifferenceAmount + 1) / rate).toString());
-        await testHelpers.expectThrow(loanManager.newEthBackedLoan(loanProductId, { value: collateralAmount }));
+        await testHelpers.expectThrow(loanManager.newEthBackedLoan(loanProductId, 0, { value: collateralAmount }));
     });
 });

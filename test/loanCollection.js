@@ -29,15 +29,15 @@ contract("Loans collection tests", accounts => {
             )
         ]);
         // These neeed to be sequential b/c product order assumed when retrieving via getProducts
-        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
-        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
-        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
-        await loanManager.addLoanProduct(1, 900000, 900000, 1000, 100000, true, 0); // defaultingNoLeftOver
-        await loanManager.addLoanProduct(1, 1000000, 900000, 2000, 50000, true, 0); // zeroInterest
-        await loanManager.addLoanProduct(1, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
+        // term (in sec), discountRate, initialCollateralRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
+        await loanManager.addLoanProduct(86400, 970000, 1176471, 3000, 50000, true, 0); // notDue
+        await loanManager.addLoanProduct(1, 970000, 1176471, 1000, 50000, true, 0); // defaulting
+        await loanManager.addLoanProduct(1, 900000, 1111111, 1000, 100000, true, 0); // defaultingNoLeftOver
+        await loanManager.addLoanProduct(1, 1000000, 1111111, 2000, 50000, true, 0); // zeroInterest
+        await loanManager.addLoanProduct(1, 1100000, 1111111, 2000, 50000, true, 0); // negativeInterest
         await loanManager.addLoanProduct(1, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
-        await loanManager.addLoanProduct(1, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
-        await loanManager.addLoanProduct(86400, 970000, 625000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%) (1/1.6 = 0.625)
+        await loanManager.addLoanProduct(1, 990000, 833333, 2000, 50000, true, 0); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 1600000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%)
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, 10),
@@ -72,7 +72,7 @@ contract("Loans collection tests", accounts => {
             this,
             products.defaulting,
             accounts[1],
-            global.web3v1.utils.toWei("0.5")
+            global.web3v1.utils.toWei("0.05")
         );
 
         await testHelpers.waitForTimeStamp(loan.maturity);
@@ -144,7 +144,7 @@ contract("Loans collection tests", accounts => {
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
-    it("Should get and collect a loan with collateralRatio = 1", async function() {
+    it("Should get and collect a loan with initialCollateralRatio = 1", async function() {
         const loan = await loanTestHelpers.createLoan(
             this,
             products.fullCoverage,
@@ -155,7 +155,7 @@ contract("Loans collection tests", accounts => {
         await loanTestHelpers.collectLoan(this, loan, accounts[2]);
     });
 
-    it("Should get and collect a loan with collateralRatio > 1", async function() {
+    it("Should get and collect a loan with initialCollateralRatio < 1", async function() {
         const loan = await loanTestHelpers.createLoan(
             this,
             products.moreCoverage,
@@ -169,15 +169,15 @@ contract("Loans collection tests", accounts => {
     it("Should collect multiple defaulted loans", async function() {
         const loanCount = (await loanManager.getLoanCount()).toNumber();
         await Promise.all([
-            loanManager.newEthBackedLoan(products.zeroInterest.id, {
+            loanManager.newEthBackedLoan(products.zeroInterest.id, 0 ,{
                 from: accounts[0],
                 value: global.web3v1.utils.toWei("0.05")
             }),
-            loanManager.newEthBackedLoan(products.fullCoverage.id, {
+            loanManager.newEthBackedLoan(products.fullCoverage.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.05")
             }),
-            loanManager.newEthBackedLoan(products.negativeInterest.id, {
+            loanManager.newEthBackedLoan(products.negativeInterest.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.05")
             })
@@ -192,11 +192,11 @@ contract("Loans collection tests", accounts => {
     it("Should NOT collect multiple loans if one is not due", async function() {
         const loanCount = (await loanManager.getLoanCount()).toNumber();
         await Promise.all([
-            loanManager.newEthBackedLoan(products.notDue.id, {
+            loanManager.newEthBackedLoan(products.notDue.id, 0, {
                 from: accounts[0],
                 value: global.web3v1.utils.toWei("0.05")
             }),
-            loanManager.newEthBackedLoan(products.defaulting.id, {
+            loanManager.newEthBackedLoan(products.defaulting.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.05")
             })
@@ -304,6 +304,14 @@ contract("Loans collection tests", accounts => {
             value: global.web3v1.utils.toWei("0.05")
         });
         testHelpers.logGasUse(this, tx, "addExtraCollateral");
+
+        testHelpers.assertEvent(loanManager, "LoanChanged", {
+            loanId: loan.id,
+            borrower: loan.borrower,
+            collateralAmount: global.web3v1.utils.toWei("0.1").toString(),
+            repaymentAmount: loan.repaymentAmount.toString(),
+            currentRate: (await rates.rates("EUR"))[0].toString()
+        });
 
         // should not be collectable
         assert(await isCollectable(loan.id) === 0);

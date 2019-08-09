@@ -8,7 +8,7 @@ module.exports = function(deployer) {
         const tokenAEur = TokenAEur.at(TokenAEur.address);
         const loanManager = LoanManager.at(LoanManager.address);
 
-        await loanManager.newEthBackedLoan(0, { value: web3.toWei(0.1066) }); // = 50 A-EUR
+        await loanManager.newEthBackedLoan(0, 0, { value: web3.toWei(0.10845) }); // = 50 A-EUR
 
         await tokenAEur.transferWithNarrative(
             InterestEarnedAccount.address,

@@ -22,7 +22,7 @@ contract("loanManager  tests", accounts => {
             minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
-            collateralRatio: 850000,
+            initialCollateralRatio: 1176471,
             defaultingFeePt: 50000,
             isActive: true,
             minCollateralRatio: 0
@@ -30,7 +30,7 @@ contract("loanManager  tests", accounts => {
         await loanManager.addLoanProduct(
             loanProduct.term,
             loanProduct.discountRate,
-            loanProduct.collateralRatio,
+            loanProduct.initialCollateralRatio,
             loanProduct.minDisbursedAmount,
             loanProduct.defaultingFeePt,
             loanProduct.isActive,
@@ -83,7 +83,7 @@ contract("loanManager  tests", accounts => {
             minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
-            collateralRatio: 850000,
+            initialCollateralRatio: 1176471,
             defaultingFeePt: 50000,
             isActive: true,
             minCollateralRatio: 0
@@ -91,7 +91,7 @@ contract("loanManager  tests", accounts => {
         const tx = await loanManager.addLoanProduct(
             prod.term,
             prod.discountRate,
-            prod.collateralRatio,
+            prod.initialCollateralRatio,
             prod.minDisbursedAmount,
             prod.defaultingFeePt,
             prod.isActive,
@@ -121,7 +121,7 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.id.toNumber(), prod.id);
         assert.equal(lastProduct.term.toNumber(), prod.term);
         assert.equal(lastProduct.discountRate.toNumber(), prod.discountRate);
-        assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
+        assert.equal(lastProduct.initialCollateralRatio.toNumber(), prod.initialCollateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
         const expMaxLoanAmount = await tokenTestHelpers.monetarySupervisor.getMaxLoanAmount(
@@ -137,7 +137,7 @@ contract("loanManager  tests", accounts => {
             minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
-            collateralRatio: 850000,
+            initialCollateralRatio: 1176471,
             defaultingFeePt: 50000,
             isActive: true,
             minCollateralRatio: 0
@@ -145,7 +145,7 @@ contract("loanManager  tests", accounts => {
         const tx = await loanManager.addLoanProduct(
             prod.term,
             prod.discountRate,
-            prod.collateralRatio,
+            prod.initialCollateralRatio,
             prod.minDisbursedAmount,
             prod.defaultingFeePt,
             prod.isActive,
@@ -164,7 +164,7 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.id.toNumber(), prod.id);
         assert.equal(lastProduct.term.toNumber(), prod.term);
         assert.equal(lastProduct.discountRate.toNumber(), prod.discountRate);
-        assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
+        assert.equal(lastProduct.initialCollateralRatio.toNumber(), prod.initialCollateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
         const expMaxLoanAmount = await tokenTestHelpers.monetarySupervisor.getMaxLoanAmount(

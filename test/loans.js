@@ -37,16 +37,16 @@ contract("Loans tests", accounts => {
             )
         ]);
         // These neeed to be sequential b/c product order assumed when retrieving via getProducts
-        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
-        await loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0); // notDue
-        await loanManager.addLoanProduct(60, 985000, 900000, 2000, 50000, true, 0); // repaying
-        await loanManager.addLoanProduct(1, 970000, 850000, 1000, 50000, true, 0); // defaulting
-        await loanManager.addLoanProduct(1, 990000, 990000, 1000, 50000, false, 0); // disabledProduct
-        await loanManager.addLoanProduct(60, 1000000, 900000, 2000, 50000, true, 0); // zeroInterest
-        await loanManager.addLoanProduct(60, 1100000, 900000, 2000, 50000, true, 0); // negativeInterest
+        // term (in sec), discountRate, initialCollateralRatio, minDisbursedAmount (w/ 2 decimals), defaultingFeePt, isActive, minCollateralRatio
+        await loanManager.addLoanProduct(86400, 970000, 1176471, 3000, 50000, true, 0); // notDue
+        await loanManager.addLoanProduct(60, 985000, 1111111, 2000, 50000, true, 0); // repaying
+        await loanManager.addLoanProduct(1, 970000, 1176471, 1000, 50000, true, 0); // defaulting
+        await loanManager.addLoanProduct(1, 990000, 1010101, 1000, 50000, false, 0); // disabledProduct
+        await loanManager.addLoanProduct(60, 1000000, 1111111, 2000, 50000, true, 0); // zeroInterest
+        await loanManager.addLoanProduct(60, 1100000, 1111111, 2000, 50000, true, 0); // negativeInterest
         await loanManager.addLoanProduct(60, 990000, 1000000, 2000, 50000, true, 0); // fullCoverage
-        await loanManager.addLoanProduct(60, 990000, 1200000, 2000, 50000, true, 0); // moreCoverage
-        await loanManager.addLoanProduct(86400, 970000, 625000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%) (1/1.6 = 0.625)
+        await loanManager.addLoanProduct(60, 990000, 833333, 2000, 50000, true, 0); // moreCoverage
+        await loanManager.addLoanProduct(86400, 970000, 1600000, 3000, 50000, true, 1200000); // with margin (collateral ratio: initial = 160%, minimum = 120%)
 
         const [newProducts] = await Promise.all([
             loanTestHelpers.getProductsInfo(prodCount, CHUNK_SIZE),
@@ -81,6 +81,18 @@ contract("Loans tests", accounts => {
         await loanTestHelpers.createLoan(this, products.repaying, accounts[0], global.web3v1.utils.toWei("0.5"));
     });
 
+    it("Should get an A-EUR loan if current rate is not below minRate", async function() {
+        const minRate = 22020;
+        await rates.setRate("EUR", minRate);
+        await loanTestHelpers.createLoan(this, products.repaying, accounts[1], global.web3v1.utils.toWei("0.5"), minRate);
+    });
+
+    it("Should NOT get an A-EUR loan if current rate is below minRate", async function() {
+        const minRate = 22020;
+        await rates.setRate("EUR", minRate - 1);
+        await testHelpers.expectThrow(loanManager.newEthBackedLoan(products.repaying.id, minRate, { from: accounts[1], value: global.web3v1.utils.toWei("0.5") }));
+    });
+
     it("Should NOT get a loan less than minDisbursedAmount", async function() {
         const prod = products.repaying;
         const loanAmount = prod.minDisbursedAmount
@@ -89,16 +101,16 @@ contract("Loans tests", accounts => {
             .mul(1000000)
             .round(0, BigNumber.ROUND_DOWN);
         const weiAmount = (await rates.convertToWei(tokenTestHelpers.peggedSymbol, loanAmount))
-            .div(prod.collateralRatio)
+            .div(prod.initialCollateralRatio)
             .mul(1000000)
             .round(0, BigNumber.ROUND_DOWN);
 
-        await testHelpers.expectThrow(loanManager.newEthBackedLoan(prod.id, { from: accounts[0], value: weiAmount }));
+        await testHelpers.expectThrow(loanManager.newEthBackedLoan(prod.id, 0, { from: accounts[0], value: weiAmount }));
     });
 
     it("Shouldn't get a loan for a disabled product", async function() {
         await testHelpers.expectThrow(
-            loanManager.newEthBackedLoan(products.disabledProduct.id, {
+            loanManager.newEthBackedLoan(products.disabledProduct.id, 0, {
                 from: accounts[0],
                 value: global.web3v1.utils.toWei("0.05")
             })
@@ -171,9 +183,11 @@ contract("Loans tests", accounts => {
             from: accounts[0]
         });
 
-        await testHelpers.assertEvent(loanManager, "LoanRepayed", {
+        const currentRate = (await rates.rates("EUR"))[0].toNumber();
+        await testHelpers.assertEvent(loanManager, "LoanRepaid", {
             loanId: loan.id,
-            borrower: loan.borrower
+            borrower: loan.borrower,
+            currentRate: currentRate
         });
     });
 
@@ -249,7 +263,7 @@ contract("Loans tests", accounts => {
     it("Should not get a loan when rates = 0", async function() {
         await rates.setRate("EUR", 0);
         await testHelpers.expectThrow(
-            loanManager.newEthBackedLoan(products.repaying.id, {
+            loanManager.newEthBackedLoan(products.repaying.id, 0, {
                 from: accounts[1],
                 value: global.web3v1.utils.toWei("0.1")
             })
@@ -354,11 +368,11 @@ contract("Loans tests", accounts => {
         await craftedLender.addLoanProduct(100000, 1000000, 1000000, 1000, 50000, true, 0);
 
         // testing Lender not having "LoanManager" permission on monetarySupervisor:
-        await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") }));
+        await testHelpers.expectThrow(craftedLender.newEthBackedLoan(0, 0, { value: global.web3v1.utils.toWei("0.05") }));
 
         // grant permission to create new loan
         await monetarySupervisor.grantPermission(craftedLender.address, "LoanManager");
-        await craftedLender.newEthBackedLoan(0, { value: global.web3v1.utils.toWei("0.05") });
+        await craftedLender.newEthBackedLoan(0, 0, { value: global.web3v1.utils.toWei("0.05") });
 
         // revoke permission and try to repay
         await monetarySupervisor.revokePermission(craftedLender.address, "LoanManager"),
@@ -407,6 +421,7 @@ contract("Loans tests", accounts => {
         assert.equal(loan.loanAmount.toNumber(), 3025);            // = 3118 * 0.97, round up (token)
         assert.equal(loan.interestAmount.toNumber(), 93);          // = 3118 - 3025 (token)
         assert.equal(loan.state, 0);                               // = "Open"
+        assert.equal(loan.currentRate, 99800);
 
         // assert LoanData has proper numbers stored
         const loanInfo = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));
@@ -435,6 +450,14 @@ contract("Loans tests", accounts => {
             value: global.web3v1.utils.toWei("0.05")
         });
         testHelpers.logGasUse(this, tx, "addExtraCollateral");
+
+        testHelpers.assertEvent(loanManager, "LoanChanged", {
+            loanId: loan.id,
+            borrower: loan.borrower,
+            collateralAmount: global.web3v1.utils.toWei("0.1").toString(),
+            repaymentAmount: loan.repaymentAmount.toString(),
+            currentRate: (await rates.rates("EUR"))[0].toString()
+        });
 
         // collateralAmount should double up, marginCallRate get halved
         const loanInfo3 = loanTestHelpers.parseLoansInfo(await loanManager.getLoans(loan.id, 1));

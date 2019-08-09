@@ -44,7 +44,7 @@ before(async function() {
     rates = Rates.at(Rates.address);
 });
 
-async function createLoan(testInstance, product, borrower, collateralWei) {
+async function createLoan(testInstance, product, borrower, collateralWei, minRate = 0) {
     const loan = await calcLoanValues(rates, product, collateralWei);
     loan.state = 0;
     loan.borrower = borrower;
@@ -60,7 +60,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
         })
     ]);
 
-    const tx = await loanManager.newEthBackedLoan(loan.product.id, {
+    const tx = await loanManager.newEthBackedLoan(loan.product.id, minRate, {
         from: loan.borrower,
         value: loan.collateralAmount
     });
@@ -74,7 +74,8 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
             collateralAmount: loan.collateralAmount.toString(),
             loanAmount: loan.loanAmount.toString(),
             repaymentAmount: loan.repaymentAmount.toString(),
-            maturity: x => x
+            maturity: x => x,
+            currentRate: x => x
         }),
 
         testHelpers.assertEvent(augmintToken, "AugmintTransfer", {
@@ -95,6 +96,7 @@ async function createLoan(testInstance, product, borrower, collateralWei) {
 
     loan.id = newLoanEvenResult.loanId.toNumber();
     loan.maturity = newLoanEvenResult.maturity.toNumber();
+    loan.currentRate = newLoanEvenResult.currentRate.toNumber();
 
     const [totalSupplyAfter, totalLoanAmountAfter, ,] = await Promise.all([
         augmintToken.totalSupply(),
@@ -151,9 +153,10 @@ async function repayLoan(testInstance, loan) {
         augmintToken.totalSupply(),
         monetarySupervisor.totalLoanAmount(),
 
-        testHelpers.assertEvent(loanManager, "LoanRepayed", {
+        testHelpers.assertEvent(loanManager, "LoanRepaid", {
             loanId: loan.id,
-            borrower: loan.borrower
+            borrower: loan.borrower,
+            currentRate: x => x
         }),
 
         /* TODO: these are emmited  but why not picked up by assertEvent? */
@@ -269,7 +272,8 @@ async function collectLoan(testInstance, loan, collector) {
             borrower: loan.borrower,
             collectedCollateral: collectedCollateral.toString(),
             releasedCollateral: releasedCollateral.toString(),
-            defaultingFee: defaultingFee.toString()
+            defaultingFee: defaultingFee.toString(),
+            currentRate: x => x
         }),
 
         loanAsserts(loan),
@@ -317,7 +321,7 @@ async function getProductsInfo(offset, chunkSize) {
             minDisbursedAmount,
             term,
             discountRate,
-            collateralRatio,
+            initialCollateralRatio,
             defaultingFeePt,
             maxLoanAmount,
             isActive,
@@ -329,7 +333,7 @@ async function getProductsInfo(offset, chunkSize) {
             minDisbursedAmount,
             term,
             discountRate,
-            collateralRatio,
+            initialCollateralRatio,
             defaultingFeePt,
             maxLoanAmount,
             isActive,
@@ -385,8 +389,8 @@ async function calcLoanValues(rates, product, collateralWei) {
     ret.tokenValue = await rates.convertFromWei(peggedSymbol, collateralWei);
 
     ret.repaymentAmount = ret.tokenValue
-        .mul(product.collateralRatio)
-        .div(ppmDiv)
+        .mul(ppmDiv)
+        .div(product.initialCollateralRatio)
         .round(0, BigNumber.ROUND_DOWN);
 
     ret.loanAmount = ret.repaymentAmount

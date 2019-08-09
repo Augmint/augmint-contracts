@@ -5,7 +5,7 @@ const TokenAEur = artifacts.require("./TokenAEur.sol");
 const Rates = artifacts.require("./Rates.sol");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const Locker = artifacts.require("./Locker.sol");
-const LoanManager = artifacts.require("./LoanManager.sol");
+const LoanManager_1_0_12 = artifacts.require("./legacy/1.0.12/LoanManager_1_0_12.sol");
 const Exchange = artifacts.require("./Exchange.sol");
 
 module.exports = async function(deployer, network, accounts) {
@@ -16,7 +16,7 @@ module.exports = async function(deployer, network, accounts) {
         const oldToken = await TokenAEur.new(accounts[0], FeeAccount.address);
 
         const oldLocker = await Locker.new(accounts[0], oldToken.address, MonetarySupervisor.address);
-        const oldLoanManager = await LoanManager.new(
+        const oldLoanManager = await LoanManager_1_0_12.new(
             accounts[0],
             oldToken.address,
             MonetarySupervisor.address,
@@ -46,10 +46,9 @@ module.exports = async function(deployer, network, accounts) {
             /* LoanManager permissions & products */
             monetarySupervisor.grantPermission(oldLoanManager.address, "LoanManager"),
             feeAccount.grantPermission(oldLoanManager.address, "NoTransferFee"),
-            oldLoanManager.addLoanProduct(1, 999999, 990000, 1000, 50000, true, 0), // defaults in 1 secs for testing ? p.a.
-            oldLoanManager.addLoanProduct(3600, 999989, 980000, 1000, 50000, true, 0), // due in 1hr for testing repayments ? p.a.
-            oldLoanManager.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true, 0), // 365d, 14% p.a.
-
+            oldLoanManager.addLoanProduct(1, 999999, 990000, 1000, 50000, true), // defaults in 1 secs for testing ? p.a.
+            oldLoanManager.addLoanProduct(3600, 999989, 980000, 1000, 50000, true), // due in 1hr for testing repayments ? p.a.
+            oldLoanManager.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true), // 365d, 14% p.a.
             /* Exchange permissions */
             feeAccount.grantPermission(oldExchange.address, "NoTransferFee")
         ]);
@@ -61,9 +60,7 @@ module.exports = async function(deployer, network, accounts) {
             oldToken.transferAndNotify(oldLocker.address, 1600, 1),
 
             oldLoanManager.newEthBackedLoan(0, { value: web3.toWei(0.1) }),
-            oldLoanManager.newEthBackedLoan(1, { value: web3.toWei(0.11) }),
-            oldLoanManager.newEthBackedLoan(2, { value: web3.toWei(0.12) }),
-
+            oldLoanManager.newEthBackedLoan(2, { value: web3.toWei(0.2) }),
             oldToken.transferAndNotify(oldExchange.address, 2000, 1010000),
             oldToken.transferAndNotify(oldExchange.address, 1100, 980000),
             oldExchange.placeBuyTokenOrder(990000, { value: web3.toWei(0.01) }),
@@ -74,7 +71,7 @@ module.exports = async function(deployer, network, accounts) {
             ` *** On local ganache - deployed a set of legacy mock contracts for manual testing:
              TokenAEur: ${oldToken.address}
              Locker: ${oldLocker.address}
-             LoanManager: ${oldLoanManager.address}
+             LoanManager_1_0_12: ${oldLoanManager.address}
              Exchange: ${oldExchange.address}`
         );
     });
