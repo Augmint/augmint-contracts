@@ -13,6 +13,6 @@ contract Main0033_reserve_transfer {
         // called via StabilityBoardProxy
         require(address(this) == address(STABILITY_BOARD_PROXY), "only execute via StabilityBoardProxy");
 
-        AUGMINT_RESERVES.migrate(TARGET_ADDRESS, AUGMINT_RESERVES.balance);
+        AUGMINT_RESERVES.migrate(TARGET_ADDRESS, address(AUGMINT_RESERVES).balance);
     }
 }
