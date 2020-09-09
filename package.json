@@ -21,7 +21,7 @@
   ],
   "engines": {
     "node": "10.15.3",
-    "yarn": ">=1.15.2"
+    "yarn": ">=1.22.4"
   },
   "scripts": {
     "start": "yarn runmigrate",
@@ -73,5 +73,7 @@
       "bignumber.js"
     ]
   },
-  "files": ["abiniser"]
+  "files": [
+    "abiniser"
+  ]
 }

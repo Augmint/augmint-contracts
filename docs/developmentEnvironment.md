@@ -28,7 +28,7 @@ These instructions are about the dev environment for contract development. For U
     n <node version, eg: 10.15.3>
     ```
 
-1.  Yarn: `npm install -g yarn@<yarn version, e.g. 1.15.2>`  
+1.  Yarn: `npm install -g yarn@<version>`  
     NB: check required yarn version in [package.json](../package.json)
 
 1.  [Docker cli](https://hub.docker.com/search/?type=edition&offering=community)
