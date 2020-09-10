@@ -7,7 +7,7 @@ const tokenTestHelpers = require("./tokenTestHelpers.js");
 
 const PLACE_ORDER_MAX_GAS = 200000;
 const CANCEL_SELL_MAX_GAS = 150000;
-const MATCH_ORDER_MAX_GAS = 85000;
+const MATCH_ORDER_MAX_GAS = 110000;
 
 const PPM_DIV = 1000000;
 
