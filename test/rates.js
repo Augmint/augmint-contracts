@@ -4,21 +4,32 @@ const testHelpers = require("./helpers/testHelpers.js");
 let rates = null;
 let snapshotId;
 
-contract("Rates tests", accounts => {
-    before(async function() {
+const SYM = {
+    EUR: web3.utils.asciiToHex("EUR"),
+    USD: web3.utils.asciiToHex("USD"),
+    GBP: web3.utils.asciiToHex("GBP"),
+    XXX: web3.utils.asciiToHex("XXX"),
+    AAA: web3.utils.asciiToHex("AAA"),
+    BBB: web3.utils.asciiToHex("BBB"),
+    NOTSETYET: web3.utils.asciiToHex("NOTSETYET"),
+    SETTOZERO: web3.utils.asciiToHex("SETTOZERO"),
+};
+
+contract("Rates tests", (accounts) => {
+    before(async function () {
         rates = ratesTestHelpers.rates;
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         snapshotId = await testHelpers.takeSnapshot();
     });
 
-    afterEach(async function() {
+    afterEach(async function () {
         await testHelpers.revertSnapshot(snapshotId);
     });
 
-    it("should be possible to set 1 rate", async function() {
-        const symbol = "EUR";
+    it("should be possible to set 1 rate", async function () {
+        const symbol = SYM.EUR;
 
         // change the symbol 1st time
         let tx = await rates.setRate(symbol, 12340000);
@@ -31,8 +42,8 @@ contract("Rates tests", accounts => {
         await ratesTestHelpers.newRatesAsserts(tx, [symbol], [12350000]);
     });
 
-    it("should be possible to set multiple rates", async function() {
-        const symbols = ["GBP", "USD"];
+    it("should be possible to set multiple rates", async function () {
+        const symbols = [SYM.GBP, SYM.USD];
         let newRates = [12350000, 11110000];
 
         // change the symbols 1st time
@@ -47,58 +58,54 @@ contract("Rates tests", accounts => {
         await ratesTestHelpers.newRatesAsserts(tx, symbols, newRates);
     });
 
-    it("should throw if set multiple rates invalid", async function() {
-        const symbols = ["GBP", "USD", "XXX"];
+    it("should throw if set multiple rates invalid", async function () {
+        const symbols = [SYM.GBP, SYM.GBP, SYM.XXX];
         let newRates = [12350000, 11110000];
 
         await testHelpers.expectThrow(rates.setMultipleRates(symbols, newRates));
     });
 
-    it("should be possible to convert WEI to/from EUR", async function() {
+    it("should be possible to convert WEI to/from EUR", async function () {
         const rate = 41592653;
         const testEur = 31415926536;
 
-        await rates.setRate("EUR", rate);
-        const ethValue = await rates.convertToWei("EUR", testEur);
-        assert.equal(
-            global.web3v1.utils.fromWei(ethValue.toString()),
-            testEur / rate,
-            "ethValue converted should be correct"
-        );
-        const eurValue = await rates.convertFromWei("EUR", ethValue);
+        await rates.setRate(SYM.EUR, rate);
+        const ethValue = await rates.convertToWei(SYM.EUR, testEur);
+        assert.equal(web3.utils.fromWei(ethValue.toString()), testEur / rate, "ethValue converted should be correct");
+        const eurValue = await rates.convertFromWei(SYM.EUR, ethValue);
         assert.equal(
             eurValue.toString(),
-            global.web3v1.utils.fromWei(ethValue.toString()) * rate,
+            web3.utils.fromWei(ethValue.toString()) * rate,
             "eurValue converted should be correct"
         );
-        //console.log(global.web3v1.utils.fromWei(ethValue).toString(), eurValue.toString());
     });
 
-    it("setRate should allow to set 0 rate", async function() {
-        let tx = await rates.setRate("XXX", 0);
+    it("setRate should allow to set 0 rate", async function () {
+        let tx = await rates.setRate(SYM.XXX, 0);
         testHelpers.logGasUse(this, tx, "setRate to 0 1st");
-        await ratesTestHelpers.newRatesAsserts(tx, ["XXX"], [0]);
+        await ratesTestHelpers.newRatesAsserts(tx, [SYM.XXX], [0]);
 
-        tx = await rates.setRate("XXX", 0);
+        tx = await rates.setRate(SYM.XXX, 0);
         testHelpers.logGasUse(this, tx, "setRate to 0");
-        await ratesTestHelpers.newRatesAsserts(tx, ["XXX"], [0]);
+        await ratesTestHelpers.newRatesAsserts(tx, [SYM.XXX], [0]);
     });
 
-    it("setMultipleRates should allow 0 rate set", async function() {
-        let tx = await rates.setMultipleRates(["AAA", "BBB"], [0, 0]);
+    it("setMultipleRates should allow 0 rate set", async function () {
+        const symbols = [SYM.AAA, SYM.BBB];
+        let tx = await rates.setMultipleRates(symbols, [0, 0]);
         testHelpers.logGasUse(this, tx, "setMultipleRates 2 to 0 1st");
-        await ratesTestHelpers.newRatesAsserts(tx, ["AAA", "BBB"], [0, 0]);
+        await ratesTestHelpers.newRatesAsserts(tx, symbols, [0, 0]);
 
-        tx = await rates.setMultipleRates(["AAA", "BBB"], [0, 0]);
+        tx = await rates.setMultipleRates(symbols, [0, 0]);
         testHelpers.logGasUse(this, tx, "setMultipleRates 2 to 0");
-        await ratesTestHelpers.newRatesAsserts(tx, ["AAA", "BBB"], [0, 0]);
+        await ratesTestHelpers.newRatesAsserts(tx, symbols, [0, 0]);
     });
 
-    it("convert should throw when 0 rate set", async function() {
-        await testHelpers.expectThrow(rates.convertToWei("NOTSETYET", 1230000));
-        await testHelpers.expectThrow(rates.convertFromWei("NOTSETYET", 1230000));
-        await rates.setRate("SETTOZERO", 0);
-        await testHelpers.expectThrow(rates.convertToWei("SETTOZERO", 1230000));
-        await testHelpers.expectThrow(rates.convertFromWei("SETTOZERO", 1230000));
+    it("convert should throw when 0 rate set", async function () {
+        await testHelpers.expectThrow(rates.convertToWei(SYM.NOTSETYET, 1230000));
+        await testHelpers.expectThrow(rates.convertFromWei(SYM.NOTSETYET, 1230000));
+        await rates.setRate(SYM.SETTOZERO, 0);
+        await testHelpers.expectThrow(rates.convertToWei(SYM.SETTOZERO, 1230000));
+        await testHelpers.expectThrow(rates.convertFromWei(SYM.SETTOZERO, 1230000));
     });
 });

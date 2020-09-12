@@ -18,12 +18,12 @@ async function addSigners(newSigners) {
     // assuming allSigners are active
     const [addSignerScript, currentSigners] = await Promise.all([
         SB_addSigners.new(newSigners),
-        stabilityBoardProxy.getSigners(0, CHUNK_SIZE)
+        stabilityBoardProxy.getSigners(0, CHUNK_SIZE),
     ]);
 
     const signTxs = currentSigners
-        .filter(signerTuple => !signerTuple[1].eq(0))
-        .map(tuple => {
+        .filter((signerTuple) => !signerTuple[1].eq(0))
+        .map((tuple) => {
             const signerAddress = "0x" + tuple[1].toString(16).padStart(40, "0");
             return stabilityBoardProxy.sign(addSignerScript.address, { from: signerAddress });
         });
@@ -35,30 +35,27 @@ async function addSigners(newSigners) {
     return executeTx;
 }
 
-contract("StabilityBoardProxy", accounts => {
+contract("StabilityBoardProxy", (accounts) => {
     before(async () => {
-        stabilityBoardProxy = StabilityBoardProxy.at(StabilityBoardProxy.address);
-        stabilityBoardProxyWeb3Contract = new global.web3v1.eth.Contract(
-            StabilityBoardProxy.abi,
-            StabilityBoardProxy.address
-        );
+        stabilityBoardProxy = await StabilityBoardProxy.deployed();
+        stabilityBoardProxyWeb3Contract = new web3.eth.Contract(StabilityBoardProxy.abi, StabilityBoardProxy.address);
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         snapshotId = await testHelpers.takeSnapshot();
     });
 
-    afterEach(async function() {
+    afterEach(async function () {
         await testHelpers.revertSnapshot(snapshotId);
     });
 
-    it("only signer should sign", async function() {
+    it("only signer should sign", async function () {
         testHelpers.expectThrow(
             stabilityBoardProxy.sign("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", { from: accounts[1] })
         );
     });
 
-    it("signer should be able to sign", async function() {
+    it("signer should be able to sign", async function () {
         const scriptAddress = "0x0000000000000000000000000000000000000001";
         const tx = await stabilityBoardProxy.sign(scriptAddress);
         testHelpers.logGasUse(this, tx, "multiSig.sign");
@@ -66,13 +63,13 @@ contract("StabilityBoardProxy", accounts => {
         const [script] = await Promise.all([
             stabilityBoardProxyWeb3Contract.methods.scripts(scriptAddress).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptSigned", { signer: accounts[0], scriptAddress }),
-            testHelpers.assertEvent(stabilityBoardProxy, "ScriptApproved", { scriptAddress })
+            testHelpers.assertEvent(stabilityBoardProxy, "ScriptApproved", { scriptAddress }),
         ]);
         assert.equal(script.signCount, 1);
         assert.equal(script.state, scriptState.Approved);
     });
 
-    it("should not sign twice", async function() {
+    it("should not sign twice", async function () {
         const scriptAddress = "0x0000000000000000000000000000000000000002";
         const tx = await stabilityBoardProxy.sign(scriptAddress);
         testHelpers.logGasUse(this, tx, "multiSig.sign");
@@ -82,12 +79,12 @@ contract("StabilityBoardProxy", accounts => {
         await testHelpers.expectThrow(stabilityBoardProxy.sign(scriptAddress, { from: accounts[0] }));
     });
 
-    it("should add then disable signers and should not cancel or execute in Done state", async function() {
+    it("should add then disable signers and should not cancel or execute in Done state", async function () {
         const newSigners = [accounts[1], accounts[2]];
 
         const [allSignersCountBefore, activeSignersCountBefore] = await Promise.all([
-            stabilityBoardProxy.getAllSignersCount().then(res => res.toNumber()),
-            stabilityBoardProxy.activeSignersCount().then(res => res.toNumber())
+            stabilityBoardProxy.getAllSignersCount().then((res) => res.toNumber()),
+            stabilityBoardProxy.activeSignersCount().then((res) => res.toNumber()),
         ]);
 
         const addSignerScript = await SB_addSigners.new(newSigners);
@@ -105,12 +102,12 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(addSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "SignerAdded", [
                 { signer: newSigners[0] },
-                { signer: newSigners[1] }
+                { signer: newSigners[1] },
             ]),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: addSignerScript.address,
-                result: true
-            })
+                result: true,
+            }),
         ]);
 
         assert.equal(script.state, scriptState.Done);
@@ -126,7 +123,7 @@ contract("StabilityBoardProxy", accounts => {
 
         const [signTx1, signTx2] = await Promise.all([
             await stabilityBoardProxy.sign(removeSignerScript.address, { from: newSigners[0] }),
-            await stabilityBoardProxy.sign(removeSignerScript.address, { from: newSigners[1] })
+            await stabilityBoardProxy.sign(removeSignerScript.address, { from: newSigners[1] }),
         ]);
         testHelpers.logGasUse(this, signTx1, "multiSig.sign");
         testHelpers.logGasUse(this, signTx2, "multiSig.sign");
@@ -140,12 +137,12 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(removeSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "SignerRemoved", [
                 { signer: newSigners[0] },
-                { signer: newSigners[1] }
+                { signer: newSigners[1] },
             ]),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: removeSignerScript.address,
-                result: true
-            })
+                result: true,
+            }),
         ]);
 
         assert.equal(script.state, scriptState.Done);
@@ -168,18 +165,18 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(cancelScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: cancelScript.address,
-                result: false
-            })
+                result: false,
+            }),
         ]);
         assert(script2After.state, scriptState.Failed);
     });
 
-    it("should add then disable signers in same script", async function() {
+    it("should add then disable signers in same script", async function () {
         const expNewSigners = [accounts[1], accounts[2]];
 
         const [allSignersCountBefore, activeSignersCountBefore] = await Promise.all([
-            stabilityBoardProxy.getAllSignersCount().then(res => res.toNumber()),
-            stabilityBoardProxy.activeSignersCount().then(res => res.toNumber())
+            stabilityBoardProxy.getAllSignersCount().then((res) => res.toNumber()),
+            stabilityBoardProxy.activeSignersCount().then((res) => res.toNumber()),
         ]);
 
         const addSignerScript = await SB_addAndRemoveSigners.new();
@@ -197,13 +194,13 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(addSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "SignerAdded", [
                 { signer: expNewSigners[0] },
-                { signer: expNewSigners[1] }
+                { signer: expNewSigners[1] },
             ]),
             testHelpers.assertEvent(stabilityBoardProxy, "SignerRemoved", { signer: accounts[0] }),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: addSignerScript.address,
-                result: true
-            })
+                result: true,
+            }),
         ]);
 
         assert.equal(script.state, scriptState.Done);
@@ -215,19 +212,19 @@ contract("StabilityBoardProxy", accounts => {
         assert.equal(allSignersCountAfter.toNumber(), allSignersCountBefore + expNewSigners.length);
     });
 
-    it("should not add 0x0 signer", async function() {
-        const newSigners = [accounts[1], "0x0"];
+    it("should not add 0x0 signer", async function () {
+        const newSigners = [accounts[1], "0x0000000000000000000000000000000000000000"];
         await addSigners(newSigners);
         await testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
-            scriptAddress: res => res,
-            result: false
+            scriptAddress: (res) => res,
+            result: false,
         });
 
         const activeSignersCountAfter = await stabilityBoardProxy.activeSignersCount();
         assert.equal(activeSignersCountAfter.toNumber(), 1);
     });
 
-    it("should not remove all signers", async function() {
+    it("should not remove all signers", async function () {
         const removeSignerScript = await SB_removeSigners.new([accounts[0]]);
 
         const signTx = await stabilityBoardProxy.sign(removeSignerScript.address, { from: accounts[0] });
@@ -238,14 +235,14 @@ contract("StabilityBoardProxy", accounts => {
 
         await testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
             scriptAddress: removeSignerScript.address,
-            result: false
+            result: false,
         });
 
         const activeSignersCountAfter = await stabilityBoardProxy.activeSignersCount();
         assert.equal(activeSignersCountAfter.toNumber(), 1);
     });
 
-    it("should not execute when script is New state (no quorum)", async function() {
+    it("should not execute when script is New state (no quorum)", async function () {
         const newSigners = [accounts[1]];
         await addSigners(newSigners);
 
@@ -260,17 +257,17 @@ contract("StabilityBoardProxy", accounts => {
         await testHelpers.expectThrow(stabilityBoardProxy.execute(removeSignerScript.address, { from: accounts[0] }));
     });
 
-    it("should accept signatures after quorum reached", async function() {
+    it("should accept signatures after quorum reached", async function () {
         const newSigners = [accounts[1], accounts[2]];
         await addSigners(newSigners);
 
         const removeSignerScript = await SB_removeSigners.new(newSigners);
 
         await Promise.all(
-            newSigners.map(signer =>
+            newSigners.map((signer) =>
                 stabilityBoardProxy
                     .sign(removeSignerScript.address, { from: signer })
-                    .then(tx => testHelpers.logGasUse(this, tx, "multiSig.sign"))
+                    .then((tx) => testHelpers.logGasUse(this, tx, "multiSig.sign"))
             )
         );
 
@@ -285,7 +282,7 @@ contract("StabilityBoardProxy", accounts => {
         assert.equal(scriptAfter.signCount, newSigners.length + 1);
     });
 
-    it("should cancel a script in New state", async function() {
+    it("should cancel a script in New state", async function () {
         const newSigners = [accounts[1]];
         await addSigners(newSigners);
 
@@ -298,7 +295,9 @@ contract("StabilityBoardProxy", accounts => {
         // create , sign & execute a script to cancel our removeSignerScript
         const cancelScript = await SB_cancelScript.new(removeSignerScript.address);
         await Promise.all(
-            [...newSigners, accounts[0]].map(signer => stabilityBoardProxy.sign(cancelScript.address, { from: signer }))
+            [...newSigners, accounts[0]].map((signer) =>
+                stabilityBoardProxy.sign(cancelScript.address, { from: signer })
+            )
         );
 
         const cancelTx = await stabilityBoardProxy.execute(cancelScript.address, { from: accounts[0] });
@@ -307,13 +306,13 @@ contract("StabilityBoardProxy", accounts => {
         const [scriptAfter] = await Promise.all([
             stabilityBoardProxyWeb3Contract.methods.scripts(removeSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptCancelled", {
-                scriptAddress: removeSignerScript.address
-            })
+                scriptAddress: removeSignerScript.address,
+            }),
         ]);
         assert.equal(scriptAfter.state, scriptState.Cancelled);
     });
 
-    it("should cancel an Approved script then should not cancel or execute in Cancelled state", async function() {
+    it("should cancel an Approved script then should not cancel or execute in Cancelled state", async function () {
         // Create and apprive script to be cancelled
         const removeSignerScript = await SB_removeSigners.new([accounts[0]]);
         await stabilityBoardProxy.sign(removeSignerScript.address);
@@ -330,8 +329,8 @@ contract("StabilityBoardProxy", accounts => {
         const [scriptAfter] = await Promise.all([
             stabilityBoardProxyWeb3Contract.methods.scripts(removeSignerScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptCancelled", {
-                scriptAddress: removeSignerScript.address
-            })
+                scriptAddress: removeSignerScript.address,
+            }),
         ]);
         assert.equal(scriptAfter.state, scriptState.Cancelled);
 
@@ -347,13 +346,13 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(cancelScript2.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: cancelScript2.address,
-                result: false
-            })
+                result: false,
+            }),
         ]);
         assert(script2After.state, scriptState.Failed);
     });
 
-    it("should set script state to Failed if script fails & should not cancel or execute in Failed state", async function() {
+    it("should set script state to Failed if script fails & should not cancel or execute in Failed state", async function () {
         const revertingScript = await SB_revertingScript.new();
         await stabilityBoardProxy.sign(revertingScript.address);
 
@@ -365,8 +364,8 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(revertingScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: revertingScript.address,
-                result: false
-            })
+                result: false,
+            }),
         ]);
 
         assert.equal(signersCountAfter.toNumber(), 1);
@@ -384,13 +383,13 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(revertingScript2.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: revertingScript2.address,
-                result: false
-            })
+                result: false,
+            }),
         ]);
         assert(script2After.state, scriptState.Failed);
     });
 
-    it("should set script state to Failed if script runs out of gas", async function() {
+    it("should set script state to Failed if script runs out of gas", async function () {
         const outOfGasScript = await SB_outOfGasScript.new();
         await stabilityBoardProxy.sign(outOfGasScript.address);
         const tx = await stabilityBoardProxy.execute(outOfGasScript.address, { gas: 200000 });
@@ -400,19 +399,19 @@ contract("StabilityBoardProxy", accounts => {
             stabilityBoardProxyWeb3Contract.methods.scripts(outOfGasScript.address).call(),
             testHelpers.assertEvent(stabilityBoardProxy, "ScriptExecuted", {
                 scriptAddress: outOfGasScript.address,
-                result: false
-            })
+                result: false,
+            }),
         ]);
 
         assert.equal(script.state, scriptState.Failed);
     });
 
-    it("Should list scripts", async function() {
+    it("Should list scripts", async function () {
         const [scriptCountBefore, approvedScript, revertingScript, doneScript] = await Promise.all([
-            stabilityBoardProxy.getScriptsCount().then(res => res.toNumber()),
+            stabilityBoardProxy.getScriptsCount().then((res) => res.toNumber()),
             SB_addSigners.new([accounts[1]]),
             SB_revertingScript.new(),
-            SB_addSigners.new([accounts[1]])
+            SB_addSigners.new([accounts[1]]),
         ]);
 
         // need to do it in sequence for deterministic order
@@ -422,60 +421,60 @@ contract("StabilityBoardProxy", accounts => {
 
         await Promise.all([
             stabilityBoardProxy.execute(revertingScript.address),
-            stabilityBoardProxy.execute(doneScript.address)
+            stabilityBoardProxy.execute(doneScript.address),
         ]);
 
         const [scriptsCountAfter, scriptsArray] = await Promise.all([
-            stabilityBoardProxy.getScriptsCount().then(res => res.toNumber()),
-            stabilityBoardProxy.getScripts(scriptCountBefore, CHUNK_SIZE)
+            stabilityBoardProxy.getScriptsCount().then((res) => res.toNumber()),
+            stabilityBoardProxy.getScripts(scriptCountBefore, CHUNK_SIZE),
         ]);
         const scripts = scriptsArray
-            .filter(item => !item[1].eq(0))
-            .map(item => {
+            .filter((item) => !item[1].eq(0))
+            .map((item) => {
                 return {
                     index: item[0].toNumber(),
                     address: "0x" + item[1].toString(16).padStart(40, "0"),
                     state: item[2].toNumber(),
-                    signCount: item[3].toNumber()
+                    signCount: item[3].toNumber(),
                 };
             });
 
         assert.equal(scripts.length, 3);
         assert.equal(scriptsCountAfter, scriptCountBefore + 3);
         assert.equal(scripts[0].state, scriptState.Approved);
-        assert.equal(scripts[0].address, approvedScript.address);
+        assert.equal(scripts[0].address, approvedScript.address.toLowerCase());
         assert.equal(scripts[0].signCount, 1);
         assert.equal(scripts[1].state, scriptState.Failed);
-        assert.equal(scripts[1].address, revertingScript.address);
+        assert.equal(scripts[1].address, revertingScript.address.toLowerCase());
         assert.equal(scripts[1].signCount, 1);
         assert.equal(scripts[2].state, scriptState.Done);
-        assert.equal(scripts[2].address, doneScript.address);
+        assert.equal(scripts[2].address, doneScript.address.toLowerCase());
         assert.equal(scripts[2].signCount, 1);
     });
 
-    it("only a signer should execute an Approved script", async function() {
+    it("only a signer should execute an Approved script", async function () {
         const addSignerScript = await SB_addSigners.new([accounts[1]]);
         await stabilityBoardProxy.sign(addSignerScript.address);
 
         await testHelpers.expectThrow(stabilityBoardProxy.execute(addSignerScript.address, { from: accounts[1] }));
     });
 
-    it("should not call cancelScript directly", async function() {
+    it("should not call cancelScript directly", async function () {
         const addSignerScript = await SB_addSigners.new([accounts[1]]);
         await stabilityBoardProxy.sign(addSignerScript.address);
 
         await testHelpers.expectThrow(stabilityBoardProxy.cancelScript(addSignerScript.address));
     });
 
-    it("should not call addSigners directly", async function() {
+    it("should not call addSigners directly", async function () {
         testHelpers.expectThrow(stabilityBoardProxy.addSigners([accounts[0]]));
     });
 
-    it("should not call removeSigners directly", async function() {
+    it("should not call removeSigners directly", async function () {
         testHelpers.expectThrow(stabilityBoardProxy.removeSigners([accounts[0]]));
     });
 
-    it("should dryExecute a script (success)", async function() {
+    it("should dryExecute a script (success)", async function () {
         const addSignerScript = await SB_addAndRemoveSigners.new();
 
         try {
@@ -488,14 +487,14 @@ contract("StabilityBoardProxy", accounts => {
         let [allSignersCountAfter, script] = await Promise.all([
             stabilityBoardProxy.getAllSignersCount(),
             stabilityBoardProxyWeb3Contract.methods.scripts(addSignerScript.address).call(),
-            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted"),
         ]);
 
         assert.equal(script.state, scriptState.New);
         assert.equal(allSignersCountAfter.toNumber(), 1);
     });
 
-    it("should dryExecute a script (revert with reason)", async function() {
+    it("should dryExecute a script (revert with reason)", async function () {
         const revertingScript = await SB_revertingScript.new();
 
         try {
@@ -510,43 +509,43 @@ contract("StabilityBoardProxy", accounts => {
 
         let [script] = await Promise.all([
             stabilityBoardProxyWeb3Contract.methods.scripts(revertingScript.address).call(),
-            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted"),
         ]);
 
         assert.equal(script.state, scriptState.New);
     });
 
-    it("should dryExecute a script (revert no reason)", async function() {
+    it("should dryExecute a script (revert no reason)", async function () {
         const revertingNoReasonScript = await SB_revertingNoReasonScript.new();
 
         try {
             await stabilityBoardProxy.dryExecute(revertingNoReasonScript.address, { gas: 200000 });
             assert.fail("Should be rejected");
         } catch (error) {
-            assert.equal(error.message, "VM Exception while processing transaction: revert");
+            assert.equal(error.message, "Returned error: VM Exception while processing transaction: revert");
         }
 
         let [script] = await Promise.all([
             stabilityBoardProxyWeb3Contract.methods.scripts(revertingNoReasonScript.address).call(),
-            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted"),
         ]);
 
         assert.equal(script.state, scriptState.New);
     });
 
-    it("should dryExecute a script (out of gas)", async function() {
+    it("should dryExecute a script (out of gas)", async function () {
         const outOfGasScript = await SB_outOfGasScript.new();
 
         try {
             await stabilityBoardProxy.dryExecute(outOfGasScript.address, { gas: 200000 });
             assert.fail("Should be rejected");
         } catch (error) {
-            assert.equal(error.message, "VM Exception while processing transaction: revert");
+            assert.equal(error.message, "Returned error: VM Exception while processing transaction: revert");
         }
 
         let [script] = await Promise.all([
             stabilityBoardProxyWeb3Contract.methods.scripts(outOfGasScript.address).call(),
-            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted")
+            testHelpers.assertNoEvents(stabilityBoardProxy, "ScriptExecuted"),
         ]);
 
         assert.equal(script.state, scriptState.New);

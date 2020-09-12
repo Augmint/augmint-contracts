@@ -12,7 +12,7 @@ const SafeMathTester = artifacts.require("./test/SafeMathTester.sol");
 
 const localTest_initialSetup = artifacts.require("./SB_scripts/localTest/localTest_initialSetup.sol");
 
-module.exports = function(deployer) {
+module.exports = function (deployer) {
     deployer
         .deploy(
             localTest_initialSetup,
@@ -27,31 +27,54 @@ module.exports = function(deployer) {
             Exchange.address,
             SafeMathTester.address
         )
-        .then(async initialSetupScript => {
+        .then(async (initialSetupScript) => {
             // StabilityBoard permissions
-            const rates = Rates.at(Rates.address);
-            const feeAccount = FeeAccount.at(FeeAccount.address);
-            const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
-            const tokenAEur = TokenAEur.at(TokenAEur.address);
-            const augmintReserves = AugmintReserves.at(AugmintReserves.address);
-            const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-            const loanManager = LoanManager.at(LoanManager.address);
-            const locker = Locker.at(Locker.address);
-            const exchange = Exchange.at(Exchange.address);
+            const [
+                rates,
+                feeAccount,
+                interestEarnedAccount,
+                tokenAEur,
+                augmintReserves,
+                monetarySupervisor,
+                loanManager,
+                locker,
+                exchange,
+                stabilityBoardProxy,
+            ] = await Promise.all([
+                Rates.at(Rates.address),
+                FeeAccount.at(FeeAccount.address),
+                InterestEarnedAccount.at(InterestEarnedAccount.address),
+                TokenAEur.at(TokenAEur.address),
+                AugmintReserves.at(AugmintReserves.address),
+                MonetarySupervisor.at(MonetarySupervisor.address),
+                LoanManager.at(LoanManager.address),
+                Locker.at(Locker.address),
+                Exchange.at(Exchange.address),
+                StabilityBoardProxy.at(StabilityBoardProxy.address),
+            ]);
+
             await Promise.all([
-                rates.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                feeAccount.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                interestEarnedAccount.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                tokenAEur.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                augmintReserves.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                monetarySupervisor.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                loanManager.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                locker.grantPermission(StabilityBoardProxy.address, "PermissionGranter"),
-                exchange.grantPermission(StabilityBoardProxy.address, "PermissionGranter")
+                rates.grantPermission(StabilityBoardProxy.address, web3.utils.asciiToHex("PermissionGranter")),
+                feeAccount.grantPermission(StabilityBoardProxy.address, web3.utils.asciiToHex("PermissionGranter")),
+                interestEarnedAccount.grantPermission(
+                    StabilityBoardProxy.address,
+                    web3.utils.asciiToHex("PermissionGranter")
+                ),
+                tokenAEur.grantPermission(StabilityBoardProxy.address, web3.utils.asciiToHex("PermissionGranter")),
+                augmintReserves.grantPermission(
+                    StabilityBoardProxy.address,
+                    web3.utils.asciiToHex("PermissionGranter")
+                ),
+                monetarySupervisor.grantPermission(
+                    StabilityBoardProxy.address,
+                    web3.utils.asciiToHex("PermissionGranter")
+                ),
+                loanManager.grantPermission(StabilityBoardProxy.address, web3.utils.asciiToHex("PermissionGranter")),
+                locker.grantPermission(StabilityBoardProxy.address, web3.utils.asciiToHex("PermissionGranter")),
+                exchange.grantPermission(StabilityBoardProxy.address, web3.utils.asciiToHex("PermissionGranter")),
             ]);
 
             // run initial setup script
-            const stabilityBoardProxy = StabilityBoardProxy.at(StabilityBoardProxy.address);
             await stabilityBoardProxy.sign(initialSetupScript.address);
             const tx = await stabilityBoardProxy.execute(initialSetupScript.address);
 

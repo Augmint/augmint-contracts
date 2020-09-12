@@ -1,0 +1,24 @@
+{
+    "extends": ['eslint:recommended'],
+    "parserOptions": {
+        "ecmaVersion": 2017,
+    },
+    "env": {
+        "mocha": true,
+        "node": true,
+        "es6": true
+    },
+    "rules": {
+        "indent": ["warn", 4],
+        max-len: "off",
+        radix: "off",
+        no-unused-vars: "warn",
+        "no-console": "off"
+    },
+    "globals": {
+        "web3": false,
+        "assert": false,
+        "artifacts": false,
+        "contract": false
+  }
+}

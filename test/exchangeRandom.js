@@ -1,5 +1,5 @@
 const RandomSeed = require("random-seed");
-const BigNumber = require("bignumber.js");
+const BN = web3.utils.BN;
 
 const Rates = artifacts.require("./Rates.sol");
 const testHelpers = new require("./helpers/testHelpers.js");
@@ -10,7 +10,7 @@ const TOKEN_BUY = testHelpers.TOKEN_BUY;
 const TOKEN_SELL = testHelpers.TOKEN_SELL;
 
 const ORDER_COUNT = 10;
-const MARKET_EURETH_RATE = 50000; // 1ETH = 500 EUR
+const MARKET_EURETH_RATE = new BN(50000); // 1ETH = 500 EUR
 const MIN_ORDER_RATE = 990000; // 99% - 1% below parity
 const MAX_ORDER_RATE = 1010000; // 101% - 1 % above parity
 const MIN_TOKEN = 10000; // 100 ACE
@@ -65,29 +65,28 @@ const getOrderToFill = async () => {
 /*
  NB: These tests dependend on each other i.e. place orders then match one by one has to run first
 */
-contract("Exchange random tests", accounts => {
-    before(async function() {
+contract("Exchange random tests", (accounts) => {
+    before(async function () {
         exchange = exchangeTestHelper.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
-        const rates = Rates.at(Rates.address);
+        const rates = await Rates.at(Rates.address);
 
         console.log(`\x1b[2m\t*** Topping up ${TEST_ACCS_CT} accounts each with ${ACC_INIT_ACE / 100} A-EURO\x1b[0m`);
         await Promise.all([
-            rates.setRate("EUR", MARKET_EURETH_RATE),
-            accounts.slice(0, TEST_ACCS_CT).map(acc => tokenTestHelpers.issueToken(accounts[0], acc, ACC_INIT_ACE))
+            rates.setRate(web3.utils.asciiToHex("EUR"), MARKET_EURETH_RATE),
+            accounts.slice(0, TEST_ACCS_CT).map((acc) => tokenTestHelpers.issueToken(accounts[0], acc, ACC_INIT_ACE)),
         ]);
     });
 
-    it("place x buy / sell orders", async function() {
+    it("place x buy / sell orders", async function () {
         const orders = [];
         for (let i = 0; i < ORDER_COUNT; i++) {
-            const tokenAmount = Math.round(random.random() * 100 * (MAX_TOKEN - MIN_TOKEN) / 100) + MIN_TOKEN;
+            const tokenAmount = Math.round((random.random() * 100 * (MAX_TOKEN - MIN_TOKEN)) / 100) + MIN_TOKEN;
             const price = Math.floor(random.random() * (MAX_ORDER_RATE - MIN_ORDER_RATE)) + MIN_ORDER_RATE;
 
-            const weiAmount = new BigNumber(tokenAmount)
-                .mul(testHelpers.ONE_ETH)
-                .div(price == 0 ? MARKET_EURETH_RATE : price)
-                .round(0, BigNumber.ROUND_HALF_UP);
+            const weiAmount = new BN(tokenAmount)
+                .mul(testHelpers.BN_ONE_ETH)
+                .div(price == 0 ? MARKET_EURETH_RATE : new BN(price));
 
             const orderType = random.random() < 0.5 ? TOKEN_BUY : TOKEN_SELL;
 
@@ -98,25 +97,25 @@ contract("Exchange random tests", accounts => {
                 amount: orderType === TOKEN_BUY ? weiAmount : tokenAmount,
                 maker,
                 price,
-                orderType
+                orderType,
             });
         }
 
         console.log(`\x1b[2m\t*** Placing ${ORDER_COUNT} random orders\t\x1b[0m`);
         const txs = await Promise.all(
-            orders.map(order => {
+            orders.map((order) => {
                 let tx;
                 if (order.orderType === TOKEN_BUY) {
                     tx = exchange.placeBuyTokenOrder(order.price, { value: order.amount, from: order.maker });
                 } else {
                     tx = augmintToken.transferAndNotify(exchange.address, order.amount, order.price, {
-                        from: order.maker
+                        from: order.maker,
                     });
                 }
                 return tx;
             })
         );
-        txs.map(tx =>
+        txs.map((tx) =>
             testHelpers.logGasUse(
                 this,
                 tx,
@@ -129,7 +128,7 @@ contract("Exchange random tests", accounts => {
         //await exchangeTestHelper.printOrderBook(10);
     });
 
-    it("should fill x matching orders", async function() {
+    it("should fill x matching orders", async function () {
         const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
 
@@ -157,7 +156,7 @@ contract("Exchange random tests", accounts => {
         await testHelpers.revertSnapshot(snapshotId);
     });
 
-    it("should match x orders at once (matchMultipleOrders)", async function() {
+    it("should match x orders at once (matchMultipleOrders)", async function () {
         const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
 
@@ -168,7 +167,7 @@ contract("Exchange random tests", accounts => {
             ),
             {
                 buyTokenIds: [],
-                sellTokenIds: []
+                sellTokenIds: [],
             }
         );
 
@@ -184,7 +183,7 @@ contract("Exchange random tests", accounts => {
         await testHelpers.revertSnapshot(snapshotId);
     });
 
-    it("should cancel all orders", async function() {
+    it("should cancel all orders", async function () {
         const snapshotId = await testHelpers.takeSnapshot();
         //await exchangeTestHelper.printOrderBook(10);
         //const stateBefore = await exchangeTestHelper.getState();

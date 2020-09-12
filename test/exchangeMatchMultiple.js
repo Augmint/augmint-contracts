@@ -10,52 +10,54 @@ let exchange = null;
 let maker;
 let taker;
 
-contract("Exchange Multiple Matching tests", () => {
-    before(async function() {
+contract("Exchange Multiple Matching tests", (accounts) => {
+    before(async function () {
         exchange = exchangeTestHelper.exchange;
-        maker = global.accounts[1];
-        taker = global.accounts[2];
-        await tokenTestHelpers.issueToken(global.accounts[0], maker, 1000000);
-        await tokenTestHelpers.issueToken(global.accounts[0], taker, 1000000);
+        maker = accounts[1];
+        taker = accounts[2];
+        await Promise.all([
+            tokenTestHelpers.issueToken(accounts[0], maker, 1000000),
+            tokenTestHelpers.issueToken(accounts[0], taker, 1000000),
+        ]);
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         snapshotId = await testHelpers.takeSnapshot();
     });
 
-    afterEach(async function() {
+    afterEach(async function () {
         await testHelpers.revertSnapshot(snapshotId);
     });
 
-    it("should match multiple sell orders", async function() {
+    it("should match multiple sell orders", async function () {
         const makerPrice = 1010000;
         const tokenAmount = 10000;
 
         const buyOrder1 = {
-            amount: global.web3v1.utils.toWei("10"),
+            amount: web3.utils.toWei("10"),
             maker: maker,
-            price: makerPrice,
-            orderType: TOKEN_BUY
+            price: makerPrice.toString(),
+            orderType: TOKEN_BUY,
         };
         const buyOrder2 = {
-            amount: global.web3v1.utils.toWei("20"),
+            amount: web3.utils.toWei("20"),
             maker: maker,
-            price: makerPrice,
-            orderType: TOKEN_BUY
+            price: makerPrice.toString(),
+            orderType: TOKEN_BUY,
         };
         const sellOrder1 = {
             amount: tokenAmount,
             maker: taker,
-            price: 990000,
-            orderType: TOKEN_SELL
+            price: "990000",
+            orderType: TOKEN_SELL,
         };
         const sellOrder2 = Object.assign({}, sellOrder1);
         const sellOrder3 = Object.assign({}, sellOrder1);
 
         await exchangeTestHelper.newOrder(this, buyOrder1);
         await exchangeTestHelper.newOrder(this, buyOrder2);
-        await exchangeTestHelper.newOrder(this, sellOrder1),
-        await exchangeTestHelper.newOrder(this, sellOrder2),
+        await exchangeTestHelper.newOrder(this, sellOrder1);
+        await exchangeTestHelper.newOrder(this, sellOrder2);
         await exchangeTestHelper.newOrder(this, sellOrder3);
 
         // await exchangeTestHelper.printOrderBook(10);
@@ -74,62 +76,62 @@ contract("Exchange Multiple Matching tests", () => {
 
         await testHelpers.assertEvent(exchange, "OrderFill", [
             {
-                sellTokenOrderId: sellOrder1.id,
-                buyTokenOrderId: buyOrder1.id,
+                sellTokenOrderId: sellOrder1.id.toString(),
+                buyTokenOrderId: buyOrder1.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
+                tokenAmount: tokenAmount.toString(),
             },
             {
-                sellTokenOrderId: sellOrder2.id,
-                buyTokenOrderId: buyOrder2.id,
+                sellTokenOrderId: sellOrder2.id.toString(),
+                buyTokenOrderId: buyOrder2.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
+                tokenAmount: tokenAmount.toString(),
             },
             {
-                sellTokenOrderId: sellOrder3.id,
-                buyTokenOrderId: buyOrder1.id,
+                sellTokenOrderId: sellOrder3.id.toString(),
+                buyTokenOrderId: buyOrder1.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
-            }
+                tokenAmount: tokenAmount.toString(),
+            },
         ]);
     });
 
     // ensure edge cases of passing the same order twice
-    it("matchMultipleOrders should match as many orders as fits into gas provided", async function() {
+    it("matchMultipleOrders should match as many orders as fits into gas provided", async function () {
         const makerPrice = 1010000;
         const tokenAmount = 10000;
         const buyOrder = {
-            amount: global.web3v1.utils.toWei("10"),
+            amount: web3.utils.toWei("10"),
             maker: maker,
-            price: makerPrice,
-            orderType: TOKEN_BUY
+            price: makerPrice.toString(),
+            orderType: TOKEN_BUY,
         };
 
         const sellOrder1 = {
             amount: tokenAmount,
             maker: taker,
-            price: 990000,
-            orderType: TOKEN_SELL
+            price: "990000",
+            orderType: TOKEN_SELL,
         };
         const sellOrder2 = Object.assign({}, sellOrder1);
         const sellOrder3 = Object.assign({}, sellOrder1);
         const sellOrder4 = Object.assign({}, sellOrder1);
 
         await exchangeTestHelper.newOrder(this, buyOrder);
-        await exchangeTestHelper.newOrder(this, sellOrder1),
-        await exchangeTestHelper.newOrder(this, sellOrder2),
+        await exchangeTestHelper.newOrder(this, sellOrder1);
+        await exchangeTestHelper.newOrder(this, sellOrder2);
         await exchangeTestHelper.newOrder(this, sellOrder3);
         await exchangeTestHelper.newOrder(this, sellOrder4);
 
@@ -147,35 +149,35 @@ contract("Exchange Multiple Matching tests", () => {
 
         await testHelpers.assertEvent(exchange, "OrderFill", [
             {
-                sellTokenOrderId: sellOrder1.id,
-                buyTokenOrderId: buyOrder.id,
+                sellTokenOrderId: sellOrder1.id.toString(),
+                buyTokenOrderId: buyOrder.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
+                tokenAmount: tokenAmount.toString(),
             },
             {
-                sellTokenOrderId: sellOrder2.id,
-                buyTokenOrderId: buyOrder.id,
+                sellTokenOrderId: sellOrder2.id.toString(),
+                buyTokenOrderId: buyOrder.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
+                tokenAmount: tokenAmount.toString(),
             },
             {
-                sellTokenOrderId: sellOrder3.id,
-                buyTokenOrderId: buyOrder.id,
+                sellTokenOrderId: sellOrder3.id.toString(),
+                buyTokenOrderId: buyOrder.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
-            }
+                tokenAmount: tokenAmount.toString(),
+            },
         ]);
 
         const stateAfter = await exchangeTestHelper.getState();
@@ -183,34 +185,34 @@ contract("Exchange Multiple Matching tests", () => {
         assert.equal(stateAfter.buyCount, 1, "Buy token order count should be 1");
     });
 
-    it("matchMultipleOrders should carry on if one is duplicate, non-matching or removed", async function() {
+    it("matchMultipleOrders should carry on if one is duplicate, non-matching or removed", async function () {
         const makerPrice = 1010000;
         const tokenAmount = 10000;
         const buyOrder = {
-            amount: global.web3v1.utils.toWei("10"),
+            amount: web3.utils.toWei("10"),
             maker: maker,
-            price: makerPrice,
-            orderType: TOKEN_BUY
+            price: makerPrice.toString(),
+            orderType: TOKEN_BUY,
         };
         const sellOrder1 = {
-            amount: tokenAmount,
+            amount: tokenAmount.toString(),
             maker: taker,
-            price: 990000,
-            orderType: TOKEN_SELL
+            price: "990000",
+            orderType: TOKEN_SELL,
         };
         const sellOrder2Cancelled = Object.assign({}, sellOrder1);
         const sellOrder3 = Object.assign({}, sellOrder1);
         const sellOrder4Matched = Object.assign({}, sellOrder1);
 
         await exchangeTestHelper.newOrder(this, buyOrder);
-        await exchangeTestHelper.newOrder(this, sellOrder1),
-        await exchangeTestHelper.newOrder(this, sellOrder2Cancelled),
+        await exchangeTestHelper.newOrder(this, sellOrder1);
+        await exchangeTestHelper.newOrder(this, sellOrder2Cancelled);
         await exchangeTestHelper.newOrder(this, sellOrder3);
         await exchangeTestHelper.newOrder(this, sellOrder4Matched);
 
         await Promise.all([
             exchange.cancelSellTokenOrder(sellOrder2Cancelled.id, { from: sellOrder2Cancelled.maker }),
-            exchange.matchOrders(buyOrder.id, sellOrder4Matched.id)
+            exchange.matchOrders(buyOrder.id, sellOrder4Matched.id),
         ]);
 
         // await exchangeTestHelper.printOrderBook(10);
@@ -227,26 +229,26 @@ contract("Exchange Multiple Matching tests", () => {
 
         await testHelpers.assertEvent(exchange, "OrderFill", [
             {
-                sellTokenOrderId: sellOrder1.id,
-                buyTokenOrderId: buyOrder.id,
+                sellTokenOrderId: sellOrder1.id.toString(),
+                buyTokenOrderId: buyOrder.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
+                tokenAmount: tokenAmount.toString(),
             },
 
             {
-                sellTokenOrderId: sellOrder3.id,
-                buyTokenOrderId: buyOrder.id,
+                sellTokenOrderId: sellOrder3.id.toString(),
+                buyTokenOrderId: buyOrder.id.toString(),
                 tokenSeller: taker,
                 tokenBuyer: maker,
                 publishedRate: () => {}, // ignore, not testing it here,
-                price: makerPrice,
+                price: makerPrice.toString(),
                 weiAmount: () => {}, // ignore, not testing it here
-                tokenAmount: tokenAmount
-            }
+                tokenAmount: tokenAmount.toString(),
+            },
         ]);
 
         const stateAfter = await exchangeTestHelper.getState();
