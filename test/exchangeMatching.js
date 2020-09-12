@@ -10,13 +10,13 @@ let exchange = null;
 let maker;
 let taker;
 
-contract("Exchange matching tests", () => {
+contract("Exchange matching tests", (accounts) => {
     before(async function () {
         exchange = exchangeTestHelper.exchange;
-        maker = global.accounts[1];
-        taker = global.accounts[2];
-        await tokenTestHelpers.issueToken(global.accounts[0], maker, 1000000);
-        await tokenTestHelpers.issueToken(global.accounts[0], taker, 1000000);
+        maker = accounts[1];
+        taker = accounts[2];
+        await tokenTestHelpers.issueToken(accounts[0], maker, 1000000);
+        await tokenTestHelpers.issueToken(accounts[0], taker, 1000000);
     });
 
     beforeEach(async function () {

@@ -15,7 +15,7 @@ let exchange = null;
 
 contract("Exchange orders tests", (accounts) => {
     before(async function () {
-        makers = [global.accounts[1], global.accounts[2], global.accounts[3]];
+        makers = [accounts[1], accounts[2], accounts[3]];
         exchange = exchangeTestHelpers.exchange;
         augmintToken = tokenTestHelpers.augmintToken;
         await Promise.all(makers.map((maker) => tokenTestHelpers.issueToken(accounts[0], maker, 1000000)));

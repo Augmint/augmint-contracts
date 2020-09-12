@@ -10,14 +10,14 @@ let exchange = null;
 let maker;
 let taker;
 
-contract("Exchange Multiple Matching tests", () => {
+contract("Exchange Multiple Matching tests", (accounts) => {
     before(async function () {
         exchange = exchangeTestHelper.exchange;
-        maker = global.accounts[1];
-        taker = global.accounts[2];
+        maker = accounts[1];
+        taker = accounts[2];
         await Promise.all([
-            tokenTestHelpers.issueToken(global.accounts[0], maker, 1000000),
-            tokenTestHelpers.issueToken(global.accounts[0], taker, 1000000),
+            tokenTestHelpers.issueToken(accounts[0], maker, 1000000),
+            tokenTestHelpers.issueToken(accounts[0], taker, 1000000),
         ]);
     });
 
