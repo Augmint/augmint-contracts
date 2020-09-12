@@ -58,7 +58,7 @@
     "dotenv": "8.0.0",
     "eslint": "6.0.0",
     "ganache-cli": "6.10.2",
-    "moment": "2.22.2",
+    "moment": "2.27.0",
     "random-seed": "0.3.0",
     "solidity-coverage": "0.5.11",
     "stringifier": "2.1.0",
