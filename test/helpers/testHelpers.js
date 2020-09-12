@@ -3,19 +3,11 @@ var gasUseLog = [];
 let gasPrice = null;
 let networkId;
 
-// Use web3v1 in tests. Nb: truffle uses web3 v0.x while web3 v1 is required for tx signatures
-const Web3v1 = require("web3v1");
-
-//global.web3v0 = new Web3v0(new Web3v0.providers.HttpProvider("http://localhost:8545"));
-global.web3v1 = new Web3v1(new Web3v1.providers.HttpProvider("http://localhost:8545"));
 global.accounts = [];
 
-//dirty hack for web3@1.0.0 support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
-if (typeof global.web3v1.currentProvider.sendAsync !== "function") {
-    global.web3v1.currentProvider.sendAsync = function() {
-        return global.web3v1.currentProvider.send.apply(global.web3v1.currentProvider, arguments);
-    };
-}
+const BN = web3.utils.BN;
+const BN_ONE_ETH = new BN("1000000000000000000");
+const PPM_DIV = new BN("1000000");
 
 module.exports = {
     stringify,
@@ -34,6 +26,12 @@ module.exports = {
     get ONE_ETH() {
         return 1000000000000000000;
     },
+    get BN_ONE_ETH() {
+        return BN_ONE_ETH;
+    },
+    get PPM_DIV() {
+        return PPM_DIV;
+    },
     get NULL_ACC() {
         return "0x0000000000000000000000000000000000000000";
     },
@@ -50,7 +48,7 @@ module.exports = {
             );
         }
         return gasPrice;
-    }
+    },
 };
 
 const _stringify = stringifier({ maxDepth: 3, indent: "   " });
@@ -58,11 +56,11 @@ const _stringify = stringifier({ maxDepth: 3, indent: "   " });
 const gasUseLogDisabled =
     process.env.TEST_DISABLE_LOG_GAS_USE && process.env.TEST_DISABLE_LOG_GAS_USE.trim().toLowerCase() === "true";
 
-before(async function() {
+before(async function () {
     [global.accounts, gasPrice, networkId] = await Promise.all([
-        global.web3v1.eth.getAccounts().then(res => res.map(acc => acc.toLowerCase())),
-        global.web3v1.eth.getGasPrice(),
-        global.web3v1.eth.net.getId()
+        web3.eth.getAccounts(),
+        web3.eth.getGasPrice(),
+        web3.eth.net.getId(),
     ]);
 });
 
@@ -72,11 +70,10 @@ function stringify(values) {
 
 function getEvents(contractInstance, eventName) {
     return new Promise((resolve, reject) => {
-        contractInstance[eventName]().get((err, res) => {
+        contractInstance.getPastEvents(eventName, (err, res) => {
             if (err) {
                 return reject(err);
             }
-
             resolve(res);
         });
     });
@@ -97,9 +94,7 @@ async function assertEvent(contractInstance, eventName, _expectedArgs) {
 
     assert(
         events.length === expectedArgsArray.length,
-        `Expected ${expectedArgsArray.length} ${eventName} events from ${contractInstance.address} but received ${
-            events.length
-        }`
+        `Expected ${expectedArgsArray.length} ${eventName} events from ${contractInstance.address} but received ${events.length}`
     ); // how to get contract name?
 
     const ret = {}; // we return values from event (useful when  custom validator passed for an id)
@@ -110,50 +105,48 @@ async function assertEvent(contractInstance, eventName, _expectedArgs) {
 
         assert(event.event === eventName, `Expected ${eventName} event but got ${event.event}`);
 
-        const eventArgs = event.args;
+        const eventArgs = event.returnValues;
 
         const expectedArgNames = Object.keys(expectedArgs);
         const receivedArgNames = Object.keys(eventArgs);
 
         assert(
-            expectedArgNames.length === receivedArgNames.length,
-            `Expected ${eventName} event to have ${expectedArgNames.length} arguments, but it had ${
-                receivedArgNames.length
-            }`
+            expectedArgNames.length === receivedArgNames.length / 2,
+            `Expected ${eventName} event to have ${expectedArgNames.length} arguments, but it had ${receivedArgNames.length}`
         );
 
-        expectedArgNames.forEach(argName => {
+        expectedArgNames.forEach((argName) => {
             assert(
-                typeof event.args[argName] !== "undefined",
+                typeof eventArgs[argName] !== "undefined",
                 `${argName} expected in ${eventName} event but it's not found`
             );
 
             const expectedValue = expectedArgs[argName];
             let value;
             switch (typeof expectedValue) {
-            case "function":
-                value = expectedValue(event.args[argName]);
-                break;
-            case "number":
-                value =
-                        typeof event.args[argName].toNumber === "function"
-                            ? event.args[argName].toNumber()
-                            : event.args[argName];
-                break;
-            case "string":
-                value =
-                        typeof event.args[argName].toString === "function"
-                            ? event.args[argName].toString()
-                            : event.args[argName];
-                break;
-            default:
-                value = event.args[argName];
+                case "function":
+                    value = expectedValue(eventArgs[argName]);
+                    break;
+                case "number":
+                    value =
+                        typeof eventArgs[argName].toNumber === "function"
+                            ? eventArgs[argName].toNumber()
+                            : eventArgs[argName];
+                    break;
+                case "string":
+                    value =
+                        typeof eventArgs[argName].toString === "function"
+                            ? eventArgs[argName].toString()
+                            : eventArgs[argName];
+                    break;
+                default:
+                    value = eventArgs[argName];
             }
 
             if (typeof expectedValue !== "function") {
                 assert(
                     value === expectedValue,
-                    `Event ${eventName} has ${argName} arg with a value of ${value} but expected ${expectedValue}`
+                    `Event ${eventName} has ${argName} arg with a value of ${value} (${typeof value}) but expected ${expectedValue} (${typeof expectedValue})`
                 );
             }
             ret[argName] = value;
@@ -169,15 +162,15 @@ async function assertNoEvents(contractInstance, eventName) {
 
 //let snapshotCount = 0;
 function takeSnapshot() {
-    return new Promise(function(resolve, reject) {
-        global.web3v1.currentProvider.sendAsync(
+    return new Promise(function (resolve, reject) {
+        web3.currentProvider.send(
             {
                 method: "evm_snapshot",
                 params: [],
                 jsonrpc: "2.0",
-                id: new Date().getTime()
+                id: new Date().getTime(),
             },
-            function(error, res) {
+            function (error, res) {
                 if (error) {
                     reject(new Error("Can't take snapshot with web3\n" + error));
                 } else {
@@ -189,15 +182,15 @@ function takeSnapshot() {
 }
 
 function revertSnapshot(snapshotId) {
-    return new Promise(function(resolve, reject) {
-        global.web3v1.currentProvider.sendAsync(
+    return new Promise(function (resolve, reject) {
+        web3.currentProvider.send(
             {
                 method: "evm_revert",
                 params: [snapshotId],
                 jsonrpc: "2.0",
-                id: new Date().getTime()
+                id: new Date().getTime(),
             },
-            function(error, res) {
+            function (error, res) {
                 if (error) {
                     // TODO: this error is not bubbling up to truffle test run :/
                     reject(new Error("Can't revert snapshot with web3. snapshotId: " + snapshotId + "\n" + error));
@@ -215,7 +208,7 @@ function logGasUse(testObj, tx, txName) {
             testObj.test.parent.title,
             testObj.test.fullTitle(),
             txName || "",
-            tx.receipt ? tx.receipt.gasUsed : tx.gasUsed /* web3v0 w/ receipt, v1 w/o */
+            tx.receipt ? tx.receipt.gasUsed : tx.gasUsed /* web3v0 w/ receipt, v1 w/o */,
         ]);
     }
 }
@@ -225,7 +218,7 @@ function waitFor(durationInMs = 1000) {
         setTimeout(() => {
             // make a transaction to force the local dev node to create a new block with
             // new timestamp:
-            global.web3v1.eth.sendTransaction({ from: global.accounts[0] }, err => {
+            web3.eth.sendTransaction({ from: global.accounts[0] }, (err) => {
                 if (err) {
                     return reject(err);
                 }
@@ -242,14 +235,14 @@ async function waitForTimeStamp(UnixTimestamp) {
 function expectThrow(promise) {
     const onPrivateChain = networkId === 1976 ? true : false; // set by .runprivatechain.sh (geth ...  --networkid 1976 ..)
     return promise
-        .then(res => {
+        .then((res) => {
             if (!onPrivateChain) {
                 //console.log("Received solidity tx instead of throw: \r\n", JSON.stringify(res, null, 4));
                 throw new Error("Received solidity transaction when expected tx to revert");
             } // on privatechain we check gasUsed after tx sent
             return;
         })
-        .catch(error => {
+        .catch((error) => {
             // TODO: Check jump destination to destinguish between a throw
             //       and an actual invalid jump.
             const invalidJump = error.message.search("invalid JUMP") >= 0;
@@ -280,7 +273,7 @@ function expectThrow(promise) {
         });
 }
 
-after(function() {
+after(function () {
     // runs after all tests
     if (gasUseLogDisabled) {
         console.log("TEST_DISABLE_LOG_GAS_USE env variable is set to true. Gas use log not recorded.");

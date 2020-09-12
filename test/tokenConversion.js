@@ -3,12 +3,14 @@ const testHelpers = require("./helpers/testHelpers.js");
 const MonetarySupervisor = artifacts.require("./MonetarySupervisor.sol");
 const AugmintToken = artifacts.require("./TokenAEur.sol");
 
+const BN = web3.utils.BN;
+
 let augmintToken = null;
 let monetarySupervisor = null;
 let newMS;
 let newToken;
 
-contract("token conversion tests", accounts => {
+contract("token conversion tests", (accounts) => {
     before(async () => {
         augmintToken = tokenTestHelpers.augmintToken;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
@@ -26,14 +28,14 @@ contract("token conversion tests", accounts => {
         );
 
         await Promise.all([
-            tokenTestHelpers.feeAccount.grantPermission(newMS.address, "NoTransferFee"),
-            newToken.grantPermission(newMS.address, "MonetarySupervisor"),
-            newToken.grantPermission(accounts[0], "StabilityBoard"),
-            newMS.grantPermission(accounts[0], "StabilityBoard")
+            tokenTestHelpers.feeAccount.grantPermission(newMS.address, web3.utils.asciiToHex("NoTransferFee")),
+            newToken.grantPermission(newMS.address, web3.utils.asciiToHex("MonetarySupervisor")),
+            newToken.grantPermission(accounts[0], web3.utils.asciiToHex("StabilityBoard")),
+            newMS.grantPermission(accounts[0], web3.utils.asciiToHex("StabilityBoard")),
         ]);
     });
 
-    it("should set accepted legacy Augmint token", async function() {
+    it("should set accepted legacy Augmint token", async function () {
         const legacyToken = accounts[1];
         const tx = await monetarySupervisor.setAcceptedLegacyAugmintToken(legacyToken, true);
         testHelpers.logGasUse(this, tx, "setAcceptedLegacyAugmintToken");
@@ -42,8 +44,8 @@ contract("token conversion tests", accounts => {
             monetarySupervisor.acceptedLegacyAugmintTokens(legacyToken),
             testHelpers.assertEvent(monetarySupervisor, "AcceptedLegacyAugmintTokenChanged", {
                 augmintTokenAddress: legacyToken,
-                newAcceptedState: true
-            })
+                newAcceptedState: true,
+            }),
         ]);
 
         assert.equal(newState, true);
@@ -55,32 +57,32 @@ contract("token conversion tests", accounts => {
             monetarySupervisor.acceptedLegacyAugmintTokens(legacyToken),
             testHelpers.assertEvent(monetarySupervisor, "AcceptedLegacyAugmintTokenChanged", {
                 augmintTokenAddress: legacyToken,
-                newAcceptedState: false
-            })
+                newAcceptedState: false,
+            }),
         ]);
         assert.equal(newState, false);
     });
 
-    it("only permitted set accepted legacy Augmint token", async function() {
+    it("only permitted set accepted legacy Augmint token", async function () {
         await testHelpers.expectThrow(
             monetarySupervisor.setAcceptedLegacyAugmintToken(accounts[1], false, { from: accounts[1] })
         );
     });
 
-    it("should convert legacy tokens", async function() {
-        const amount = 50000;
+    it("should convert legacy tokens", async function () {
+        const amount = new BN(50000);
         const account = accounts[0];
 
         await Promise.all([
             tokenTestHelpers.issueToken(accounts[0], account, amount),
-            newMS.setAcceptedLegacyAugmintToken(augmintToken.address, true)
+            newMS.setAcceptedLegacyAugmintToken(augmintToken.address, true),
         ]);
 
         const [oldTokenSupplyBefore, newTokenSupplyBefore, oldTokenBalBefore, newTokenBalBefore] = await Promise.all([
             augmintToken.totalSupply(),
             newToken.totalSupply(),
             augmintToken.balanceOf(account),
-            newToken.balanceOf(account)
+            newToken.balanceOf(account),
         ]);
 
         const tx = await augmintToken.transferAndNotify(newMS.address, amount, 0, { from: account });
@@ -94,13 +96,13 @@ contract("token conversion tests", accounts => {
             testHelpers.assertEvent(newToken, "Transfer", {
                 from: "0x0000000000000000000000000000000000000000",
                 to: account,
-                amount: amount
+                amount: amount.toString(),
             }),
             testHelpers.assertEvent(newMS, "LegacyTokenConverted", {
                 oldTokenAddress: augmintToken.address,
                 account,
-                amount
-            })
+                amount: amount.toString(),
+            }),
         ]);
 
         assert.equal(oldTokenSupplyAfter.toString(), oldTokenSupplyBefore.sub(amount).toString(), "old Token Supply");
@@ -109,13 +111,13 @@ contract("token conversion tests", accounts => {
         assert.equal(newTokenBalAfter.toString(), newTokenBalBefore.add(amount).toString(), "new token balance");
     });
 
-    it("only accepted tokens should be converted", async function() {
+    it("only accepted tokens should be converted", async function () {
         const amount = 1000;
         const account = accounts[0];
 
         await Promise.all([
             newMS.setAcceptedLegacyAugmintToken(augmintToken.address, false),
-            tokenTestHelpers.issueToken(accounts[0], account, amount)
+            tokenTestHelpers.issueToken(accounts[0], account, amount),
         ]);
 
         await testHelpers.expectThrow(augmintToken.transferAndNotify(newMS.address, amount, 0, { from: account }));

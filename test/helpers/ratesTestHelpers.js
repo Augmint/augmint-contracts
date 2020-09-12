@@ -5,33 +5,37 @@ module.exports = {
     newRatesAsserts,
     get rates() {
         return rates;
-    }
+    },
 };
 
 let rates = null;
 
-before(function() {
-    rates = Rates.at(Rates.address);
+before(async function () {
+    rates = await Rates.at(Rates.address);
 });
 
 async function newRatesAsserts(tx, symbols, newRates) {
-    const currentTime = moment()
-        .utc()
-        .unix();
-    assert.equal(tx.logs.length, symbols.length, "setMultipleRates / setRate should be emmit RateChanged event(s)");
+    const currentTime = moment().utc().unix();
+
+    assert.equal(tx.logs.length, symbols.length, "setMultipleRates / setRate should emmit RateChanged event(s)");
+
     for (let i = 0; i < symbols.length; i++) {
         assert.equal(tx.logs[i].event, "RateChanged", "RateChanged event should be emited for " + i + ". symbol");
+
         assert.equal(
-            global.web3v1.utils.toAscii(tx.logs[i].args.symbol).slice(0, symbols[i].length),
-            symbols[i],
+            web3.utils.hexToUtf8(tx.logs[i].args.symbol), // hexToUtf8 removes trailing zeros from bytes32 ascii
+            web3.utils.hexToUtf8(symbols[i]),
             "symbol " + i + ". should be set in RateChanged event"
         );
+
         assert.equal(
             tx.logs[i].args.newRate.toString(),
             newRates[i].toString(),
             "newRate " + i + ". should be set in RateChanged event"
         );
+
         const rateInfo = await rates.rates(symbols[i]);
+
         assert.equal(
             rateInfo[0].toString(),
             newRates[i].toString(),

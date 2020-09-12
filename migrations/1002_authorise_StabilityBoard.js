@@ -11,28 +11,39 @@ const LoanManager = artifacts.require("./LoanManager.sol");
 const Locker = artifacts.require("./Locker.sol");
 const Exchange = artifacts.require("./Exchange.sol");
 
-module.exports = function(deployer, network, accounts) {
+module.exports = function (deployer, network, accounts) {
     deployer.then(async () => {
         const stabilityBoardAccounts = [accounts[0]];
 
-        const feeAccount = FeeAccount.at(FeeAccount.address);
-        const augmintReserves = AugmintReserves.at(AugmintReserves.address);
-        const tokenAEur = TokenAEur.at(TokenAEur.address);
-        const interestEarnedAccount = InterestEarnedAccount.at(InterestEarnedAccount.address);
-        const monetarySupervisor = MonetarySupervisor.at(MonetarySupervisor.address);
-        const loanManager = LoanManager.at(LoanManager.address);
-        const locker = Locker.at(Locker.address);
-        const exchange = Exchange.at(Exchange.address);
+        const [
+            feeAccount,
+            augmintReserves,
+            tokenAEur,
+            interestEarnedAccount,
+            monetarySupervisor,
+            loanManager,
+            locker,
+            exchange,
+        ] = await Promise.all([
+            FeeAccount.at(FeeAccount.address),
+            AugmintReserves.at(AugmintReserves.address),
+            TokenAEur.at(TokenAEur.address),
+            InterestEarnedAccount.at(InterestEarnedAccount.address),
+            MonetarySupervisor.at(MonetarySupervisor.address),
+            LoanManager.at(LoanManager.address),
+            Locker.at(Locker.address),
+            Exchange.at(Exchange.address),
+        ]);
 
-        const grantTxs = stabilityBoardAccounts.map(acc => [
-            feeAccount.grantPermission(acc, "StabilityBoard"),
-            augmintReserves.grantPermission(acc, "StabilityBoard"),
-            tokenAEur.grantPermission(acc, "StabilityBoard"),
-            interestEarnedAccount.grantPermission(acc, "StabilityBoard"),
-            monetarySupervisor.grantPermission(acc, "StabilityBoard"),
-            locker.grantPermission(acc, "StabilityBoard"),
-            loanManager.grantPermission(acc, "StabilityBoard"),
-            exchange.grantPermission(acc, "StabilityBoard")
+        const grantTxs = stabilityBoardAccounts.map((acc) => [
+            feeAccount.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
+            augmintReserves.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
+            tokenAEur.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
+            interestEarnedAccount.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
+            monetarySupervisor.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
+            locker.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
+            loanManager.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
+            exchange.grantPermission(acc, web3.utils.asciiToHex("StabilityBoard")),
         ]);
 
         await Promise.all(grantTxs);
