@@ -61,7 +61,7 @@
     "moment": "2.22.2",
     "random-seed": "0.3.0",
     "solidity-coverage": "0.5.11",
-    "stringifier": "2.0.0",
+    "stringifier": "2.1.0",
     "truffle": "5.1.44",
     "truffle-hdwallet-provider": "1.0.13",
     "wait-on": "3.2.0"
