@@ -63,7 +63,6 @@ contract("FeeAccount tests", (accounts) => {
         );
         testHelpers.logGasUse(this, tx, "withdraw");
 
-        console.log(" weiAmount", weiAmount, typeof weiAmount);
         await Promise.all([
             testHelpers.assertEvent(feeAccountInstance, "WithdrawFromSystemAccount", {
                 tokenAddress: augmintTokenInstance.address,
