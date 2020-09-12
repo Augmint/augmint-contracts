@@ -21,16 +21,16 @@
   ],
   "engines": {
     "node": "10.15.3",
-    "yarn": ">=1.15.2"
+    "yarn": ">=1.22.4"
   },
   "scripts": {
     "start": "yarn runmigrate",
     "start_comp": "yarn runmigrate_comp",
     "build": "truffle compile",
     "clean": "rm build/contracts/*",
-    "test": "truffle test --migrations_directory migrations_null",
+    "test": "truffle test",
     "coverage": "solidity-coverage",
-    "migrate": "truffle migrate",
+    "migrate": "truffle migrate --migrations_directory ./migrations",
     "compile": "yarn build",
     "ganache:run": "./scripts/runganache.sh",
     "ganache:stop": "echo TODO",
@@ -54,24 +54,19 @@
   "devDependencies": {
     "abiniser": "0.5.1",
     "babel-register": "6.26.0",
-    "bignumber.js": "5.0.0",
     "coveralls": "3.0.4",
     "dotenv": "8.0.0",
     "eslint": "6.0.0",
-    "ganache-cli": "6.4.4",
+    "ganache-cli": "6.10.2",
     "moment": "2.22.2",
     "random-seed": "0.3.0",
     "solidity-coverage": "0.5.11",
     "stringifier": "2.0.0",
-    "truffle": "4.1.14",
+    "truffle": "5.1.43",
     "truffle-hdwallet-provider": "1.0.13",
-    "wait-on": "3.2.0",
-    "web3v1": "npm:web3@1.0.0-beta.34"
+    "wait-on": "3.2.0"
   },
-  "greenkeeper": {
-    "ignore": [
-      "bignumber.js"
-    ]
-  },
-  "files": ["abiniser"]
+  "files": [
+    "abiniser"
+  ]
 }

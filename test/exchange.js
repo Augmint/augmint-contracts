@@ -4,25 +4,26 @@ const ratesTestHelpers = require("./helpers/ratesTestHelpers.js");
 
 let exchange = null;
 
-contract("Exchange tests", accounts => {
-    before(async function() {
+contract("Exchange tests", (accounts) => {
+    before(async function () {
         exchange = exchangeTestHelpers.exchange;
     });
 
-    it("Should allow to change rates contract", async function() {
-        const newRatesContract = ratesTestHelpers.rates.address;
-        const tx = await exchange.setRatesContract(newRatesContract);
+    it("Should allow to change rates contract", async function () {
+        const newRatesContract = accounts[0];
+
+        const tx = await exchange.setRatesContract(accounts[0]);
         testHelpers.logGasUse(this, tx, "setRatesContract");
 
         const [actualRatesContract] = await Promise.all([
             exchange.rates(),
-            testHelpers.assertEvent(exchange, "RatesContractChanged", { newRatesContract })
+            testHelpers.assertEvent(exchange, "RatesContractChanged", { newRatesContract }),
         ]);
 
         assert.equal(actualRatesContract, newRatesContract);
     });
 
-    it("Only allowed should change rates and monetarySupervisor contracts", async function() {
+    it("Only allowed should change rates and monetarySupervisor contracts", async function () {
         const newRatesContract = ratesTestHelpers.rates.address;
         await testHelpers.expectThrow(exchange.setRatesContract(newRatesContract, { from: accounts[1] }));
     });

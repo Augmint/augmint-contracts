@@ -1,3 +1,5 @@
 An empty dir to speed up test by avoiding migrations running unnecessarily again
-when yarn test runing on ganache docker container which already have all contracts
+when ganache has all the contracts already (eg. yarn test running on ganache docker container)
+This dir is set by default in truffle-config.js and --migrations_directory flag is used to override it 
+in packages.json scripts
 see: https://ethereum.stackexchange.com/a/62918/7866
