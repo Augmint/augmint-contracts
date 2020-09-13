@@ -1,8 +1,6 @@
-// Allows us to use ES6 in our migrations and tests.
-require("babel-register");
 require("dotenv").config();
 
-const HDWalletProvider = require("truffle-hdwallet-provider");
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 const MNEMONIC = process.env.DEPLOYER_MNEMONIC;
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
