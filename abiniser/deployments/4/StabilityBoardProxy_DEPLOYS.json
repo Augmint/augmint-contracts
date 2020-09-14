@@ -1,6 +1,6 @@
 {
   "contractName": "StabilityBoardProxy",
-  "latestAbiHash": "dd40c0d39ea8bad8a388522667a84687",
+  "latestAbiHash": "875b3d71bd113c550827112698f839cd",
   "deployedAbis": {
     "dd40c0d39ea8bad8a388522667a84687": {
       "latestDeployedAddress": "0xa612de13b629a1ff790c1f4e41d0422d2bb50a30",
@@ -27,6 +27,23 @@
           },
           "bytecodeHash": "4f899546765577ad2e325da53c3e7179",
           "deployedBytecodeHash": "a5f3dd7878e556db538c1206827e5959",
+          "sourceHash": "4d60c55b8e4009873db939b37558d9dc"
+        }
+      }
+    },
+    "875b3d71bd113c550827112698f839cd": {
+      "latestDeployedAddress": "0x9bb8f0855b8bbaea064bce9b4ef88bc22e649af5",
+      "deployments": {
+        "0x9bb8f0855b8bbaea064bce9b4ef88bc22e649af5": {
+          "generatedAt": "2019-07-02T11:05:08.462Z",
+          "truffleContractFileUpdatedAt": "2019-07-02T10:59:24.915Z",
+          "deployTransactionHash": "0xb4d8550e24607c2c5969d9230a0b7471ace76f1133c4712f264562fe910eb8ae",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "9d8ba85809293da3b9a84c628de8d2c7",
+          "deployedBytecodeHash": "c3fe17ffca9ede5d2fc500da0865c1c7",
           "sourceHash": "4d60c55b8e4009873db939b37558d9dc"
         }
       }

@@ -84,16 +84,23 @@ contract MultiSig {
         Script storage script = scripts[scriptAddress];
         require(script.state == ScriptState.Approved, "script state must be Approved");
 
-        // passing scriptAddress to allow called script access its own public fx-s if needed
-        if (scriptAddress.delegatecall.gas(gasleft() - 23000)
-            (abi.encodeWithSignature("execute(address)", scriptAddress))) {
-            script.state = ScriptState.Done;
-            result = true;
-        } else {
-            script.state = ScriptState.Failed;
-            result = false;
+        result = _execute(scriptAddress);
+    }
+    /* Function to test scripts without signatures - always reverts.
+        It's even possible to test scripts without deployment if script deployed and dry run on a ganache */
+    function dryExecute(address scriptAddress) public {
+        bool result = _execute(scriptAddress);
+
+        if(!result) { // if delegatecall failed then revert with the revert returndata
+            // solium-disable-next-line security/no-inline-assembly
+            assembly {
+                let ptr := mload(0x40) // starts from the "free memory pointer"
+                returndatacopy(ptr, 0, returndatasize) // retreive delegatecall revert reason message
+                revert(ptr, returndatasize)  // revert with the reason message from delegeatecall
+            }
         }
-        emit ScriptExecuted(scriptAddress, result);
+
+        revert("dryExecute success");
     }
 
     function cancelScript(address scriptAddress) public {
@@ -110,7 +117,7 @@ contract MultiSig {
     /* requires quorum so it's callable only via a script executed by this contract */
     function addSigners(address[] signers) public {
         require(msg.sender == address(this), "only callable via MultiSig");
-        for (uint i= 0; i < signers.length; i++) {
+        for (uint i = 0; i < signers.length; i++) {
             if (!isSigner[signers[i]]) {
                 require(signers[i] != address(0), "new signer must not be 0x0");
                 activeSignersCount++;
@@ -124,7 +131,7 @@ contract MultiSig {
     /* requires quorum so it's callable only via a script executed by this contract */
     function removeSigners(address[] signers) public {
         require(msg.sender == address(this), "only callable via MultiSig");
-        for (uint i= 0; i < signers.length; i++) {
+        for (uint i = 0; i < signers.length; i++) {
             if (isSigner[signers[i]]) {
                 require(activeSignersCount > 1, "must not remove last signer");
                 activeSignersCount--;
@@ -137,7 +144,7 @@ contract MultiSig {
     /* implement it in derived contract */
     function checkQuorum(uint signersCount) internal view returns(bool isQuorum);
 
-    function getAllSignersCount() view external returns (uint allSignersCount) {
+    function getAllSignersCount() external view returns (uint allSignersCount) {
         return allSigners.length;
     }
 
@@ -153,7 +160,7 @@ contract MultiSig {
         return response;
     }
 
-    function getScriptsCount() view external returns (uint scriptsCount) {
+    function getScriptsCount() external view returns (uint scriptsCount) {
         return scriptAddresses.length;
     }
 
@@ -169,5 +176,19 @@ contract MultiSig {
                 uint(scripts[scriptAddress].state), scripts[scriptAddress].signCount];
         }
         return response;
+    }
+
+    function _execute(address scriptAddress) private returns (bool result) {
+        Script storage script = scripts[scriptAddress];
+        // passing scriptAddress to allow called script access its own public fx-s if needed
+        if (scriptAddress.delegatecall.gas(gasleft() - 23000)
+            (abi.encodeWithSignature("execute(address)", scriptAddress))) {
+            script.state = ScriptState.Done;
+            result = true;
+        } else {
+            script.state = ScriptState.Failed;
+            result = false;
+        }
+        emit ScriptExecuted(scriptAddress, result);
     }
 }

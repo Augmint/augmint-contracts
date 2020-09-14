@@ -8,8 +8,13 @@ let loanProduct = null;
 
 let CHUNK_SIZE = 20;
 
+let snapshotIdSingleTest;
+let snapshotIdAllTests;
+
 contract("loanManager  tests", accounts => {
     before(async function() {
+        snapshotIdAllTests = await testHelpers.takeSnapshot();
+
         loanManager = loanTestHelpers.loanManager;
 
         loanProduct = {
@@ -17,17 +22,19 @@ contract("loanManager  tests", accounts => {
             minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
-            collateralRatio: 850000,
+            initialCollateralRatio: 1176471,
             defaultingFeePt: 50000,
-            isActive: true
+            isActive: true,
+            minCollateralRatio: 0
         };
         await loanManager.addLoanProduct(
             loanProduct.term,
             loanProduct.discountRate,
-            loanProduct.collateralRatio,
+            loanProduct.initialCollateralRatio,
             loanProduct.minDisbursedAmount,
             loanProduct.defaultingFeePt,
             loanProduct.isActive,
+            loanProduct.minCollateralRatio,
             { from: accounts[0] }
         );
 
@@ -35,6 +42,18 @@ contract("loanManager  tests", accounts => {
             productId: x => x
         });
         loanProduct.id = res.productId;
+    });
+
+    after(async () => {
+        await testHelpers.revertSnapshot(snapshotIdAllTests);
+    });
+
+    beforeEach(async function() {
+        snapshotIdSingleTest = await testHelpers.takeSnapshot();
+    });
+
+    afterEach(async function() {
+        await testHelpers.revertSnapshot(snapshotIdSingleTest);
     });
 
     it("Verifies default test loanproduct discount rates", async function() {
@@ -64,17 +83,19 @@ contract("loanManager  tests", accounts => {
             minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
-            collateralRatio: 850000,
+            initialCollateralRatio: 1176471,
             defaultingFeePt: 50000,
-            isActive: true
+            isActive: true,
+            minCollateralRatio: 0
         };
         const tx = await loanManager.addLoanProduct(
             prod.term,
             prod.discountRate,
-            prod.collateralRatio,
+            prod.initialCollateralRatio,
             prod.minDisbursedAmount,
             prod.defaultingFeePt,
             prod.isActive,
+            prod.minCollateralRatio,
             { from: accounts[0] }
         );
         testHelpers.logGasUse(this, tx, "addLoanProduct");
@@ -100,7 +121,7 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.id.toNumber(), prod.id);
         assert.equal(lastProduct.term.toNumber(), prod.term);
         assert.equal(lastProduct.discountRate.toNumber(), prod.discountRate);
-        assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
+        assert.equal(lastProduct.initialCollateralRatio.toNumber(), prod.initialCollateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
         const expMaxLoanAmount = await tokenTestHelpers.monetarySupervisor.getMaxLoanAmount(
@@ -116,17 +137,19 @@ contract("loanManager  tests", accounts => {
             minDisbursedAmount: 3000,
             term: 86400,
             discountRate: 970000,
-            collateralRatio: 850000,
+            initialCollateralRatio: 1176471,
             defaultingFeePt: 50000,
-            isActive: true
+            isActive: true,
+            minCollateralRatio: 0
         };
         const tx = await loanManager.addLoanProduct(
             prod.term,
             prod.discountRate,
-            prod.collateralRatio,
+            prod.initialCollateralRatio,
             prod.minDisbursedAmount,
             prod.defaultingFeePt,
             prod.isActive,
+            prod.minCollateralRatio,
             { from: accounts[0] }
         );
         testHelpers.logGasUse(this, tx, "addLoanProduct");
@@ -141,7 +164,7 @@ contract("loanManager  tests", accounts => {
         assert.equal(lastProduct.id.toNumber(), prod.id);
         assert.equal(lastProduct.term.toNumber(), prod.term);
         assert.equal(lastProduct.discountRate.toNumber(), prod.discountRate);
-        assert.equal(lastProduct.collateralRatio.toNumber(), prod.collateralRatio);
+        assert.equal(lastProduct.initialCollateralRatio.toNumber(), prod.initialCollateralRatio);
         assert.equal(lastProduct.minDisbursedAmount.toNumber(), prod.minDisbursedAmount);
         assert.equal(lastProduct.defaultingFeePt.toNumber(), prod.defaultingFeePt);
         const expMaxLoanAmount = await tokenTestHelpers.monetarySupervisor.getMaxLoanAmount(
@@ -153,7 +176,7 @@ contract("loanManager  tests", accounts => {
 
     it("Only allowed should add new product", async function() {
         await testHelpers.expectThrow(
-            loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, { from: accounts[1] })
+            loanManager.addLoanProduct(86400, 970000, 850000, 3000, 50000, true, 0, { from: accounts[1] })
         );
     });
 

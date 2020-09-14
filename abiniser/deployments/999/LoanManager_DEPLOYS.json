@@ -1,23 +1,11 @@
 {
   "contractName": "LoanManager",
-  "latestAbiHash": "fdf5fde95aa940c6dbfb8353c572c5fb",
+  "latestAbiHash": "753a73f4b2140507197a8f80bff47b40",
   "deployedAbis": {
     "fdf5fde95aa940c6dbfb8353c572c5fb": {
-      "latestDeployedAddress": "0x213135c85437c23bc529a2ee9c2980646c332fcb",
+      "latestDeployedAddress": "0xF7B8384c392fc333d3858a506c4F1506af44D53c",
       "deployments": {
-        "0x213135c85437c23bc529a2ee9c2980646c332fcb": {
-          "generatedAt": "2019-04-04T18:31:39.018Z",
-          "truffleContractFileUpdatedAt": "2019-04-04T18:20:16.642Z",
-          "deployTransactionHash": "0x04c167ad48f178b4a316b0d6bbfa885ca96dcd70ed9edf1d4923aeb29fa7fa4c",
-          "compiler": {
-            "name": "solc",
-            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
-          },
-          "bytecodeHash": "4f80cc451be48e4d62a17dbc3895a91d",
-          "deployedBytecodeHash": "bc0eea72e35030fc44549a2a0064bf73",
-          "sourceHash": "234fd5848af85ca2444c888fd6ba61aa"
-        },
-        "0xf7b8384c392fc333d3858a506c4f1506af44d53c": {
+        "0xF7B8384c392fc333d3858a506c4F1506af44D53c": {
           "generatedAt": "2019-04-04T18:31:39.018Z",
           "truffleContractFileUpdatedAt": "2019-04-04T18:20:16.642Z",
           "deployTransactionHash": "0x23d5906de7ecfe9595bb8cfd7080a0e06eccee34ef92f017a3b4b657855e3619",
@@ -28,6 +16,23 @@
           "bytecodeHash": "4f80cc451be48e4d62a17dbc3895a91d",
           "deployedBytecodeHash": "bc0eea72e35030fc44549a2a0064bf73",
           "sourceHash": "234fd5848af85ca2444c888fd6ba61aa"
+        }
+      }
+    },
+    "753a73f4b2140507197a8f80bff47b40": {
+      "latestDeployedAddress": "0x213135c85437C23bC529A2eE9c2980646c332fCB",
+      "deployments": {
+        "0x213135c85437C23bC529A2eE9c2980646c332fCB": {
+          "generatedAt": "2019-07-02T09:59:47.885Z",
+          "truffleContractFileUpdatedAt": "2019-07-02T09:59:42.024Z",
+          "deployTransactionHash": "0x6e09b864f8d42ac28128e3c1af6b8f2aa43f5007bbc91f5f655dc6840883224e",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "4408d1ad57d708e0d0664838e6f10136",
+          "deployedBytecodeHash": "05ee93b22e275d2ea639c2fcb1284dfa",
+          "sourceHash": "78a783ccd39197b8ac7ef2cb49cc243c"
         }
       }
     }

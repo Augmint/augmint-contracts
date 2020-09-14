@@ -1,4 +1,4 @@
-/* script to setup  contracts  deplyomed on local test ganache instance
+/* script to setup contracts deployed on local test ganache instance
         - one instance can be executed by StabilityBoardProxy only once
     NB: live scripts (rinkeby & mainnet etc.) will have contracts setup from constant addresses
 */
@@ -104,18 +104,18 @@ contract localTest_initialSetup {
         _monetarySupervisor.grantPermission(_locker, "Locker");
 
         // add test loan Products
-        // term (in sec), discountRate, loanCoverageRatio, minDisbursedAmount (w/ 4 decimals), defaultingFeePt, isActive
-        _loanManager.addLoanProduct(365 days, 854701, 550000, 1000, 50000, true); //  17% p.a.
-        _loanManager.addLoanProduct(180 days, 924753, 550000, 1000, 50000, true); // 16.5% p.a.
+        // term (in sec), discountRate, initialCollateralRatio (ppm), minDisbursedAmount (token), defaultingFeePt (ppm), isActive, minCollateralRatio (ppm)
+        _loanManager.addLoanProduct(365 days, 854701, 1850000, 1000, 50000, true, 1500000); //  17% p.a., (collateral ratio: initial = 185%, minimum = 150%)
+        _loanManager.addLoanProduct(180 days, 924753, 1850000, 1000, 50000, true, 1500000); // 16.5% p.a., (collateral ratio: initial = 185%, minimum = 150%)
 
-        _loanManager.addLoanProduct(90 days, 962046, 600000, 1000, 50000, true); // 16%. p.a.
-        _loanManager.addLoanProduct(60 days, 975154, 600000, 1000, 50000, true); //  15.5% p.a.
-        _loanManager.addLoanProduct(30 days, 987822, 600000, 1000, 50000, true); //  15% p.a.
-        _loanManager.addLoanProduct(14 days, 994280, 600000, 1000, 50000, true); // 15% p.a.
-        _loanManager.addLoanProduct(7 days, 997132, 600000, 1000, 50000, true); // 15% p.a.
+        _loanManager.addLoanProduct(90 days, 962046, 1600000, 1000, 50000, true, 1200000); // 16%. p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(60 days, 975154, 1600000, 1000, 50000, true, 1200000); //  15.5% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(30 days, 987822, 1600000, 1000, 50000, true, 1200000); //  15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(14 days, 994280, 1600000, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+        _loanManager.addLoanProduct(7 days, 997132, 1600000, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
 
-        _loanManager.addLoanProduct(1 hours, 999998, 980000, 2000, 50000, true); // due in 1hr for testing repayments ? p.a.
-        _loanManager.addLoanProduct(1 seconds, 999999, 990000, 3000, 50000, true); // defaults in 1 secs for testing ? p.a.
+        _loanManager.addLoanProduct(1 hours, 999000, 1230000, 2000, 50000, true, 1050000); // due in 1hr for testing repayments ~877% p.a., (collateral ratio: initial = 123%, minimum = 105%)
+        _loanManager.addLoanProduct(1 seconds, 999000, 1110000, 3000, 50000, true, 1020000); // defaults in 1 secs for testing ~3156757% p.a., (collateral ratio: initial = 111%, minimum = 102%)
 
         // add test lock products
         // (perTermInterest, durationInSecs, minimumLockAmount, isActive)

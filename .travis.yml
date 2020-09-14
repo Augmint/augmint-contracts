@@ -2,7 +2,7 @@ dist: xenial # https://docs.travis-ci.com/user/reference/xenial/
 language: node_js
 cache: yarn
 before_install:
-    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.15.2
+    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.4
     - export PATH="$HOME/.yarn/bin:$PATH"
     - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
     - yarn global add greenkeeper-lockfile@1
@@ -32,7 +32,7 @@ after_success:
     - echo after_success TRAVIS_BRANCH=$TRAVIS_BRANCH TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST TRAVIS_TAG=$TRAVIS_TAG TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER TRAVIS_COMMIT=$TRAVIS_COMMIT ;
     - |
         if [ $TRAVIS_PULL_REQUEST == "false" ]; then
-            if [ $TRAVIS_BRANCH == "master" ] || [[ $TRAVIS_TAG =~ v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            if [ $TRAVIS_BRANCH == "master" ] || [[ $TRAVIS_TAG =~ v([0-9]+)\.([0-9]+)\.([0-9]+)((-|_)\S*)? ]]; then
                 echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin ;
                 yarn docker:tag:build ;
                 if [ ! -z $TRAVIS_TAG ]; then

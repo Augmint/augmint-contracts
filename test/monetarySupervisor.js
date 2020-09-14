@@ -1,24 +1,31 @@
 const tokenTestHelpers = require("./helpers/tokenTestHelpers.js");
 const testHelpers = require("./helpers/testHelpers.js");
 
+const BN = web3.utils.BN;
+
 let augmintToken = null;
 let monetarySupervisor = null;
 let augmintReserves = null;
 
-contract("MonetarySupervisor tests", accounts => {
+contract("MonetarySupervisor tests", (accounts) => {
     before(async () => {
         augmintToken = tokenTestHelpers.augmintToken;
         monetarySupervisor = tokenTestHelpers.monetarySupervisor;
         augmintReserves = tokenTestHelpers.augmintReserves;
     });
 
-    it("should be possible to issue new tokens to reserve", async function() {
-        const amount = 100000;
-        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore, burnedByStabilityBoardBefore] = await Promise.all([
+    it("should be possible to issue new tokens to reserve", async function () {
+        const amount = new BN(100000);
+        const [
+            totalSupplyBefore,
+            reserveBalBefore,
+            issuedByStabilityBoardBefore,
+            burnedByStabilityBoardBefore,
+        ] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByStabilityBoard(),
-            monetarySupervisor.burnedByStabilityBoard()
+            monetarySupervisor.burnedByStabilityBoard(),
         ]);
 
         const tx = await monetarySupervisor.issueToReserve(amount);
@@ -27,14 +34,14 @@ contract("MonetarySupervisor tests", accounts => {
         await testHelpers.assertEvent(augmintToken, "Transfer", {
             from: testHelpers.NULL_ACC,
             to: augmintReserves.address,
-            amount: amount
+            amount: amount.toString(),
         });
 
         const [totalSupply, reserveBal, issuedByStabilityBoard, burnedByStabilityBoard] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByStabilityBoard(),
-            monetarySupervisor.burnedByStabilityBoard()
+            monetarySupervisor.burnedByStabilityBoard(),
         ]);
 
         assert.equal(
@@ -59,18 +66,23 @@ contract("MonetarySupervisor tests", accounts => {
         );
     });
 
-    it("only allowed should issue tokens", async function() {
+    it("only allowed should issue tokens", async function () {
         await testHelpers.expectThrow(monetarySupervisor.issueToReserve(1000, { from: accounts[1] }));
     });
 
-    it("should be possible to burn tokens from reserve", async function() {
-        const amount = 9000000;
+    it("should be possible to burn tokens from reserve", async function () {
+        const amount = new BN(9000000);
         await monetarySupervisor.issueToReserve(amount);
-        const [totalSupplyBefore, reserveBalBefore, issuedByStabilityBoardBefore, burnedByStabilityBoardBefore] = await Promise.all([
+        const [
+            totalSupplyBefore,
+            reserveBalBefore,
+            issuedByStabilityBoardBefore,
+            burnedByStabilityBoardBefore,
+        ] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByStabilityBoard(),
-            monetarySupervisor.burnedByStabilityBoard()
+            monetarySupervisor.burnedByStabilityBoard(),
         ]);
 
         const tx = await monetarySupervisor.burnFromReserve(amount, { from: accounts[0] });
@@ -79,14 +91,14 @@ contract("MonetarySupervisor tests", accounts => {
         await testHelpers.assertEvent(augmintToken, "Transfer", {
             from: augmintReserves.address,
             to: testHelpers.NULL_ACC,
-            amount: amount
+            amount: amount.toString(),
         });
 
         const [totalSupply, reserveBal, issuedByStabilityBoard, burnedByStabilityBoard] = await Promise.all([
             augmintToken.totalSupply(),
             augmintToken.balanceOf(augmintReserves.address),
             monetarySupervisor.issuedByStabilityBoard(),
-            monetarySupervisor.burnedByStabilityBoard()
+            monetarySupervisor.burnedByStabilityBoard(),
         ]);
         assert.equal(
             totalSupply.toString(),
@@ -110,23 +122,23 @@ contract("MonetarySupervisor tests", accounts => {
         );
     });
 
-    it("only allowed should burn tokens", async function() {
+    it("only allowed should burn tokens", async function () {
         await monetarySupervisor.issueToReserve(2000);
         await testHelpers.expectThrow(monetarySupervisor.burnFromReserve(1000, { from: accounts[1] }));
     });
 
-    it("should be possible to set parameters", async function() {
+    it("should be possible to set parameters", async function () {
         const params = {
-            lockDifferenceLimit: 12345,
-            loanDifferenceLimit: 54321,
-            allowedDifferenceAmount: 1234
+            lockDifferenceLimit: "12345",
+            loanDifferenceLimit: "54321",
+            allowedDifferenceAmount: "1234",
         };
         const tx = await monetarySupervisor.setLtdParams(
             params.lockDifferenceLimit,
             params.loanDifferenceLimit,
             params.allowedDifferenceAmount,
             {
-                from: accounts[0]
+                from: accounts[0],
             }
         );
         testHelpers.logGasUse(this, tx, "setLtdParams");
@@ -134,50 +146,48 @@ contract("MonetarySupervisor tests", accounts => {
         await testHelpers.assertEvent(monetarySupervisor, "LtdParamsChanged", {
             lockDifferenceLimit: params.lockDifferenceLimit,
             loanDifferenceLimit: params.loanDifferenceLimit,
-            allowedDifferenceAmount: params.allowedDifferenceAmount
+            allowedDifferenceAmount: params.allowedDifferenceAmount,
         });
 
-        const [
-            lockDifferenceLimit,
-            loanDifferenceLimit,
-            allowedDifferenceAmount
-        ] = await monetarySupervisor.ltdParams();
+        const actualParams = await monetarySupervisor.ltdParams();
 
-        assert.equal(lockDifferenceLimit, params.lockDifferenceLimit);
-        assert.equal(loanDifferenceLimit, params.loanDifferenceLimit);
-        assert.equal(allowedDifferenceAmount, params.allowedDifferenceAmount);
+        assert.equal(actualParams.lockDifferenceLimit, params.lockDifferenceLimit);
+        assert.equal(actualParams.loanDifferenceLimit, params.loanDifferenceLimit);
+        assert.equal(actualParams.allowedDifferenceAmount, params.allowedDifferenceAmount);
     });
 
-    it("only allowed should set ltd params ", async function() {
+    it("only allowed should set ltd params ", async function () {
         await testHelpers.expectThrow(monetarySupervisor.setLtdParams(10000, 10000, 10000, { from: accounts[1] }));
     });
 
-    it("should adjust KPIs", async function() {
+    it("should adjust KPIs", async function () {
+        const loansAdjustment = new BN(10);
+        const locksAdjustment = new BN(20);
         const [totalLoanAmountBefore, totalLockedAmountBefore] = await Promise.all([
             monetarySupervisor.totalLoanAmount(),
-            monetarySupervisor.totalLockedAmount()
+            monetarySupervisor.totalLockedAmount(),
         ]);
-        const tx = await monetarySupervisor.adjustKPIs(10, 20, { from: accounts[0] });
+        const tx = await monetarySupervisor.adjustKPIs("10", 20, { from: accounts[0] });
         testHelpers.logGasUse(this, tx, "adjustKPIs");
 
         const [totalLoanAmountAfter, totalLockedAmountAfter] = await Promise.all([
             monetarySupervisor.totalLoanAmount(),
             monetarySupervisor.totalLockedAmount(),
             testHelpers.assertEvent(monetarySupervisor, "KPIsAdjusted", {
-                totalLoanAmountAdjustment: 10,
-                totalLockedAmountAdjustment: 20
-            })
+                totalLoanAmountAdjustment: "10",
+                totalLockedAmountAdjustment: "20",
+            }),
         ]);
 
-        assert.equal(totalLoanAmountAfter.toString(), totalLoanAmountBefore.add(10).toString());
-        assert.equal(totalLockedAmountAfter.toString(), totalLockedAmountBefore.add(20).toString());
+        assert.equal(totalLoanAmountAfter.toString(), totalLoanAmountBefore.add(loansAdjustment).toString());
+        assert.equal(totalLockedAmountAfter.toString(), totalLockedAmountBefore.add(locksAdjustment).toString());
     });
 
-    it("only allowed should adjust KPIs", async function() {
+    it("only allowed should adjust KPIs", async function () {
         await testHelpers.expectThrow(monetarySupervisor.adjustKPIs(10, 10, { from: accounts[1] }));
     });
 
-    it("should change interestEarnedAccount and augmintReserves", async function() {
+    it("should change interestEarnedAccount and augmintReserves", async function () {
         const newInterestEarnedAccount = accounts[2];
         const newAugmintReserves = accounts[3];
         const tx = await monetarySupervisor.setSystemContracts(newInterestEarnedAccount, newAugmintReserves);
@@ -188,15 +198,15 @@ contract("MonetarySupervisor tests", accounts => {
             monetarySupervisor.augmintReserves(),
             testHelpers.assertEvent(monetarySupervisor, "SystemContractsChanged", {
                 newInterestEarnedAccount,
-                newAugmintReserves
-            })
+                newAugmintReserves,
+            }),
         ]);
 
         assert.equal(actualInterestEarnedContract, newInterestEarnedAccount);
         assert.equal(actualAugmintReserves, newAugmintReserves);
     });
 
-    it("only allowed should change interestEarnedAccount and augmintReserves", async function() {
+    it("only allowed should change interestEarnedAccount and augmintReserves", async function () {
         const newInterestEarnedAccount = tokenTestHelpers.interestEarnedAccount.address;
         const newAugmintReserves = augmintReserves.address;
         await testHelpers.expectThrow(

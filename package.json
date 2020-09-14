@@ -1,6 +1,6 @@
 {
   "name": "@augmint/contracts",
-  "version": "1.0.12",
+  "version": "1.1.2",
   "description": "Augmint Stable Tokens - Solidity contract's abi and deployment descriptors",
   "author": "“Augmint”",
   "homepage": "https://github.com/Augmint/augmint-contracts#readme",
@@ -21,52 +21,51 @@
   ],
   "engines": {
     "node": "10.15.3",
-    "yarn": "1.15.2"
+    "yarn": ">=1.22.4"
   },
   "scripts": {
     "start": "yarn runmigrate",
+    "start_comp": "yarn runmigrate_comp",
     "build": "truffle compile",
     "clean": "rm build/contracts/*",
-    "test": "truffle test --migrations_directory migrations_null",
+    "test": "truffle test",
     "coverage": "solidity-coverage",
-    "migrate": "truffle migrate",
+    "migrate": "truffle migrate --migrations_directory ./migrations",
     "compile": "yarn build",
     "ganache:run": "./scripts/runganache.sh",
     "ganache:stop": "echo TODO",
-    "runmigrate": "./scripts/runganache.sh & yarn migrate --reset && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "runmigrate": "./scripts/runganache.sh & yarn migrate --reset --to 2000 && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
+    "runmigrate_comp": "./scripts/runganache_comp.sh & yarn migrate --reset --to 2000 && echo 'Migration done. Contracts deployed to ganache. Contract artifacts are in build/contracts folder.' & wait",
     "localchaindb:clean": "rm -rf localchaindb && mkdir localchaindb",
-    "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate && echo 'Migration done. Ganache db in ./localchaindb folder.'",
+    "localchaindb:build": "yarn localchaindb:clean && ./scripts/runganache.sh --db ./localchaindb & yarn migrate --to 2000 && echo 'Migration done. Ganache db in ./localchaindb folder.'",
     "localchaindb:builddocker": "yarn localchaindb:build && yarn docker:build",
     "docker:build": "docker build . -t localdockerimage",
-    "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
+    "docker:run": "docker rm ganache ; docker run --init --name ganache -p 8545:8545 localdockerimage --db ./dockerLocalchaindb --gasLimit 0x694920 --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\" & wait",
     "docker:start": "docker start ganache || yarn docker:run",
     "docker:stop": "docker stop ganache",
     "docker:tag:build": "docker tag localdockerimage augmint/contracts:commit-$(git log -1 --format='%h'); docker tag localdockerimage augmint/contracts:build-$TRAVIS_BUILD_NUMBER",
     "docker:tag:staging": "docker tag localdockerimage augmint/contracts:staging;",
     "docker:tag:latest": "docker tag localdockerimage augmint/contracts:latest",
-    "docker:tag:version": "func () { docker tag localdockerimage augmint/contracts:${1}; }; func"
+    "docker:tag:version": "func () { docker tag localdockerimage augmint/contracts:${1}; }; func",
+    "setrate:default": "truffle migrate -f 2000 --to 2000",
+    "setrate:low": "truffle migrate -f 2001 --to 2001",
+    "setrate:high": "truffle migrate -f 2002 --to 2002"
   },
   "devDependencies": {
     "abiniser": "0.5.1",
-    "babel-register": "6.26.0",
-    "bignumber.js": "5.0.0",
-    "coveralls": "3.0.3",
-    "dotenv": "8.0.0",
-    "eslint": "5.16.0",
-    "ganache-cli": "6.4.3",
-    "moment": "2.22.2",
+    "coveralls": "3.1.0",
+    "dotenv": "8.2.0",
+    "eslint": "7.9.0",
+    "ganache-cli": "6.10.2",
+    "moment": "2.28.0",
     "random-seed": "0.3.0",
-    "solidity-coverage": "0.5.11",
-    "stringifier": "2.0.0",
-    "truffle": "4.1.14",
-    "truffle-hdwallet-provider": "1.0.9",
-    "wait-on": "3.2.0",
-    "web3v1": "npm:web3@1.0.0-beta.34"
+    "solidity-coverage": "0.7.10",
+    "stringifier": "2.1.0",
+    "truffle": "5.1.44",
+    "@truffle/hdwallet-provider": "1.0.44",
+    "wait-on": "5.2.0"
   },
-  "greenkeeper": {
-    "ignore": [
-      "bignumber.js"
-    ]
-  },
-  "files": ["abiniser"]
+  "files": [
+    "abiniser"
+  ]
 }
