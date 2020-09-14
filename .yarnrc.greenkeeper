@@ -1,2 +1,0 @@
-# used for greenkeeper builds without --frozen-lockfile option (set in travis.yml)
-save-prefix ""
