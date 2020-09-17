@@ -3,7 +3,7 @@ require("dotenv").config();
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 const MNEMONIC = process.env.DEPLOYER_MNEMONIC;
-const INFURA_API_KEY = process.env.INFURA_API_KEY;
+const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
 
 module.exports = {
     // Workaround of --migrations_directory flag removed truffle test.
@@ -75,8 +75,13 @@ module.exports = {
             gasPrice: 140000000000, // 140 Gwei
         },
         mainnet: {
-            provider: () => new HDWalletProvider(MNEMONIC, "https://mainnet.infura.io/" + INFURA_API_KEY),
+            provider: () => new HDWalletProvider(MNEMONIC, "https://mainnet.infura.io/v3/" + INFURA_PROJECT_ID),
             network_id: 1,
+            gasPrice: 6000000000, // 6 Gwei
+        },
+        rinkebyInfura: {
+            provider: () => new HDWalletProvider(MNEMONIC, "https://rinkeby.infura.io/v3/" + INFURA_PROJECT_ID),
+            network_id: 4,
             gasPrice: 6000000000, // 6 Gwei
         },
     },
