@@ -5,16 +5,7 @@ before_install:
     - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.4
     - export PATH="$HOME/.yarn/bin:$PATH"
     - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
-    - yarn global add greenkeeper-lockfile@1
-install:
-    - |
-        if [[ $BRANCH == "greenkeeper/"* ]]; then
-            echo Greenkeeper build using .yarnrc.greenkeeper; cp .yarnrc.greenkeeper .yarnrc; yarn install;
-        else
-            echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
-        fi
 before_script:
-    - greenkeeper-lockfile-update
     - yarn localchaindb:builddocker > /dev/null
     - yarn ganache:start > /dev/null &
     - yarn wait-on tcp:localhost:8545 # ganache
@@ -22,7 +13,6 @@ script:
     - yarn test
 # discord webhooks hack until this is released: https://github.com/travis-ci/travis-tasks/pull/71
 after_script:
-    - greenkeeper-lockfile-upload
 # TODO: failing even locally: "error: cannot sign data; no private key" & "Error: sender account not recognized"
 #    - yarn coverage && cat coverage/lcov.info | coveralls
 after_success:

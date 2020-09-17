@@ -1,0 +1,3 @@
+# used for for builds without --frozen-lockfile option 
+# I.e. when ameding packages manually and want to regenerate yarn.lock
+save-prefix ""

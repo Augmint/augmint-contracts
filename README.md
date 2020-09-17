@@ -5,7 +5,6 @@
 
 [![Build Status](https://travis-ci.org/Augmint/augmint-contracts.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-contracts)
 [![Coveralls github branch](https://img.shields.io/coveralls/github/Augmint/augmint-contracts/staging.svg)](https://coveralls.io/github/Augmint/augmint-contracts)
-[![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-contracts.svg)](https://greenkeeper.io/)
 [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
 [![license](https://img.shields.io/github/license/Augmint/augmint-contracts.svg)](https://github.com/Augmint/augmint-contracts/blob/master/LICENSE)
 
