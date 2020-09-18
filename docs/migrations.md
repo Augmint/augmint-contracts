@@ -77,18 +77,9 @@ NB: New deployments to Rinkeby is now a testbed for future mainnet upgrades. I.e
 
     Cross check changes manually in `./abiniser` folder before commit
 
-1.  Tag it in gitgit
-
-    ```
-    git tag -a vx.x.x -m "Deployed to rinkeby, last migration step xxx"
-    git push --tags
-    ```
-
-    Tag format in vx.x.x semver format TBD: shall we tag with last migration step no.? Eg. Rinkeby_12, Main_33
-
-1.  push + merge to staging & master
-
 ## Main network
+
+Check `gasPrice` setting in [truffle-config.js](../truffle-config.js)
 
 ```
 truffle migrate --network mainnet --migrations_directory=./mainnet_migrations/ -f <migration step> --dry-run
