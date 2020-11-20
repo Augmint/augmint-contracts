@@ -4966,10 +4966,10 @@ traverse@^0.6.6:
   resolved "https://registry.yarnpkg.com/traverse/-/traverse-0.6.6.tgz#cbdf560fd7b9af632502fed40f918c157ea97137"
   integrity sha1-y99WD9e5r2MlAv7UD5GMFX6pcTc=
 
-truffle@5.1.44:
-  version "5.1.44"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.44.tgz#11a91b1befc68b85d38baf2cb301d566d18a3780"
-  integrity sha512-8NIFw8jJFbi2vYHWGeflFHZByIDtx56r+BDl2CkPjpGEb9arEFDaCmjy70UQe4PBIX+olsl3opSVqpUb16b6tQ==
+truffle@5.1.54:
+  version "5.1.54"
+  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.54.tgz#e92bf801f1d75136aced8d7b75d8bd5ad94f2c70"
+  integrity sha512-9jl1jk3oIvWR7F5meh1FTyGV9qPh5GYbPdbrvaLgSUevMLUxnaMtWK6ZRcoVUG9zC0mY4uPL/brzb9nt+4LKJA==
   dependencies:
     app-module-path "^2.2.0"
     mocha "8.1.2"
