@@ -1,10 +1,12 @@
 version: 2
 updates:
-    # Enable version updates for npm
-    - package-ecosystem: "npm"
-      # Look for `package.json` and `lock` files in the `root` directory
-      directory: "/"
-      # Check the npm registry for updates every day (weekdays)
-      schedule:
-          interval: "daily"
-      open-pull-requests-limit: 20
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: y18n
+    versions:
+    - 4.0.1
+    - 4.0.2
