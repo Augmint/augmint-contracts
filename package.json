@@ -63,7 +63,7 @@
     "stringifier": "2.1.0",
     "truffle": "5.1.44",
     "@truffle/hdwallet-provider": "1.0.44",
-    "wait-on": "5.2.0"
+    "wait-on": "6.0.0"
   },
   "files": [
     "abiniser"
