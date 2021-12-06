@@ -55,7 +55,7 @@
     "abiniser": "0.5.1",
     "coveralls": "3.1.0",
     "dotenv": "8.2.0",
-    "eslint": "7.9.0",
+    "eslint": "8.4.0",
     "ganache-cli": "6.10.2",
     "moment": "2.28.0",
     "random-seed": "0.3.0",
