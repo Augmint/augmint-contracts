@@ -61,7 +61,7 @@
     "random-seed": "0.3.0",
     "solidity-coverage": "0.7.10",
     "stringifier": "2.1.0",
-    "truffle": "5.1.44",
+    "truffle": "5.5.11",
     "@truffle/hdwallet-provider": "1.0.44",
     "wait-on": "5.2.0"
   },
